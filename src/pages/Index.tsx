@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const roles = [
   {
@@ -10,6 +12,8 @@ const roles = [
     description: "Coordinate care for your loved ones",
     icon: Users,
     color: "bg-primary-100",
+    path: "/register/family",
+    cta: "Find Care Now",
   },
   {
     id: "professional",
@@ -17,6 +21,8 @@ const roles = [
     description: "Provide care services and expertise",
     icon: UserCog,
     color: "bg-primary-200",
+    path: "/register/professional",
+    cta: "Get Hired as a Skilled Care Professional",
   },
   {
     id: "community",
@@ -24,11 +30,34 @@ const roles = [
     description: "Support and contribute to care networks",
     icon: Heart,
     color: "bg-primary-300",
+    path: "/register/community",
+    cta: "Join the Village",
   },
 ];
 
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const handleRoleSelect = (roleId: string) => {
+    setSelectedRole(roleId);
+    const role = roles.find((r) => r.id === roleId);
+    if (role) {
+      toast.success(`Welcome! Let's get you started as a ${role.title} member.`);
+      navigate(role.path);
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (selectedRole) {
+      const role = roles.find((r) => r.id === selectedRole);
+      if (role) {
+        navigate(role.path);
+      }
+    } else {
+      toast.info("Please select your role first to continue");
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-white to-primary-100">
@@ -73,10 +102,10 @@ const Index = () => {
                 </h3>
                 <p className="text-gray-600 mb-6">{role.description}</p>
                 <button
-                  onClick={() => setSelectedRole(role.id)}
+                  onClick={() => handleRoleSelect(role.id)}
                   className="inline-flex items-center text-primary-700 font-medium group/button"
                 >
-                  Learn more
+                  {role.cta}
                   <ArrowRight className="ml-2 w-4 h-4 transition-transform duration-300 group-hover/button:translate-x-1" />
                 </button>
               </div>
@@ -90,12 +119,12 @@ const Index = () => {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="text-center mt-16"
         >
-          <a
-            href="#get-started"
+          <button
+            onClick={handleGetStarted}
             className="inline-flex items-center justify-center h-11 px-8 font-medium text-white bg-primary-500 rounded-full transition-colors duration-300 hover:bg-primary-600"
           >
             Get Started
-          </a>
+          </button>
         </motion.div>
       </div>
     </div>
