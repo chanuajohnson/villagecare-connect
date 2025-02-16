@@ -1,0 +1,95 @@
+
+import { motion } from "framer-motion";
+import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+
+const ProfessionalDashboard = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container px-4 py-12 mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold text-gray-900">Professional Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage your caregiving services and professional development.</p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Card>
+              <CardHeader>
+                <div className="mb-4">
+                  <UserCog className="w-8 h-8 text-primary-600" />
+                </div>
+                <CardTitle>Complete Your Profile</CardTitle>
+                <CardDescription>Showcase your qualifications and experience</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                  Update Profile <ArrowRight className="ml-2 w-4 h-4" />
+                </button>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader>
+                <div className="mb-4">
+                  <FileText className="w-8 h-8 text-primary-600" />
+                </div>
+                <CardTitle>Admin Assistant</CardTitle>
+                <CardDescription>Streamline your administrative tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-4 text-sm text-gray-600">
+                  <li>Get Job Letters</li>
+                  <li>NIS Registration Assistance</li>
+                  <li>Document Management</li>
+                  <li>Administrative Support</li>
+                </ul>
+                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                  Access Tools <ArrowRight className="ml-2 w-4 h-4" />
+                </button>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <div className="mb-4">
+                  <Book className="w-8 h-8 text-primary-600" />
+                </div>
+                <CardTitle>Training Resources</CardTitle>
+                <CardDescription>Access our comprehensive library of caregiving resources</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                  Learn More <ArrowRight className="ml-2 w-4 h-4" />
+                </button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfessionalDashboard;

@@ -1,11 +1,21 @@
 
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ProfessionalRegistration = () => {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Add registration logic here
+    navigate("/dashboard/professional");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-primary-100 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-white to-primary
+
+-100 py-12">
       <div className="container max-w-4xl mx-auto px-4">
         <Link to="/" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-8">
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -23,11 +33,14 @@ const ProfessionalRegistration = () => {
             Complete your professional profile to start connecting with families in need.
           </p>
           
-          <div className="space-y-6">
-            <p className="text-primary-600">
-              Professional registration form will be implemented in the next iteration.
-            </p>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <button 
+              type="submit"
+              className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600"
+            >
+              Go to Dashboard
+            </button>
+          </form>
         </motion.div>
       </div>
     </div>

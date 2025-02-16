@@ -9,6 +9,9 @@ import NotFound from "./pages/NotFound";
 import FamilyRegistration from "./pages/registration/FamilyRegistration";
 import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
 import CommunityRegistration from "./pages/registration/CommunityRegistration";
+import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
+import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
+import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,9 @@ const App = () => (
           <Route path="/register/family" element={<FamilyRegistration />} />
           <Route path="/register/professional" element={<ProfessionalRegistration />} />
           <Route path="/register/community" element={<CommunityRegistration />} />
+          <Route path="/dashboard/family" element={<FamilyDashboard />} />
+          <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+          <Route path="/dashboard/community" element={<CommunityDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
