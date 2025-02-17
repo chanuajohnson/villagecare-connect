@@ -8,10 +8,17 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const FamilyDashboard = () => {
-  // Fetch care plans
+  // Check if Supabase is configured
+  const isSupabaseConfigured = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+  // Fetch care plans only if Supabase is configured
   const { data: carePlans, isLoading: carePlansLoading } = useQuery({
     queryKey: ['carePlans'],
     queryFn: async () => {
+      if (!isSupabaseConfigured) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('care_plans')
         .select(`
@@ -77,6 +84,13 @@ const FamilyDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
+          {!isSupabaseConfigured && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-yellow-800">
+                Please connect to Supabase to enable all features.
+              </p>
+            </div>
+          )}
         </motion.div>
 
         <QuickActions />
