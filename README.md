@@ -1,69 +1,128 @@
-# Welcome to your Lovable project
 
-## Project info
+# Takes a Village - Care Coordination Platform
 
-**URL**: https://lovable.dev/projects/6d6595e0-04bb-4870-8c48-286aef5b647f
+Takes a Village is a platform designed to streamline care coordination and community support. It empowers families, professional caregivers, and community members to collaborate efficiently using AI-driven workflows. The platform provides a structured approach to managing care plans, enhancing communication, and ensuring accessibility across various roles.
 
-## How can I edit this code?
+## Current Features (v0.1.0)
 
-There are several ways of editing your application.
+### Authentication & Access Control ✅
+- Role-based authentication (Family, Professional, Community)
+- Secure registration and login flows
+- User profile management
+- Session handling with Supabase Auth
 
-**Use Lovable**
+### Database Schema ✅
+- Profiles table with role management
+- Care plans and tasks structure
+- Document storage system
+- Comprehensive RLS policies
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6d6595e0-04bb-4870-8c48-286aef5b647f) and start prompting.
+### Family Dashboard ✅
+- Care plan overview
+- Team management
+- Appointment scheduling
+- Meal planning integration
 
-Changes made via Lovable will be committed automatically to this repo.
+### User Experience ✅
+- Mobile-first responsive design
+- Role-specific dashboards
+- Intuitive navigation
+- Clear call-to-actions
 
-**Use your preferred IDE**
+## Upcoming Features 🚧
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Care Coordination Tools
+- [ ] Shared care plans
+- [ ] Task management system
+- [ ] Automated reminders
+- [ ] Care activity logging
+- [ ] Progress tracking
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Meal Planning System
+- [ ] Create and manage meal plans
+- [ ] Recipe browser and storage
+- [ ] Prepped meal ordering
+- [ ] Dietary preferences and restrictions
+- [ ] Shopping list generation
 
-Follow these steps:
+### Professional Features
+- [ ] Certification verification
+- [ ] Client management tools
+- [ ] Documentation templates
+- [ ] Schedule management
+- [ ] Training resources
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Community Support
+- [ ] Messaging system
+- [ ] Resource sharing
+- [ ] Event coordination
+- [ ] Volunteer matching
+- [ ] Support network management
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Technical Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Frontend
+- React with TypeScript
+- Tailwind CSS for styling
+- shadcn/ui component library
+- Framer Motion for animations
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Backend
+- Supabase for authentication and database
+- Row Level Security (RLS) policies
+- Real-time subscriptions
+- File storage system
+
+## Local Development
+
+1. Clone the repository
+```bash
+git clone <repository-url>
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Start the development server
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Database Schema
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Core Tables
+- `profiles`: User profiles and role management
+- `care_plans`: Care plan management
+- `care_tasks`: Task tracking and assignments
+- `documents`: File storage and management
+- `meal_plans`: Meal planning and scheduling
+- `recipes`: Recipe management
+- `prepped_meal_orders`: Meal ordering system
 
-**Use GitHub Codespaces**
+## Security & Compliance
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Row Level Security (RLS) policies for data protection
+- Role-based access control
+- Secure file storage
+- Data encryption at rest and in transit
 
-## What technologies are used for this project?
+## Performance Goals
 
-This project is built with .
+- Page load time < 3 seconds
+- Real-time updates < 500ms
+- Mobile-responsive across all devices
+- Accessible according to WCAG 2.1 standards
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+We welcome contributions! Please read our contributing guidelines before submitting pull requests.
 
-Simply open [Lovable](https://lovable.dev/projects/6d6595e0-04bb-4870-8c48-286aef5b647f) and click on Share -> Publish.
+## License
 
-## I want to use a custom domain - is that possible?
+This project is proprietary and confidential. All rights reserved.
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Support
+
+For support, please join our [Discord community](https://discord.com/channels/1119885301872070706/1280461670979993613) or refer to our [documentation](https://docs.lovable.dev/).
