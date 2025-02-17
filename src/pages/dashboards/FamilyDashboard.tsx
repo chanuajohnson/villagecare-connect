@@ -67,26 +67,26 @@ const FamilyDashboard = () => {
       <Button 
         variant="outline" 
         className="justify-start space-x-2"
-        onClick={() => toast.info("Create meal plan coming soon!")}
+        onClick={() => toast.info("Create care plan coming soon!")}
+      >
+        <ClipboardList className="w-4 h-4" />
+        <span>New Care Plan</span>
+      </Button>
+      <Button 
+        variant="outline" 
+        className="justify-start space-x-2"
+        onClick={() => toast.info("Add team member coming soon!")}
+      >
+        <Users className="w-4 h-4" />
+        <span>Add Team Member</span>
+      </Button>
+      <Button 
+        variant="outline" 
+        className="justify-start space-x-2"
+        onClick={() => toast.info("Schedule appointment coming soon!")}
       >
         <Calendar className="w-4 h-4" />
-        <span>New Meal Plan</span>
-      </Button>
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => toast.info("Browse recipes coming soon!")}
-      >
-        <Utensils className="w-4 h-4" />
-        <span>Browse Recipes</span>
-      </Button>
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => toast.info("Order meals coming soon!")}
-      >
-        <ShoppingCart className="w-4 h-4" />
-        <span>Order Prepped Meals</span>
+        <span>Schedule Appointment</span>
       </Button>
       <Button 
         variant="outline" 
@@ -109,7 +109,7 @@ const FamilyDashboard = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Takes a Village</h1>
-          <p className="text-gray-600 mt-2">Manage your meal plans and coordinate with your care team.</p>
+          <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
           {!isSupabaseConfigured && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-yellow-800">
@@ -130,15 +130,10 @@ const FamilyDashboard = () => {
             <Card>
               <CardHeader>
                 <div className="mb-4">
-                  <Calendar className="w-8 h-8 text-primary-600" />
+                  <ClipboardList className="w-8 h-8 text-primary-600" />
                 </div>
-                <CardTitle>Meal Plans</CardTitle>
-                <CardDescription>
-                  {mealPlansLoading 
-                    ? "Loading meal plans..." 
-                    : `${mealPlans?.length || 0} upcoming meal plans`
-                  }
-                </CardDescription>
+                <CardTitle>Care Plans</CardTitle>
+                <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
               <CardContent>
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
@@ -156,14 +151,14 @@ const FamilyDashboard = () => {
             <Card>
               <CardHeader>
                 <div className="mb-4">
-                  <Utensils className="w-8 h-8 text-primary-600" />
+                  <Users className="w-8 h-8 text-primary-600" />
                 </div>
-                <CardTitle>Recipes</CardTitle>
-                <CardDescription>Browse and save your favorite recipes</CardDescription>
+                <CardTitle>Care Team</CardTitle>
+                <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
               <CardContent>
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
-                  View Recipes <ArrowRight className="ml-2 w-4 h-4" />
+                  View Team <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
               </CardContent>
             </Card>
@@ -177,18 +172,92 @@ const FamilyDashboard = () => {
             <Card>
               <CardHeader>
                 <div className="mb-4">
-                  <ShoppingCart className="w-8 h-8 text-primary-600" />
+                  <Calendar className="w-8 h-8 text-primary-600" />
                 </div>
-                <CardTitle>Prepped Meals</CardTitle>
-                <CardDescription>Order meals from our community</CardDescription>
+                <CardTitle>Appointments</CardTitle>
+                <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent>
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
-                  Order Now <ArrowRight className="ml-2 w-4 h-4" />
+                  View Calendar <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
               </CardContent>
             </Card>
           </motion.div>
+        </div>
+
+        {/* Meal Planning Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <Calendar className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Meal Plans</CardTitle>
+                  <CardDescription>
+                    {mealPlansLoading 
+                      ? "Loading meal plans..." 
+                      : `${mealPlans?.length || 0} upcoming meal plans`
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={() => toast.info("Meal plans coming soon!")}>
+                    View Plans <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <Utensils className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Recipes</CardTitle>
+                  <CardDescription>Browse and save your favorite recipes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={() => toast.info("Recipe browser coming soon!")}>
+                    View Recipes <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <ShoppingCart className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Prepped Meals</CardTitle>
+                  <CardDescription>Order meals from our community</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={() => toast.info("Meal ordering coming soon!")}>
+                    Order Now <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </div>
 
         {/* Recent Activity */}
@@ -201,13 +270,13 @@ const FamilyDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest updates from your meal plans and orders</CardDescription>
+              <CardDescription>Latest updates from your care plans and meal activities</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {ordersLoading || mealPlansLoading ? (
+                {ordersLoading ? (
                   <p className="text-gray-500">Loading activities...</p>
-                ) : recentOrders?.length === 0 && mealPlans?.length === 0 ? (
+                ) : recentOrders?.length === 0 ? (
                   <p className="text-gray-500">No recent activities</p>
                 ) : (
                   <div className="space-y-4">
