@@ -1,12 +1,19 @@
-
 import { motion } from "framer-motion";
-import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
+import { Book, UserCog, FileText, ArrowRight, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const ProfessionalDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <Link to="/" className="inline-flex items-center text-primary-600 hover:text-primary-700">
+            <Home className="w-5 h-5 mr-2" />
+            Back to Home
+          </Link>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
