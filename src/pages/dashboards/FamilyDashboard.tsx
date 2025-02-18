@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import MealPlanner from "@/components/meal-planning/MealPlanner";
 
 const FamilyDashboard = () => {
   // Check if Supabase is configured
@@ -59,6 +60,15 @@ const FamilyDashboard = () => {
       }
       return data || [];
     }
+  });
+
+  // Fetch user data
+  const { data: userData } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
   });
 
   // Quick Actions Section
@@ -195,75 +205,7 @@ const FamilyDashboard = () => {
         {/* Meal Planning Section */}
         <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <Calendar className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Meal Plans</CardTitle>
-                  <CardDescription>
-                    {mealPlansLoading 
-                      ? "Loading meal plans..." 
-                      : `${mealPlans?.length || 0} upcoming meal plans`
-                    }
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={() => toast.info("Meal plans coming soon!")}>
-                    View Plans <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <Utensils className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Recipes</CardTitle>
-                  <CardDescription>Browse and save your favorite recipes</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={() => toast.info("Recipe browser coming soon!")}>
-                    View Recipes <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <ShoppingCart className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Prepped Meals</CardTitle>
-                  <CardDescription>Order meals from our community</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={() => toast.info("Meal ordering coming soon!")}>
-                    Order Now <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+          {userData && <MealPlanner userId={userData.id} />}
         </div>
 
         {/* Recent Activity */}

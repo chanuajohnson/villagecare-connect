@@ -157,30 +157,39 @@ export type Database = {
       }
       recipes: {
         Row: {
+          category: string | null
           created_at: string
           description: string | null
           id: string
           ingredients: Json
           instructions: string[] | null
+          nutrition_info: Json | null
           preparation_time: number | null
+          servings: number | null
           title: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
           ingredients?: Json
           instructions?: string[] | null
+          nutrition_info?: Json | null
           preparation_time?: number | null
+          servings?: number | null
           title: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
           ingredients?: Json
           instructions?: string[] | null
+          nutrition_info?: Json | null
           preparation_time?: number | null
+          servings?: number | null
           title?: string
         }
         Relationships: []
@@ -193,7 +202,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      meal_type:
+        | "morning_drink"
+        | "breakfast"
+        | "morning_snack"
+        | "lunch"
+        | "afternoon_snack"
+        | "dinner"
     }
     CompositeTypes: {
       [_ in never]: never
