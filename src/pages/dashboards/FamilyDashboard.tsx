@@ -1,76 +1,42 @@
 
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, PlusCircle, Pill, Utensils, ShoppingCart, Home } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
+import { useEffect } from "react";
 
 const FamilyDashboard = () => {
-  // Check if Supabase is configured
-  const isSupabaseConfigured = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-  // Fetch meal plans
-  const { data: mealPlans, isLoading: mealPlansLoading } = useQuery({
-    queryKey: ['mealPlans'],
+  const navigate = useNavigate();
+  
+  // Check authentication status
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ['session'],
     queryFn: async () => {
-      if (!isSupabaseConfigured) return [];
-
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .select(`
-          *,
-          meal_plan_items (
-            *,
-            recipe: recipes (*)
-          )
-        `)
-        .gte('end_date', new Date().toISOString())
-        .order('start_date', { ascending: true });
-      
-      if (error) {
-        toast.error("Failed to load meal plans");
-        throw error;
-      }
-      return data || [];
-    }
-  });
-
-  // Fetch recent orders
-  const { data: recentOrders, isLoading: ordersLoading } = useQuery({
-    queryKey: ['recentOrders'],
-    queryFn: async () => {
-      if (!isSupabaseConfigured) return [];
-
-      const { data, error } = await supabase
-        .from('prepped_meal_orders')
-        .select(`
-          *,
-          recipe: recipes (*)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (error) {
-        toast.error("Failed to load recent orders");
-        throw error;
-      }
-      return data || [];
-    }
-  });
-
-  // Fetch user data
-  const { data: userData } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
     },
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!sessionLoading && !session) {
+      toast.error("Please login to access the dashboard");
+      navigate("/auth");
+    }
+  }, [session, sessionLoading, navigate]);
+
+  // Only render dashboard content when authenticated
+  if (sessionLoading || !session) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <p>Loading...</p>
+    </div>;
+  }
 
   // Quick Actions Section
   const QuickActions = () => (
@@ -113,12 +79,22 @@ const FamilyDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center justify-between gap-4 mb-8">
           <Link to="/" className="inline-flex items-center text-primary-600 hover:text-primary-700">
             <Home className="w-5 h-5 mr-2" />
             Back to Home
           </Link>
+          <Button 
+            variant="outline" 
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate("/");
+            }}
+          >
+            Sign Out
+          </Button>
         </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,13 +103,6 @@ const FamilyDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
-          {!isSupabaseConfigured && (
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-yellow-800">
-                Please connect to Supabase to enable all features.
-              </p>
-            </div>
-          )}
         </motion.div>
 
         <QuickActions />
@@ -153,9 +122,9 @@ const FamilyDashboard = () => {
                 <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
               <CardContent>
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button className="w-full" variant="default">
                   View Plans <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -174,9 +143,9 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
               <CardContent>
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button className="w-full" variant="default">
                   View Team <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -195,9 +164,9 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent>
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button className="w-full" variant="default">
                   View Calendar <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
               </CardContent>
             </Card>
           </motion.div>
@@ -206,7 +175,7 @@ const FamilyDashboard = () => {
         {/* Meal Planning Section */}
         <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          {userData && <MealPlanner userId={userData.id} />}
+          {session && <MealPlanner userId={session.user.id} />}
         </div>
 
         {/* Recent Activity */}
@@ -222,31 +191,7 @@ const FamilyDashboard = () => {
               <CardDescription>Latest updates from your care plans and meal activities</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {ordersLoading ? (
-                  <p className="text-gray-500">Loading activities...</p>
-                ) : recentOrders?.length === 0 ? (
-                  <p className="text-gray-500">No recent activities</p>
-                ) : (
-                  <div className="space-y-4">
-                    {recentOrders?.map((order) => (
-                      <div key={order.id} className="flex items-start space-x-4">
-                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                          <ShoppingCart className="w-4 h-4 text-primary-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            Ordered {order.quantity}x {order.recipe.title}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Delivery on {format(new Date(order.delivery_date), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <p className="text-gray-500">No recent activities</p>
             </CardContent>
           </Card>
         </motion.div>
