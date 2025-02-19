@@ -20,7 +20,6 @@ const AuthPage = () => {
       let result;
 
       if (action === 'signup') {
-        // Use signUp for registration
         result = await supabase.auth.signUp({
           email,
           password,
@@ -29,8 +28,7 @@ const AuthPage = () => {
           }
         });
       } else {
-        // Use signIn for login
-        result = await supabase.auth.signIn({
+        result = await supabase.auth.signInWithPassword({
           email,
           password
         });
