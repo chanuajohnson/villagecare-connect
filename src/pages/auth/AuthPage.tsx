@@ -17,30 +17,25 @@ const AuthPage = () => {
   const handleAuth = async (action: 'login' | 'signup') => {
     try {
       setLoading(true);
-      let result;
 
       if (action === 'signup') {
-        result = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard/family`
           }
         });
+
+        if (error) throw error;
+        toast.success('Registration successful! Please check your email to verify your account.');
       } else {
-        result = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
-      }
 
-      if (result.error) {
-        throw result.error;
-      }
-
-      if (action === 'signup') {
-        toast.success('Registration successful! Please check your email to verify your account.');
-      } else {
+        if (error) throw error;
         toast.success('Login successful!');
         navigate('/dashboard/family');
       }

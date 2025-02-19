@@ -10,7 +10,9 @@ const createDummyClient = () => {
       })
     }),
     auth: {
-      getUser: () => Promise.resolve({ data: { user: null }, error: null })
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+      signUp: () => Promise.resolve({ data: { user: null }, error: null })
     }
   } as any;
 };
@@ -20,7 +22,13 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Create the Supabase client if credentials are available, otherwise use dummy client
 export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
   : createDummyClient();
 
 // Helper function to get user role
