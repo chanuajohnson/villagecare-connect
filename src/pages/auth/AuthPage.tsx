@@ -20,14 +20,19 @@ const AuthPage = () => {
       let result;
 
       if (action === 'signup') {
+        // Use signUp for registration
         result = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard/family`
+          }
         });
       } else {
-        result = await supabase.auth.signInWithPassword({
+        // Use signIn for login
+        result = await supabase.auth.signIn({
           email,
-          password,
+          password
         });
       }
 
@@ -39,9 +44,8 @@ const AuthPage = () => {
         toast.success('Registration successful! Please check your email to verify your account.');
       } else {
         toast.success('Login successful!');
+        navigate('/dashboard/family');
       }
-
-      navigate('/dashboard/family');
     } catch (error: any) {
       toast.error(error.message);
     } finally {
