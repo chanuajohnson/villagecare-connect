@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,32 +14,57 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/dashboard/family');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+
   const handleAuth = async (action: 'login' | 'signup') => {
     try {
       setLoading(true);
+      console.log(`Attempting to ${action} with email:`, email); // Debug log
 
       if (action === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard/family`
-          }
-        });
-
-        if (error) throw error;
-        toast.success('Registration successful! Please check your email to verify your account.');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password
         });
 
+        console.log('Signup response:', { data, error }); // Debug log
+
         if (error) throw error;
-        toast.success('Login successful!');
-        navigate('/dashboard/family');
+        
+        if (data.user) {
+          toast.success('Registration successful! Please check your email to verify your account.');
+        } else {
+          toast.error('Something went wrong during registration.');
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        console.log('Login response:', { data, error }); // Debug log
+
+        if (error) throw error;
+
+        if (data.session) {
+          toast.success('Login successful!');
+          navigate('/dashboard/family');
+        } else {
+          toast.error('Login failed. Please try again.');
+        }
       }
     } catch (error: any) {
+      console.error('Auth error:', error); // Debug log
       toast.error(error.message);
     } finally {
       setLoading(false);
