@@ -105,6 +105,28 @@ const FamilyDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
         </motion.div>
 
+        {/* Registration Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Complete Your Registration</CardTitle>
+              <CardDescription>Set up your family profile to start coordinating care</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/auth">
+                <Button className="w-full">
+                  Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         <QuickActions />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

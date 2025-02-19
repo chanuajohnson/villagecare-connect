@@ -1,7 +1,9 @@
+
 import { motion } from "framer-motion";
 import { Users, Heart, Calendar, ArrowRight, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const CommunityDashboard = () => {
   return (
@@ -22,6 +24,28 @@ const CommunityDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Community Dashboard</h1>
           <p className="text-gray-600 mt-2">Connect and contribute to your local care community.</p>
+        </motion.div>
+
+        {/* Registration Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Complete Your Registration</CardTitle>
+              <CardDescription>Set up your community profile to start supporting families</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/auth">
+                <Button className="w-full">
+                  Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-8">
