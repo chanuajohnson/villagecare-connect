@@ -17,7 +17,7 @@ const AuthPage = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = supabase.auth.session();
       if (session) {
         navigate('/dashboard/family');
       }
