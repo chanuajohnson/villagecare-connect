@@ -18,6 +18,7 @@ const AuthPage = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
+      console.log('Current session:', data); // Debug log
       if (data.session) {
         navigate('/dashboard/family');
       }
@@ -27,36 +28,53 @@ const AuthPage = () => {
   }, [navigate]);
 
   const handleAuth = async (action: 'login' | 'signup') => {
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
     try {
       setLoading(true);
-      console.log(`Attempting to ${action} with email:`, email); // Debug log
+      console.log(`Attempting to ${action} with email:`, email);
 
       if (action === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
-          password
+          password,
+          options: {
+            emailRedirectTo: window.location.origin + '/auth'
+          }
         });
 
-        console.log('Signup response:', { data, error }); // Debug log
+        console.log('Signup response:', { signUpData, signUpError }); // Debug log
 
-        if (error) throw error;
+        if (signUpError) {
+          console.error('Signup error:', signUpError);
+          toast.error(signUpError.message || 'Failed to register');
+          return;
+        }
         
-        if (data.user) {
+        if (signUpData.user) {
           toast.success('Registration successful! Please check your email to verify your account.');
+          // Don't navigate yet since they need to verify email
         } else {
-          toast.error('Something went wrong during registration.');
+          toast.error('Something unexpected happened during registration.');
         }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
-        console.log('Login response:', { data, error }); // Debug log
+        console.log('Login response:', { signInData, signInError }); // Debug log
 
-        if (error) throw error;
+        if (signInError) {
+          console.error('Login error:', signInError);
+          toast.error(signInError.message || 'Failed to login');
+          return;
+        }
 
-        if (data.session) {
+        if (signInData.session) {
           toast.success('Login successful!');
           navigate('/dashboard/family');
         } else {
@@ -64,8 +82,8 @@ const AuthPage = () => {
         }
       }
     } catch (error: any) {
-      console.error('Auth error:', error); // Debug log
-      toast.error(error.message);
+      console.error('Auth error:', error);
+      toast.error(error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -127,3 +145,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+
