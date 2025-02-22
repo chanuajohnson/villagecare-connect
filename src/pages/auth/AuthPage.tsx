@@ -14,17 +14,12 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const session = await supabase.auth.getSession();
-        console.log('Current session:', session);
-        if (session?.data?.session) {
-          navigate('/dashboard/family');
-        }
-      } catch (error) {
-        console.error('Session check error:', error);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('Current session:', { session, error });
+      if (session) {
+        navigate('/dashboard/family');
       }
     };
     
@@ -42,43 +37,40 @@ const AuthPage = () => {
       console.log(`Attempting to ${action} with email:`, email);
 
       if (action === 'signup') {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: window.location.origin + '/auth'
-          }
         });
 
-        console.log('Signup response:', { signUpData, signUpError });
+        console.log('Signup response:', { data, error });
 
-        if (signUpError) {
-          console.error('Signup error:', signUpError);
-          toast.error(signUpError.message || 'Failed to register');
+        if (error) {
+          toast.error(error.message);
           return;
         }
         
-        if (signUpData.user) {
+        if (data?.user) {
           toast.success('Registration successful! Please check your email to verify your account.');
-          // Don't navigate yet since they need to verify email
+          // Clear the form
+          setEmail('');
+          setPassword('');
         } else {
-          toast.error('Something unexpected happened during registration.');
+          toast.error('Unable to create account. Please try again.');
         }
       } else {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
-        console.log('Login response:', { signInData, signInError });
+        console.log('Login response:', { data, error });
 
-        if (signInError) {
-          console.error('Login error:', signInError);
-          toast.error(signInError.message || 'Failed to login');
+        if (error) {
+          toast.error(error.message);
           return;
         }
 
-        if (signInData.session) {
+        if (data?.session) {
           toast.success('Login successful!');
           navigate('/dashboard/family');
         } else {
