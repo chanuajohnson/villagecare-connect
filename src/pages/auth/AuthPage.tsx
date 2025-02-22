@@ -17,10 +17,14 @@ const AuthPage = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      console.log('Current session:', data); // Debug log
-      if (data.session) {
-        navigate('/dashboard/family');
+      try {
+        const session = await supabase.auth.getSession();
+        console.log('Current session:', session);
+        if (session?.data?.session) {
+          navigate('/dashboard/family');
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
       }
     };
     
@@ -46,7 +50,7 @@ const AuthPage = () => {
           }
         });
 
-        console.log('Signup response:', { signUpData, signUpError }); // Debug log
+        console.log('Signup response:', { signUpData, signUpError });
 
         if (signUpError) {
           console.error('Signup error:', signUpError);
@@ -66,7 +70,7 @@ const AuthPage = () => {
           password
         });
 
-        console.log('Login response:', { signInData, signInError }); // Debug log
+        console.log('Login response:', { signInData, signInError });
 
         if (signInError) {
           console.error('Login error:', signInError);
@@ -145,4 +149,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-
