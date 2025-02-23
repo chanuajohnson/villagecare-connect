@@ -123,7 +123,7 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
                       {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="start" side="bottom">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
