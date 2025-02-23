@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -6,36 +5,33 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
-  
-  // Check authentication status
-  const { data: session, isLoading: sessionLoading } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
-    if (!sessionLoading && !session) {
-      toast.error("Please login to access the dashboard");
-      navigate("/auth");
-    }
-  }, [session, sessionLoading, navigate]);
+    const checkAuth = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        toast.error("Please login to access the dashboard");
+        navigate("/auth", { replace: true });
+      }
+      setIsLoading(false);
+    };
 
-  // Only render dashboard content when authenticated
-  if (sessionLoading || !session) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <p>Loading...</p>
-    </div>;
+    checkAuth();
+  }, [navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   // Quick Actions Section
@@ -88,7 +84,7 @@ const FamilyDashboard = () => {
             variant="outline" 
             onClick={async () => {
               await supabase.auth.signOut();
-              navigate("/");
+              navigate("/", { replace: true });
             }}
           >
             Sign Out
@@ -105,7 +101,6 @@ const FamilyDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
         </motion.div>
 
-        {/* Registration Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,13 +189,11 @@ const FamilyDashboard = () => {
           </motion.div>
         </div>
 
-        {/* Meal Planning Section */}
         <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
           {session && <MealPlanner userId={session.user.id} />}
         </div>
 
-        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
