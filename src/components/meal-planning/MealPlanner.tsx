@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ChefHat, Clock, Users } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecipeBrowser from './RecipeBrowser';
 import { toast } from "sonner";
 
@@ -98,84 +99,165 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+      <Tabs defaultValue="planner" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="planner">Meal Planner</TabsTrigger>
+          <TabsTrigger value="recipes">Recipe Library</TabsTrigger>
+          <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
+        </TabsList>
 
-        {selectedDate && (
-          <div className="flex gap-2">
-            {mealTypes.map((type) => (
-              <Button
-                key={type.value}
-                variant={selectedMealType === type.value ? "default" : "outline"}
-                onClick={() => setSelectedMealType(type.value)}
-              >
-                {type.label}
-              </Button>
-            ))}
+        <TabsContent value="planner" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Select Date
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Meal Types
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {mealTypes.map((type) => (
+                    <Button
+                      key={type.value}
+                      variant={selectedMealType === type.value ? "default" : "outline"}
+                      onClick={() => setSelectedMealType(type.value)}
+                      className="w-full"
+                      disabled={!selectedDate}
+                    >
+                      {type.label}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Features
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm">✓ Plan meals for the whole family</p>
+                <p className="text-sm">✓ Browse recipe suggestions</p>
+                <p className="text-sm">✓ Track nutritional information</p>
+                <p className="text-sm">✓ Generate shopping lists</p>
+                <p className="text-sm">✓ Share plans with care team</p>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </div>
 
-      {selectedDate && selectedMealType && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Select a Recipe</h3>
-          <RecipeBrowser 
-            category={selectedMealType}
-            onSelectRecipe={(recipe) => createMealPlanMutation.mutate(recipe)}
-          />
-        </div>
-      )}
-
-      {selectedDate && mealPlan && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Meal Plan for {format(selectedDate, 'MMM d, yyyy')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+          {selectedDate && selectedMealType && (
             <div className="space-y-4">
-              {mealTypes.map((type) => {
-                const meals = mealPlan.meal_plan_items.filter(
-                  (item: any) => item.meal_type === type.value
-                );
-
-                return (
-                  <div key={type.value}>
-                    <h4 className="font-medium mb-2">{type.label}</h4>
-                    {meals.length > 0 ? (
-                      <div className="space-y-2">
-                        {meals.map((meal: any) => (
-                          <div key={meal.id} className="flex items-center gap-2">
-                            <span>{meal.recipe.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No meals planned</p>
-                    )}
-                  </div>
-                );
-              })}
+              <h3 className="text-lg font-semibold">Select a Recipe</h3>
+              <RecipeBrowser 
+                category={selectedMealType}
+                onSelectRecipe={(recipe) => createMealPlanMutation.mutate(recipe)}
+              />
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+
+          {selectedDate && mealPlan && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Meal Plan for {format(selectedDate, 'MMM d, yyyy')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mealTypes.map((type) => {
+                    const meals = mealPlan.meal_plan_items.filter(
+                      (item: any) => item.meal_type === type.value
+                    );
+
+                    return (
+                      <div key={type.value}>
+                        <h4 className="font-medium mb-2">{type.label}</h4>
+                        {meals.length > 0 ? (
+                          <div className="space-y-2">
+                            {meals.map((meal: any) => (
+                              <div key={meal.id} className="flex items-center gap-2">
+                                <ChefHat className="h-4 w-4" />
+                                <span>{meal.recipe.title}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No meals planned</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="recipes">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recipe Library</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Browse our collection of recipes and add them to your meal plan.</p>
+              <RecipeBrowser 
+                onSelectRecipe={(recipe) => {
+                  if (!selectedDate) {
+                    toast.error("Please select a date first");
+                    return;
+                  }
+                  createMealPlanMutation.mutate(recipe);
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="suggestions">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personalized Suggestions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">
+                Coming soon: Get personalized meal suggestions based on your preferences and dietary requirements.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
 export default MealPlanner;
+
