@@ -98,19 +98,19 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <Tabs defaultValue="planner" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="planner">Meal Planner</TabsTrigger>
           <TabsTrigger value="recipes">Recipe Library</TabsTrigger>
           <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="planner" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <Calendar className="h-5 w-5" />
                   Select Date
                 </CardTitle>
@@ -118,12 +118,12 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
               <CardContent>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                    <Button variant="outline" className="w-full justify-start text-left">
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                       {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -135,21 +135,21 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <Clock className="h-5 w-5" />
                   Meal Types
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {mealTypes.map((type) => (
                     <Button
                       key={type.value}
                       variant={selectedMealType === type.value ? "default" : "outline"}
                       onClick={() => setSelectedMealType(type.value)}
-                      className="w-full"
+                      className="w-full text-sm"
                       disabled={!selectedDate}
                     >
                       {type.label}
@@ -159,19 +159,36 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="h-5 w-5" />
                   Features
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm">✓ Plan meals for the whole family</p>
-                <p className="text-sm">✓ Browse recipe suggestions</p>
-                <p className="text-sm">✓ Track nutritional information</p>
-                <p className="text-sm">✓ Generate shopping lists</p>
-                <p className="text-sm">✓ Share plans with care team</p>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    Plan meals for the whole family
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    Browse recipe suggestions
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    Track nutritional information
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    Generate shopping lists
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    Share plans with care team
+                  </li>
+                </ul>
               </CardContent>
             </Card>
           </div>
@@ -179,39 +196,43 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
           {selectedDate && selectedMealType && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Select a Recipe</h3>
-              <RecipeBrowser 
-                category={selectedMealType}
-                onSelectRecipe={(recipe) => createMealPlanMutation.mutate(recipe)}
-              />
+              <div className="w-full overflow-x-auto">
+                <RecipeBrowser 
+                  category={selectedMealType}
+                  onSelectRecipe={(recipe) => createMealPlanMutation.mutate(recipe)}
+                />
+              </div>
             </div>
           )}
 
           {selectedDate && mealPlan && (
             <Card>
               <CardHeader>
-                <CardTitle>Meal Plan for {format(selectedDate, 'MMM d, yyyy')}</CardTitle>
+                <CardTitle className="text-lg">
+                  Meal Plan for {format(selectedDate, 'MMM d, yyyy')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {mealTypes.map((type) => {
                     const meals = mealPlan.meal_plan_items.filter(
                       (item: any) => item.meal_type === type.value
                     );
 
                     return (
-                      <div key={type.value}>
-                        <h4 className="font-medium mb-2">{type.label}</h4>
+                      <div key={type.value} className="space-y-2">
+                        <h4 className="font-medium text-sm">{type.label}</h4>
                         {meals.length > 0 ? (
                           <div className="space-y-2">
                             {meals.map((meal: any) => (
-                              <div key={meal.id} className="flex items-center gap-2">
-                                <ChefHat className="h-4 w-4" />
-                                <span>{meal.recipe.title}</span>
+                              <div key={meal.id} className="flex items-center gap-2 text-sm">
+                                <ChefHat className="h-4 w-4 shrink-0" />
+                                <span className="truncate">{meal.recipe.title}</span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-500">No meals planned</p>
+                          <p className="text-sm text-muted-foreground">No meals planned</p>
                         )}
                       </div>
                     );
@@ -228,16 +249,18 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
               <CardTitle>Recipe Library</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Browse our collection of recipes and add them to your meal plan.</p>
-              <RecipeBrowser 
-                onSelectRecipe={(recipe) => {
-                  if (!selectedDate) {
-                    toast.error("Please select a date first");
-                    return;
-                  }
-                  createMealPlanMutation.mutate(recipe);
-                }}
-              />
+              <p className="text-muted-foreground mb-4">Browse our collection of recipes and add them to your meal plan.</p>
+              <div className="w-full overflow-x-auto">
+                <RecipeBrowser 
+                  onSelectRecipe={(recipe) => {
+                    if (!selectedDate) {
+                      toast.error("Please select a date first");
+                      return;
+                    }
+                    createMealPlanMutation.mutate(recipe);
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -248,7 +271,7 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
               <CardTitle>Personalized Suggestions</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 Coming soon: Get personalized meal suggestions based on your preferences and dietary requirements.
               </p>
             </CardContent>
