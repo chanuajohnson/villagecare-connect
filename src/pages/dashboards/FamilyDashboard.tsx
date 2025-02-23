@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -12,14 +13,17 @@ import { useEffect, useState } from "react";
 const FamilyDashboard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      if (error || !currentSession) {
         toast.error("Please login to access the dashboard");
         navigate("/auth", { replace: true });
+        return;
       }
+      setSession(currentSession);
       setIsLoading(false);
     };
 
@@ -216,3 +220,4 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
+
