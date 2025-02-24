@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, BookOpen } from "lucide-react";
 
 type Recipe = {
   id: string;
@@ -48,8 +48,11 @@ const RecipeBrowser = ({ category, onSelectRecipe }: RecipeBrowserProps) => {
           onClick={() => onSelectRecipe?.(recipe)}
         >
           <CardHeader>
-            <CardTitle>{recipe.title}</CardTitle>
-            <CardDescription>{recipe.description}</CardDescription>
+            <div className="flex items-center justify-between mb-2">
+              <CardTitle className="text-lg">{recipe.title}</CardTitle>
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <CardDescription className="line-clamp-2">{recipe.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 text-sm text-gray-600">

@@ -32,3 +32,137 @@ export const getUserRole = async () => {
     
   return data?.role;
 };
+
+// Insert initial recipes if they don't exist
+export const insertInitialRecipes = async () => {
+  const recipes = [
+    {
+      title: "Green Seasoning",
+      description: "A versatile Caribbean-style herb blend perfect for marinades and seasonings",
+      category: "seasoning",
+      preparation_time: 15,
+      servings: 10,
+      ingredients: [
+        { item: "Handania (Culantro)", amount: "1 bunch" },
+        { item: "Chives", amount: "2 bunches" },
+        { item: "Celery", amount: "2 bunches" },
+        { item: "Fine Thyme", amount: "1 sprig" },
+        { item: "Water", amount: "to cover" }
+      ],
+      instructions: [
+        "Clean and wash all herbs thoroughly",
+        "Combine all ingredients in a blender",
+        "Blend until smooth",
+        "Store in a bottle in refrigerator",
+        "Use as needed for seasoning"
+      ]
+    },
+    {
+      title: "Pimento, Garlic, Ginger Mix",
+      description: "A flavorful aromatic base for Caribbean cuisine",
+      category: "seasoning",
+      preparation_time: 20,
+      servings: 12,
+      ingredients: [
+        { item: "Garlic", amount: "1 head" },
+        { item: "Onions", amount: "2 whole" },
+        { item: "Pimento", amount: "4" },
+        { item: "Ginger", amount: "1 large piece" }
+      ],
+      instructions: [
+        "Peel and clean all ingredients",
+        "Place in a food processor",
+        "Chop until fine",
+        "Store in a covered bottle in refrigerator",
+        "Use as needed"
+      ]
+    },
+    {
+      title: "Overnight Steel Cut Oats",
+      description: "Hearty and nutritious breakfast option",
+      category: "breakfast",
+      preparation_time: 20,
+      servings: 4,
+      ingredients: [
+        { item: "Steel cut oats", amount: "1/2 cup" },
+        { item: "Water", amount: "2.5 cups" }
+      ],
+      instructions: [
+        "Bring water to boil",
+        "Add steel cut oats",
+        "Cook over low heat for 15-20 minutes",
+        "Cook until desired consistency is reached",
+        "Store in sealed container in refrigerator",
+        "Serve with fresh fruit or desired toppings"
+      ]
+    },
+    {
+      title: "Sautéed Greens and Tomatoes",
+      description: "A flavorful vegetarian side dish",
+      category: "side dish",
+      preparation_time: 25,
+      servings: 2,
+      ingredients: [
+        { item: "Tomato", amount: "1, cubed" },
+        { item: "Sautéed greens", amount: "1 cup" },
+        { item: "Onion, garlic, ginger mix", amount: "1 tablespoon" },
+        { item: "Salt", amount: "1/8 teaspoon" },
+        { item: "Fennel seeds", amount: "2" },
+        { item: "Geera (Cumin)", amount: "1/4 teaspoon" },
+        { item: "Water", amount: "5 tablespoons" }
+      ],
+      instructions: [
+        "Add water and onion-garlic-ginger mix to a warm pot",
+        "Simmer until soft",
+        "Add cubed tomato, salt, fennel seeds, and geera",
+        "Cook on low heat until tender",
+        "Add more water if needed for saucy finish",
+        "Add cooked greens",
+        "Take off heat, mix well",
+        "Serve in bowl with sauce"
+      ]
+    },
+    {
+      title: "Ital Channa",
+      description: "A hearty Caribbean-style chickpea dish",
+      category: "main",
+      preparation_time: 90,
+      servings: 6,
+      ingredients: [
+        { item: "Channa (Chickpeas)", amount: "2 cups" },
+        { item: "Pimento-onion-garlic-ginger mix", amount: "2 tablespoons" },
+        { item: "Green seasoning", amount: "2 tablespoons" },
+        { item: "Salt", amount: "1/8 teaspoon" },
+        { item: "Fennel seeds", amount: "2" },
+        { item: "Geera (Cumin)", amount: "1/4 teaspoon" },
+        { item: "Turmeric powder", amount: "1 teaspoon" },
+        { item: "Black pepper", amount: "to taste" }
+      ],
+      instructions: [
+        "Soak channa overnight",
+        "Slow cook with just enough water to cover",
+        "Add initial tablespoon of pimento mix",
+        "Add green seasoning and spices",
+        "Cook until nearly done",
+        "Add additional tablespoon of pimento mix",
+        "Continue cooking until soft",
+        "Serve hot"
+      ]
+    }
+  ];
+
+  // Insert recipes one by one
+  for (const recipe of recipes) {
+    const { error } = await supabase
+      .from('recipes')
+      .insert([recipe])
+      .select();
+      
+    if (error) {
+      console.error('Error inserting recipe:', error);
+    }
+  }
+};
+
+// Call insertInitialRecipes when the app starts
+insertInitialRecipes().catch(console.error);
