@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -16,18 +17,13 @@ const FamilyDashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      if (error || !currentSession) {
-        toast.error("Please login to access the dashboard");
-        navigate("/auth", { replace: true });
-        return;
-      }
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
       setIsLoading(false);
     };
 
     checkAuth();
-  }, [navigate]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -43,7 +39,7 @@ const FamilyDashboard = () => {
       <Button 
         variant="outline" 
         className="justify-start space-x-2"
-        onClick={() => toast.info("Create care plan coming soon!")}
+        onClick={() => session ? toast.info("Create care plan coming soon!") : navigate("/auth")}
       >
         <ClipboardList className="w-4 h-4" />
         <span>New Care Plan</span>
@@ -51,7 +47,7 @@ const FamilyDashboard = () => {
       <Button 
         variant="outline" 
         className="justify-start space-x-2"
-        onClick={() => toast.info("Add team member coming soon!")}
+        onClick={() => session ? toast.info("Add team member coming soon!") : navigate("/auth")}
       >
         <Users className="w-4 h-4" />
         <span>Add Team Member</span>
@@ -59,7 +55,7 @@ const FamilyDashboard = () => {
       <Button 
         variant="outline" 
         className="justify-start space-x-2"
-        onClick={() => toast.info("Schedule appointment coming soon!")}
+        onClick={() => session ? toast.info("Schedule appointment coming soon!") : navigate("/auth")}
       >
         <Calendar className="w-4 h-4" />
         <span>Schedule Appointment</span>
@@ -67,11 +63,27 @@ const FamilyDashboard = () => {
       <Button 
         variant="outline" 
         className="justify-start space-x-2"
-        onClick={() => toast.info("View notifications coming soon!")}
+        onClick={() => session ? toast.info("View notifications coming soon!") : navigate("/auth")}
       >
         <Bell className="w-4 h-4" />
         <span>Notifications</span>
       </Button>
+    </div>
+  );
+
+  const PreviewBanner = () => (
+    <div className="bg-primary/10 p-4 rounded-lg mb-8">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold text-primary">Preview Mode</h3>
+          <p className="text-sm text-gray-600">Sign up to access your personalized dashboard and start coordinating care.</p>
+        </div>
+        <Link to="/auth">
+          <Button>
+            Sign Up Now <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 
@@ -83,16 +95,24 @@ const FamilyDashboard = () => {
             <Home className="w-5 h-5 mr-2" />
             Back to Home
           </Link>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate("/", { replace: true });
-            }}
-          >
-            Sign Out
-          </Button>
+          {session ? (
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/", { replace: true });
+              }}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button variant="outline">Sign In</Button>
+            </Link>
+          )}
         </div>
+
+        {!session && <PreviewBanner />}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -101,29 +121,33 @@ const FamilyDashboard = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Takes a Village</h1>
-          <p className="text-gray-600 mt-2">Manage your care plans and coordinate with your care team.</p>
+          <p className="text-gray-600 mt-2">
+            {session ? "Manage your care plans and coordinate with your care team." : "Preview our comprehensive care coordination platform."}
+          </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Your Registration</CardTitle>
-              <CardDescription>Set up your family profile to start coordinating care</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/auth">
-                <Button className="w-full">
-                  Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {!session && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Get Started Today</CardTitle>
+                <CardDescription>Create your account to access all features and start coordinating care</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/auth">
+                  <Button className="w-full">
+                    Create Account <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         <QuickActions />
 
@@ -142,7 +166,11 @@ const FamilyDashboard = () => {
                 <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full" variant="default">
+                <Button 
+                  className="w-full" 
+                  variant="default"
+                  onClick={() => !session && navigate("/auth")}
+                >
                   View Plans <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </CardContent>
@@ -163,7 +191,11 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full" variant="default">
+                <Button 
+                  className="w-full" 
+                  variant="default"
+                  onClick={() => !session && navigate("/auth")}
+                >
                   View Team <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </CardContent>
@@ -184,7 +216,11 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full" variant="default">
+                <Button 
+                  className="w-full" 
+                  variant="default"
+                  onClick={() => !session && navigate("/auth")}
+                >
                   View Calendar <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </CardContent>
@@ -209,7 +245,11 @@ const FamilyDashboard = () => {
                   <CardDescription>View and manage medications</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="default" onClick={() => toast.info("Medications feature coming soon!")}>
+                  <Button 
+                    className="w-full" 
+                    variant="default" 
+                    onClick={() => session ? toast.info("Medications feature coming soon!") : navigate("/auth")}
+                  >
                     View Medications <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </CardContent>
@@ -230,7 +270,11 @@ const FamilyDashboard = () => {
                   <CardDescription>Manage medication schedules</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication schedule feature coming soon!")}>
+                  <Button 
+                    className="w-full" 
+                    variant="default" 
+                    onClick={() => session ? toast.info("Medication schedule feature coming soon!") : navigate("/auth")}
+                  >
                     View Schedule <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </CardContent>
@@ -251,7 +295,11 @@ const FamilyDashboard = () => {
                   <CardDescription>Plan medication routines</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication planning feature coming soon!")}>
+                  <Button 
+                    className="w-full" 
+                    variant="default" 
+                    onClick={() => session ? toast.info("Medication planning feature coming soon!") : navigate("/auth")}
+                  >
                     View Plans <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </CardContent>
@@ -272,7 +320,11 @@ const FamilyDashboard = () => {
                   <CardDescription>Track medication administration</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication administration feature coming soon!")}>
+                  <Button 
+                    className="w-full" 
+                    variant="default" 
+                    onClick={() => session ? toast.info("Medication administration feature coming soon!") : navigate("/auth")}
+                  >
                     View Tracking <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </CardContent>
@@ -283,7 +335,23 @@ const FamilyDashboard = () => {
 
         <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          {session && <MealPlanner userId={session.user.id} />}
+          {session ? (
+            <MealPlanner userId={session.user.id} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Meal Planning</CardTitle>
+                <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/auth">
+                  <Button className="w-full">
+                    Start Planning Meals <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <motion.div
@@ -295,10 +363,23 @@ const FamilyDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest updates from your care plans and meal activities</CardDescription>
+              <CardDescription>
+                {session 
+                  ? "Latest updates from your care plans and meal activities" 
+                  : "Sign up to track your care activities and meal planning"
+                }
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">No recent activities</p>
+              {session ? (
+                <p className="text-gray-500">No recent activities</p>
+              ) : (
+                <Link to="/auth">
+                  <Button className="w-full">
+                    Sign Up to Track Activities <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -308,3 +389,4 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
+
