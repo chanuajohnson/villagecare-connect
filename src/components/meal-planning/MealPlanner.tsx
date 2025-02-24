@@ -19,6 +19,7 @@ interface MealPlannerProps {
 const MealPlanner = ({ userId }: MealPlannerProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMealType, setSelectedMealType] = useState<string>('');
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: mealPlan, isLoading } = useQuery({
@@ -116,7 +117,7 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Popover>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left">
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
@@ -127,7 +128,10 @@ const MealPlanner = ({ userId }: MealPlannerProps) => {
                     <Calendar
                       mode="single"
                       selected={selectedDate}
-                      onSelect={setSelectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date);
+                        setIsCalendarOpen(false);
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
