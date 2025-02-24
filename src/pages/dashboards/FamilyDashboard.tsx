@@ -1,6 +1,5 @@
-
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -194,6 +193,95 @@ const FamilyDashboard = () => {
         </div>
 
         <div className="mt-12">
+          <h2 className="text-2xl font-semibold mb-6">Medication Management</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <Pill className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Medications</CardTitle>
+                  <CardDescription>View and manage medications</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" variant="default" onClick={() => toast.info("Medications feature coming soon!")}>
+                    View Medications <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <Clock className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Schedule</CardTitle>
+                  <CardDescription>Manage medication schedules</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication schedule feature coming soon!")}>
+                    View Schedule <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <CalendarCheck className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Planning</CardTitle>
+                  <CardDescription>Plan medication routines</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication planning feature coming soon!")}>
+                    View Plans <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="mb-4">
+                    <Syringe className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>Administration</CardTitle>
+                  <CardDescription>Track medication administration</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" variant="default" onClick={() => toast.info("Medication administration feature coming soon!")}>
+                    View Tracking <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+
+        <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
           {session && <MealPlanner userId={session.user.id} />}
         </div>
@@ -220,4 +308,3 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
-
