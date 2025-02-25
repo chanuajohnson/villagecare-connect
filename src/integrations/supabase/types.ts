@@ -9,6 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      feature_votes: {
+        Row: {
+          created_at: string
+          feature_id: string | null
+          feedback: string | null
+          id: string
+          user_email: string
+          user_id: string | null
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id?: string | null
+          feedback?: string | null
+          id?: string
+          user_email: string
+          user_id?: string | null
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string | null
+          feedback?: string | null
+          id?: string
+          user_email?: string
+          user_id?: string | null
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_votes_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      features: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          status: Database["public"]["Enums"]["feature_status"] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          status?: Database["public"]["Enums"]["feature_status"] | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          status?: Database["public"]["Enums"]["feature_status"] | null
+          title?: string
+        }
+        Relationships: []
+      }
       meal_plan_items: {
         Row: {
           created_at: string
@@ -202,6 +264,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      feature_status:
+        | "planned"
+        | "in_development"
+        | "ready_for_demo"
+        | "launched"
       meal_type:
         | "morning_drink"
         | "breakfast"

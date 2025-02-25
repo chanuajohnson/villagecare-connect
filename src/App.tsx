@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/auth/AuthPage";
+import FeaturesPage from "./pages/features/FeaturesPage";
 import FamilyRegistration from "./pages/registration/FamilyRegistration";
 import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
 import CommunityRegistration from "./pages/registration/CommunityRegistration";
@@ -45,6 +46,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/features" element={<FeaturesPage />} />
       <Route path="/register/family" element={<FamilyRegistration />} />
       <Route path="/register/professional" element={<ProfessionalRegistration />} />
       <Route path="/register/community" element={<CommunityRegistration />} />
