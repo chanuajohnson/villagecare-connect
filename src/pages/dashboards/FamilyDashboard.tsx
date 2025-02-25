@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -48,38 +47,53 @@ const FamilyDashboard = () => {
 
   const QuickActions = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => session ? toast.info("Create care plan coming soon!") : navigate("/auth")}
-      >
-        <ClipboardList className="w-4 h-4" />
-        <span>New Care Plan</span>
-      </Button>
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => session ? toast.info("Add team member coming soon!") : navigate("/auth")}
-      >
-        <Users className="w-4 h-4" />
-        <span>Add Team Member</span>
-      </Button>
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => session ? toast.info("Schedule appointment coming soon!") : navigate("/auth")}
-      >
-        <Calendar className="w-4 h-4" />
-        <span>Schedule Appointment</span>
-      </Button>
-      <Button 
-        variant="outline" 
-        className="justify-start space-x-2"
-        onClick={() => session ? toast.info("View notifications coming soon!") : navigate("/auth")}
-      >
-        <Bell className="w-4 h-4" />
-        <span>Notifications</span>
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start space-x-2"
+          onClick={() => session ? toast.info("Create care plan coming soon!") : navigate("/auth")}
+        >
+          <ClipboardList className="w-4 h-4" />
+          <span>New Care Plan</span>
+        </Button>
+        <UpvoteFeatureButton featureTitle="New Care Plan Creation" className="w-full" />
+      </div>
+
+      <div className="space-y-2">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start space-x-2"
+          onClick={() => session ? toast.info("Add team member coming soon!") : navigate("/auth")}
+        >
+          <Users className="w-4 h-4" />
+          <span>Add Team Member</span>
+        </Button>
+        <UpvoteFeatureButton featureTitle="Team Member Addition" className="w-full" />
+      </div>
+
+      <div className="space-y-2">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start space-x-2"
+          onClick={() => session ? toast.info("Schedule appointment coming soon!") : navigate("/auth")}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Schedule Appointment</span>
+        </Button>
+        <UpvoteFeatureButton featureTitle="Appointment Scheduling" className="w-full" />
+      </div>
+
+      <div className="space-y-2">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start space-x-2"
+          onClick={() => session ? toast.info("View notifications coming soon!") : navigate("/auth")}
+        >
+          <Bell className="w-4 h-4" />
+          <span>Notifications</span>
+        </Button>
+        <UpvoteFeatureButton featureTitle="Notifications Center" className="w-full" />
+      </div>
     </div>
   );
 
@@ -177,7 +191,7 @@ const FamilyDashboard = () => {
                 <CardTitle>Care Plans</CardTitle>
                 <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button 
                   className="w-full" 
                   variant="default"
@@ -185,6 +199,7 @@ const FamilyDashboard = () => {
                 >
                   View Plans <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
+                <UpvoteFeatureButton featureTitle="Care Plans Management" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -202,7 +217,7 @@ const FamilyDashboard = () => {
                 <CardTitle>Care Team</CardTitle>
                 <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button 
                   className="w-full" 
                   variant="default"
@@ -210,6 +225,7 @@ const FamilyDashboard = () => {
                 >
                   View Team <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
+                <UpvoteFeatureButton featureTitle="Care Team Management" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -227,7 +243,7 @@ const FamilyDashboard = () => {
                 <CardTitle>Appointments</CardTitle>
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button 
                   className="w-full" 
                   variant="default"
@@ -235,6 +251,7 @@ const FamilyDashboard = () => {
                 >
                   View Calendar <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
+                <UpvoteFeatureButton featureTitle="Appointment Calendar" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -292,12 +309,13 @@ const FamilyDashboard = () => {
                 <CardTitle>Meal Planning</CardTitle>
                 <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Link to="/auth">
                   <Button className="w-full">
                     Start Planning Meals <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </Link>
+                <UpvoteFeatureButton featureTitle="Meal Planning Features" className="w-full" />
               </CardContent>
             </Card>
           )}
@@ -319,15 +337,18 @@ const FamilyDashboard = () => {
                 }
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {session ? (
                 <p className="text-gray-500">No recent activities</p>
               ) : (
-                <Link to="/auth">
-                  <Button className="w-full">
-                    Sign Up to Track Activities <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/auth">
+                    <Button className="w-full">
+                      Sign Up to Track Activities <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <UpvoteFeatureButton featureTitle="Activity Tracking" className="w-full" />
+                </>
               )}
             </CardContent>
           </Card>
