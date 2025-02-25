@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
 import { useEffect, useState } from "react";
+import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
@@ -33,7 +33,19 @@ const FamilyDashboard = () => {
     );
   }
 
-  // Quick Actions Section
+  const handleFeatureClick = (featureTitle: string) => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+    toast.info(`${featureTitle} feature coming soon!`, {
+      action: {
+        label: "Upvote",
+        onClick: () => navigate("/features")
+      }
+    });
+  };
+
   const QuickActions = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <Button 
@@ -231,105 +243,42 @@ const FamilyDashboard = () => {
         <div className="mt-12">
           <h2 className="text-2xl font-semibold mb-6">Medication Management</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <Pill className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Medications</CardTitle>
-                  <CardDescription>View and manage medications</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full" 
-                    variant="default" 
-                    onClick={() => session ? toast.info("Medications feature coming soon!") : navigate("/auth")}
-                  >
-                    View Medications <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <Clock className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Schedule</CardTitle>
-                  <CardDescription>Manage medication schedules</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full" 
-                    variant="default" 
-                    onClick={() => session ? toast.info("Medication schedule feature coming soon!") : navigate("/auth")}
-                  >
-                    View Schedule <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <CalendarCheck className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Planning</CardTitle>
-                  <CardDescription>Plan medication routines</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full" 
-                    variant="default" 
-                    onClick={() => session ? toast.info("Medication planning feature coming soon!") : navigate("/auth")}
-                  >
-                    View Plans <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="mb-4">
-                    <Syringe className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <CardTitle>Administration</CardTitle>
-                  <CardDescription>Track medication administration</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full" 
-                    variant="default" 
-                    onClick={() => session ? toast.info("Medication administration feature coming soon!") : navigate("/auth")}
-                  >
-                    View Tracking <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {[
+              { title: "Medications", icon: Pill, description: "View and manage medications" },
+              { title: "Schedule", icon: Clock, description: "Manage medication schedules" },
+              { title: "Planning", icon: CalendarCheck, description: "Plan medication routines" },
+              { title: "Administration", icon: Syringe, description: "Track medication administration" }
+            ].map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+              >
+                <Card>
+                  <CardHeader>
+                    <div className="mb-4">
+                      <item.icon className="w-8 h-8 text-primary-600" />
+                    </div>
+                    <CardTitle>{item.title}</CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button 
+                      className="w-full" 
+                      variant="default"
+                      onClick={() => handleFeatureClick(item.title)}
+                    >
+                      View {item.title} <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                    <UpvoteFeatureButton 
+                      featureTitle={`${item.title} Management`}
+                      className="w-full"
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
 
@@ -389,4 +338,3 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
-

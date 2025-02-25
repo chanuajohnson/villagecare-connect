@@ -1,13 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
+import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -133,16 +133,10 @@ const AuthPage = () => {
               >
                 Create Account
               </Button>
-              <Link to="/features">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  className="w-full mt-4"
-                >
-                  Upvote The Next Feature to be rolled out
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              <UpvoteFeatureButton 
+                featureTitle="Authentication Enhancements"
+                className="mt-4"
+              />
             </div>
           </form>
         </CardContent>
