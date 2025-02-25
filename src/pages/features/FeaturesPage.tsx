@@ -2,11 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import FeaturesGrid from "@/components/features/FeaturesGrid";
+import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 
 const FeaturesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
+        <Breadcrumb />
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Feature Roadmap
@@ -31,3 +33,4 @@ const FeaturesPage = () => {
 };
 
 export default FeaturesPage;
+
