@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from "sonner";
+import { ChevronRight } from "lucide-react";
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -132,6 +133,16 @@ const AuthPage = () => {
               >
                 Create Account
               </Button>
+              <Link to="/features">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full mt-4"
+                >
+                  Upvote The Next Feature to be rolled out
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </form>
         </CardContent>
