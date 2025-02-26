@@ -11,7 +11,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
-  const { session, handleSignOut, isLoading } = useSession();
+  const { session, handleSignOut } = useSession();
 
   const breadcrumbItems = [
     { label: "Home", link: "/" },
@@ -32,20 +32,6 @@ const FamilyDashboard = () => {
       }
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-8 rounded-lg">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-64"></div>
-            <div className="h-4 bg-gray-200 rounded w-52"></div>
-            <div className="h-4 bg-gray-200 rounded w-40"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const QuickActions = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
