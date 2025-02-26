@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -34,25 +33,24 @@ const ProfessionalDashboard = () => {
     initializeSession();
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
       
-      // Check for pending votes after login
-      if (session && localStorage.getItem('pendingVoteTitle')) {
-        console.log("Found pending vote after login");
+      if (_event === 'SIGNED_OUT') {
+        navigate('/');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleSignOut = async () => {
     try {
-      console.log("Signing out...");
-      const { error } = await supabase.auth.signOut();
+      // Don't check session before signing out
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'  // Only sign out from current tab
+      });
       
       if (error) {
         console.error('Sign out error:', error);
@@ -60,9 +58,7 @@ const ProfessionalDashboard = () => {
         return;
       }
       
-      // Clear session state
-      setSession(null);
-      navigate('/');
+      // Success handled by onAuthStateChange
       toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -282,4 +278,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-
