@@ -18,7 +18,7 @@ export const useSession = () => {
         .from('profiles')
         .select('role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user role:', error);
@@ -58,6 +58,7 @@ export const useSession = () => {
       if (error) {
         console.error('Sign out error:', error);
         toast.error('Error signing out');
+        setIsLoading(false);
         return;
       }
       
@@ -67,6 +68,7 @@ export const useSession = () => {
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred');
+      setIsLoading(false);
     }
   };
 
