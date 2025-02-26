@@ -11,7 +11,6 @@ import { toast } from "sonner";
 
 const ProfessionalDashboard = () => {
   const [session, setSession] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,9 +24,6 @@ const ProfessionalDashboard = () => {
         setSession(session);
       } catch (error) {
         console.error("Error checking session:", error);
-        toast.error("Error checking authentication status");
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -37,14 +33,10 @@ const ProfessionalDashboard = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
-      
-      if (_event === 'SIGNED_OUT') {
-        navigate('/');
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -71,31 +63,10 @@ const ProfessionalDashboard = () => {
     }
   };
 
-  const handleNavigation = (path: string) => {
-    // If the action requires authentication, redirect to auth page
-    if (!session && (path.includes('/register/') || path.includes('/profile/') || path.includes('/admin/') || path.includes('/training/'))) {
-      navigate('/auth');
-      toast.error('Please sign in to access this feature');
-      return;
-    }
-    navigate(path);
-  };
-
   const breadcrumbItems = [
     { label: "Home", link: "/" },
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,9 +146,12 @@ const ProfessionalDashboard = () => {
               <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button className="w-full" onClick={() => handleNavigation('/register/professional')}>
-                Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <Link to={session ? '/register/professional' : '/auth'}>
+                <Button className="w-full">
+                  {session ? 'Complete Registration' : 'Sign in to Register'}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
               <UpvoteFeatureButton 
                 featureTitle="Professional Registration" 
                 className="w-full" 
@@ -201,12 +175,12 @@ const ProfessionalDashboard = () => {
                 <CardDescription>Showcase your qualifications and experience</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleNavigation('/profile/professional')}
-                >
-                  Update Profile <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to={session ? '/profile/professional' : '/auth'}>
+                  <Button className="w-full">
+                    {session ? 'Update Profile' : 'Sign in to Access Profile'}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton 
                   featureTitle="Professional Profile Management" 
                   className="w-full" 
@@ -235,12 +209,12 @@ const ProfessionalDashboard = () => {
                   <li>Document Management</li>
                   <li>Administrative Support</li>
                 </ul>
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleNavigation('/admin/tools')}
-                >
-                  Access Tools <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to={session ? '/admin/tools' : '/auth'}>
+                  <Button className="w-full">
+                    {session ? 'Access Tools' : 'Sign in to Access Tools'}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton 
                   featureTitle="Administrative Tools" 
                   className="w-full" 
@@ -263,12 +237,12 @@ const ProfessionalDashboard = () => {
                 <CardDescription>Access our comprehensive library of caregiving resources</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleNavigation('/training/resources')}
-                >
-                  Learn More <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to={session ? '/training/resources' : '/auth'}>
+                  <Button className="w-full">
+                    {session ? 'Learn More' : 'Sign in to Access Training'}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton 
                   featureTitle="Training Resources Access" 
                   className="w-full" 
@@ -283,4 +257,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-
