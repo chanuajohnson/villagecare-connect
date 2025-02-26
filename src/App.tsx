@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
-import { supabase } from "@/lib/supabase";
+import { supabase, getUserRole } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/auth/AuthPage";
@@ -24,20 +24,39 @@ const AppRoutes = () => {
   const location = useLocation();
 
   useEffect(() => {
+    const handleAuthChange = async (session: any) => {
+      if (session && location.pathname === '/auth') {
+        const userRole = await getUserRole();
+        
+        // Redirect based on user role
+        switch(userRole) {
+          case 'family':
+            navigate('/dashboard/family', { replace: true });
+            break;
+          case 'professional':
+            navigate('/dashboard/professional', { replace: true });
+            break;
+          case 'community':
+            navigate('/dashboard/community', { replace: true });
+            break;
+          default:
+            // If no role is set yet, default to family (you can modify this default)
+            console.log('No role found for user, defaulting to family dashboard');
+            navigate('/dashboard/family', { replace: true });
+        }
+      }
+    };
+
     // Handle the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && location.pathname === '/auth') {
-        navigate('/dashboard/family', { replace: true });
-      }
+      handleAuthChange(session);
     });
 
     // Set up auth listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && location.pathname === '/auth') {
-        navigate('/dashboard/family', { replace: true });
-      }
+      handleAuthChange(session);
     });
 
     return () => subscription.unsubscribe();
