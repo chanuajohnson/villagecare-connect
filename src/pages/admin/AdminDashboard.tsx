@@ -1,33 +1,25 @@
 
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useSession } from "@/hooks/useSession";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
-import { toast } from "sonner";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 const AdminDashboard = () => {
-  const { session, userRole } = useSession();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!session) {
-      navigate('/auth');
-      return;
-    }
-
-    if (userRole !== 'admin') {
-      toast.error('Unauthorized access');
-      navigate('/');
-    }
-  }, [session, userRole, navigate]);
-
-  if (!session || userRole !== 'admin') {
-    return null;
-  }
+  const { session, handleSignOut } = useSession();
 
   return (
-    <div className="container mx-auto py-10">
-      <AdminUserManagement />
+    <div className="container mx-auto py-8">
+      <DashboardHeader
+        breadcrumbItems={[
+          { label: 'Admin', link: '/dashboard/admin' }
+        ]}
+        session={session}
+        onSignOut={handleSignOut}
+        loginUrl="/auth"
+      />
+      
+      <div className="mt-8">
+        <UserManagement />
+      </div>
     </div>
   );
 };
