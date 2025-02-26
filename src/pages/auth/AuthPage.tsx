@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,38 +16,14 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Fetch user role and redirect accordingly
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileData?.role) {
-          console.log('User role found:', profileData.role);
-          const dashboardPath = profileData.role === 'admin' 
-            ? '/dashboard/admin'
-            : `/dashboard/${profileData.role.toLowerCase()}`;
-          navigate(dashboardPath, { replace: true });
-        }
-      }
-    };
-    
-    checkSession();
-  }, [navigate]);
-
   const handleAuth = async (action: 'login' | 'signup') => {
     if (!email || !password) {
       toast.error('Please fill in all fields');
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
       console.log(`Attempting to ${action} with email:`, email);
 
       if (action === 'signup') {
@@ -59,16 +35,14 @@ const AuthPage = () => {
           }
         });
 
-        console.log('Signup response:', { data, error });
-
         if (error) {
+          console.error('Signup error:', error);
           toast.error(error.message);
           return;
         }
         
         if (data?.user) {
           toast.success('Registration successful! Please check your email to verify your account.');
-          // Clear the form
           setEmail('');
           setPassword('');
         } else {
@@ -80,36 +54,42 @@ const AuthPage = () => {
           password
         });
 
-        console.log('Login response:', { data, error });
-
         if (error) {
+          console.error('Login error:', error);
           toast.error(error.message);
-          setLoading(false);
           return;
         }
 
-        if (data.session) {
-          // Get the return URL from localStorage if it exists
-          const returnTo = localStorage.getItem('returnTo');
-          localStorage.removeItem('returnTo'); // Clean up
-          
+        if (data?.session) {
+          console.log('Login successful, fetching user role');
           toast.success('Login successful!');
           
-          // Get user role
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', data.session.user.id)
             .single();
-            
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            toast.error('Error loading user profile');
+            return;
+          }
+
           if (profileData?.role) {
+            const returnTo = localStorage.getItem('returnTo');
+            localStorage.removeItem('returnTo');
+            
             const dashboardPath = profileData.role === 'admin' 
               ? '/dashboard/admin'
               : `/dashboard/${profileData.role.toLowerCase()}`;
+            
+            console.log('Redirecting to:', returnTo || dashboardPath);
             navigate(returnTo || dashboardPath, { replace: true });
+          } else {
+            console.error('No role found for user');
+            toast.error('Error loading user profile');
           }
-        } else {
-          toast.error('Login failed. Please try again.');
         }
       }
     } catch (error: any) {
@@ -181,4 +161,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-

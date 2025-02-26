@@ -61,51 +61,51 @@ export const useSession = () => {
   useEffect(() => {
     let mounted = true;
     
+    // Initialize session state
     const initializeSession = async () => {
       try {
+        setIsLoading(true);
         console.log("Checking initial session...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         console.log("Initial session check result:", currentSession);
-        
+
         if (!mounted) return;
 
         if (currentSession?.user) {
-          // We have a session
+          console.log("Found existing session for user:", currentSession.user.id);
           setSession(currentSession);
           const role = await fetchUserRole(currentSession.user.id);
-          console.log("Fetched role for initial session:", role);
           setUserRole(role);
           
-          // Only redirect if we're on the auth page
+          // Only redirect if on auth page and we have a role
           if (window.location.pathname === '/auth' && role) {
+            console.log("On auth page with valid role, redirecting to dashboard");
             const dashboardPath = role === 'admin' 
               ? '/dashboard/admin' 
               : `/dashboard/${role.toLowerCase()}`;
-            console.log("Redirecting to dashboard:", dashboardPath);
             navigate(dashboardPath, { replace: true });
           }
         } else {
-          console.log("No session found");
+          console.log("No active session found");
           setSession(null);
           setUserRole(null);
           
-          // Only redirect to auth if we're not already there
+          // Only redirect to auth if not already there
           if (window.location.pathname !== '/auth') {
-            console.log("Redirecting to auth...");
+            console.log("Not on auth page, redirecting...");
             navigate('/auth', { replace: true });
           }
         }
-        
-        setIsLoading(false);
       } catch (error) {
-        console.error("Error in initializeSession:", error);
+        console.error("Session initialization error:", error);
+        setSession(null);
+        setUserRole(null);
+        if (window.location.pathname !== '/auth') {
+          navigate('/auth', { replace: true });
+        }
+      } finally {
         if (mounted) {
-          setSession(null);
-          setUserRole(null);
           setIsLoading(false);
-          if (window.location.pathname !== '/auth') {
-            navigate('/auth', { replace: true });
-          }
         }
       }
     };
@@ -120,7 +120,7 @@ export const useSession = () => {
 
       switch (event) {
         case 'SIGNED_IN':
-          console.log('User signed in');
+          console.log('User signed in, updating session state');
           setSession(currentSession);
           if (currentSession?.user) {
             const role = await fetchUserRole(currentSession.user.id);
@@ -135,14 +135,14 @@ export const useSession = () => {
           break;
           
         case 'SIGNED_OUT':
-          console.log('User signed out');
+          console.log('User signed out, clearing session state');
           setSession(null);
           setUserRole(null);
           navigate('/auth', { replace: true });
           break;
           
         case 'USER_UPDATED':
-          console.log('User updated');
+          console.log('User updated, refreshing session state');
           setSession(currentSession);
           if (currentSession?.user) {
             const role = await fetchUserRole(currentSession.user.id);
