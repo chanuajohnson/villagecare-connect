@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, Home, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
 import { useEffect, useState } from "react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
@@ -116,6 +117,7 @@ const FamilyDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
+        <Breadcrumb />
         <div className="flex items-center justify-between gap-4 mb-8">
           <Link to="/" className="inline-flex items-center text-primary-600 hover:text-primary-700">
             <Home className="w-5 h-5 mr-2" />
