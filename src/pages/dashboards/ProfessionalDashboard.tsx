@@ -36,6 +36,10 @@ const ProfessionalDashboard = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (!session) {
+        // Redirect to auth page when session ends
+        navigate('/auth');
+      }
     });
 
     const fetchFeatureIds = async () => {
@@ -62,19 +66,28 @@ const ProfessionalDashboard = () => {
     fetchFeatureIds();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleSignOut = async () => {
     try {
+      // First check if we have a session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // If no session, just redirect to auth page
+        navigate('/auth');
+        return;
+      }
+
+      // If we have a session, try to sign out
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
-        toast.error(error.message || 'Error signing out');
+        toast.error('Error signing out. Please try again.');
       } else {
-        // Clear any local state if needed
+        // Clear session state
         setSession(null);
-        // Navigate immediately after successful sign out
-        window.location.href = '/auth';
+        // The onAuthStateChange listener will handle the redirect
       }
     } catch (error) {
       console.error('Sign out error:', error);
