@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
+import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,16 @@ import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface FeatureIds {
   [key: string]: string | null;
 }
 
 const ProfessionalDashboard = () => {
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
   const [featureIds, setFeatureIds] = useState<FeatureIds>({
     registration: null,
     profileManagement: null,
@@ -22,6 +26,18 @@ const ProfessionalDashboard = () => {
   });
 
   useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
     const fetchFeatureIds = async () => {
       const { data: features, error } = await supabase
         .from('feature_lookup')
@@ -44,12 +60,40 @@ const ProfessionalDashboard = () => {
     };
 
     fetchFeatureIds();
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Error signing out');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
-        <Breadcrumb />
+        <div className="flex justify-between items-center mb-8">
+          <Breadcrumb />
+          <div className="flex gap-4">
+            {!session ? (
+              <Link to="/auth">
+                <Button variant="outline">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
+          </div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -179,3 +223,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+
