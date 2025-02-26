@@ -110,20 +110,21 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
   };
 
   const handleUpvote = async () => {
+    if (!session) {
+      // Store current location before redirecting
+      const currentPath = window.location.pathname;
+      localStorage.setItem('returnTo', currentPath);
+      
+      // Redirect to auth page
+      navigate('/auth');
+      toast.info('Please sign in to vote for this feature');
+      return;
+    }
+
     const featureId = await getOrCreateFeatureId(featureTitle);
     
     if (!featureId) {
       toast.error('Unable to process vote at this time.');
-      return;
-    }
-
-    if (!session) {
-      // Store the feature info we want to vote for after login
-      localStorage.setItem('pendingVoteFeatureId', featureId);
-      localStorage.setItem('pendingVoteTitle', featureTitle);
-      const returnUrl = encodeURIComponent(window.location.pathname);
-      navigate(`/auth?returnTo=${returnUrl}`);
-      toast.info('Please sign in to vote for this feature');
       return;
     }
 
@@ -182,3 +183,4 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
     </Button>
   );
 };
+
