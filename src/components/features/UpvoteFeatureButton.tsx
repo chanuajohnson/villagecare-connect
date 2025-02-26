@@ -171,12 +171,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
 
         if (error) throw error;
         toast.success(`Thank you for voting for "${featureTitle}"!`);
-        
-        // After successful vote post-login, redirect to features page
-        if (isPostLogin) {
-          console.log('Post-login vote successful, redirecting to features page');
-          navigate('/features');
-        }
       }
     } catch (error: any) {
       console.error('Error handling vote:', error);
@@ -199,3 +193,4 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     </Button>
   );
 };
+
