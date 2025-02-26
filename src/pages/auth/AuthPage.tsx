@@ -84,12 +84,30 @@ const AuthPage = () => {
 
         if (error) {
           toast.error(error.message);
+          setLoading(false);
           return;
         }
 
-        if (data?.session) {
+        if (data.session) {
+          // Get the return URL from localStorage if it exists
+          const returnTo = localStorage.getItem('returnTo');
+          localStorage.removeItem('returnTo'); // Clean up
+          
           toast.success('Login successful!');
-          // The navigation will be handled by onAuthStateChange
+          
+          // Get user role
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profileData?.role) {
+            const dashboardPath = profileData.role === 'admin' 
+              ? '/dashboard/admin'
+              : `/dashboard/${profileData.role.toLowerCase()}`;
+            navigate(returnTo || dashboardPath, { replace: true });
+          }
         } else {
           toast.error('Login failed. Please try again.');
         }
@@ -163,3 +181,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+

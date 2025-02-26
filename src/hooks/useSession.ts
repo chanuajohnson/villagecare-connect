@@ -69,26 +69,31 @@ export const useSession = () => {
         
         if (!mounted) return;
 
-        if (!currentSession?.user) {
-          console.log("No session found, redirecting to auth...");
+        if (currentSession?.user) {
+          // We have a session
+          setSession(currentSession);
+          const role = await fetchUserRole(currentSession.user.id);
+          console.log("Fetched role for initial session:", role);
+          setUserRole(role);
+          
+          // Only redirect if we're on the auth page
+          if (window.location.pathname === '/auth' && role) {
+            const dashboardPath = role === 'admin' 
+              ? '/dashboard/admin' 
+              : `/dashboard/${role.toLowerCase()}`;
+            console.log("Redirecting to dashboard:", dashboardPath);
+            navigate(dashboardPath, { replace: true });
+          }
+        } else {
+          console.log("No session found");
           setSession(null);
-          setIsLoading(false);
-          navigate('/auth', { replace: true });
-          return;
-        }
-
-        // We have a session
-        setSession(currentSession);
-        const role = await fetchUserRole(currentSession.user.id);
-        console.log("Fetched role for initial session:", role);
-        setUserRole(role);
-        
-        if (role) {
-          const dashboardPath = role === 'admin' 
-            ? '/dashboard/admin' 
-            : `/dashboard/${role.toLowerCase()}`;
-          console.log("Redirecting to dashboard:", dashboardPath);
-          navigate(dashboardPath, { replace: true });
+          setUserRole(null);
+          
+          // Only redirect to auth if we're not already there
+          if (window.location.pathname !== '/auth') {
+            console.log("Redirecting to auth...");
+            navigate('/auth', { replace: true });
+          }
         }
         
         setIsLoading(false);
@@ -96,8 +101,11 @@ export const useSession = () => {
         console.error("Error in initializeSession:", error);
         if (mounted) {
           setSession(null);
+          setUserRole(null);
           setIsLoading(false);
-          navigate('/auth', { replace: true });
+          if (window.location.pathname !== '/auth') {
+            navigate('/auth', { replace: true });
+          }
         }
       }
     };
