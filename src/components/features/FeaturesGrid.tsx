@@ -21,6 +21,7 @@ interface AdditionalFeature {
   title: string;
   description: string;
   icon: React.ComponentType<any>;
+  status?: 'planned' | 'in_development' | 'ready_for_demo' | 'launched';
   noList?: boolean;
   benefits?: string[];
 }
@@ -83,66 +84,77 @@ const FeaturesGrid = () => {
       title: "Professional Dashboard (After Registration - Caregiver)",
       description: "A dedicated dashboard for professional caregivers with job opportunities, care management tools, certifications, and career growth resources.",
       icon: Briefcase,
+      status: 'planned',
       noList: true
     },
     {
       title: "Professional Dashboard (After Registration - Agency)",
       description: "A comprehensive agency management hub for overseeing caregivers, handling client relationships, and streamlining operations.",
       icon: Building2,
+      status: 'planned',
       noList: true
     },
     {
       title: "Update Profile (Caregiver)",
       description: "A profile management tool for professional caregivers to update credentials, experience, and skills.",
       icon: UserCog,
+      status: 'planned',
       noList: true
     },
     {
       title: "Update Profile (Agency)",
       description: "A dynamic agency profile management tool for services, caregiver availability, and operational details.",
       icon: UserCog,
+      status: 'planned',
       noList: true
     },
     {
       title: "Access Professional Tools",
       description: "A resource hub providing administrative tools, job letter requests, and workflow management for caregivers and agencies.",
       icon: ClipboardCheck,
+      status: 'planned',
       noList: true
     },
     {
       title: "Learn More – Caregiver Learning Hub",
       description: "A dedicated learning space with courses, certifications, and best practices for career advancement.",
       icon: GraduationCap,
+      status: 'planned',
       noList: true
     },
     {
       title: "Learn More – Agency Training & Development Hub",
       description: "A training center for agencies offering certifications, compliance training, and workforce development.",
       icon: GraduationCap,
+      status: 'planned',
       noList: true
     },
     {
       title: "Community Dashboard (After Registration)",
       description: "A centralized hub for community engagement, support, and caregiving advocacy.",
       icon: Users,
+      status: 'planned',
       noList: true
     },
     {
       title: "Find Care Circles",
       description: "A community-driven support system for knowledge sharing and mutual support.",
       icon: HeartHandshake,
+      status: 'planned',
       noList: true
     },
     {
       title: "View Events",
       description: "A calendar system for community meetups, workshops, and advocacy events.",
       icon: Calendar,
+      status: 'planned',
       noList: true
     },
     {
       title: "Get Involved",
       description: "A volunteer portal for supporting families and caregivers through mentorship and assistance.",
       icon: HeartHandshake,
+      status: 'planned',
       noList: true
     }
   ];
@@ -191,10 +203,17 @@ const FeaturesGrid = () => {
       {additionalFeatures.map((feature, index) => (
         <Card key={index} className="w-full">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <feature.icon className="h-5 w-5" />
-              {feature.title}
-            </CardTitle>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <feature.icon className="h-5 w-5" />
+                  {feature.title}
+                </CardTitle>
+                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${statusColors[feature.status || 'planned']}`}>
+                  {formatStatus(feature.status || 'planned')}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
@@ -226,6 +245,9 @@ const FeaturesGrid = () => {
             <Rocket className="h-5 w-5" />
             Insider Access & Tech Innovators Hub
           </CardTitle>
+          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${statusColors['in_development']}`}>
+            {formatStatus('in_development')}
+          </span>
           <CardDescription>
             A dedicated space for tech enthusiasts, AI builders, and behind-the-scenes explorers who want to follow the platform's development journey, feature rollouts, and upcoming innovations.
           </CardDescription>
