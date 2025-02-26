@@ -16,7 +16,17 @@ const ProfessionalDashboard = () => {
   const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/professional')}`;
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-8 rounded-lg">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-64"></div>
+            <div className="h-4 bg-gray-200 rounded w-52"></div>
+            <div className="h-4 bg-gray-200 rounded w-40"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
