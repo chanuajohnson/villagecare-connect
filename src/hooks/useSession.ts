@@ -87,7 +87,6 @@ export const useSession = () => {
         if (currentSession?.user) {
           setSession(currentSession);
           const role = await fetchUserRole(currentSession.user.id);
-          
           if (role) {
             setUserRole(role);
             if (window.location.pathname === '/auth') {
@@ -96,7 +95,9 @@ export const useSession = () => {
           }
         } else {
           console.log('No active session found');
-          clearSession();
+          if (window.location.pathname !== '/auth') {
+            clearSession();
+          }
         }
       } catch (error) {
         console.error('Session initialization error:', error);
@@ -118,14 +119,12 @@ export const useSession = () => {
 
       switch (event) {
         case 'SIGNED_IN':
-          if (currentSession) {
+          if (currentSession?.user) {
             setSession(currentSession);
-            if (currentSession.user) {
-              const role = await fetchUserRole(currentSession.user.id);
-              if (role) {
-                setUserRole(role);
-                redirectToDashboard(role);
-              }
+            const role = await fetchUserRole(currentSession.user.id);
+            if (role) {
+              setUserRole(role);
+              redirectToDashboard(role);
             }
           }
           break;
@@ -136,12 +135,10 @@ export const useSession = () => {
           break;
           
         case 'USER_UPDATED':
-          if (currentSession) {
+          if (currentSession?.user) {
             setSession(currentSession);
-            if (currentSession.user) {
-              const role = await fetchUserRole(currentSession.user.id);
-              setUserRole(role);
-            }
+            const role = await fetchUserRole(currentSession.user.id);
+            setUserRole(role);
           }
           break;
       }

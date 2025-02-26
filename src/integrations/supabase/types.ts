@@ -152,15 +152,7 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "meal_plans_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       prepped_meal_orders: {
         Row: {
@@ -198,36 +190,32 @@ export type Database = {
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "prepped_meal_orders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profiles: {
         Row: {
-          created_at: string
-          first_name: string | null
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
           id: string
-          last_name: string | null
           role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          first_name?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
           id: string
-          last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          first_name?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
           id?: string
-          last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
         }
         Relationships: []
       }
