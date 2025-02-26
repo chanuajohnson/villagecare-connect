@@ -41,8 +41,15 @@ export const useSession = () => {
     navigate(dashboardPath, { replace: true });
   };
 
+  const clearSession = () => {
+    console.log('Clearing session state');
+    setSession(null);
+    setUserRole(null);
+    navigate('/auth', { replace: true });
+  };
+
   const handleSignOut = async () => {
-    console.log('Signing out user...');
+    console.log('Starting sign out process...');
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
@@ -53,10 +60,8 @@ export const useSession = () => {
         return;
       }
       
-      console.log('Sign out successful');
-      setSession(null);
-      setUserRole(null);
-      navigate('/auth', { replace: true });
+      console.log('Sign out successful, clearing session');
+      clearSession();
       toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -91,16 +96,11 @@ export const useSession = () => {
           }
         } else {
           console.log('No active session found');
-          setSession(null);
-          setUserRole(null);
-          if (window.location.pathname !== '/auth') {
-            navigate('/auth', { replace: true });
-          }
+          clearSession();
         }
       } catch (error) {
         console.error('Session initialization error:', error);
-        setSession(null);
-        setUserRole(null);
+        clearSession();
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -118,27 +118,30 @@ export const useSession = () => {
 
       switch (event) {
         case 'SIGNED_IN':
-          setSession(currentSession);
-          if (currentSession?.user) {
-            const role = await fetchUserRole(currentSession.user.id);
-            if (role) {
-              setUserRole(role);
-              redirectToDashboard(role);
+          if (currentSession) {
+            setSession(currentSession);
+            if (currentSession.user) {
+              const role = await fetchUserRole(currentSession.user.id);
+              if (role) {
+                setUserRole(role);
+                redirectToDashboard(role);
+              }
             }
           }
           break;
           
         case 'SIGNED_OUT':
-          setSession(null);
-          setUserRole(null);
-          navigate('/auth', { replace: true });
+          console.log('Handling SIGNED_OUT event');
+          clearSession();
           break;
           
         case 'USER_UPDATED':
-          setSession(currentSession);
-          if (currentSession?.user) {
-            const role = await fetchUserRole(currentSession.user.id);
-            setUserRole(role);
+          if (currentSession) {
+            setSession(currentSession);
+            if (currentSession.user) {
+              const role = await fetchUserRole(currentSession.user.id);
+              setUserRole(role);
+            }
           }
           break;
       }
