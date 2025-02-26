@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,14 +18,24 @@ const AuthPage = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('Current session:', { session, error });
-      if (session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('User is already logged in, redirecting...');
         navigate('/dashboard/family');
       }
     };
     
     checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session);
+      if (session?.user) {
+        navigate('/dashboard/family');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleAuth = async (action: 'login' | 'signup') => {
@@ -41,6 +52,9 @@ const AuthPage = () => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`
+          }
         });
 
         console.log('Signup response:', { data, error });
@@ -73,7 +87,7 @@ const AuthPage = () => {
 
         if (data?.session) {
           toast.success('Login successful!');
-          navigate('/dashboard/family');
+          // The navigation will be handled by onAuthStateChange
         } else {
           toast.error('Login failed. Please try again.');
         }
