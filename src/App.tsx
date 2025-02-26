@@ -14,6 +14,7 @@ import CommunityRegistration from "./pages/registration/CommunityRegistration";
 import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
 import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
 import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => {
             <Route path="/dashboard/family" element={<FamilyDashboard />} />
             <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
             <Route path="/dashboard/community" element={<CommunityDashboard />} />
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
