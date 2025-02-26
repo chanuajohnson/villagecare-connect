@@ -1,7 +1,7 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import FeatureCard from './FeatureCard';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Rocket, Users, ShieldCheck, Code, Brain, Briefcase, Building2, UserCog, ClipboardCheck, GraduationCap, Calendar, HeartHandshake } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ const FeaturesGrid = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   const fetchFeatures = async () => {
     try {
@@ -148,17 +147,45 @@ const FeaturesGrid = () => {
     }
   ];
 
+  const statusColors = {
+    planned: 'bg-gray-100 text-gray-800',
+    in_development: 'bg-blue-100 text-blue-800',
+    ready_for_demo: 'bg-green-100 text-green-800',
+    launched: 'bg-purple-100 text-purple-800'
+  };
+
+  const formatStatus = (status: string) => {
+    return status.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {features.map((feature) => (
-        <FeatureCard
-          key={feature.id}
-          feature={feature}
-          isAuthenticated={!!session}
-          userEmail={session?.user?.email}
-          userType="family"
-          onVote={fetchFeatures}
-        />
+        <Card key={feature.id} className="w-full">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-lg">{feature.title}</CardTitle>
+                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${statusColors[feature.status]}`}>
+                  {formatStatus(feature.status)}
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              {feature.description}
+            </CardDescription>
+            <div className="mt-4">
+              <UpvoteFeatureButton
+                featureTitle={feature.title}
+                className="w-full"
+              />
+            </div>
+          </CardContent>
+        </Card>
       ))}
       
       {additionalFeatures.map((feature, index) => (
