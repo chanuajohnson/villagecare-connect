@@ -300,6 +300,12 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_user: {
+        Args: {
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       get_feature_vote_count: {
         Args: {
           feature_id: string
@@ -327,7 +333,7 @@ export type Database = {
         | "lunch"
         | "afternoon_snack"
         | "dinner"
-      user_role: "family" | "professional" | "community"
+      user_role: "family" | "professional" | "community" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
