@@ -11,31 +11,16 @@ import { toast } from "sonner";
 
 const ProfessionalDashboard = () => {
   const [session, setSession] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("Professional Dashboard mounting");
     
-    async function checkSession() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("Got session:", session);
-        setSession(session);
-        
-        if (!session) {
-          console.log("No session, redirecting to /auth");
-          navigate('/auth');
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        toast.error("Error checking authentication status");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    checkSession();
+    // Only check session, don't redirect if not logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Got session:", session);
+      setSession(session);
+    });
 
     // Listen for auth changes
     const {
@@ -43,10 +28,6 @@ const ProfessionalDashboard = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
-      if (!session) {
-        console.log("Auth state changed: no session, redirecting to /auth");
-        navigate('/auth');
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -74,6 +55,12 @@ const ProfessionalDashboard = () => {
   };
 
   const handleNavigation = (path: string) => {
+    // If the action requires authentication, redirect to auth page
+    if (!session && (path.includes('/register/') || path.includes('/profile/') || path.includes('/admin/') || path.includes('/training/'))) {
+      navigate('/auth');
+      toast.error('Please sign in to access this feature');
+      return;
+    }
     navigate(path);
   };
 
@@ -81,21 +68,6 @@ const ProfessionalDashboard = () => {
     { label: "Home", link: "/" },
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
