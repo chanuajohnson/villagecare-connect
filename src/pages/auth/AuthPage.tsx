@@ -24,6 +24,8 @@ const AuthPage = () => {
 
     setLoading(true);
     try {
+      console.log(`Attempting ${action}...`);
+      
       if (action === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -36,6 +38,7 @@ const AuthPage = () => {
         if (error) throw error;
         
         if (data?.user) {
+          console.log('Signup successful:', data.user);
           toast.success('Registration successful! Please check your email to verify your account.');
           setEmail('');
           setPassword('');
@@ -51,6 +54,7 @@ const AuthPage = () => {
         if (error) throw error;
 
         if (data?.user) {
+          console.log('Login successful:', data.user);
           toast.success('Login successful!');
           
           const { data: profileData, error: profileError } = await supabase
@@ -62,6 +66,7 @@ const AuthPage = () => {
           if (profileError) throw profileError;
 
           if (profileData?.role) {
+            console.log('User role:', profileData.role);
             const dashboardPath = profileData.role === 'admin' 
               ? '/dashboard/admin'
               : `/dashboard/${profileData.role.toLowerCase()}`;

@@ -3,16 +3,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { AuthChangeEvent } from "@supabase/supabase-js";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export const useSession = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log('Fetching user role for userId:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -24,6 +25,7 @@ export const useSession = () => {
         return null;
       }
 
+      console.log('Fetched user role:', data?.role);
       return data?.role;
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
@@ -32,6 +34,7 @@ export const useSession = () => {
   };
 
   const redirectToDashboard = (role: string) => {
+    console.log('Redirecting to dashboard for role:', role);
     const dashboardPath = role === 'admin' 
       ? '/dashboard/admin' 
       : `/dashboard/${role.toLowerCase()}`;
@@ -39,6 +42,7 @@ export const useSession = () => {
   };
 
   const handleSignOut = async () => {
+    console.log('Signing out user...');
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
@@ -49,6 +53,7 @@ export const useSession = () => {
         return;
       }
       
+      console.log('Sign out successful');
       setSession(null);
       setUserRole(null);
       navigate('/auth', { replace: true });
@@ -66,10 +71,13 @@ export const useSession = () => {
 
     const initializeSession = async () => {
       try {
+        console.log('Initializing session...');
         setIsLoading(true);
         const { data: { session: currentSession } } = await supabase.auth.getSession();
 
         if (!mounted) return;
+
+        console.log('Current session:', currentSession);
 
         if (currentSession?.user) {
           setSession(currentSession);
@@ -82,6 +90,7 @@ export const useSession = () => {
             }
           }
         } else {
+          console.log('No active session found');
           setSession(null);
           setUserRole(null);
           if (window.location.pathname !== '/auth') {
@@ -103,6 +112,9 @@ export const useSession = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, currentSession) => {
       if (!mounted) return;
+
+      console.log('Auth state changed:', event);
+      console.log('Current session:', currentSession);
 
       switch (event) {
         case 'SIGNED_IN':
