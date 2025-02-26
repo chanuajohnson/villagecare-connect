@@ -13,7 +13,7 @@ export const useSession = () => {
     const initializeSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Got session:", currentSession);
+        console.log("Got initial session:", currentSession);
         setSession(currentSession);
       } catch (error) {
         console.error("Error checking session:", error);
@@ -25,19 +25,24 @@ export const useSession = () => {
 
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      console.log("Auth state changed:", _event, currentSession);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log("Auth state changed - Event:", event);
+      console.log("Auth state changed - Session:", currentSession);
       
-      if (_event === 'SIGNED_OUT') {
-        console.log('User signed out');
-        setSession(null);
-        toast.success('Successfully signed out');
-      } else if (_event === 'SIGNED_IN') {
-        console.log('User signed in');
-        setSession(currentSession);
-        toast.success('Successfully signed in');
-      } else {
-        setSession(currentSession);
+      switch (event) {
+        case 'SIGNED_OUT':
+          console.log('Setting session to null due to sign out');
+          setSession(null);
+          toast.success('Successfully signed out');
+          break;
+        case 'SIGNED_IN':
+          console.log('Setting session due to sign in');
+          setSession(currentSession);
+          toast.success('Successfully signed in');
+          break;
+        default:
+          console.log('Updating session state for event:', event);
+          setSession(currentSession);
       }
       setIsLoading(false);
     });
@@ -50,10 +55,15 @@ export const useSession = () => {
 
   const handleSignOut = async () => {
     try {
-      console.log('Attempting to sign out...');
-      await supabase.auth.signOut();
+      console.log('Initiating sign out process...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Error signing out. Please try again.');
+        return;
+      }
       console.log('Sign out API call successful');
-      // The onAuthStateChange listener will handle updating the state
+      // The onAuthStateChange listener will handle the state update and toast
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
