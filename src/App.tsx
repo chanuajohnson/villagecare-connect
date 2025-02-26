@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from 'react';
 import { supabase } from "@/lib/supabase";
 import Index from "./pages/Index";
@@ -21,11 +21,12 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Handle the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && location.pathname === '/auth') {
         navigate('/dashboard/family', { replace: true });
       }
     });
@@ -34,13 +35,13 @@ const AppRoutes = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+      if (session && location.pathname === '/auth') {
         navigate('/dashboard/family', { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return (
     <Routes>
