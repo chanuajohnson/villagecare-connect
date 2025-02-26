@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight } from "lucide-react";
@@ -66,12 +65,11 @@ const Index = () => {
   const navigate = useNavigate();
   const comparisonRef = useRef<HTMLDivElement>(null);
 
-  const handleRoleSelect = async (roleId: string) => {
+  const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
     const role = roles.find((r) => r.id === roleId);
     if (role) {
-      // Use navigate instead of directly accessing the path to ensure proper routing
-      navigate(role.path);
+      window.location.href = role.path;
       toast.success(`Welcome to the ${role.title} dashboard!`);
     }
   };
