@@ -1,103 +1,122 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
-interface DashboardCardGridProps {
-  session?: any; // Made optional
-}
-
-export const DashboardCardGrid = ({ session }: DashboardCardGridProps) => {
+export const DashboardCardGrid = () => {
   return (
-    <div className="grid md:grid-cols-2 gap-8">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Profile Management Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5" />
+              Profile Management
+            </CardTitle>
+            <CardDescription>
+              Update your profile information and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Personal information and settings</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Professional qualifications</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Contact preferences</span>
+              </li>
+            </ul>
+            <Button className="w-full" asChild>
+              <Link to="/profile">Manage Profile</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Resources Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <Card>
+        <Card className="h-full">
           <CardHeader>
-            <div className="mb-4">
-              <UserCog className="w-8 h-8 text-primary-600" />
-            </div>
-            <CardTitle>Complete Your Profile</CardTitle>
-            <CardDescription>Showcase your qualifications and experience</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Book className="h-5 w-5" />
+              Resources
+            </CardTitle>
+            <CardDescription>
+              Access training materials and documentation
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Link to={session ? '/profile/professional' : '/auth'}>
-              <Button className="w-full">
-                {session ? 'Update Profile' : 'Sign in to Access Profile'}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            <UpvoteFeatureButton 
-              featureTitle="Professional Profile Management" 
-              className="w-full" 
-            />
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Training modules</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Best practices guides</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Certification paths</span>
+              </li>
+            </ul>
+            <Button className="w-full" asChild>
+              <Link to="/resources">View Resources</Link>
+            </Button>
           </CardContent>
         </Card>
       </motion.div>
 
+      {/* Documentation Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <Card>
+        <Card className="h-full">
           <CardHeader>
-            <div className="mb-4">
-              <FileText className="w-8 h-8 text-primary-600" />
-            </div>
-            <CardTitle>Admin Assistant</CardTitle>
-            <CardDescription>Streamline your administrative tasks</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Documentation
+            </CardTitle>
+            <CardDescription>Review and manage your documents</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ul className="space-y-2 mb-4 text-sm text-gray-600">
-              <li>Get Job Letters</li>
-              <li>NIS Registration Assistance</li>
-              <li>Document Management</li>
-              <li>Administrative Support</li>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Forms and templates</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Policies and procedures</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span>Reports and analytics</span>
+              </li>
             </ul>
-            <Link to={session ? '/admin/tools' : '/auth'}>
-              <Button className="w-full">
-                {session ? 'Access Tools' : 'Sign in to Access Tools'}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            <UpvoteFeatureButton 
-              featureTitle="Administrative Tools" 
-              className="w-full" 
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader>
-            <div className="mb-4">
-              <Book className="w-8 h-8 text-primary-600" />
-            </div>
-            <CardTitle>Training Resources</CardTitle>
-            <CardDescription>Access our comprehensive library of caregiving resources</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Link to={session ? '/training/resources' : '/auth'}>
-              <Button className="w-full">
-                {session ? 'Learn More' : 'Sign in to Access Training'}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            <UpvoteFeatureButton 
-              featureTitle="Training Resources Access" 
-              className="w-full" 
-            />
+            <Button className="w-full" asChild>
+              <Link to="/documentation">View Documentation</Link>
+            </Button>
           </CardContent>
         </Card>
       </motion.div>

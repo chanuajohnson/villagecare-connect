@@ -5,18 +5,17 @@ import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
 
 const ProfessionalDashboard = () => {
   const breadcrumbItems = [
-    { label: "Home", link: "/" },
-    { label: "Professional Dashboard", link: "/dashboard/professional" }
+    {
+      label: "Professional",
+      href: "/dashboard/professional",
+    },
   ];
-
-  const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/professional')}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-12 mx-auto">
-        <DashboardHeader 
+      <div className="container px-4 py-8">
+        <DashboardHeader
           breadcrumbItems={breadcrumbItems}
-          loginUrl={loginUrl}
         />
 
         <motion.div
@@ -29,7 +28,7 @@ const ProfessionalDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your caregiving services and professional development.</p>
         </motion.div>
 
-        <DashboardCardGrid session={undefined} />
+        <DashboardCardGrid />
       </div>
     </div>
   );

@@ -1,66 +1,52 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogIn } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
-  link: string;
+  href: string;
 }
 
 interface DashboardHeaderProps {
   breadcrumbItems: BreadcrumbItem[];
-  loginUrl: string;
-  session?: any; // Made optional
-  onSignOut?: () => void; // Made optional
 }
 
-export const DashboardHeader = ({ breadcrumbItems, loginUrl }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
       <nav className="flex" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
+          <li className="inline-flex items-center">
+            <Link
+              to="/"
+              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary"
+            >
+              Home
+            </Link>
+          </li>
           {breadcrumbItems.map((item, index) => (
-            <li key={index} className="inline-flex items-center">
-              {index > 0 && (
-                <svg
-                  className="w-3 h-3 text-gray-400 mx-1"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 6 10"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="m1 9 4-4-4-4"
-                  />
-                </svg>
-              )}
-              <Link
-                to={item.link}
-                className={`inline-flex items-center text-sm font-medium ${
-                  index === breadcrumbItems.length - 1
-                    ? 'text-primary-600'
-                    : 'text-gray-700 hover:text-primary-600'
-                }`}
-              >
-                {item.label}
-              </Link>
+            <li key={index}>
+              <div className="flex items-center">
+                <ArrowRight className="w-4 h-4 text-gray-400 mx-1" />
+                {index === breadcrumbItems.length - 1 ? (
+                  <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
+                    {item.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={item.href}
+                    className="ml-1 text-sm font-medium text-gray-700 hover:text-primary md:ml-2"
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
             </li>
           ))}
         </ol>
       </nav>
-      <div className="flex gap-4">
-        <Link to={loginUrl}>
-          <Button variant="outline">
-            <LogIn className="w-4 h-4 mr-2" />
-            Sign In
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 };
+
