@@ -213,21 +213,21 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
           created_at?: string
           first_name?: string | null
           id: string
           last_name?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
           created_at?: string
           first_name?: string | null
           id?: string
           last_name?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
       }
@@ -327,6 +327,7 @@ export type Database = {
         | "lunch"
         | "afternoon_snack"
         | "dinner"
+      user_role: "family" | "professional" | "community"
     }
     CompositeTypes: {
       [_ in never]: never
