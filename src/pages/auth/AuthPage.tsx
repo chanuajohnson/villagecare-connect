@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { LogIn } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
@@ -15,7 +15,6 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -29,8 +28,11 @@ const AuthPage = () => {
           .single();
 
         if (profileData?.role) {
-          console.log('User role found, redirecting to:', profileData.role);
-          navigate(`/dashboard/${profileData.role.toLowerCase()}`, { replace: true });
+          console.log('User role found:', profileData.role);
+          const dashboardPath = profileData.role === 'admin' 
+            ? '/dashboard/admin'
+            : `/dashboard/${profileData.role.toLowerCase()}`;
+          navigate(dashboardPath, { replace: true });
         }
       }
     };
@@ -87,7 +89,7 @@ const AuthPage = () => {
 
         if (data?.session) {
           toast.success('Login successful!');
-          // Navigation will be handled by onAuthStateChange
+          // The navigation will be handled by onAuthStateChange
         } else {
           toast.error('Login failed. Please try again.');
         }

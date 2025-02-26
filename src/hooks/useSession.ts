@@ -13,6 +13,7 @@ export const useSession = () => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log('Fetching user role for ID:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -35,12 +36,18 @@ export const useSession = () => {
   const handleRoleBasedRedirect = async (userId: string) => {
     try {
       const role = await fetchUserRole(userId);
+      console.log('Handling redirect for role:', role);
       setUserRole(role);
       
       if (role) {
-        const dashboardPath = `/dashboard/${role.toLowerCase()}`;
+        let dashboardPath: string;
+        if (role === 'admin') {
+          dashboardPath = '/dashboard/admin';
+        } else {
+          dashboardPath = `/dashboard/${role.toLowerCase()}`;
+        }
         console.log('Redirecting to dashboard:', dashboardPath);
-        navigate(dashboardPath);
+        navigate(dashboardPath, { replace: true });
       } else {
         console.error('No role found for user');
         toast.error('Error determining user role. Please try again.');
