@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight } from "lucide-react";
@@ -69,7 +70,8 @@ const Index = () => {
     setSelectedRole(roleId);
     const role = roles.find((r) => r.id === roleId);
     if (role) {
-      navigate(role.path);
+      // Force navigation to the dashboard route
+      window.location.href = role.path;
       toast.success(`Welcome to the ${role.title} dashboard!`);
     }
   };
@@ -206,3 +208,4 @@ const Index = () => {
 };
 
 export default Index;
+
