@@ -4,7 +4,6 @@ import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -57,11 +56,50 @@ const ProfessionalDashboard = () => {
     navigate(path);
   };
 
+  const breadcrumbItems = [
+    { label: "Home", link: "/" },
+    { label: "Professional Dashboard", link: "/dashboard/professional" }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <Breadcrumb />
+          <nav className="flex" aria-label="Breadcrumb">
+            <ol className="inline-flex items-center space-x-1 md:space-x-3">
+              {breadcrumbItems.map((item, index) => (
+                <li key={index} className="inline-flex items-center">
+                  {index > 0 && (
+                    <svg
+                      className="w-3 h-3 text-gray-400 mx-1"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 6 10"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m1 9 4-4-4-4"
+                      />
+                    </svg>
+                  )}
+                  <Link
+                    to={item.link}
+                    className={`inline-flex items-center text-sm font-medium ${
+                      index === breadcrumbItems.length - 1
+                        ? 'text-primary-600'
+                        : 'text-gray-700 hover:text-primary-600'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </nav>
           <div className="flex gap-4">
             {!session ? (
               <Link to="/auth">
@@ -209,4 +247,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-
