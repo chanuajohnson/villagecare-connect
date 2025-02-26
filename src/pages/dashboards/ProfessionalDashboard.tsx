@@ -19,24 +19,30 @@ const ProfessionalDashboard = () => {
     // Initialize session state
     const initializeSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("Got session:", session);
-        setSession(session);
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Got session:", currentSession);
+        setSession(currentSession);
       } catch (error) {
         console.error("Error checking session:", error);
+        setSession(null);
       }
     };
 
     initializeSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      console.log("Auth state changed:", _event, currentSession);
+      
       if (_event === 'SIGNED_OUT') {
         console.log('User signed out, clearing session');
         setSession(null);
+        toast.success('Successfully signed out');
+      } else if (_event === 'SIGNED_IN') {
+        setSession(currentSession);
+        toast.success('Successfully signed in');
       } else {
-        setSession(session);
+        setSession(currentSession);
       }
     });
 
@@ -49,6 +55,15 @@ const ProfessionalDashboard = () => {
   const handleSignOut = async () => {
     try {
       console.log('Attempting to sign out...');
+      
+      // First check if we actually have a session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        console.log('No active session found');
+        setSession(null);
+        return;
+      }
+
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -56,6 +71,8 @@ const ProfessionalDashboard = () => {
         toast.error('Error signing out. Please try again.');
         return;
       }
+
+      // The session state and success message will be handled by the onAuthStateChange listener
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
