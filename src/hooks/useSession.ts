@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 export const useSession = () => {
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log("Initializing session hook");
@@ -17,6 +18,8 @@ export const useSession = () => {
       } catch (error) {
         console.error("Error checking session:", error);
         setSession(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -35,6 +38,7 @@ export const useSession = () => {
       } else {
         setSession(currentSession);
       }
+      setIsLoading(false);
     });
 
     return () => {
@@ -45,15 +49,6 @@ export const useSession = () => {
 
   const handleSignOut = async () => {
     try {
-      console.log('Attempting to sign out...');
-      
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) {
-        console.log('No active session found');
-        setSession(null);
-        return;
-      }
-
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -61,12 +56,13 @@ export const useSession = () => {
         toast.error('Error signing out. Please try again.');
         return;
       }
+
+      // Successfully signed out - the onAuthStateChange listener will handle updating the state
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
     }
   };
 
-  return { session, handleSignOut };
+  return { session, handleSignOut, isLoading };
 };
-
