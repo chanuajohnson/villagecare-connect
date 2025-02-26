@@ -33,28 +33,27 @@ export const useSession = () => {
     }
   };
 
-  const handleRoleBasedRedirect = async (userId: string) => {
+  const handleSignOut = async () => {
     try {
-      const role = await fetchUserRole(userId);
-      console.log('Handling redirect for role:', role);
-      setUserRole(role);
+      console.log('Initiating sign out process...');
+      const { error } = await supabase.auth.signOut();
       
-      if (role) {
-        let dashboardPath: string;
-        if (role === 'admin') {
-          dashboardPath = '/dashboard/admin';
-        } else {
-          dashboardPath = `/dashboard/${role.toLowerCase()}`;
-        }
-        console.log('Redirecting to dashboard:', dashboardPath);
-        navigate(dashboardPath, { replace: true });
-      } else {
-        console.error('No role found for user');
-        toast.error('Error determining user role. Please try again.');
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Error signing out. Please try again.');
+        return;
       }
+      
+      // Clear session and role states
+      setSession(null);
+      setUserRole(null);
+      
+      // Navigate to auth page
+      navigate('/auth');
+      toast.success('Successfully signed out');
     } catch (error) {
-      console.error('Error in handleRoleBasedRedirect:', error);
-      toast.error('Error determining user role. Please try again.');
+      console.error('Sign out error:', error);
+      toast.error('An unexpected error occurred while signing out');
     }
   };
 
@@ -71,7 +70,14 @@ export const useSession = () => {
           setSession(currentSession);
           
           if (currentSession?.user) {
-            await handleRoleBasedRedirect(currentSession.user.id);
+            const role = await fetchUserRole(currentSession.user.id);
+            setUserRole(role);
+            if (role) {
+              const dashboardPath = role === 'admin' 
+                ? '/dashboard/admin' 
+                : `/dashboard/${role.toLowerCase()}`;
+              navigate(dashboardPath);
+            }
           }
           
           setIsLoading(false);
@@ -94,12 +100,18 @@ export const useSession = () => {
       if (!mounted) return;
 
       switch (event) {
-        case 'INITIAL_SESSION':
         case 'SIGNED_IN':
           console.log('Setting session and handling redirect');
           setSession(currentSession);
           if (currentSession?.user) {
-            await handleRoleBasedRedirect(currentSession.user.id);
+            const role = await fetchUserRole(currentSession.user.id);
+            setUserRole(role);
+            if (role) {
+              const dashboardPath = role === 'admin' 
+                ? '/dashboard/admin' 
+                : `/dashboard/${role.toLowerCase()}`;
+              navigate(dashboardPath);
+            }
           }
           break;
           
@@ -127,27 +139,6 @@ export const useSession = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
-
-  const handleSignOut = async () => {
-    try {
-      console.log('Initiating sign out process...');
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        toast.error('Error signing out. Please try again.');
-        return;
-      }
-      
-      setSession(null);
-      setUserRole(null);
-      navigate('/auth');
-      toast.success('Successfully signed out');
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('An unexpected error occurred while signing out');
-    }
-  };
 
   return { session, handleSignOut, isLoading, userRole };
 };
