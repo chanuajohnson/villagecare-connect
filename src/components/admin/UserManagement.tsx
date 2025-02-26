@@ -52,35 +52,31 @@ export const UserManagement = () => {
         throw new Error('Unauthorized - Admin access required');
       }
 
-      // Fetch all profiles
-      const { data: profiles, error: profilesError } = await supabase
+      // Fetch all profiles with their auth.user emails using a join
+      const { data: userProfiles, error: usersError } = await supabase
         .from('profiles')
-        .select('id, role');
+        .select(`
+          id,
+          role,
+          created_at,
+          auth_users!inner(
+            email
+          )
+        `);
 
-      if (profilesError) {
-        throw profilesError;
+      if (usersError) {
+        throw usersError;
       }
 
-      // Fetch users from auth
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        throw authError;
-      }
+      const formattedUsers = userProfiles?.map(profile => ({
+        id: profile.id,
+        email: profile.auth_users?.email,
+        role: profile.role,
+        created_at: profile.created_at
+      })) || [];
 
-      // Combine the data
-      const combinedUsers = authUsers.users.map(user => {
-        const profile = profiles?.find(p => p.id === user.id);
-        return {
-          id: user.id,
-          email: user.email,
-          role: profile?.role || 'unknown',
-          created_at: user.created_at
-        };
-      });
-
-      setUsers(combinedUsers);
-      console.log('Users loaded:', combinedUsers);
+      setUsers(formattedUsers);
+      console.log('Users loaded:', formattedUsers);
 
     } catch (error: any) {
       console.error('Error fetching users:', error);
