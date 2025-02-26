@@ -43,22 +43,30 @@ export const useSession = () => {
 
   useEffect(() => {
     console.log("Initializing session hook");
+    let mounted = true;
     
     const initializeSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         console.log("Got initial session:", currentSession);
-        setSession(currentSession);
         
-        if (currentSession?.user) {
-          const role = await fetchUserRole(currentSession.user.id);
-          setUserRole(role);
+        if (mounted) {
+          setSession(currentSession);
+          
+          if (currentSession?.user) {
+            const role = await fetchUserRole(currentSession.user.id);
+            setUserRole(role);
+          }
         }
       } catch (error) {
         console.error("Error checking session:", error);
-        setSession(null);
+        if (mounted) {
+          setSession(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -68,22 +76,36 @@ export const useSession = () => {
       console.log("Auth state changed - Event:", event);
       console.log("Auth state changed - Session:", currentSession);
       
+      if (!mounted) return;
+
       switch (event) {
         case 'SIGNED_OUT':
           console.log('Setting session to null due to sign out');
           setSession(null);
           setUserRole(null);
-          toast.success('Successfully signed out');
-          navigate('/auth');
+          navigate('/auth', { replace: true });
+          // Only show toast if the component is still mounted
+          if (mounted) {
+            toast.success('Successfully signed out');
+          }
           break;
         case 'SIGNED_IN':
-        case 'USER_UPDATED':
           console.log('Setting session due to sign in');
           setSession(currentSession);
           if (currentSession?.user) {
             await handleRoleBasedRedirect(currentSession.user.id);
           }
-          toast.success('Successfully signed in');
+          if (mounted) {
+            toast.success('Successfully signed in');
+          }
+          break;
+        case 'USER_UPDATED':
+          console.log('Updating session for user update');
+          setSession(currentSession);
+          if (currentSession?.user) {
+            const role = await fetchUserRole(currentSession.user.id);
+            setUserRole(role);
+          }
           break;
         default:
           console.log('Updating session state for event:', event);
@@ -93,11 +115,14 @@ export const useSession = () => {
             setUserRole(role);
           }
       }
-      setIsLoading(false);
+      if (mounted) {
+        setIsLoading(false);
+      }
     });
 
     return () => {
       console.log("Cleaning up auth subscription");
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -105,17 +130,26 @@ export const useSession = () => {
   const handleSignOut = async () => {
     try {
       console.log('Initiating sign out process...');
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
         console.error('Sign out error:', error);
         toast.error('Error signing out. Please try again.');
         return;
       }
-      console.log('Sign out API call successful');
-      // The onAuthStateChange listener will handle the state update and toast
+      
+      // Clear local state immediately
+      setSession(null);
+      setUserRole(null);
+      
+      console.log('Sign out successful, local state cleared');
+      // The onAuthStateChange listener will handle navigation and toast
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
+    } finally {
+      setIsLoading(false);
     }
   };
 
