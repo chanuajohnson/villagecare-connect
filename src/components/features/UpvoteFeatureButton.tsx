@@ -30,11 +30,18 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session && featureId) {
-        checkUserVote(session.user.id);
-        fetchVoteCount();
+        await checkUserVote(session.user.id);
+        await fetchVoteCount();
+        
+        // If we just logged in and there's a pending vote, submit it
+        const pendingVote = localStorage.getItem('pendingVoteFeatureId');
+        if (pendingVote === featureId) {
+          await handleUpvote(true);
+          localStorage.removeItem('pendingVoteFeatureId');
+        }
       }
     });
 
@@ -101,15 +108,17 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     }
   };
 
-  const handleUpvote = async () => {
-    if (!session) {
-      navigate('/auth');
-      toast.info(`Sign in to vote for "${featureTitle}" and other upcoming features!`);
+  const handleUpvote = async (isPostLogin: boolean = false) => {
+    if (!featureId) {
+      toast.error('This feature is not available for voting yet.');
       return;
     }
 
-    if (!featureId) {
-      toast.error('This feature is not available for voting yet.');
+    if (!session) {
+      // Store the feature ID we want to vote for after login
+      localStorage.setItem('pendingVoteFeatureId', featureId);
+      navigate('/auth');
+      toast.info(`Sign in to vote for "${featureTitle}" and other upcoming features!`);
       return;
     }
 
@@ -140,6 +149,11 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
 
         if (error) throw error;
         toast.success(`Thank you for voting for "${featureTitle}"!`);
+        
+        // After successful vote post-login, redirect to features page
+        if (isPostLogin) {
+          navigate('/features');
+        }
       }
     } catch (error: any) {
       console.error('Error handling vote:', error);
@@ -154,7 +168,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
       variant={hasVoted ? "default" : "outline"}
       size="sm"
       className={className}
-      onClick={handleUpvote}
+      onClick={() => handleUpvote(false)}
       disabled={isVoting}
     >
       <ThumbsUp className={`w-4 h-4 mr-2 ${hasVoted ? 'fill-current' : ''}`} />
