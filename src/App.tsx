@@ -7,6 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FeaturesPage from "./pages/features/FeaturesPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
+import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
+import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +24,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
+            <Route path="/dashboard/family" element={<FamilyDashboard />} />
+            <Route path="/dashboard/community" element={<CommunityDashboard />} />
+            <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
