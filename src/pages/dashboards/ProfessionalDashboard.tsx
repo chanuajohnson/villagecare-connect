@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -47,18 +48,22 @@ const ProfessionalDashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      // Don't check session before signing out
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'  // Only sign out from current tab
-      });
+      const { error } = await supabase.auth.signOut();
       
       if (error) {
+        if (error.message === 'Auth session missing!') {
+          // If there's no session, just navigate away
+          setSession(null);
+          navigate('/');
+          toast.success('Successfully signed out');
+          return;
+        }
         console.error('Sign out error:', error);
         toast.error('Error signing out. Please try again.');
         return;
       }
       
-      // Success handled by onAuthStateChange
+      // Success case is handled by onAuthStateChange
       toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -278,3 +283,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+
