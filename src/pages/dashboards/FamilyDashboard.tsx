@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -119,11 +118,7 @@ const FamilyDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
         <Breadcrumb />
-        <div className="flex items-center justify-between gap-4 mb-8">
-          <Link to="/" className="inline-flex items-center text-primary-600 hover:text-primary-700">
-            <Home className="w-5 h-5 mr-2" />
-            Back to Home
-          </Link>
+        <div className="flex items-center justify-end gap-4 mb-8">
           {session ? (
             <Button 
               variant="outline" 

@@ -7,7 +7,7 @@ const FamilyRegistration = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate("/dashboard/family");
+    navigate("/dashboard/family", { replace: true });
   }, [navigate]);
 
   return (
