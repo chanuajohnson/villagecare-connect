@@ -1,16 +1,13 @@
+
 import { motion } from "framer-motion";
-import { Users, Heart, Calendar, ArrowRight, LogIn, LogOut } from "lucide-react";
+import { Users, Heart, Calendar, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { useSession } from "@/hooks/useSession";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const CommunityDashboard = () => {
-  const { session, handleSignOut } = useSession();
-
   const breadcrumbItems = [
     { label: "Home", link: "/" },
     { label: "Community Dashboard", link: "/dashboard/community" }
@@ -23,8 +20,6 @@ const CommunityDashboard = () => {
       <div className="container px-4 py-12 mx-auto">
         <DashboardHeader 
           breadcrumbItems={breadcrumbItems}
-          session={session}
-          onSignOut={handleSignOut}
           loginUrl={loginUrl}
         />
         
@@ -36,29 +31,6 @@ const CommunityDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Community Dashboard</h1>
           <p className="text-gray-600 mt-2">Connect and contribute to your local care community.</p>
-        </motion.div>
-
-        {/* Registration Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Your Registration</CardTitle>
-              <CardDescription>Set up your community profile to start supporting families</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Link to="/auth">
-                <Button className="w-full">
-                  Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-              <UpvoteFeatureButton featureTitle="Community Registration" className="w-full" />
-            </CardContent>
-          </Card>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -76,9 +48,11 @@ const CommunityDashboard = () => {
                 <CardDescription>Connect with families and other community members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
-                  Find Circles <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    Find Circles <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Care Circles" className="w-full" />
               </CardContent>
             </Card>
@@ -98,9 +72,11 @@ const CommunityDashboard = () => {
                 <CardDescription>Discover and participate in local care events</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
-                  View Events <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    View Events <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Community Events" className="w-full" />
               </CardContent>
             </Card>
@@ -120,9 +96,11 @@ const CommunityDashboard = () => {
                 <CardDescription>Offer and receive community support</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
-                  Get Involved <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    Get Involved <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Support Network" className="w-full" />
               </CardContent>
             </Card>
@@ -134,3 +112,4 @@ const CommunityDashboard = () => {
 };
 
 export default CommunityDashboard;
+

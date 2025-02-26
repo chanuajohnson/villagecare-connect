@@ -1,18 +1,14 @@
+
 import { motion } from "framer-motion";
 import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import MealPlanner from "@/components/meal-planning/MealPlanner";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { useSession } from "@/hooks/useSession";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const FamilyDashboard = () => {
-  const navigate = useNavigate();
-  const { session, handleSignOut } = useSession();
-
   const breadcrumbItems = [
     { label: "Home", link: "/" },
     { label: "Family Dashboard", link: "/dashboard/family" }
@@ -21,14 +17,12 @@ const FamilyDashboard = () => {
   const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/family')}`;
 
   const handleFeatureClick = (featureTitle: string) => {
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
     toast.info(`${featureTitle} feature coming soon!`, {
       action: {
         label: "Upvote",
-        onClick: () => navigate("/features")
+        onClick: () => {
+          // Navigate to features page handled by Link component
+        }
       }
     });
   };
@@ -39,7 +33,7 @@ const FamilyDashboard = () => {
         <Button 
           variant="outline" 
           className="w-full justify-start space-x-2"
-          onClick={() => session ? toast.info("Create care plan coming soon!") : navigate("/auth")}
+          onClick={() => handleFeatureClick("Create care plan")}
         >
           <ClipboardList className="w-4 h-4" />
           <span>New Care Plan</span>
@@ -51,7 +45,7 @@ const FamilyDashboard = () => {
         <Button 
           variant="outline" 
           className="w-full justify-start space-x-2"
-          onClick={() => session ? toast.info("Add team member coming soon!") : navigate("/auth")}
+          onClick={() => handleFeatureClick("Add team member")}
         >
           <Users className="w-4 h-4" />
           <span>Add Team Member</span>
@@ -63,7 +57,7 @@ const FamilyDashboard = () => {
         <Button 
           variant="outline" 
           className="w-full justify-start space-x-2"
-          onClick={() => session ? toast.info("Schedule appointment coming soon!") : navigate("/auth")}
+          onClick={() => handleFeatureClick("Schedule appointment")}
         >
           <Calendar className="w-4 h-4" />
           <span>Schedule Appointment</span>
@@ -75,7 +69,7 @@ const FamilyDashboard = () => {
         <Button 
           variant="outline" 
           className="w-full justify-start space-x-2"
-          onClick={() => session ? toast.info("View notifications coming soon!") : navigate("/auth")}
+          onClick={() => handleFeatureClick("View notifications")}
         >
           <Bell className="w-4 h-4" />
           <span>Notifications</span>
@@ -85,33 +79,15 @@ const FamilyDashboard = () => {
     </div>
   );
 
-  const PreviewBanner = () => (
-    <div className="bg-primary/10 p-4 rounded-lg mb-8">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold text-primary">Preview Mode</h3>
-          <p className="text-sm text-gray-600">Sign up to access your personalized dashboard and start coordinating care.</p>
-        </div>
-        <Link to="/auth">
-          <Button>
-            Sign Up Now <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
+  // Removed PreviewBanner since we're not using authentication anymore
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
         <DashboardHeader 
           breadcrumbItems={breadcrumbItems}
-          session={session}
-          onSignOut={handleSignOut}
           loginUrl={loginUrl}
         />
-
-        {!session && <PreviewBanner />}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -121,36 +97,14 @@ const FamilyDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mt-2">
-            {session ? "Manage your care plans and coordinate with your care team." : "Preview our comprehensive care coordination platform."}
+            Preview our comprehensive care coordination platform.
           </p>
         </motion.div>
-
-        {!session && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Get Started Today</CardTitle>
-                <CardDescription>Create your account to access all features and start coordinating care</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/auth">
-                  <Button className="w-full">
-                    Create Account <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
 
         <QuickActions />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Care Plans Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -165,18 +119,17 @@ const FamilyDashboard = () => {
                 <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  variant="default"
-                  onClick={() => !session && navigate("/auth")}
-                >
-                  View Plans <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    View Plans <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Care Plans Management" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
 
+          {/* Care Team Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -191,18 +144,17 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  variant="default"
-                  onClick={() => !session && navigate("/auth")}
-                >
-                  View Team <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    View Team <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Care Team Management" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
 
+          {/* Appointments Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -217,13 +169,11 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  variant="default"
-                  onClick={() => !session && navigate("/auth")}
-                >
-                  View Calendar <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to="/features">
+                  <Button className="w-full">
+                    View Calendar <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Appointment Calendar" className="w-full" />
               </CardContent>
             </Card>
@@ -254,13 +204,11 @@ const FamilyDashboard = () => {
                     <CardDescription>{item.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button 
-                      className="w-full" 
-                      variant="default"
-                      onClick={() => handleFeatureClick(item.title)}
-                    >
-                      View {item.title} <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
+                    <Link to="/features">
+                      <Button className="w-full">
+                        View {item.title} <ArrowRight className="ml-2 w-4 h-4" />
+                      </Button>
+                    </Link>
                     <UpvoteFeatureButton 
                       featureTitle={`${item.title} Management`}
                       className="w-full"
@@ -271,64 +219,10 @@ const FamilyDashboard = () => {
             ))}
           </div>
         </div>
-
-        <div className="mt-12">
-          <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          {session ? (
-            <MealPlanner userId={session.user.id} />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Meal Planning</CardTitle>
-                <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Link to="/auth">
-                  <Button className="w-full">
-                    Start Planning Meals <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
-                <UpvoteFeatureButton featureTitle="Meal Planning Features" className="w-full" />
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-8"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                {session 
-                  ? "Latest updates from your care plans and meal activities" 
-                  : "Sign up to track your care activities and meal planning"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {session ? (
-                <p className="text-gray-500">No recent activities</p>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button className="w-full">
-                      Sign Up to Track Activities <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <UpvoteFeatureButton featureTitle="Activity Tracking" className="w-full" />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
       </div>
     </div>
   );
 };
 
 export default FamilyDashboard;
+
