@@ -17,6 +17,14 @@ interface Feature {
   };
 }
 
+interface AdditionalFeature {
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  noList?: boolean;
+  benefits?: string[];
+}
+
 const FeaturesGrid = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [session, setSession] = useState<any>(null);
@@ -71,7 +79,7 @@ const FeaturesGrid = () => {
     );
   }
 
-  const additionalFeatures = [
+  const additionalFeatures: AdditionalFeature[] = [
     {
       title: "Professional Dashboard (After Registration - Caregiver)",
       description: "A dedicated dashboard for professional caregivers with job opportunities, care management tools, certifications, and career growth resources.",
@@ -167,7 +175,7 @@ const FeaturesGrid = () => {
             </CardDescription>
             {!feature.noList && feature.benefits && (
               <div className="space-y-2 text-sm">
-                {feature.benefits.map((benefit: string, idx: number) => (
+                {feature.benefits.map((benefit, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
                     {benefit}
