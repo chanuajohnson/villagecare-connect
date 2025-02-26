@@ -25,14 +25,15 @@ export const useSession = () => {
 
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       console.log("Auth state changed:", _event, currentSession);
       
       if (_event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing session');
+        console.log('User signed out');
         setSession(null);
         toast.success('Successfully signed out');
       } else if (_event === 'SIGNED_IN') {
+        console.log('User signed in');
         setSession(currentSession);
         toast.success('Successfully signed in');
       } else {
@@ -49,15 +50,10 @@ export const useSession = () => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        toast.error('Error signing out. Please try again.');
-        return;
-      }
-
-      // Successfully signed out - the onAuthStateChange listener will handle updating the state
+      console.log('Attempting to sign out...');
+      await supabase.auth.signOut();
+      console.log('Sign out API call successful');
+      // The onAuthStateChange listener will handle updating the state
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
