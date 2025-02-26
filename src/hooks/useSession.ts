@@ -48,8 +48,9 @@ export const useSession = () => {
       setSession(null);
       setUserRole(null);
       
-      // Navigate to auth page
-      navigate('/auth');
+      // Force navigation to auth page
+      console.log('Redirecting to auth page...');
+      navigate('/auth', { replace: true });
       toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -58,35 +59,45 @@ export const useSession = () => {
   };
 
   useEffect(() => {
-    console.log("Initializing session hook");
     let mounted = true;
     
     const initializeSession = async () => {
       try {
+        console.log("Checking initial session...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Got initial session:", currentSession);
+        console.log("Initial session check result:", currentSession);
         
-        if (mounted) {
-          setSession(currentSession);
-          
-          if (currentSession?.user) {
-            const role = await fetchUserRole(currentSession.user.id);
-            setUserRole(role);
-            if (role) {
-              const dashboardPath = role === 'admin' 
-                ? '/dashboard/admin' 
-                : `/dashboard/${role.toLowerCase()}`;
-              navigate(dashboardPath);
-            }
-          }
-          
+        if (!mounted) return;
+
+        if (!currentSession?.user) {
+          console.log("No session found, redirecting to auth...");
+          setSession(null);
           setIsLoading(false);
+          navigate('/auth', { replace: true });
+          return;
         }
+
+        // We have a session
+        setSession(currentSession);
+        const role = await fetchUserRole(currentSession.user.id);
+        console.log("Fetched role for initial session:", role);
+        setUserRole(role);
+        
+        if (role) {
+          const dashboardPath = role === 'admin' 
+            ? '/dashboard/admin' 
+            : `/dashboard/${role.toLowerCase()}`;
+          console.log("Redirecting to dashboard:", dashboardPath);
+          navigate(dashboardPath, { replace: true });
+        }
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("Error in initializeSession:", error);
         if (mounted) {
           setSession(null);
           setIsLoading(false);
+          navigate('/auth', { replace: true });
         }
       }
     };
@@ -94,14 +105,14 @@ export const useSession = () => {
     initializeSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, currentSession) => {
-      console.log("Auth state changed - Event:", event);
-      console.log("Auth state changed - Session:", currentSession);
-      
       if (!mounted) return;
+
+      console.log("Auth state changed:", event);
+      console.log("New session state:", currentSession);
 
       switch (event) {
         case 'SIGNED_IN':
-          console.log('Setting session and handling redirect');
+          console.log('User signed in');
           setSession(currentSession);
           if (currentSession?.user) {
             const role = await fetchUserRole(currentSession.user.id);
@@ -110,20 +121,20 @@ export const useSession = () => {
               const dashboardPath = role === 'admin' 
                 ? '/dashboard/admin' 
                 : `/dashboard/${role.toLowerCase()}`;
-              navigate(dashboardPath);
+              navigate(dashboardPath, { replace: true });
             }
           }
           break;
           
         case 'SIGNED_OUT':
-          console.log('Setting session to null due to sign out');
+          console.log('User signed out');
           setSession(null);
           setUserRole(null);
-          navigate('/auth');
+          navigate('/auth', { replace: true });
           break;
           
         case 'USER_UPDATED':
-          console.log('Updating session for user update');
+          console.log('User updated');
           setSession(currentSession);
           if (currentSession?.user) {
             const role = await fetchUserRole(currentSession.user.id);
@@ -134,7 +145,7 @@ export const useSession = () => {
     });
 
     return () => {
-      console.log("Cleaning up auth subscription");
+      console.log("Cleaning up session hook");
       mounted = false;
       subscription.unsubscribe();
     };
