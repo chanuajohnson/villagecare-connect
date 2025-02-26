@@ -24,8 +24,6 @@ const AuthPage = () => {
 
     setLoading(true);
     try {
-      console.log(`Attempting to ${action} with email:`, email);
-
       if (action === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -35,18 +33,14 @@ const AuthPage = () => {
           }
         });
 
-        if (error) {
-          console.error('Signup error:', error);
-          toast.error(error.message);
-          return;
-        }
+        if (error) throw error;
         
         if (data?.user) {
           toast.success('Registration successful! Please check your email to verify your account.');
           setEmail('');
           setPassword('');
         } else {
-          toast.error('Unable to create account. Please try again.');
+          toast.error('Unable to create account');
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -54,41 +48,26 @@ const AuthPage = () => {
           password
         });
 
-        if (error) {
-          console.error('Login error:', error);
-          toast.error(error.message);
-          return;
-        }
+        if (error) throw error;
 
-        if (data?.session) {
-          console.log('Login successful, fetching user role');
+        if (data?.user) {
           toast.success('Login successful!');
           
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', data.session.user.id)
+            .eq('id', data.user.id)
             .single();
 
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
-            toast.error('Error loading user profile');
-            return;
-          }
+          if (profileError) throw profileError;
 
           if (profileData?.role) {
-            const returnTo = localStorage.getItem('returnTo');
-            localStorage.removeItem('returnTo');
-            
             const dashboardPath = profileData.role === 'admin' 
               ? '/dashboard/admin'
               : `/dashboard/${profileData.role.toLowerCase()}`;
-            
-            console.log('Redirecting to:', returnTo || dashboardPath);
-            navigate(returnTo || dashboardPath, { replace: true });
+            navigate(dashboardPath, { replace: true });
           } else {
-            console.error('No role found for user');
-            toast.error('Error loading user profile');
+            throw new Error('No role found for user');
           }
         }
       }
