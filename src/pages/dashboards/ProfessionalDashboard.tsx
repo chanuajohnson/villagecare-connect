@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -9,19 +10,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-interface FeatureIds {
-  [key: string]: string | null;
-}
-
 const ProfessionalDashboard = () => {
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
-  const [featureIds, setFeatureIds] = useState<FeatureIds>({
-    registration: null,
-    profileManagement: null,
-    adminTools: null,
-    trainingResources: null
-  });
 
   useEffect(() => {
     // Get initial session
@@ -38,29 +29,6 @@ const ProfessionalDashboard = () => {
         navigate('/');
       }
     });
-
-    const fetchFeatureIds = async () => {
-      const { data: features, error } = await supabase
-        .from('feature_lookup')
-        .select('id, title');
-      
-      if (error) {
-        console.error('Error fetching feature IDs:', error);
-        return;
-      }
-
-      const ids: FeatureIds = {};
-      features?.forEach(feature => {
-        if (feature.title === 'Professional Registration') ids.registration = feature.id;
-        if (feature.title === 'Professional Profile Management') ids.profileManagement = feature.id;
-        if (feature.title === 'Administrative Tools') ids.adminTools = feature.id;
-        if (feature.title === 'Training Resources Access') ids.trainingResources = feature.id;
-      });
-
-      setFeatureIds(ids);
-    };
-
-    fetchFeatureIds();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -137,7 +105,6 @@ const ProfessionalDashboard = () => {
                 Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
               <UpvoteFeatureButton 
-                featureId={featureIds.registration}
                 featureTitle="Professional Registration" 
                 className="w-full" 
               />
@@ -167,7 +134,6 @@ const ProfessionalDashboard = () => {
                   Update Profile <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
                 <UpvoteFeatureButton 
-                  featureId={featureIds.profileManagement}
                   featureTitle="Professional Profile Management" 
                   className="w-full" 
                 />
@@ -202,7 +168,6 @@ const ProfessionalDashboard = () => {
                   Access Tools <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
                 <UpvoteFeatureButton 
-                  featureId={featureIds.adminTools}
                   featureTitle="Administrative Tools" 
                   className="w-full" 
                 />
@@ -231,7 +196,6 @@ const ProfessionalDashboard = () => {
                   Learn More <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
                 <UpvoteFeatureButton 
-                  featureId={featureIds.trainingResources}
                   featureTitle="Training Resources Access" 
                   className="w-full" 
                 />
@@ -245,3 +209,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+
