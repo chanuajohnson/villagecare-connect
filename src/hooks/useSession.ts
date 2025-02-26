@@ -83,38 +83,36 @@ export const useSession = () => {
           console.log('Setting session to null due to sign out');
           setSession(null);
           setUserRole(null);
-          navigate('/auth', { replace: true });
-          // Only show toast if the component is still mounted
-          if (mounted) {
-            toast.success('Successfully signed out');
-          }
+          // Ensure navigation happens after state is cleared
+          setTimeout(() => {
+            if (mounted) {
+              navigate('/auth', { replace: true });
+              toast.success('Successfully signed out');
+            }
+          }, 0);
           break;
         case 'SIGNED_IN':
           console.log('Setting session due to sign in');
           setSession(currentSession);
           if (currentSession?.user) {
             await handleRoleBasedRedirect(currentSession.user.id);
-          }
-          if (mounted) {
-            toast.success('Successfully signed in');
+            if (mounted) {
+              toast.success('Successfully signed in');
+            }
           }
           break;
         case 'USER_UPDATED':
           console.log('Updating session for user update');
-          setSession(currentSession);
-          if (currentSession?.user) {
-            const role = await fetchUserRole(currentSession.user.id);
-            setUserRole(role);
+          if (mounted) {
+            setSession(currentSession);
+            if (currentSession?.user) {
+              const role = await fetchUserRole(currentSession.user.id);
+              setUserRole(role);
+            }
           }
           break;
-        default:
-          console.log('Updating session state for event:', event);
-          setSession(currentSession);
-          if (currentSession?.user) {
-            const role = await fetchUserRole(currentSession.user.id);
-            setUserRole(role);
-          }
       }
+      
       if (mounted) {
         setIsLoading(false);
       }
@@ -131,6 +129,12 @@ export const useSession = () => {
     try {
       console.log('Initiating sign out process...');
       setIsLoading(true);
+
+      // Clear local state first
+      setSession(null);
+      setUserRole(null);
+
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -139,11 +143,6 @@ export const useSession = () => {
         return;
       }
       
-      // Clear local state immediately
-      setSession(null);
-      setUserRole(null);
-      
-      console.log('Sign out successful, local state cleared');
       // The onAuthStateChange listener will handle navigation and toast
     } catch (error) {
       console.error('Sign out error:', error);
