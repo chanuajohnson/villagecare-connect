@@ -44,6 +44,7 @@ export const DatabaseFeatureCard = ({ feature }: { feature: DatabaseFeature }) =
         </CardDescription>
         <div className="mt-4">
           <UpvoteFeatureButton
+            featureId={feature.id}
             featureTitle={feature.title}
             className="w-full"
           />
