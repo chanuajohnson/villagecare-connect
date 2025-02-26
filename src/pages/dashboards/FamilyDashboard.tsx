@@ -1,5 +1,6 @@
+
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
