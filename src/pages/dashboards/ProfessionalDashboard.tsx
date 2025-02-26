@@ -11,16 +11,27 @@ import { toast } from "sonner";
 
 const ProfessionalDashboard = () => {
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("Professional Dashboard mounting");
     
-    // Only check session, don't redirect if not logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Got session:", session);
-      setSession(session);
-    });
+    // Initialize session state
+    const initializeSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Got session:", session);
+        setSession(session);
+      } catch (error) {
+        console.error("Error checking session:", error);
+        toast.error("Error checking authentication status");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeSession();
 
     // Listen for auth changes
     const {
@@ -28,10 +39,15 @@ const ProfessionalDashboard = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
+      
+      // Check for pending votes after login
+      if (session && localStorage.getItem('pendingVoteTitle')) {
+        console.log("Found pending vote after login");
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +84,17 @@ const ProfessionalDashboard = () => {
     { label: "Home", link: "/" },
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
