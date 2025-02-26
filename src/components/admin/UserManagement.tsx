@@ -23,7 +23,6 @@ export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Call fetchUsers when component mounts
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -31,12 +30,14 @@ export const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log('Starting to fetch users...');
       
       // First, verify if the current user is an admin
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Not authenticated');
       }
+      console.log('Current user:', user.id);
 
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
@@ -45,41 +46,51 @@ export const UserManagement = () => {
         .single();
 
       if (profileError) {
+        console.error('Profile fetch error:', profileError);
         throw profileError;
       }
 
       if (currentUserProfile?.role !== 'admin') {
         throw new Error('Unauthorized - Admin access required');
       }
+      console.log('Admin status verified');
 
-      // Fetch all profiles with their auth.user emails using a join
-      const { data: userProfiles, error: usersError } = await supabase
+      // Fetch profiles first
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          role,
-          created_at,
-          auth_users!inner(
-            email
-          )
-        `);
+        .select('id, role, created_at');
 
-      if (usersError) {
-        throw usersError;
+      if (profilesError) {
+        console.error('Profiles fetch error:', profilesError);
+        throw profilesError;
       }
+      console.log('Fetched profiles:', profiles);
 
-      const formattedUsers = userProfiles?.map(profile => ({
-        id: profile.id,
-        email: profile.auth_users?.email,
-        role: profile.role,
-        created_at: profile.created_at
-      })) || [];
+      // Then fetch auth users for these profiles
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Auth users fetch error:', authError);
+        throw authError;
+      }
+      console.log('Fetched auth users:', authUsers);
 
+      // Combine the data
+      const formattedUsers = profiles?.map(profile => {
+        const authUser = authUsers?.find(u => u.id === profile.id);
+        return {
+          id: profile.id,
+          email: authUser?.email,
+          role: profile.role,
+          created_at: profile.created_at
+        };
+      }) || [];
+
+      console.log('Combined user data:', formattedUsers);
       setUsers(formattedUsers);
-      console.log('Users loaded:', formattedUsers);
 
     } catch (error: any) {
-      console.error('Error fetching users:', error);
+      console.error('Error in fetchUsers:', error);
       toast.error(error.message || 'Failed to fetch users');
       setUsers([]);
     } finally {
@@ -89,19 +100,20 @@ export const UserManagement = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
+      console.log('Attempting to delete user:', userId);
       const { error } = await supabase.rpc('admin_delete_user', {
         target_user_id: userId
       });
 
       if (error) {
+        console.error('Delete user error:', error);
         throw error;
       }
 
       toast.success('User deleted successfully');
-      // Refresh the users list
-      fetchUsers();
+      fetchUsers(); // Refresh the users list
     } catch (error: any) {
-      console.error('Error deleting user:', error);
+      console.error('Error in handleDeleteUser:', error);
       toast.error(error.message || 'Failed to delete user');
     }
   };
