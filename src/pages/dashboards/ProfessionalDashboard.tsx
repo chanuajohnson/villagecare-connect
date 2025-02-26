@@ -11,16 +11,31 @@ import { toast } from "sonner";
 
 const ProfessionalDashboard = () => {
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("Professional Dashboard mounting");
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Got session:", session);
-      setSession(session);
-    });
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Got session:", session);
+        setSession(session);
+        
+        if (!session) {
+          console.log("No session, redirecting to /auth");
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        toast.error("Error checking authentication status");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkSession();
 
     // Listen for auth changes
     const {
@@ -29,8 +44,8 @@ const ProfessionalDashboard = () => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
       if (!session) {
-        console.log("No session, redirecting to /");
-        navigate('/');
+        console.log("Auth state changed: no session, redirecting to /auth");
+        navigate('/auth');
       }
     });
 
@@ -66,6 +81,21 @@ const ProfessionalDashboard = () => {
     { label: "Home", link: "/" },
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -253,3 +283,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+
