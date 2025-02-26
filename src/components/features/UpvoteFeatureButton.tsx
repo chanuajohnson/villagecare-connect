@@ -19,7 +19,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
   const [voteCount, setVoteCount] = useState(0);
   const [session, setSession] = useState<any>(null);
 
-  // First, let's get or create a feature ID for the given title
+  // Get or create a feature ID for the given title
   const getOrCreateFeatureId = async (title: string) => {
     try {
       // Try to get existing feature
@@ -40,7 +40,10 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
         .select('id')
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error creating feature:', insertError);
+        return null;
+      }
       return newFeature?.id;
     } catch (error) {
       console.error('Error getting/creating feature:', error);
@@ -49,11 +52,13 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
   };
 
   useEffect(() => {
+    let isMounted = true;
     let cleanupFunction: (() => void) | undefined;
     
     // Get initial session and check for pending votes
     const checkSessionAndPendingVotes = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(session);
       
       const featureId = await getOrCreateFeatureId(featureTitle);
@@ -62,17 +67,15 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
         await checkUserVote(session.user.id, featureId);
         await fetchVoteCount(featureId);
         
-        // Check for pending vote immediately after getting session
+        // Check for pending vote
         const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
         const pendingVoteTitle = localStorage.getItem('pendingVoteTitle');
-        console.log('Initial session check - Pending vote:', { pendingVoteFeatureId, pendingVoteTitle });
         
         if (pendingVoteTitle === featureTitle) {
-          console.log('Processing pending vote on initial session check');
+          console.log('Processing pending vote for:', featureTitle);
           await handleUpvote(true);
           localStorage.removeItem('pendingVoteFeatureId');
           localStorage.removeItem('pendingVoteTitle');
-          navigate('/features');
         }
       }
     };
@@ -81,7 +84,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('Auth state changed:', { _event, session });
+      if (!isMounted) return;
       setSession(session);
       
       const featureId = await getOrCreateFeatureId(featureTitle);
@@ -89,19 +92,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
       if (session && featureId) {
         await checkUserVote(session.user.id, featureId);
         await fetchVoteCount(featureId);
-        
-        // Check for pending vote on auth state change
-        const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
-        const pendingVoteTitle = localStorage.getItem('pendingVoteTitle');
-        console.log('Auth state change - Checking pending vote:', { pendingVoteFeatureId, pendingVoteTitle });
-        
-        if (pendingVoteTitle === featureTitle) {
-          console.log('Processing pending vote after auth state change');
-          await handleUpvote(true);
-          localStorage.removeItem('pendingVoteFeatureId');
-          localStorage.removeItem('pendingVoteTitle');
-          navigate('/features');
-        }
       }
     });
 
@@ -120,7 +110,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
               filter: `feature_id=eq.${featureId}`
             },
             () => {
-              console.log('Vote change detected for feature:', featureId);
+              if (!isMounted) return;
               fetchVoteCount(featureId);
               if (session) {
                 checkUserVote(session.user.id, featureId);
@@ -129,7 +119,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
           )
           .subscribe();
 
-        // Store the cleanup function
         cleanupFunction = () => {
           supabase.removeChannel(channel);
         };
@@ -138,26 +127,28 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
 
     setupRealtimeSubscription();
 
-    // Return the cleanup function
+    // Cleanup function
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       if (cleanupFunction) {
         cleanupFunction();
       }
     };
-  }, [featureTitle, navigate]);
+  }, [featureTitle]);
 
   const checkUserVote = async (userId: string, featureId: string) => {
     if (!featureId) return;
     
     try {
-      const { data, error } = await supabase.rpc('has_user_voted_for_feature', {
-        feature_id: featureId,
-        user_id: userId
-      });
+      const { data: votes, error } = await supabase
+        .from('feature_votes')
+        .select('id')
+        .eq('feature_id', featureId)
+        .eq('user_id', userId);
       
       if (error) throw error;
-      setHasVoted(!!data);
+      setHasVoted(votes && votes.length > 0);
     } catch (error) {
       console.error('Error checking vote:', error);
     }
@@ -167,12 +158,13 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
     if (!featureId) return;
     
     try {
-      const { data, error } = await supabase.rpc('get_feature_vote_count', {
-        feature_id: featureId
-      });
+      const { data: votes, error } = await supabase
+        .from('feature_votes')
+        .select('id')
+        .eq('feature_id', featureId);
       
       if (error) throw error;
-      setVoteCount(data || 0);
+      setVoteCount(votes?.length || 0);
     } catch (error) {
       console.error('Error fetching vote count:', error);
     }
@@ -251,4 +243,3 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
     </Button>
   );
 };
-
