@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -35,6 +34,9 @@ const ProfessionalDashboard = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (!session) {
+        navigate('/');
+      }
     });
 
     const fetchFeatureIds = async () => {
@@ -70,11 +72,13 @@ const ProfessionalDashboard = () => {
       if (error) {
         console.error('Sign out error:', error);
         toast.error('Error signing out. Please try again.');
-      } else {
-        setSession(null);
-        navigate('/');
-        toast.success('Successfully signed out');
+        return;
       }
+      
+      // Clear session state
+      setSession(null);
+      navigate('/');
+      toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
