@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,9 +23,36 @@ export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Call fetchUsers when component mounts
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      
+      // First, verify if the current user is an admin
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (currentUserProfile?.role !== 'admin') {
+        throw new Error('Unauthorized - Admin access required');
+      }
+
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, role');
@@ -34,13 +61,15 @@ export const UserManagement = () => {
         throw profilesError;
       }
 
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
+      // Fetch users from auth
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (usersError) {
-        throw usersError;
+      if (authError) {
+        throw authError;
       }
 
-      const combinedUsers = usersData.users.map(user => {
+      // Combine the data
+      const combinedUsers = authUsers.users.map(user => {
         const profile = profiles?.find(p => p.id === user.id);
         return {
           id: user.id,
@@ -51,9 +80,12 @@ export const UserManagement = () => {
       });
 
       setUsers(combinedUsers);
+      console.log('Users loaded:', combinedUsers);
+
     } catch (error: any) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to fetch users');
+      toast.error(error.message || 'Failed to fetch users');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -61,7 +93,7 @@ export const UserManagement = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { data, error } = await supabase.rpc('admin_delete_user', {
+      const { error } = await supabase.rpc('admin_delete_user', {
         target_user_id: userId
       });
 
@@ -124,7 +156,7 @@ export const UserManagement = () => {
 
       {users.length === 0 && !loading && (
         <div className="text-center py-4 text-gray-500">
-          Click "Refresh Users" to load user data
+          No users found. Click "Refresh Users" to try again.
         </div>
       )}
     </div>
