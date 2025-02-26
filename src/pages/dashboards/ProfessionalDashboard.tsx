@@ -1,14 +1,14 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface FeatureIds {
   [key: string]: string | null;
@@ -72,11 +72,17 @@ const ProfessionalDashboard = () => {
         toast.error('Error signing out. Please try again.');
       } else {
         setSession(null);
+        navigate('/');
+        toast.success('Successfully signed out');
       }
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
     }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -123,11 +129,9 @@ const ProfessionalDashboard = () => {
               <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Link to="/auth">
-                <Button className="w-full">
-                  Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+              <Button className="w-full" onClick={() => handleNavigation('/register/professional')}>
+                Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
               <UpvoteFeatureButton 
                 featureId={featureIds.registration}
                 featureTitle="Professional Registration" 
@@ -152,9 +156,12 @@ const ProfessionalDashboard = () => {
                 <CardDescription>Showcase your qualifications and experience</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleNavigation('/profile/professional')}
+                >
                   Update Profile <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
                 <UpvoteFeatureButton 
                   featureId={featureIds.profileManagement}
                   featureTitle="Professional Profile Management" 
@@ -184,9 +191,12 @@ const ProfessionalDashboard = () => {
                   <li>Document Management</li>
                   <li>Administrative Support</li>
                 </ul>
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleNavigation('/admin/tools')}
+                >
                   Access Tools <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
                 <UpvoteFeatureButton 
                   featureId={featureIds.adminTools}
                   featureTitle="Administrative Tools" 
@@ -210,9 +220,12 @@ const ProfessionalDashboard = () => {
                 <CardDescription>Access our comprehensive library of caregiving resources</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleNavigation('/training/resources')}
+                >
                   Learn More <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Button>
                 <UpvoteFeatureButton 
                   featureId={featureIds.trainingResources}
                   featureTitle="Training Resources Access" 
