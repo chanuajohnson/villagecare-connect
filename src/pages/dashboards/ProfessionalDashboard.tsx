@@ -68,6 +68,9 @@ const ProfessionalDashboard = () => {
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
 
+  // Construct the login URL with returnTo parameter
+  const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/professional')}`;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
@@ -109,7 +112,7 @@ const ProfessionalDashboard = () => {
           </nav>
           <div className="flex gap-4">
             {!session ? (
-              <Link to="/auth">
+              <Link to={loginUrl}>
                 <Button variant="outline">
                   <LogIn className="w-4 h-4 mr-2" />
                   Sign In
@@ -257,3 +260,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+

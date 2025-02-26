@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
@@ -15,13 +15,18 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the return path from the URL search params or default to family dashboard
+  const searchParams = new URLSearchParams(location.search);
+  const returnTo = searchParams.get('returnTo') || '/dashboard/family';
 
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        console.log('User is already logged in, redirecting...');
-        navigate('/dashboard/family');
+        console.log('User is already logged in, redirecting to:', returnTo);
+        navigate(returnTo);
       }
     };
     
@@ -31,12 +36,12 @@ const AuthPage = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session);
       if (session?.user) {
-        navigate('/dashboard/family');
+        navigate(returnTo);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, returnTo]);
 
   const handleAuth = async (action: 'login' | 'signup') => {
     if (!email || !password) {
@@ -53,7 +58,7 @@ const AuthPage = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth`
+            emailRedirectTo: `${window.location.origin}/auth?returnTo=${encodeURIComponent(returnTo)}`
           }
         });
 
@@ -87,7 +92,7 @@ const AuthPage = () => {
 
         if (data?.session) {
           toast.success('Login successful!');
-          // The navigation will be handled by onAuthStateChange
+          // Navigation will be handled by onAuthStateChange
         } else {
           toast.error('Login failed. Please try again.');
         }
@@ -160,3 +165,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+
