@@ -49,6 +49,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
   };
 
   useEffect(() => {
+    let cleanupFunction: (() => void) | undefined;
+    
     // Get initial session and check for pending votes
     const checkSessionAndPendingVotes = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -127,18 +129,20 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
           )
           .subscribe();
 
-        return () => {
+        // Store the cleanup function
+        cleanupFunction = () => {
           supabase.removeChannel(channel);
         };
       }
     };
 
-    const cleanupFn = setupRealtimeSubscription();
+    setupRealtimeSubscription();
 
+    // Return the cleanup function
     return () => {
       subscription.unsubscribe();
-      if (cleanupFn) {
-        cleanupFn();
+      if (cleanupFunction) {
+        cleanupFunction();
       }
     };
   }, [featureTitle, navigate]);
@@ -247,3 +251,4 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
     </Button>
   );
 };
+
