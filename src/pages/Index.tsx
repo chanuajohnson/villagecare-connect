@@ -5,6 +5,7 @@ import { Users, UserCog, Heart, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
 
 const roles = [
   {
@@ -13,7 +14,7 @@ const roles = [
     description: "Coordinate care for your loved ones",
     icon: Users,
     color: "bg-primary-100",
-    path: "/register/family",
+    path: "/dashboard/family",
     cta: "Find Care Now",
     features: [
       "Create and manage care plans",
@@ -65,12 +66,19 @@ const Index = () => {
   const navigate = useNavigate();
   const comparisonRef = useRef<HTMLDivElement>(null);
 
-  const handleRoleSelect = (roleId: string) => {
+  const handleRoleSelect = async (roleId: string) => {
     setSelectedRole(roleId);
     const role = roles.find((r) => r.id === roleId);
     if (role) {
-      toast.success(`Welcome! Let's get you started as a ${role.title} member.`);
-      navigate(role.path);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        toast.success(`Welcome! Redirecting you to the ${role.title} dashboard.`);
+        navigate(role.path);
+      } else {
+        toast.success(`Welcome! Let's get you started as a ${role.title} member.`);
+        navigate('/auth');
+      }
     }
   };
 
@@ -206,3 +214,4 @@ const Index = () => {
 };
 
 export default Index;
+
