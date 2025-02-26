@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe, Home } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
 import { useEffect, useState } from "react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
@@ -12,26 +12,24 @@ import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
-      setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleFeatureClick = (featureTitle: string) => {
     if (!session) {
@@ -44,6 +42,22 @@ const FamilyDashboard = () => {
         onClick: () => navigate("/features")
       }
     });
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Error signing out. Please try again.');
+      } else {
+        setSession(null);
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('An unexpected error occurred while signing out');
+    }
   };
 
   const QuickActions = () => (
@@ -117,23 +131,23 @@ const FamilyDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
-        <Breadcrumb />
-        <div className="flex items-center justify-end gap-4 mb-8">
-          {session ? (
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                await supabase.auth.signOut();
-                navigate("/", { replace: true });
-              }}
-            >
-              Sign Out
-            </Button>
-          ) : (
-            <Link to="/auth">
-              <Button variant="outline">Sign In</Button>
-            </Link>
-          )}
+        <div className="flex justify-between items-center mb-8">
+          <Breadcrumb />
+          <div className="flex gap-4">
+            {!session ? (
+              <Link to="/auth">
+                <Button variant="outline">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
+          </div>
         </div>
 
         {!session && <PreviewBanner />}

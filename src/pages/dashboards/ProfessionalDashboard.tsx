@@ -28,10 +28,6 @@ const ProfessionalDashboard = () => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (!session) {
-        // No session, redirect to auth
-        navigate('/auth');
-      }
     });
 
     // Listen for auth changes
@@ -39,9 +35,6 @@ const ProfessionalDashboard = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session) {
-        navigate('/auth');
-      }
     });
 
     const fetchFeatureIds = async () => {
@@ -72,26 +65,13 @@ const ProfessionalDashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      // Always attempt to sign out regardless of session state
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        // Log the error for debugging
         console.error('Sign out error:', error);
-        
-        // If it's a session missing error, we can just redirect
-        if (error.message.includes('session')) {
-          setSession(null);
-          navigate('/auth');
-          return;
-        }
-        
-        // For other errors, show the toast
         toast.error('Error signing out. Please try again.');
       } else {
-        // Successful sign out
         setSession(null);
-        // The onAuthStateChange listener will handle the redirect
       }
     } catch (error) {
       console.error('Sign out error:', error);
@@ -131,7 +111,6 @@ const ProfessionalDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your caregiving services and professional development.</p>
         </motion.div>
 
-        {/* Registration Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

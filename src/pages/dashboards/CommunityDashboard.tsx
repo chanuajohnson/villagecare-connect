@@ -1,16 +1,72 @@
 import { motion } from "framer-motion";
-import { Users, Heart, Calendar, ArrowRight } from "lucide-react";
+import { Users, Heart, Calendar, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const CommunityDashboard = () => {
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Error signing out. Please try again.');
+      } else {
+        setSession(null);
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('An unexpected error occurred while signing out');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
-        <Breadcrumb />
+        <div className="flex justify-between items-center mb-8">
+          <Breadcrumb />
+          <div className="flex gap-4">
+            {!session ? (
+              <Link to="/auth">
+                <Button variant="outline">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
+          </div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
