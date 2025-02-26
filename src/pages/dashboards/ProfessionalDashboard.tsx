@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -29,6 +28,10 @@ const ProfessionalDashboard = () => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (!session) {
+        // No session, redirect to auth
+        navigate('/auth');
+      }
     });
 
     // Listen for auth changes
@@ -37,7 +40,6 @@ const ProfessionalDashboard = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
-        // Redirect to auth page when session ends
         navigate('/auth');
       }
     });
@@ -70,22 +72,24 @@ const ProfessionalDashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      // First check if we have a session
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession) {
-        // If no session, just redirect to auth page
-        navigate('/auth');
-        return;
-      }
-
-      // If we have a session, try to sign out
+      // Always attempt to sign out regardless of session state
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
+        // Log the error for debugging
         console.error('Sign out error:', error);
+        
+        // If it's a session missing error, we can just redirect
+        if (error.message.includes('session')) {
+          setSession(null);
+          navigate('/auth');
+          return;
+        }
+        
+        // For other errors, show the toast
         toast.error('Error signing out. Please try again.');
       } else {
-        // Clear session state
+        // Successful sign out
         setSession(null);
         // The onAuthStateChange listener will handle the redirect
       }
@@ -245,4 +249,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-
