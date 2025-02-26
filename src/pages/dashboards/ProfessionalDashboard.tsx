@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -33,6 +32,11 @@ const ProfessionalDashboard = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       setSession(session);
+      
+      // If user signs out, we don't need to navigate since they should stay on this page
+      if (_event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -43,19 +47,13 @@ const ProfessionalDashboard = () => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        if (error.message === 'Auth session missing!') {
-          // If there's no session, just navigate away
-          setSession(null);
-          navigate('/');
-          toast.success('Successfully signed out');
-          return;
-        }
         console.error('Sign out error:', error);
         toast.error('Error signing out. Please try again.');
         return;
       }
       
-      // Success case is handled by onAuthStateChange
+      // On successful sign out
+      setSession(null);
       toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -260,4 +258,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-
