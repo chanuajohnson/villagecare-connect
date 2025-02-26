@@ -1,9 +1,11 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
+import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const ProfessionalDashboard = () => {
   return (
@@ -39,12 +41,13 @@ const ProfessionalDashboard = () => {
               <CardTitle>Complete Your Registration</CardTitle>
               <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Link to="/auth">
                 <Button className="w-full">
                   Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
+              <UpvoteFeatureButton featureTitle="Professional Registration" className="w-full" />
             </CardContent>
           </Card>
         </motion.div>
@@ -63,10 +66,11 @@ const ProfessionalDashboard = () => {
                 <CardTitle>Complete Your Profile</CardTitle>
                 <CardDescription>Showcase your qualifications and experience</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Update Profile <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Professional Profile Management" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -84,7 +88,7 @@ const ProfessionalDashboard = () => {
                 <CardTitle>Admin Assistant</CardTitle>
                 <CardDescription>Streamline your administrative tasks</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <ul className="space-y-2 mb-4 text-sm text-gray-600">
                   <li>Get Job Letters</li>
                   <li>NIS Registration Assistance</li>
@@ -94,6 +98,7 @@ const ProfessionalDashboard = () => {
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Access Tools <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Administrative Tools" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -111,10 +116,11 @@ const ProfessionalDashboard = () => {
                 <CardTitle>Training Resources</CardTitle>
                 <CardDescription>Access our comprehensive library of caregiving resources</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Learn More <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Training Resources Access" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -125,3 +131,4 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
+

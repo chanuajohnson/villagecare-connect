@@ -1,9 +1,11 @@
+
 import { motion } from "framer-motion";
 import { Users, Heart, Calendar, ArrowRight, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
+import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const CommunityDashboard = () => {
   return (
@@ -39,12 +41,13 @@ const CommunityDashboard = () => {
               <CardTitle>Complete Your Registration</CardTitle>
               <CardDescription>Set up your community profile to start supporting families</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Link to="/auth">
                 <Button className="w-full">
                   Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
+              <UpvoteFeatureButton featureTitle="Community Registration" className="w-full" />
             </CardContent>
           </Card>
         </motion.div>
@@ -63,10 +66,11 @@ const CommunityDashboard = () => {
                 <CardTitle>Join Care Circles</CardTitle>
                 <CardDescription>Connect with families and other community members</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Find Circles <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Care Circles" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -84,10 +88,11 @@ const CommunityDashboard = () => {
                 <CardTitle>Community Events</CardTitle>
                 <CardDescription>Discover and participate in local care events</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   View Events <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Community Events" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -105,10 +110,11 @@ const CommunityDashboard = () => {
                 <CardTitle>Support Network</CardTitle>
                 <CardDescription>Offer and receive community support</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Get Involved <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
+                <UpvoteFeatureButton featureTitle="Support Network" className="w-full" />
               </CardContent>
             </Card>
           </motion.div>
@@ -119,3 +125,4 @@ const CommunityDashboard = () => {
 };
 
 export default CommunityDashboard;
+
