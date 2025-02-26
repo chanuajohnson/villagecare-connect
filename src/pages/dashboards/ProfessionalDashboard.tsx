@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -7,6 +8,14 @@ import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const ProfessionalDashboard = () => {
+  // Feature IDs for the professional dashboard features
+  const FEATURE_IDS = {
+    registration: "professional-registration",
+    profileManagement: "professional-profile-management",
+    adminTools: "professional-admin-tools",
+    trainingResources: "training-resources"
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
@@ -40,7 +49,11 @@ const ProfessionalDashboard = () => {
                   Complete Registration <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
-              <UpvoteFeatureButton featureTitle="Professional Registration" className="w-full" />
+              <UpvoteFeatureButton 
+                featureId={FEATURE_IDS.registration}
+                featureTitle="Professional Registration" 
+                className="w-full" 
+              />
             </CardContent>
           </Card>
         </motion.div>
@@ -63,7 +76,11 @@ const ProfessionalDashboard = () => {
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Update Profile <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
-                <UpvoteFeatureButton featureTitle="Professional Profile Management" className="w-full" />
+                <UpvoteFeatureButton 
+                  featureId={FEATURE_IDS.profileManagement}
+                  featureTitle="Professional Profile Management" 
+                  className="w-full" 
+                />
               </CardContent>
             </Card>
           </motion.div>
@@ -91,7 +108,11 @@ const ProfessionalDashboard = () => {
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Access Tools <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
-                <UpvoteFeatureButton featureTitle="Administrative Tools" className="w-full" />
+                <UpvoteFeatureButton 
+                  featureId={FEATURE_IDS.adminTools}
+                  featureTitle="Administrative Tools" 
+                  className="w-full" 
+                />
               </CardContent>
             </Card>
           </motion.div>
@@ -113,7 +134,11 @@ const ProfessionalDashboard = () => {
                 <button className="w-full inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
                   Learn More <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
-                <UpvoteFeatureButton featureTitle="Training Resources Access" className="w-full" />
+                <UpvoteFeatureButton 
+                  featureId={FEATURE_IDS.trainingResources}
+                  featureTitle="Training Resources Access" 
+                  className="w-full" 
+                />
               </CardContent>
             </Card>
           </motion.div>
