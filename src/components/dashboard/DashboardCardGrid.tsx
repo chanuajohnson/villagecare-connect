@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 interface DashboardCardGridProps {
-  session: any;
+  session?: any; // Made optional
 }
 
 export const DashboardCardGrid = ({ session }: DashboardCardGridProps) => {
@@ -105,4 +104,3 @@ export const DashboardCardGrid = ({ session }: DashboardCardGridProps) => {
     </div>
   );
 };
-

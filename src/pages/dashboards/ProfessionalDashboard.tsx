@@ -29,11 +29,10 @@ const ProfessionalDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your caregiving services and professional development.</p>
         </motion.div>
 
-        <DashboardCardGrid />
+        <DashboardCardGrid session={undefined} />
       </div>
     </div>
   );
 };
 
 export default ProfessionalDashboard;
-

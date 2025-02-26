@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
@@ -10,12 +10,12 @@ interface BreadcrumbItem {
 
 interface DashboardHeaderProps {
   breadcrumbItems: BreadcrumbItem[];
-  session: any;
-  onSignOut: () => void;
   loginUrl: string;
+  session?: any; // Made optional
+  onSignOut?: () => void; // Made optional
 }
 
-export const DashboardHeader = ({ breadcrumbItems, session, onSignOut, loginUrl }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ breadcrumbItems, loginUrl }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
       <nav className="flex" aria-label="Breadcrumb">
@@ -54,21 +54,13 @@ export const DashboardHeader = ({ breadcrumbItems, session, onSignOut, loginUrl 
         </ol>
       </nav>
       <div className="flex gap-4">
-        {!session ? (
-          <Link to={loginUrl}>
-            <Button variant="outline">
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
-          </Link>
-        ) : (
-          <Button variant="outline" onClick={onSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+        <Link to={loginUrl}>
+          <Button variant="outline">
+            <LogIn className="w-4 h-4 mr-2" />
+            Sign In
           </Button>
-        )}
+        </Link>
       </div>
     </div>
   );
 };
-
