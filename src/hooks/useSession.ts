@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { AuthChangeEvent } from "@supabase/supabase-js";
 
 export const useSession = () => {
   const [session, setSession] = useState<any>(null);
@@ -79,15 +80,15 @@ export const useSession = () => {
 
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, currentSession) => {
       console.log("Auth state changed - Event:", event);
       console.log("Auth state changed - Session:", currentSession);
       
       if (!mounted) return;
 
       switch (event) {
+        case 'INITIAL_SESSION':
         case 'SIGNED_IN':
-        case 'SIGNED_UP':
           console.log('Setting session and handling redirect');
           setSession(currentSession);
           if (currentSession?.user) {
@@ -143,4 +144,3 @@ export const useSession = () => {
 
   return { session, handleSignOut, isLoading, userRole };
 };
-
