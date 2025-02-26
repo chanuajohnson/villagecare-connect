@@ -20,14 +20,28 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get initial session and check for pending votes
+    const checkSessionAndPendingVotes = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
+      
       if (session && featureId) {
-        checkUserVote(session.user.id);
-        fetchVoteCount();
+        await checkUserVote(session.user.id);
+        await fetchVoteCount();
+        
+        // Check for pending vote immediately after getting session
+        const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
+        console.log('Initial session check - Pending vote:', { pendingVoteFeatureId, featureId });
+        
+        if (pendingVoteFeatureId === featureId) {
+          console.log('Processing pending vote on initial session check');
+          await handleUpvote(true);
+          localStorage.removeItem('pendingVoteFeatureId');
+        }
       }
-    });
+    };
+
+    checkSessionAndPendingVotes();
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -38,12 +52,12 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
         await checkUserVote(session.user.id);
         await fetchVoteCount();
         
-        // Check if there's a pending vote after login
+        // Check for pending vote on auth state change
         const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
-        console.log('Checking pending vote:', { pendingVoteFeatureId, featureId });
+        console.log('Auth state change - Checking pending vote:', { pendingVoteFeatureId, featureId });
         
         if (pendingVoteFeatureId === featureId) {
-          console.log('Processing pending vote for feature:', featureId);
+          console.log('Processing pending vote after auth state change');
           await handleUpvote(true);
           localStorage.removeItem('pendingVoteFeatureId');
         }
@@ -51,8 +65,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     });
 
     // Set up real-time subscription for vote changes
+    let channel;
     if (featureId) {
-      const channel = supabase
+      channel = supabase
         .channel('vote_changes')
         .on(
           'postgres_changes',
@@ -63,6 +78,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
             filter: `feature_id=eq.${featureId}`
           },
           () => {
+            console.log('Vote change detected for feature:', featureId);
             fetchVoteCount();
             if (session) {
               checkUserVote(session.user.id);
@@ -70,15 +86,13 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
           }
         )
         .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-        supabase.removeChannel(channel);
-      };
     }
-    
+
     return () => {
       subscription.unsubscribe();
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [featureId]);
 
@@ -121,12 +135,14 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
 
     if (!session) {
       // Store the feature ID we want to vote for after login
+      console.log('Storing pending vote for feature:', featureId);
       localStorage.setItem('pendingVoteFeatureId', featureId);
       navigate('/auth');
       toast.info(`Sign in to vote for "${featureTitle}" and other upcoming features!`);
       return;
     }
 
+    if (isVoting) return;
     setIsVoting(true);
     
     try {
@@ -158,6 +174,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
         
         // After successful vote post-login, redirect to features page
         if (isPostLogin) {
+          console.log('Post-login vote successful, redirecting to features page');
           navigate('/features');
         }
       }
