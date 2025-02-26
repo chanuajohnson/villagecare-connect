@@ -14,8 +14,11 @@ const ProfessionalDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Professional Dashboard mounting");
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Got session:", session);
       setSession(session);
     });
 
@@ -23,8 +26,10 @@ const ProfessionalDashboard = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setSession(session);
       if (!session) {
+        console.log("No session, redirecting to /");
         navigate('/');
       }
     });
@@ -34,6 +39,7 @@ const ProfessionalDashboard = () => {
 
   const handleSignOut = async () => {
     try {
+      console.log("Signing out...");
       const { error } = await supabase.auth.signOut();
       
       if (error) {
