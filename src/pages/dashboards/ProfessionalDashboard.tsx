@@ -65,11 +65,20 @@ const ProfessionalDashboard = () => {
   }, []);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error('Error signing out');
-    } else {
-      navigate('/auth');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error(error.message || 'Error signing out');
+      } else {
+        // Clear any local state if needed
+        setSession(null);
+        // Navigate immediately after successful sign out
+        window.location.href = '/auth';
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('An unexpected error occurred while signing out');
     }
   };
 
