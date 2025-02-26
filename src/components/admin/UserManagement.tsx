@@ -19,6 +19,14 @@ interface User {
   created_at: string;
 }
 
+interface AdminUserResponse {
+  users: Array<{
+    id: string;
+    email?: string;
+    created_at: string;
+  }>;
+}
+
 export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,24 +75,27 @@ export const UserManagement = () => {
       console.log('Fetched profiles:', profiles);
 
       // Then fetch auth users for these profiles
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers() as { 
+        data: AdminUserResponse; 
+        error: any; 
+      };
       
       if (authError) {
         console.error('Auth users fetch error:', authError);
         throw authError;
       }
-      console.log('Fetched auth users:', authUsers);
+      console.log('Fetched auth users:', authData?.users);
 
       // Combine the data
-      const formattedUsers = profiles?.map(profile => {
-        const authUser = authUsers?.find(u => u.id === profile.id);
+      const formattedUsers = (profiles || []).map(profile => {
+        const authUser = authData?.users?.find(u => u.id === profile.id);
         return {
           id: profile.id,
           email: authUser?.email,
           role: profile.role,
           created_at: profile.created_at
         };
-      }) || [];
+      });
 
       console.log('Combined user data:', formattedUsers);
       setUsers(formattedUsers);
