@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Book, UserCog, FileText, ArrowRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -31,19 +32,23 @@ const ProfessionalDashboard = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
-      setSession(session);
-      
-      // If user signs out, we don't need to navigate since they should stay on this page
       if (_event === 'SIGNED_OUT') {
-        console.log('User signed out');
+        console.log('User signed out, clearing session');
+        setSession(null);
+      } else {
+        setSession(session);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth subscription");
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSignOut = async () => {
     try {
+      console.log('Attempting to sign out...');
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -51,10 +56,6 @@ const ProfessionalDashboard = () => {
         toast.error('Error signing out. Please try again.');
         return;
       }
-      
-      // On successful sign out
-      setSession(null);
-      toast.success('Successfully signed out');
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred while signing out');
