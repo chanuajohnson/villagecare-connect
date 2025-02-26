@@ -12,12 +12,41 @@ interface UpvoteFeatureButtonProps {
   featureId?: string;
 }
 
-export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: UpvoteFeatureButtonProps) => {
+export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureButtonProps) => {
   const navigate = useNavigate();
   const [isVoting, setIsVoting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
   const [session, setSession] = useState<any>(null);
+
+  // First, let's get or create a feature ID for the given title
+  const getOrCreateFeatureId = async (title: string) => {
+    try {
+      // Try to get existing feature
+      const { data: existingFeature, error: fetchError } = await supabase
+        .from('features')
+        .select('id')
+        .eq('title', title)
+        .single();
+
+      if (existingFeature) {
+        return existingFeature.id;
+      }
+
+      // If feature doesn't exist, create it
+      const { data: newFeature, error: insertError } = await supabase
+        .from('features')
+        .insert([{ title, description: `Feature request for ${title}` }])
+        .select('id')
+        .single();
+
+      if (insertError) throw insertError;
+      return newFeature?.id;
+    } catch (error) {
+      console.error('Error getting/creating feature:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     // Get initial session and check for pending votes
@@ -25,18 +54,23 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       
+      const featureId = await getOrCreateFeatureId(featureTitle);
+      
       if (session && featureId) {
-        await checkUserVote(session.user.id);
-        await fetchVoteCount();
+        await checkUserVote(session.user.id, featureId);
+        await fetchVoteCount(featureId);
         
         // Check for pending vote immediately after getting session
         const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
-        console.log('Initial session check - Pending vote:', { pendingVoteFeatureId, featureId });
+        const pendingVoteTitle = localStorage.getItem('pendingVoteTitle');
+        console.log('Initial session check - Pending vote:', { pendingVoteFeatureId, pendingVoteTitle });
         
-        if (pendingVoteFeatureId === featureId) {
+        if (pendingVoteTitle === featureTitle) {
           console.log('Processing pending vote on initial session check');
           await handleUpvote(true);
           localStorage.removeItem('pendingVoteFeatureId');
+          localStorage.removeItem('pendingVoteTitle');
+          navigate('/features');
         }
       }
     };
@@ -48,55 +82,68 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
       console.log('Auth state changed:', { _event, session });
       setSession(session);
       
+      const featureId = await getOrCreateFeatureId(featureTitle);
+      
       if (session && featureId) {
-        await checkUserVote(session.user.id);
-        await fetchVoteCount();
+        await checkUserVote(session.user.id, featureId);
+        await fetchVoteCount(featureId);
         
         // Check for pending vote on auth state change
         const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
-        console.log('Auth state change - Checking pending vote:', { pendingVoteFeatureId, featureId });
+        const pendingVoteTitle = localStorage.getItem('pendingVoteTitle');
+        console.log('Auth state change - Checking pending vote:', { pendingVoteFeatureId, pendingVoteTitle });
         
-        if (pendingVoteFeatureId === featureId) {
+        if (pendingVoteTitle === featureTitle) {
           console.log('Processing pending vote after auth state change');
           await handleUpvote(true);
           localStorage.removeItem('pendingVoteFeatureId');
+          localStorage.removeItem('pendingVoteTitle');
+          navigate('/features');
         }
       }
     });
 
     // Set up real-time subscription for vote changes
-    let channel;
-    if (featureId) {
-      channel = supabase
-        .channel('vote_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'feature_votes',
-            filter: `feature_id=eq.${featureId}`
-          },
-          () => {
-            console.log('Vote change detected for feature:', featureId);
-            fetchVoteCount();
-            if (session) {
-              checkUserVote(session.user.id);
+    const setupRealtimeSubscription = async () => {
+      const featureId = await getOrCreateFeatureId(featureTitle);
+      if (featureId) {
+        const channel = supabase
+          .channel('vote_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'feature_votes',
+              filter: `feature_id=eq.${featureId}`
+            },
+            () => {
+              console.log('Vote change detected for feature:', featureId);
+              fetchVoteCount(featureId);
+              if (session) {
+                checkUserVote(session.user.id, featureId);
+              }
             }
-          }
-        )
-        .subscribe();
-    }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }
+    };
+
+    const cleanupFn = setupRealtimeSubscription();
 
     return () => {
       subscription.unsubscribe();
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (cleanupFn) {
+        cleanupFn();
       }
     };
-  }, [featureId]);
+  }, [featureTitle, navigate]);
 
-  const checkUserVote = async (userId: string) => {
+  const checkUserVote = async (userId: string, featureId: string) => {
     if (!featureId) return;
     
     try {
@@ -112,7 +159,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     }
   };
 
-  const fetchVoteCount = async () => {
+  const fetchVoteCount = async (featureId: string) => {
     if (!featureId) return;
     
     try {
@@ -128,15 +175,18 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
   };
 
   const handleUpvote = async (isPostLogin: boolean = false) => {
+    const featureId = await getOrCreateFeatureId(featureTitle);
+    
     if (!featureId) {
-      toast.error('This feature is not available for voting yet.');
+      toast.error('Unable to process vote at this time.');
       return;
     }
 
     if (!session) {
-      // Store the feature ID we want to vote for after login
-      console.log('Storing pending vote for feature:', featureId);
+      // Store the feature info we want to vote for after login
+      console.log('Storing pending vote for feature:', featureTitle);
       localStorage.setItem('pendingVoteFeatureId', featureId);
+      localStorage.setItem('pendingVoteTitle', featureTitle);
       navigate('/auth');
       toast.info(`Sign in to vote for "${featureTitle}" and other upcoming features!`);
       return;
@@ -172,6 +222,10 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
         if (error) throw error;
         toast.success(`Thank you for voting for "${featureTitle}"!`);
       }
+
+      if (!hasVoted && !isPostLogin) {
+        navigate('/features');
+      }
     } catch (error: any) {
       console.error('Error handling vote:', error);
       toast.error(error.message || 'Failed to process your vote. Please try again.');
@@ -193,4 +247,3 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
     </Button>
   );
 };
-
