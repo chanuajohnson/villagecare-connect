@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -58,10 +58,10 @@ export const AdminUserManagement = () => {
     }
   };
 
-  // Fetch users when component mounts
-  useState(() => {
+  // Use useEffect instead of useState for initial fetch
+  useEffect(() => {
     fetchUsers();
-  });
+  }, []); // Empty dependency array means this only runs once when component mounts
 
   return (
     <div className="space-y-6">
@@ -110,3 +110,4 @@ export const AdminUserManagement = () => {
     </div>
   );
 };
+
