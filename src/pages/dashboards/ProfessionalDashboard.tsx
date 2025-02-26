@@ -6,15 +6,18 @@ import { DashboardRegistrationCard } from "@/components/dashboard/DashboardRegis
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
 
 const ProfessionalDashboard = () => {
-  const { session, handleSignOut } = useSession();
+  const { session, handleSignOut, isLoading } = useSession();
 
   const breadcrumbItems = [
     { label: "Home", link: "/" },
     { label: "Professional Dashboard", link: "/dashboard/professional" }
   ];
 
-  // Construct the login URL with returnTo parameter
   const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/professional')}`;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,4 +47,3 @@ const ProfessionalDashboard = () => {
 };
 
 export default ProfessionalDashboard;
-

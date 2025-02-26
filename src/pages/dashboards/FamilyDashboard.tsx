@@ -1,35 +1,24 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe, LogIn, LogOut } from "lucide-react";
+import { ClipboardList, Users, Calendar, ArrowRight, Bell, Pill, Clock, CalendarCheck, Syringe } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import MealPlanner from "@/components/meal-planning/MealPlanner";
-import { useEffect, useState } from "react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
+import { useSession } from "@/hooks/useSession";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 const FamilyDashboard = () => {
   const navigate = useNavigate();
-  const [session, setSession] = useState<any>(null);
+  const { session, handleSignOut, isLoading } = useSession();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-    };
+  const breadcrumbItems = [
+    { label: "Home", link: "/" },
+    { label: "Family Dashboard", link: "/dashboard/family" }
+  ];
 
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const loginUrl = `/auth?returnTo=${encodeURIComponent('/dashboard/family')}`;
 
   const handleFeatureClick = (featureTitle: string) => {
     if (!session) {
@@ -44,21 +33,9 @@ const FamilyDashboard = () => {
     });
   };
 
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        toast.error('Error signing out. Please try again.');
-      } else {
-        setSession(null);
-      }
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('An unexpected error occurred while signing out');
-    }
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   const QuickActions = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -131,24 +108,12 @@ const FamilyDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <Breadcrumb />
-          <div className="flex gap-4">
-            {!session ? (
-              <Link to="/auth">
-                <Button variant="outline">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            )}
-          </div>
-        </div>
+        <DashboardHeader 
+          breadcrumbItems={breadcrumbItems}
+          session={session}
+          onSignOut={handleSignOut}
+          loginUrl={loginUrl}
+        />
 
         {!session && <PreviewBanner />}
 
