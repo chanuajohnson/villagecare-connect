@@ -45,29 +45,28 @@ export const useSession = () => {
     console.log('Clearing session state');
     setSession(null);
     setUserRole(null);
+    setIsLoading(false);
     navigate('/auth', { replace: true });
   };
 
   const handleSignOut = async () => {
-    console.log('Starting sign out process...');
-    setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
+      console.log('Starting sign out process...');
+      setIsLoading(true);
       
+      const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
         toast.error('Error signing out');
         return;
       }
       
-      console.log('Sign out successful, clearing session');
-      clearSession();
+      console.log('Sign out successful');
       toast.success('Successfully signed out');
+      clearSession();
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
     }
   };
 
