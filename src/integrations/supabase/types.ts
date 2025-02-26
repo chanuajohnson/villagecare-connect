@@ -42,6 +42,13 @@ export type Database = {
             foreignKeyName: "feature_votes_feature_id_fkey"
             columns: ["feature_id"]
             isOneToOne: false
+            referencedRelation: "feature_statistics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_votes_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
             referencedRelation: "features"
             referencedColumns: ["id"]
           },
@@ -258,10 +265,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      feature_statistics: {
+        Row: {
+          description: string | null
+          id: string | null
+          status: Database["public"]["Enums"]["feature_status"] | null
+          title: string | null
+          vote_count: number | null
+          voted_users: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_feature_vote_count: {
+        Args: {
+          feature_id: string
+        }
+        Returns: number
+      }
+      has_user_voted_for_feature: {
+        Args: {
+          feature_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       feature_status:
