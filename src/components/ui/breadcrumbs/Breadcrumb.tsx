@@ -1,3 +1,4 @@
+
 import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
@@ -25,9 +26,10 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
 
   return paths.map((path) => {
     currentPath += `/${path}`;
+    // Return early if this is a dashboard route and there's only one path segment
     if (path === "dashboard" && paths.length === 1) {
       return {
-        label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
+        label: "",  // Empty label means this breadcrumb won't be shown
         path: "/",
       };
     }
@@ -35,7 +37,7 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
       label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
       path: currentPath,
     };
-  });
+  }).filter(item => item.label !== ""); // Filter out empty labels
 };
 
 export function Breadcrumb() {
@@ -82,3 +84,4 @@ export function Breadcrumb() {
     </nav>
   );
 }
+
