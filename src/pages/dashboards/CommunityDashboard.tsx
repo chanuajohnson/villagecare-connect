@@ -8,11 +8,9 @@ import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 const CommunityDashboard = () => {
   const [session, setSession] = useState<any>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Get initial session
@@ -28,7 +26,7 @@ const CommunityDashboard = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -39,6 +37,7 @@ const CommunityDashboard = () => {
         toast.error('Error signing out. Please try again.');
       } else {
         setSession(null);
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Sign out error:', error);
