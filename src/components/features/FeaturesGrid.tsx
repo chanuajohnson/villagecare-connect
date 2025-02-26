@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import FeatureCard from './FeatureCard';
@@ -200,26 +201,26 @@ const FeaturesGrid = () => {
       ))}
       
       {additionalFeatures.map((feature, index) => (
-        <Card key={index} className="bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200">
+        <Card key={index} className="w-full">
           <CardHeader>
-            <div className="flex items-center gap-2 mb-4">
-              <feature.icon className="w-8 h-8 text-primary-600" />
-              <CardTitle className="text-2xl">{feature.title}</CardTitle>
-            </div>
-            <CardDescription className="text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <feature.icon className="h-5 w-5" />
+              {feature.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
               {feature.description}
             </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4">
+            <div className="space-y-2 text-sm">
               {feature.benefits.map((benefit, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <span className="text-primary-600 mt-1">✓</span>
-                  <p>{benefit}</p>
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-primary">✓</span>
+                  {benefit}
                 </div>
               ))}
             </div>
-            <div className="pt-4 space-y-4">
+            <div className="mt-6 space-y-4">
               <Link to="/auth" className="block w-full">
                 <Button className="w-full">
                   Get Started
@@ -234,36 +235,36 @@ const FeaturesGrid = () => {
         </Card>
       ))}
 
-      <Card className="lg:col-span-3 bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200">
+      <Card className="lg:col-span-3 w-full">
         <CardHeader>
-          <div className="flex items-center gap-2 mb-4">
-            <Rocket className="w-8 h-8 text-primary-600" />
-            <CardTitle className="text-2xl">Insider Access & Tech Innovators Hub</CardTitle>
-          </div>
-          <CardDescription className="text-lg">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Rocket className="h-5 w-5" />
+            Insider Access & Tech Innovators Hub
+          </CardTitle>
+          <CardDescription>
             A dedicated space for tech enthusiasts, AI builders, and behind-the-scenes explorers who want to follow the platform's development journey, feature rollouts, and upcoming innovations.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4">
-            <div className="flex items-start gap-2">
-              <ShieldCheck className="w-5 h-5 text-primary-600 mt-1" />
-              <p>Exclusive Insider Updates – Get early access to new platform features, UI/UX enhancements, and backend improvements before public release.</p>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <span>Exclusive Insider Updates – Get early access to new platform features, UI/UX enhancements, and backend improvements before public release.</span>
             </div>
-            <div className="flex items-start gap-2">
-              <Code className="w-5 h-5 text-primary-600 mt-1" />
-              <p>Behind-the-Scenes Tech Drops – Learn about AI integrations, automation tools, and development workflows powering the platform.</p>
+            <div className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-primary" />
+              <span>Behind-the-Scenes Tech Drops – Learn about AI integrations, automation tools, and development workflows powering the platform.</span>
             </div>
-            <div className="flex items-start gap-2">
-              <Brain className="w-5 h-5 text-primary-600 mt-1" />
-              <p>Beta Testing & Feedback Loop – Help refine new features, participate in A/B testing, and provide direct feedback on technical implementations.</p>
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <span>Beta Testing & Feedback Loop – Help refine new features, participate in A/B testing, and provide direct feedback on technical implementations.</span>
             </div>
-            <div className="flex items-start gap-2">
-              <Users className="w-5 h-5 text-primary-600 mt-1" />
-              <p>Community of Builders – Connect with other AI enthusiasts, developers, and product innovators who are passionate about using tech to enhance caregiving solutions.</p>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <span>Community of Builders – Connect with other AI enthusiasts, developers, and product innovators who are passionate about using tech to enhance caregiving solutions.</span>
             </div>
           </div>
-          <div className="pt-4 space-y-4">
+          <div className="mt-6 space-y-4">
             <Link to="/auth" className="block w-full">
               <Button className="w-full">
                 Join the Innovators Hub 🚀
@@ -281,3 +282,4 @@ const FeaturesGrid = () => {
 };
 
 export default FeaturesGrid;
+
