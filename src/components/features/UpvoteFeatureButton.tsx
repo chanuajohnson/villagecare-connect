@@ -29,16 +29,21 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
       }
     });
 
-    // Listen for auth changes
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('Auth state changed:', { _event, session });
       setSession(session);
+      
       if (session && featureId) {
         await checkUserVote(session.user.id);
         await fetchVoteCount();
         
-        // If we just logged in and there's a pending vote, submit it
-        const pendingVote = localStorage.getItem('pendingVoteFeatureId');
-        if (pendingVote === featureId) {
+        // Check if there's a pending vote after login
+        const pendingVoteFeatureId = localStorage.getItem('pendingVoteFeatureId');
+        console.log('Checking pending vote:', { pendingVoteFeatureId, featureId });
+        
+        if (pendingVoteFeatureId === featureId) {
+          console.log('Processing pending vote for feature:', featureId);
           await handleUpvote(true);
           localStorage.removeItem('pendingVoteFeatureId');
         }
@@ -67,8 +72,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
         subscription.unsubscribe();
+        supabase.removeChannel(channel);
       };
     }
     
@@ -143,7 +148,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId }: Upvo
             {
               feature_id: featureId,
               user_id: session.user.id,
-              user_email: session.user.email
+              user_email: session.user.email,
+              user_type: 'user'
             }
           ]);
 
