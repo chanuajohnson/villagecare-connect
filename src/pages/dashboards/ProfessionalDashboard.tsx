@@ -6,15 +6,45 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+interface FeatureIds {
+  [key: string]: string | null;
+}
 
 const ProfessionalDashboard = () => {
-  // Feature IDs for the professional dashboard features
-  const FEATURE_IDS = {
-    registration: "professional-registration",
-    profileManagement: "professional-profile-management",
-    adminTools: "professional-admin-tools",
-    trainingResources: "training-resources"
-  };
+  const [featureIds, setFeatureIds] = useState<FeatureIds>({
+    registration: null,
+    profileManagement: null,
+    adminTools: null,
+    trainingResources: null
+  });
+
+  useEffect(() => {
+    const fetchFeatureIds = async () => {
+      const { data: features, error } = await supabase
+        .from('feature_lookup')
+        .select('id, title');
+      
+      if (error) {
+        console.error('Error fetching feature IDs:', error);
+        return;
+      }
+
+      const ids: FeatureIds = {};
+      features?.forEach(feature => {
+        if (feature.title === 'Professional Registration') ids.registration = feature.id;
+        if (feature.title === 'Professional Profile Management') ids.profileManagement = feature.id;
+        if (feature.title === 'Administrative Tools') ids.adminTools = feature.id;
+        if (feature.title === 'Training Resources Access') ids.trainingResources = feature.id;
+      });
+
+      setFeatureIds(ids);
+    };
+
+    fetchFeatureIds();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,7 +80,7 @@ const ProfessionalDashboard = () => {
                 </Button>
               </Link>
               <UpvoteFeatureButton 
-                featureId={FEATURE_IDS.registration}
+                featureId={featureIds.registration}
                 featureTitle="Professional Registration" 
                 className="w-full" 
               />
@@ -77,7 +107,7 @@ const ProfessionalDashboard = () => {
                   Update Profile <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
                 <UpvoteFeatureButton 
-                  featureId={FEATURE_IDS.profileManagement}
+                  featureId={featureIds.profileManagement}
                   featureTitle="Professional Profile Management" 
                   className="w-full" 
                 />
@@ -109,7 +139,7 @@ const ProfessionalDashboard = () => {
                   Access Tools <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
                 <UpvoteFeatureButton 
-                  featureId={FEATURE_IDS.adminTools}
+                  featureId={featureIds.adminTools}
                   featureTitle="Administrative Tools" 
                   className="w-full" 
                 />
@@ -135,7 +165,7 @@ const ProfessionalDashboard = () => {
                   Learn More <ArrowRight className="ml-2 w-4 h-4" />
                 </button>
                 <UpvoteFeatureButton 
-                  featureId={FEATURE_IDS.trainingResources}
+                  featureId={featureIds.trainingResources}
                   featureTitle="Training Resources Access" 
                   className="w-full" 
                 />

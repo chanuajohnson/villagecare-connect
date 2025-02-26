@@ -42,6 +42,13 @@ export type Database = {
             foreignKeyName: "feature_votes_feature_id_fkey"
             columns: ["feature_id"]
             isOneToOne: false
+            referencedRelation: "feature_lookup"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_votes_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
             referencedRelation: "feature_statistics"
             referencedColumns: ["id"]
           },
@@ -265,6 +272,21 @@ export type Database = {
       }
     }
     Views: {
+      feature_lookup: {
+        Row: {
+          id: string | null
+          title: string | null
+        }
+        Insert: {
+          id?: string | null
+          title?: string | null
+        }
+        Update: {
+          id?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       feature_statistics: {
         Row: {
           description: string | null
