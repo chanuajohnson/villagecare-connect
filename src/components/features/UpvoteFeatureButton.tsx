@@ -13,11 +13,10 @@ interface UpvoteFeatureButtonProps {
   buttonText?: string;
 }
 
-export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFeatureId, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
+export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
   const [isVoting, setIsVoting] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
-  const [localFeatureId, setLocalFeatureId] = useState<string | null>(null);
   const { user, requireAuth } = useAuth();
   
   const getOrCreateFeatureId = async (title: string) => {
@@ -27,8 +26,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         .select('id')
         .eq('title', title)
         .maybeSingle();
-
-      if (fetchError) throw fetchError;
 
       if (existingFeature) {
         return existingFeature.id;
@@ -85,9 +82,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
   useEffect(() => {
     const initializeFeature = async () => {
-      const featureId = propFeatureId || await getOrCreateFeatureId(featureTitle);
+      const featureId = await getOrCreateFeatureId(featureTitle);
       if (featureId) {
-        setLocalFeatureId(featureId);
         await fetchVoteCount(featureId);
         if (user) {
           const userHasVoted = await checkUserVote(featureId);
@@ -97,27 +93,26 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     };
 
     initializeFeature();
-  }, [featureTitle, propFeatureId, user]);
+  }, [featureTitle, user]);
 
   const handleUpvote = async () => {
+    const featureId = await getOrCreateFeatureId(featureTitle);
+    if (!featureId) {
+      toast.error('Unable to process vote at this time.');
+      return;
+    }
+    
+    // Store the feature ID for post-login handling
+    sessionStorage.setItem('pendingFeatureId', featureId);
+    
+    if (!requireAuth(`upvote "${featureTitle}"`)) {
+      return;
+    }
+    
+    if (isVoting) return;
+    setIsVoting(true);
+    
     try {
-      const featureId = localFeatureId || await getOrCreateFeatureId(featureTitle);
-      if (!featureId) {
-        toast.error('Unable to process vote at this time.');
-        return;
-      }
-      
-      // Store the feature ID for post-login handling
-      sessionStorage.setItem('pendingFeatureId', featureId);
-      sessionStorage.setItem('pendingFeatureUpvote', featureId);
-      
-      if (!requireAuth(`upvote "${featureTitle}"`)) {
-        return;
-      }
-      
-      if (isVoting) return;
-      setIsVoting(true);
-      
       if (hasVoted) {
         const { error } = await supabase
           .from('feature_upvotes')
@@ -137,10 +132,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
             user_id: user!.id
           }]);
 
-        if (error) {
-          console.error('Error inserting upvote:', error);
-          throw error;
-        }
+        if (error) throw error;
         setHasVoted(true);
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
@@ -152,7 +144,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       setIsVoting(false);
       // Clean up session storage after successful vote
       sessionStorage.removeItem('pendingFeatureId');
-      sessionStorage.removeItem('pendingFeatureUpvote');
     }
   };
 
