@@ -59,11 +59,6 @@ export function Navigation() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Debug info */}
-          <div className="text-xs text-gray-400">
-            {user ? `Logged in as ${user.email?.split('@')[0]}` : 'Not logged in'}
-          </div>
-
           {isLoading ? (
             <Button variant="outline" size="sm" disabled>Loading...</Button>
           ) : user ? (
