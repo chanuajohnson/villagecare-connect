@@ -59,23 +59,22 @@ export function Navigation() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Debug info - remove in production */}
-          <div className="text-xs text-gray-400 hidden">
-            Auth state: {isLoading ? "Loading" : user ? "Logged in" : "Logged out"}
+          {/* Debug info */}
+          <div className="text-xs text-gray-400">
+            {user ? `Logged in as ${user.email?.split('@')[0]}` : 'Not logged in'}
           </div>
 
-          {/* Always show either Sign In or Sign Out button */}
           {isLoading ? (
             <Button variant="outline" size="sm" disabled>Loading...</Button>
           ) : user ? (
             <Button 
-              onClick={signOut} 
-              variant="destructive" 
-              size="sm" 
+              onClick={signOut}
+              variant="destructive"
+              size="sm"
               className="flex items-center gap-2"
             >
               <LogOut className="h-4 w-4" />
-              <span className="inline">Sign Out</span>
+              <span>Sign Out</span>
             </Button>
           ) : (
             <Link to="/auth">
