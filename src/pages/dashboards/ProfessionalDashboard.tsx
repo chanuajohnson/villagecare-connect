@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const ProfessionalDashboard = () => {
+  const { user, isProfileComplete } = useAuth();
+  
   const breadcrumbItems = [
     {
       label: "Professional",
@@ -26,15 +29,39 @@ const ProfessionalDashboard = () => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <div className="bg-blue-50 p-6 rounded-lg mb-8">
-            <h2 className="text-xl mb-2">Preview Mode</h2>
-            <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
-            <Link to="/auth">
-              <Button variant="default" size="lg" className="float-right">
-                Sign Up Now
-              </Button>
-            </Link>
-          </div>
+          {!user ? (
+            <div className="bg-gradient-to-r from-teal-50 to-blue-50 p-6 rounded-lg mb-8 border border-teal-100">
+              <h2 className="text-2xl font-bold mb-2">Welcome to Your Professional Dashboard! 🏥 Connect, Learn, and Grow.</h2>
+              <p className="text-gray-600 mb-4">Caregivers and agencies like you are shaping the future of care. Get hired, track your services, and access professional tools.</p>
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link to="/auth">
+                  <Button variant="default" size="sm">
+                    Complete Your Profile
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    View Jobs
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Access Professional Tools
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : !isProfileComplete ? (
+            <div className="bg-yellow-50 p-6 rounded-lg mb-8">
+              <h2 className="text-xl mb-2">Complete Your Profile</h2>
+              <p className="text-gray-600 mb-4">Please complete your profile to access all features.</p>
+              <Link to="/registration/professional">
+                <Button variant="default" size="lg" className="float-right">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          ) : null}
 
           <h1 className="text-3xl font-bold">Professional Dashboard</h1>
           <p className="text-muted-foreground mt-2">
@@ -43,29 +70,31 @@ const ProfessionalDashboard = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle>Complete Your Registration</CardTitle>
-              <CardDescription>
-                Set up your professional profile to start connecting with families
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                variant="default"
-                className="w-full bg-primary hover:bg-primary-600 text-white"
-              >
-                Complete Registration
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <div className="pt-2">
-                <UpvoteFeatureButton
-                  featureTitle="Professional Registration"
-                  buttonText="Upvote this Feature"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {(!user || !isProfileComplete) && (
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle>Complete Your Registration</CardTitle>
+                <CardDescription>
+                  Set up your professional profile to start connecting with families
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  variant="default"
+                  className="w-full bg-primary hover:bg-primary-600 text-white"
+                >
+                  Complete Registration
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <div className="pt-2">
+                  <UpvoteFeatureButton
+                    featureTitle="Professional Registration"
+                    buttonText="Upvote this Feature"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-white shadow-sm">
             <CardHeader>

@@ -30,14 +30,26 @@ const CommunityDashboard = () => {
           className="space-y-6"
         >
           {!user ? (
-            <div className="bg-blue-50 p-6 rounded-lg mb-8">
-              <h2 className="text-xl mb-2">Preview Mode</h2>
-              <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
-              <Link to="/auth">
-                <Button variant="default" size="lg" className="float-right">
-                  Sign Up Now
-                </Button>
-              </Link>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg mb-8 border border-blue-100">
+              <h2 className="text-2xl font-bold mb-2">Join the Movement! 🌍 Supporting Care, Together.</h2>
+              <p className="text-gray-600 mb-4">Help families, participate in care circles, and engage with the growing community as we expand features.</p>
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link to="/auth">
+                  <Button variant="default" size="sm">
+                    Find Care Circles
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Join Events
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Get Involved
+                  </Button>
+                </Link>
+              </div>
             </div>
           ) : !isProfileComplete ? (
             <div className="bg-yellow-50 p-6 rounded-lg mb-8">

@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const FamilyDashboard = () => {
+  const { user, isProfileComplete } = useAuth();
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
 
   return (
@@ -21,39 +23,65 @@ const FamilyDashboard = () => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <div className="bg-blue-50 p-6 rounded-lg mb-8">
-            <h2 className="text-xl mb-2">Preview Mode</h2>
-            <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
-            <Link to="/auth">
-              <Button variant="default" size="lg" className="float-right">
-                Sign Up Now
-              </Button>
-            </Link>
-          </div>
+          {!user ? (
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mb-8 border border-green-100">
+              <h2 className="text-2xl font-bold mb-2">Welcome to Takes a Village! 🚀 Your Care Coordination Hub.</h2>
+              <p className="text-gray-600 mb-4">We're building this platform with you in mind. Explore features, connect with caregivers, and help shape the future of care by voting on features!</p>
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link to="/auth">
+                  <Button variant="default" size="sm">
+                    View Care Plans
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Find a Caregiver
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Upvote Features
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : !isProfileComplete ? (
+            <div className="bg-yellow-50 p-6 rounded-lg mb-8">
+              <h2 className="text-xl mb-2">Complete Your Profile</h2>
+              <p className="text-gray-600 mb-4">Please complete your profile to access all features.</p>
+              <Link to="/registration/family">
+                <Button variant="default" size="lg" className="float-right">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          ) : null}
 
           <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
-          <p className="text-gray-600 mb-8">Preview our comprehensive care coordination platform.</p>
+          <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Complete Your Registration</CardTitle>
-              <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                variant="default" 
-                className="w-full"
-              >
-                Complete Registration
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <UpvoteFeatureButton 
-                featureTitle="Family Registration" 
-                className="w-full" 
-                buttonText="Upvote this Feature" 
-              />
-            </CardContent>
-          </Card>
+          {(!user || !isProfileComplete) && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Complete Your Registration</CardTitle>
+                <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  variant="default" 
+                  className="w-full"
+                >
+                  Complete Registration
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <UpvoteFeatureButton 
+                  featureTitle="Family Registration" 
+                  className="w-full" 
+                  buttonText="Upvote this Feature" 
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
