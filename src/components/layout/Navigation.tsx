@@ -26,7 +26,7 @@ export function Navigation() {
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold">CareCircle</Link>
+          <Link to="/" className="text-xl font-bold">Takes a Village</Link>
         </div>
         
         <div className="flex items-center gap-4">
