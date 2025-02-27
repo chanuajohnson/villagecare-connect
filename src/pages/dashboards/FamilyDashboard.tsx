@@ -196,55 +196,66 @@ const FamilyDashboard = () => {
 
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
           <div className="bg-white rounded-lg p-6 mb-8">
+            <div className="flex mb-4 gap-4 text-sm">
+              <span className="text-gray-500">Meal Planner</span>
+              <span className="text-gray-500">Recipe Library</span>
+              <span className="text-gray-500">Suggestions</span>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Meal Planner</h3>
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Select Date</h4>
-                    <p className="text-gray-600 text-sm">Pick a date</p>
-                  </div>
+                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Select Date
+                </h3>
+                <div className="border rounded-lg p-4">
+                  <p className="text-gray-500 text-sm">Pick a date</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">Meal Types</h3>
+                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Meal Types
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600">Morning Drink</p>
-                    <p className="text-gray-600">Morning Snack</p>
-                    <p className="text-gray-600">Afternoon Snack</p>
+                  <div className="space-y-2">
+                    <p className="text-gray-500">Morning Drink</p>
+                    <p className="text-gray-500">Morning Snack</p>
+                    <p className="text-gray-500">Afternoon Snack</p>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Breakfast</p>
-                    <p className="text-gray-600">Lunch</p>
-                    <p className="text-gray-600">Dinner</p>
+                  <div className="space-y-2">
+                    <p className="text-gray-500">Breakfast</p>
+                    <p className="text-gray-500">Lunch</p>
+                    <p className="text-gray-500">Dinner</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">Features</h3>
+                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Features
+                </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
-                    <span className="text-gray-600">Plan meals for the whole family</span>
+                    <span className="text-gray-500">Plan meals for the whole family</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
-                    <span className="text-gray-600">Browse recipe suggestions</span>
+                    <span className="text-gray-500">Browse recipe suggestions</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
-                    <span className="text-gray-600">Track nutritional information</span>
+                    <span className="text-gray-500">Track nutritional information</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
-                    <span className="text-gray-600">Generate shopping lists</span>
+                    <span className="text-gray-500">Generate shopping lists</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
-                    <span className="text-gray-600">Share plans with care team</span>
+                    <span className="text-gray-500">Share plans with care team</span>
                   </li>
                 </ul>
               </div>
