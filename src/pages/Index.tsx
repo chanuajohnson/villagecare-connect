@@ -1,9 +1,11 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
 const roles = [
@@ -13,7 +15,7 @@ const roles = [
     description: "Coordinate care for your loved ones",
     icon: Users,
     color: "bg-primary-100",
-    path: "/dashboard/family",
+    path: "/auth",
     cta: "Find Care Now",
     features: [
       "Create and manage care plans",
@@ -30,7 +32,7 @@ const roles = [
     description: "Provide care services and expertise",
     icon: UserCog,
     color: "bg-primary-200",
-    path: "/dashboard/professional",
+    path: "/auth",
     cta: "Get Hired as a Skilled Care Professional",
     features: [
       "Showcase qualifications",
@@ -47,7 +49,7 @@ const roles = [
     description: "Support and contribute to care networks",
     icon: Heart,
     color: "bg-primary-300",
-    path: "/dashboard/community",
+    path: "/auth",
     cta: "Join the Village",
     features: [
       "Join care circles",
@@ -67,11 +69,8 @@ const Index = () => {
 
   const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
-    const role = roles.find((r) => r.id === roleId);
-    if (role) {
-      window.location.href = role.path;
-      toast.success(`Welcome to the ${role.title} dashboard!`);
-    }
+    navigate('/auth');
+    toast.success(`Welcome! Please sign up or log in to continue.`);
   };
 
   const handleGetStarted = () => {
@@ -242,12 +241,13 @@ const Index = () => {
                         </li>
                       ))}
                     </ul>
-                    <button
-                      onClick={() => handleRoleSelect(role.id)}
-                      className="w-full mt-6 inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600"
-                    >
-                      {role.cta}
-                    </button>
+                    <Link to="/auth">
+                      <Button
+                        className="w-full mt-6 inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600"
+                      >
+                        {role.cta}
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               </motion.div>

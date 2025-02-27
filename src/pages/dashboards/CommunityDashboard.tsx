@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Calendar, Heart } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { Link } from "react-router-dom";
 
 const CommunityDashboard = () => {
   const breadcrumbItems = [
@@ -28,9 +29,11 @@ const CommunityDashboard = () => {
           <div className="bg-blue-50 p-6 rounded-lg mb-8">
             <h2 className="text-xl mb-2">Preview Mode</h2>
             <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
-            <Button variant="default" size="lg" className="float-right">
-              Sign Up Now
-            </Button>
+            <Link to="/auth">
+              <Button variant="default" size="lg" className="float-right">
+                Sign Up Now
+              </Button>
+            </Link>
           </div>
 
           <h1 className="text-3xl font-bold">Community Dashboard</h1>
