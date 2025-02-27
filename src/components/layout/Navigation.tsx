@@ -25,12 +25,11 @@ export function Navigation() {
           <Link to="/" className="text-xl font-bold">Takes a Village</Link>
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-4">
           <Link to="/features" className="text-gray-700 hover:text-primary">
             Features
           </Link>
           
-          {/* Always show Dashboards dropdown regardless of authentication status */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
@@ -61,21 +60,15 @@ export function Navigation() {
           {!isLoading && (
             <>
               {user ? (
-                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                  <User className="h-4 w-4 text-green-600" />
-                  <span className="text-xs text-green-700 font-medium max-w-[120px] truncate hidden sm:inline">
-                    {user.email}
-                  </span>
-                  <Button 
-                    onClick={signOut} 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1 ml-1 bg-white hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="inline">Sign Out</span>
-                  </Button>
-                </div>
+                <Button 
+                  onClick={signOut} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </Button>
               ) : (
                 <Link to="/auth">
                   <Button size="sm">Sign In</Button>
