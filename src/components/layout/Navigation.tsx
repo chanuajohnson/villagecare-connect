@@ -29,6 +29,7 @@ export function Navigation() {
             Features
           </Link>
           
+          {/* Always show Dashboards dropdown regardless of authentication status */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
