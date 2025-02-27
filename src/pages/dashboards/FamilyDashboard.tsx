@@ -49,7 +49,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <UpvoteFeatureButton featureTitle="New Care Plan" className="w-full" />
+                <UpvoteFeatureButton featureTitle="New Care Plan" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -61,7 +61,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <UpvoteFeatureButton featureTitle="Add Team Member" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Add Team Member" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -73,7 +73,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -85,7 +85,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <UpvoteFeatureButton featureTitle="Notifications" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Notifications" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
           </div>
@@ -101,7 +101,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Plans</Button>
-                <UpvoteFeatureButton featureTitle="Care Plans" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Care Plans" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -115,7 +115,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Team</Button>
-                <UpvoteFeatureButton featureTitle="Care Team" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Care Team" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -129,7 +129,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Calendar</Button>
-                <UpvoteFeatureButton featureTitle="Appointments" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Appointments" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
           </div>
@@ -146,7 +146,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Medications</Button>
-                <UpvoteFeatureButton featureTitle="Medications" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Medications" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -160,7 +160,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Schedule</Button>
-                <UpvoteFeatureButton featureTitle="Medication Schedule" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Medication Schedule" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -174,7 +174,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Planning</Button>
-                <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -188,7 +188,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Administration</Button>
-                <UpvoteFeatureButton featureTitle="Medication Administration" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Medication Administration" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
           </div>
@@ -207,7 +207,7 @@ const FamilyDashboard = () => {
                 <div className="border rounded-lg p-4">
                   <p className="text-gray-500 text-sm">Pick a date</p>
                 </div>
-                <UpvoteFeatureButton featureTitle="Meal Planning Date Selection" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Meal Planning Date Selection" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -232,7 +232,7 @@ const FamilyDashboard = () => {
                     <p className="text-gray-500">Dinner</p>
                   </div>
                 </div>
-                <UpvoteFeatureButton featureTitle="Meal Types Selection" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Meal Types Selection" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -246,7 +246,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Library</Button>
-                <UpvoteFeatureButton featureTitle="Recipe Library" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Recipe Library" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -260,7 +260,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="secondary" className="w-full">View Suggestions</Button>
-                <UpvoteFeatureButton featureTitle="Meal Suggestions" className="w-full" />
+                <UpvoteFeatureButton featureTitle="Meal Suggestions" className="w-full" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
           </div>
