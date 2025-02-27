@@ -1,5 +1,5 @@
 
-export type UserRole = 'family' | 'professional' | 'community';
+export type UserRole = 'family' | 'professional' | 'community' | 'admin';
 
 export interface Profile {
   id: string;
