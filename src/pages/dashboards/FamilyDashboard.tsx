@@ -2,17 +2,22 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import { Pill, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, FileText, Bell } from "lucide-react";
+import { Pill, Clock, Calendar as CalendarIcon, PenSquare, ChefHat, ActivitySquare, Users, FileText, Bell } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { useState } from "react";
+import MealTypeSelector from "@/components/meal-planning/components/MealTypeSelector";
+import RecipeBrowser from "@/components/meal-planning/RecipeBrowser";
 
 const FamilyDashboard = () => {
-  const breadcrumbItems = [
-    {
-      label: "Family",
-      href: "/dashboard/family",
-    },
-  ];
+  const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState("");
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,7 +28,7 @@ const FamilyDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="space-y-6"
         >
           <div className="bg-blue-50 p-6 rounded-lg mb-8">
             <h2 className="text-xl font-semibold mb-2">Preview Mode</h2>
@@ -200,19 +205,92 @@ const FamilyDashboard = () => {
           </div>
 
           <h2 className="text-2xl font-bold mb-6">Meal Planning</h2>
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ChefHat className="h-5 w-5 text-primary" />
-                Meal Planning
-              </CardTitle>
-              <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full" variant="secondary">Start Planning Meals</Button>
-              <UpvoteFeatureButton featureTitle="Meal Planning" className="w-full" />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 text-primary" />
+                  Select Date
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date);
+                        setIsCalendarOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  Meal Types
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MealTypeSelector
+                  selectedMealType={selectedMealType}
+                  setSelectedMealType={setSelectedMealType}
+                  selectedDate={selectedDate}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ChefHat className="h-5 w-5 text-primary" />
+                  Recipe Library
+                </CardTitle>
+                <CardDescription>Browse and select recipes for your meal plan</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="planner" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="planner">Planner</TabsTrigger>
+                    <TabsTrigger value="recipes">Recipes</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="planner">
+                    {selectedDate && selectedMealType ? (
+                      <div className="space-y-4">
+                        <RecipeBrowser
+                          category={selectedMealType}
+                          onSelectRecipe={(recipe) => {
+                            console.log("Selected recipe:", recipe);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Please select a date and meal type to start planning
+                      </p>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="recipes">
+                    <div className="space-y-4">
+                      <RecipeBrowser />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
 
           <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
           <Card className="mb-8">
