@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const ProfessionalDashboard = () => {
   const breadcrumbItems = [
@@ -30,38 +31,32 @@ const ProfessionalDashboard = () => {
           </p>
         </motion.div>
 
-        <div className="grid gap-6">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle>Complete Your Registration</CardTitle>
               <CardDescription>
                 Set up your professional profile to start connecting with families
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full flex items-center justify-center">
+            <CardContent className="space-y-4">
+              <Button 
+                variant="default"
+                className="w-full bg-primary hover:bg-primary-600 text-white"
+              >
                 Complete Registration
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <div className="pt-2">
+                <UpvoteFeatureButton
+                  featureTitle="Professional Registration"
+                  buttonText="Upvote this Feature"
+                />
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Your Profile</CardTitle>
-              <CardDescription>
-                Showcase your qualifications and experience
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full flex items-center justify-center">
-                Update Profile
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
+          <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle>Admin Assistant</CardTitle>
               <CardDescription>
@@ -69,16 +64,73 @@ const ProfessionalDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 mb-4">
-                <p className="text-sm">Get Job Letters</p>
-                <p className="text-sm">NIS Registration Assistance</p>
-                <p className="text-sm">Document Management</p>
-                <p className="text-sm">Administrative Support</p>
+              <div className="space-y-2 mb-4 text-left">
+                <p className="text-sm text-gray-600">Get Job Letters</p>
+                <p className="text-sm text-gray-600">NIS Registration Assistance</p>
+                <p className="text-sm text-gray-600">Document Management</p>
+                <p className="text-sm text-gray-600">Administrative Support</p>
               </div>
-              <Button className="w-full flex items-center justify-center">
+              <Button 
+                variant="default"
+                className="w-full bg-primary hover:bg-primary-600 text-white"
+              >
                 Access Tools
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <div className="pt-4">
+                <UpvoteFeatureButton
+                  featureTitle="Admin Assistant Tools"
+                  buttonText="Upvote this Feature"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle>Complete Your Profile</CardTitle>
+              <CardDescription>
+                Showcase your qualifications and experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                variant="default"
+                className="w-full bg-primary hover:bg-primary-600 text-white"
+              >
+                Update Profile
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <div className="pt-2">
+                <UpvoteFeatureButton
+                  featureTitle="Professional Profile"
+                  buttonText="Upvote this Feature"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle>Training Resources</CardTitle>
+              <CardDescription>
+                Access our comprehensive library of caregiving resources
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                variant="default"
+                className="w-full bg-primary hover:bg-primary-600 text-white"
+              >
+                Learn More
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <div className="pt-2">
+                <UpvoteFeatureButton
+                  featureTitle="Training Resources"
+                  buttonText="Upvote this Feature"
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
