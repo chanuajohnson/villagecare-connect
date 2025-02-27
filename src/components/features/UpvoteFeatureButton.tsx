@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ThumbsUp } from "lucide-react";
@@ -95,6 +96,15 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
   }, [featureTitle, user]);
 
   const handleUpvote = async () => {
+    const featureId = await getOrCreateFeatureId(featureTitle);
+    if (!featureId) {
+      toast.error('Unable to process vote at this time.');
+      return;
+    }
+    
+    // Store the feature ID for post-login handling
+    sessionStorage.setItem('pendingFeatureId', featureId);
+    
     if (!requireAuth(`upvote "${featureTitle}"`)) {
       return;
     }
@@ -103,13 +113,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
     setIsVoting(true);
     
     try {
-      const featureId = await getOrCreateFeatureId(featureTitle);
-      
-      if (!featureId) {
-        toast.error('Unable to process vote at this time.');
-        return;
-      }
-
       if (hasVoted) {
         const { error } = await supabase
           .from('feature_upvotes')
@@ -139,6 +142,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
       toast.error(error.message || 'Failed to process your vote. Please try again.');
     } finally {
       setIsVoting(false);
+      // Clean up session storage after successful vote
+      sessionStorage.removeItem('pendingFeatureId');
     }
   };
 
