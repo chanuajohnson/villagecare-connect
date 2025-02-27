@@ -15,7 +15,7 @@ const roles = [
     description: "Coordinate care for your loved ones",
     icon: Users,
     color: "bg-primary-100",
-    path: "/auth",
+    path: "/dashboard/family",
     cta: "Find Care Now",
     features: [
       "Create and manage care plans",
@@ -32,7 +32,7 @@ const roles = [
     description: "Provide care services and expertise",
     icon: UserCog,
     color: "bg-primary-200",
-    path: "/auth",
+    path: "/dashboard/professional",
     cta: "Get Hired as a Skilled Care Professional",
     features: [
       "Showcase qualifications",
@@ -49,7 +49,7 @@ const roles = [
     description: "Support and contribute to care networks",
     icon: Heart,
     color: "bg-primary-300",
-    path: "/auth",
+    path: "/dashboard/community",
     cta: "Join the Village",
     features: [
       "Join care circles",
@@ -68,9 +68,14 @@ const Index = () => {
   const comparisonRef = useRef<HTMLDivElement>(null);
 
   const handleRoleSelect = (roleId: string) => {
-    setSelectedRole(roleId);
-    navigate('/auth');
-    toast.success(`Welcome! Please sign up or log in to continue.`);
+    // Find the selected role
+    const role = roles.find(r => r.id === roleId);
+    if (role) {
+      setSelectedRole(roleId);
+      // Navigate directly to the dashboard instead of auth
+      navigate(role.path);
+      toast.success(`Welcome to the ${role.title} Dashboard! Sign in to access all features.`);
+    }
   };
 
   const handleGetStarted = () => {
@@ -241,7 +246,7 @@ const Index = () => {
                         </li>
                       ))}
                     </ul>
-                    <Link to="/auth">
+                    <Link to={role.path}>
                       <Button
                         className="w-full mt-6 inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600"
                       >
