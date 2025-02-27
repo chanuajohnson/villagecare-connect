@@ -17,6 +17,8 @@ import {
 
 export function Navigation() {
   const { user, signOut, isLoading } = useAuth();
+  
+  console.log("Navigation render - User state:", user ? "Logged in" : "Not logged in");
 
   return (
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
@@ -57,24 +59,28 @@ export function Navigation() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {!isLoading && (
-            <>
-              {user ? (
-                <Button 
-                  onClick={signOut} 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
-              ) : (
-                <Link to="/auth">
-                  <Button size="sm">Sign In</Button>
-                </Link>
-              )}
-            </>
+          {/* Debug info - remove in production */}
+          <div className="text-xs text-gray-400 hidden">
+            Auth state: {isLoading ? "Loading" : user ? "Logged in" : "Logged out"}
+          </div>
+
+          {/* Always show either Sign In or Sign Out button */}
+          {isLoading ? (
+            <Button variant="outline" size="sm" disabled>Loading...</Button>
+          ) : user ? (
+            <Button 
+              onClick={signOut} 
+              variant="destructive" 
+              size="sm" 
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="inline">Sign Out</span>
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button size="sm">Sign In</Button>
+            </Link>
           )}
         </div>
       </div>
