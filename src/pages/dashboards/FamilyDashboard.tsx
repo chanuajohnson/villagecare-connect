@@ -1,16 +1,13 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Pill, Clock, Calendar as CalendarIcon, PenSquare, ChefHat, ActivitySquare, Users, FileText, Bell } from "lucide-react";
+import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useState } from "react";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
-  const [dates, setDates] = useState<{ [key: string]: Date | undefined }>({});
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,14 +21,14 @@ const FamilyDashboard = () => {
           className="space-y-6"
         >
           <div className="bg-blue-50 p-6 rounded-lg mb-8">
-            <h2 className="text-xl font-semibold mb-2">Preview Mode</h2>
+            <h2 className="text-xl mb-2">Preview Mode</h2>
             <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
             <Button variant="default" size="lg" className="float-right">
               Sign Up Now
             </Button>
           </div>
 
-          <h1 className="text-3xl font-bold mb-4">Welcome to Takes a Village</h1>
+          <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mb-8">Preview our comprehensive care coordination platform.</p>
 
           <Card className="mb-8">
@@ -40,7 +37,7 @@ const FamilyDashboard = () => {
               <CardDescription>Create your account to access all features and start coordinating care</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="default" className="w-full mb-4">Create Account</Button>
+              <Button variant="default" className="w-full">Create Account</Button>
             </CardContent>
           </Card>
 
@@ -77,23 +74,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Select date
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dates['schedule']}
-                      onSelect={(date) => setDates(prev => ({ ...prev, schedule: date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full mt-4" />
+                <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full" />
               </CardContent>
             </Card>
 
@@ -120,8 +101,8 @@ const FamilyDashboard = () => {
                 <CardDescription>View and manage care plans</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="secondary">View Plans</Button>
-                <UpvoteFeatureButton featureTitle="Care Plans Management" className="w-full" />
+                <Button variant="secondary" className="w-full">View Plans</Button>
+                <UpvoteFeatureButton featureTitle="Care Plans" className="w-full" />
               </CardContent>
             </Card>
 
@@ -134,8 +115,8 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage your care team members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="secondary">View Team</Button>
-                <UpvoteFeatureButton featureTitle="Care Team Management" className="w-full" />
+                <Button variant="secondary" className="w-full">View Team</Button>
+                <UpvoteFeatureButton featureTitle="Care Team" className="w-full" />
               </CardContent>
             </Card>
 
@@ -148,29 +129,13 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Select date
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dates['appointments']}
-                      onSelect={(date) => setDates(prev => ({ ...prev, appointments: date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button className="w-full mt-4" variant="secondary">View Calendar</Button>
-                <UpvoteFeatureButton featureTitle="Appointments Management" className="w-full" />
+                <Button variant="secondary" className="w-full">View Calendar</Button>
+                <UpvoteFeatureButton featureTitle="Appointments" className="w-full" />
               </CardContent>
             </Card>
           </div>
 
-          <h2 className="text-2xl font-bold mb-6">Medication Management</h2>
+          <h2 className="text-2xl font-semibold mb-6">Medication Management</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader>
@@ -181,8 +146,8 @@ const FamilyDashboard = () => {
                 <CardDescription>View and manage medications</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="secondary">View Medications</Button>
-                <UpvoteFeatureButton featureTitle="Medications Management" className="w-full" />
+                <Button variant="secondary" className="w-full">View Medications</Button>
+                <UpvoteFeatureButton featureTitle="Medications" className="w-full" />
               </CardContent>
             </Card>
 
@@ -195,7 +160,7 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage medication schedules</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="secondary">View Schedule</Button>
+                <Button variant="secondary" className="w-full">View Schedule</Button>
                 <UpvoteFeatureButton featureTitle="Medication Schedule" className="w-full" />
               </CardContent>
             </Card>
@@ -209,23 +174,7 @@ const FamilyDashboard = () => {
                 <CardDescription>Plan medication routines</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Select date
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dates['planning']}
-                      onSelect={(date) => setDates(prev => ({ ...prev, planning: date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button className="w-full mt-4" variant="secondary">View Planning</Button>
+                <Button variant="secondary" className="w-full">View Planning</Button>
                 <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
               </CardContent>
             </Card>
@@ -239,36 +188,77 @@ const FamilyDashboard = () => {
                 <CardDescription>Track medication administration</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="secondary">View Administration</Button>
+                <Button variant="secondary" className="w-full">View Administration</Button>
                 <UpvoteFeatureButton featureTitle="Medication Administration" className="w-full" />
               </CardContent>
             </Card>
           </div>
 
-          <h2 className="text-2xl font-bold mb-6">Meal Planning</h2>
+          <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
+          <div className="bg-white rounded-lg p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Meal Planner</h3>
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Select Date</h4>
+                    <p className="text-gray-600 text-sm">Pick a date</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Meal Types</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-600">Morning Drink</p>
+                    <p className="text-gray-600">Morning Snack</p>
+                    <p className="text-gray-600">Afternoon Snack</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Breakfast</p>
+                    <p className="text-gray-600">Lunch</p>
+                    <p className="text-gray-600">Dinner</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Features</h3>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    <span className="text-gray-600">Plan meals for the whole family</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    <span className="text-gray-600">Browse recipe suggestions</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    <span className="text-gray-600">Track nutritional information</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    <span className="text-gray-600">Generate shopping lists</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-primary">✓</span>
+                    <span className="text-gray-600">Share plans with care team</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Meal Planning</CardTitle>
-              <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Latest updates from your care plans and meal activities</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="default" className="w-full mb-4">Start Planning Meals</Button>
-              <UpvoteFeatureButton featureTitle="Meal Planning" className="w-full" />
-            </CardContent>
-          </Card>
-
-          <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ActivitySquare className="h-5 w-5 text-primary" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>Sign up to track your care activities and meal planning</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full" variant="secondary">Sign Up to Track Activities</Button>
-              <UpvoteFeatureButton featureTitle="Recent Activity" className="w-full" />
+              <p className="text-gray-600">No recent activities</p>
             </CardContent>
           </Card>
         </motion.div>
