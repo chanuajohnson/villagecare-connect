@@ -1,8 +1,9 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill } from "lucide-react";
+import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 
 const FamilyDashboard = () => {
@@ -32,11 +33,22 @@ const FamilyDashboard = () => {
 
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Get Started Today</CardTitle>
-              <CardDescription>Create your account to access all features and start coordinating care</CardDescription>
+              <CardTitle>Complete Your Registration</CardTitle>
+              <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button variant="default" className="w-full">Create Account</Button>
+            <CardContent className="space-y-4">
+              <Button 
+                variant="default" 
+                className="w-full"
+              >
+                Complete Registration
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <UpvoteFeatureButton 
+                featureTitle="Family Registration" 
+                className="w-full" 
+                buttonText="Upvote this Feature" 
+              />
             </CardContent>
           </Card>
 
