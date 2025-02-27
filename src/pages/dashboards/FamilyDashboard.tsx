@@ -63,17 +63,19 @@ const FamilyDashboard = () => {
           {(!user || !isProfileComplete) && (
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>Complete Your Registration</CardTitle>
-                <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
+                <CardTitle>Preview Mode</CardTitle>
+                <CardDescription>Sign up to access your personalized dashboard and start coordinating care</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  variant="default" 
-                  className="w-full"
-                >
-                  Complete Registration
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/auth">
+                  <Button 
+                    variant="default" 
+                    className="w-full"
+                  >
+                    Sign Up Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton 
                   featureTitle="Family Registration" 
                   className="w-full" 

@@ -73,19 +73,21 @@ const ProfessionalDashboard = () => {
           {(!user || !isProfileComplete) && (
             <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Complete Your Registration</CardTitle>
+                <CardTitle>Preview Mode</CardTitle>
                 <CardDescription>
-                  Set up your professional profile to start connecting with families
+                  Sign up to access your personalized dashboard and start coordinating care
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  variant="default"
-                  className="w-full bg-primary hover:bg-primary-600 text-white"
-                >
-                  Complete Registration
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/auth">
+                  <Button 
+                    variant="default"
+                    className="w-full bg-primary hover:bg-primary-600 text-white"
+                  >
+                    Sign Up Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <div className="pt-2">
                   <UpvoteFeatureButton
                     featureTitle="Professional Registration"

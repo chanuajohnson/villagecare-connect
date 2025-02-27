@@ -73,15 +73,15 @@ const CommunityDashboard = () => {
           {!user || !isProfileComplete ? (
             <Card>
               <CardHeader>
-                <CardTitle>Complete Your Registration</CardTitle>
+                <CardTitle>Preview Mode</CardTitle>
                 <CardDescription>
-                  Set up your community profile to start supporting families
+                  Sign up to access your personalized dashboard and start coordinating care
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Link to={user ? "/registration/community" : "/auth"}>
+                <Link to="/auth">
                   <Button className="w-full flex items-center justify-center">
-                    {user ? "Complete Registration" : "Sign Up Now"}
+                    Sign Up Now
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
