@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Pill, Clock, Calendar as CalendarIcon, PenSquare, ChefHat, ActivitySquare, Users, FileText, Bell } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState } from "react";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
+  const [dates, setDates] = useState<{ [key: string]: Date | undefined }>({});
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,10 +78,22 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Select date
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Select date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dates['schedule']}
+                      onSelect={(date) => setDates(prev => ({ ...prev, schedule: date }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full mt-4" />
               </CardContent>
             </Card>
@@ -134,10 +149,22 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Select date
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Select date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dates['appointments']}
+                      onSelect={(date) => setDates(prev => ({ ...prev, appointments: date }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Button className="w-full mt-4" variant="secondary">View Calendar</Button>
                 <UpvoteFeatureButton featureTitle="Appointments Management" className="w-full" />
               </CardContent>
@@ -183,10 +210,22 @@ const FamilyDashboard = () => {
                 <CardDescription>Plan medication routines</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Select date
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Select date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dates['planning']}
+                      onSelect={(date) => setDates(prev => ({ ...prev, planning: date }))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Button className="w-full mt-4" variant="secondary">View Planning</Button>
                 <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
               </CardContent>
@@ -240,3 +279,4 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
+
