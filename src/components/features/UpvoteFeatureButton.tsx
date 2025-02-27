@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface UpvoteFeatureButtonProps {
   featureTitle: string;
@@ -15,6 +16,8 @@ interface UpvoteFeatureButtonProps {
 export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
   const [isVoting, setIsVoting] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
+  const [hasVoted, setHasVoted] = useState(false);
+  const { user } = useAuth();
   
   const getOrCreateFeatureId = async (title: string) => {
     try {
@@ -45,15 +48,33 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
     }
   };
 
+  const checkUserVote = async (featureId: string) => {
+    if (!user) return false;
+    
+    const { data, error } = await supabase
+      .from('feature_upvotes')
+      .select('id')
+      .eq('feature_id', featureId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking user vote:', error);
+      return false;
+    }
+
+    return !!data;
+  };
+
   const fetchVoteCount = async (featureId: string) => {
     try {
-      const { data: votes, error } = await supabase
-        .from('feature_votes')
-        .select('id')
+      const { count, error } = await supabase
+        .from('feature_upvotes')
+        .select('id', { count: 'exact' })
         .eq('feature_id', featureId);
       
       if (error) throw error;
-      setVoteCount(votes?.length || 0);
+      setVoteCount(count || 0);
     } catch (error) {
       console.error('Error fetching vote count:', error);
     }
@@ -64,13 +85,22 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
       const featureId = await getOrCreateFeatureId(featureTitle);
       if (featureId) {
         await fetchVoteCount(featureId);
+        if (user) {
+          const userHasVoted = await checkUserVote(featureId);
+          setHasVoted(userHasVoted);
+        }
       }
     };
 
     initializeFeature();
-  }, [featureTitle]);
+  }, [featureTitle, user]);
 
   const handleUpvote = async () => {
+    if (!user) {
+      toast.error('Please sign in to upvote features');
+      return;
+    }
+    
     if (isVoting) return;
     setIsVoting(true);
     
@@ -82,17 +112,32 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
         return;
       }
 
-      const { error } = await supabase
-        .from('feature_votes')
-        .insert([{
-          feature_id: featureId,
-          anonymous: true
-        }]);
+      if (hasVoted) {
+        // Remove upvote
+        const { error } = await supabase
+          .from('feature_upvotes')
+          .delete()
+          .eq('feature_id', featureId)
+          .eq('user_id', user.id);
 
-      if (error) throw error;
-      
-      setVoteCount(prev => prev + 1);
-      toast.success(`Thank you for voting for "${featureTitle}"!`);
+        if (error) throw error;
+        setHasVoted(false);
+        setVoteCount(prev => prev - 1);
+        toast.success('Your vote has been removed');
+      } else {
+        // Add upvote
+        const { error } = await supabase
+          .from('feature_upvotes')
+          .insert([{
+            feature_id: featureId,
+            user_id: user.id
+          }]);
+
+        if (error) throw error;
+        setHasVoted(true);
+        setVoteCount(prev => prev + 1);
+        toast.success(`Thank you for voting for "${featureTitle}"!`);
+      }
     } catch (error: any) {
       console.error('Error handling vote:', error);
       toast.error(error.message || 'Failed to process your vote. Please try again.');
@@ -103,13 +148,13 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
 
   return (
     <Button
-      variant="outline"
+      variant={hasVoted ? "default" : "outline"}
       size="sm"
       className={className}
       onClick={handleUpvote}
       disabled={isVoting}
     >
-      <ThumbsUp className="w-4 h-4 mr-2" />
+      <ThumbsUp className={`w-4 h-4 mr-2 ${hasVoted ? 'fill-current' : ''}`} />
       {buttonText} {voteCount > 0 && `(${voteCount})`}
     </Button>
   );

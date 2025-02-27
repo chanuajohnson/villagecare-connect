@@ -9,6 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      feature_upvotes: {
+        Row: {
+          feature_id: string
+          id: string
+          upvoted_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          feature_id: string
+          id?: string
+          upvoted_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          feature_id?: string
+          id?: string
+          upvoted_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_votes: {
         Row: {
           created_at: string
