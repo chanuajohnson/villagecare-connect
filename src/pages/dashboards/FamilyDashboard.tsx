@@ -1,20 +1,14 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
 import { Pill, Clock, Calendar as CalendarIcon, PenSquare, ChefHat, ActivitySquare, Users, FileText, Bell } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { useState } from "react";
-import MealTypeSelector from "@/components/meal-planning/components/MealTypeSelector";
-import RecipeBrowser from "@/components/meal-planning/RecipeBrowser";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
-  const [selectedDate, setSelectedDate] = useState<Date>();
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,22 +75,10 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Button variant="outline" className="w-full">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Select date
+                </Button>
                 <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full mt-4" />
               </CardContent>
             </Card>
@@ -152,22 +134,10 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Button variant="outline" className="w-full">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Select date
+                </Button>
                 <Button className="w-full mt-4" variant="secondary">View Calendar</Button>
                 <UpvoteFeatureButton featureTitle="Appointments Management" className="w-full" />
               </CardContent>
@@ -213,22 +183,10 @@ const FamilyDashboard = () => {
                 <CardDescription>Plan medication routines</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Button variant="outline" className="w-full">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Select date
+                </Button>
                 <Button className="w-full mt-4" variant="secondary">View Planning</Button>
                 <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
               </CardContent>
@@ -250,89 +208,16 @@ const FamilyDashboard = () => {
           </div>
 
           <h2 className="text-2xl font-bold mb-6">Meal Planning</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-primary" />
-                  Select Date
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-primary" />
-                  Meal Types
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MealTypeSelector
-                  selectedMealType={selectedDate ? "breakfast" : ""}
-                  setSelectedMealType={() => {}}
-                  selectedDate={selectedDate}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ChefHat className="h-5 w-5 text-primary" />
-                  Recipe Library
-                </CardTitle>
-                <CardDescription>Browse and select recipes for your meal plan</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="planner" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="planner">Planner</TabsTrigger>
-                    <TabsTrigger value="recipes">Recipes</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="planner">
-                    {selectedDate ? (
-                      <div className="space-y-4">
-                        <RecipeBrowser
-                          category="breakfast"
-                          onSelectRecipe={(recipe) => {
-                            console.log("Selected recipe:", recipe);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Please select a date and meal type to start planning
-                      </p>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="recipes">
-                    <div className="space-y-4">
-                      <RecipeBrowser />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Meal Planning</CardTitle>
+              <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="default" className="w-full mb-4">Start Planning Meals</Button>
+              <UpvoteFeatureButton featureTitle="Meal Planning" className="w-full" />
+            </CardContent>
+          </Card>
 
           <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
           <Card className="mb-8">
