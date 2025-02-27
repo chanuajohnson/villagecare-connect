@@ -141,7 +141,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const registrationRoutes: Record<UserRole, string> = {
           'family': '/registration/family',
           'professional': '/registration/professional',
-          'community': '/registration/community'
+          'community': '/registration/community',
+          'admin': '/dashboard/admin' // Admin users don't need registration
         };
         
         const route = registrationRoutes[userRole];
@@ -153,7 +154,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     // Handle feature upvote if present
-    await checkPendingUpvote();
+    const pendingFeatureUpvote = localStorage.getItem('pendingFeatureUpvote');
+    if (pendingFeatureUpvote) {
+      await checkPendingUpvote();
+      return;
+    }
     
     // Handle pending booking if present
     const pendingBooking = localStorage.getItem('pendingBooking');
@@ -191,14 +196,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else if (profileComplete) {
       // If no last path but profile is complete, redirect to the appropriate dashboard
       if (userRole) {
-        console.log('Navigating to dashboard for role:', userRole);
         const dashboardRoutes: Record<UserRole, string> = {
           'family': '/dashboard/family',
           'professional': '/dashboard/professional',
-          'community': '/dashboard/community'
+          'community': '/dashboard/community',
+          'admin': '/dashboard/admin'
         };
         
+        console.log('Navigating to dashboard for role:', userRole);
         navigate(dashboardRoutes[userRole]);
+        toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
       }
     } else {
       // If we get here and the profile is not complete but we didn't redirect to registration,
@@ -207,11 +214,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const dashboardRoutes: Record<UserRole, string> = {
           'family': '/dashboard/family',
           'professional': '/dashboard/professional',
-          'community': '/dashboard/community'
+          'community': '/dashboard/community',
+          'admin': '/dashboard/admin'
         };
         
         console.log('Forcing navigation to dashboard for role:', userRole);
         navigate(dashboardRoutes[userRole]);
+        toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
       }
     }
   };
@@ -300,8 +309,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(role);
 
         // Check user profile completion and handle pending actions when auth state changes
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          console.log('User signed in or updated, checking pending actions');
+        if (event === 'SIGNED_IN') {
+          console.log('User signed in, checking pending actions');
+          await checkPendingActions();
+          // Display welcome message on successful login
+          toast.success('You have successfully logged in!');
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated, checking pending actions');
           await checkPendingActions();
         }
       } else {
