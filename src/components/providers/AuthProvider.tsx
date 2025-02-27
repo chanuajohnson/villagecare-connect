@@ -134,7 +134,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
     console.log('Has pending action:', hasPendingAction);
     
-    // If the user hasn't completed their profile, redirect to the appropriate registration page
+    // If the user hasn't completed their profile and there are no pending actions,
+    // redirect to the appropriate registration page
     if (!profileComplete && !hasPendingAction) {
       if (userRole) {
         const registrationRoutes: Record<UserRole, string> = {
@@ -197,6 +198,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           'community': '/dashboard/community'
         };
         
+        navigate(dashboardRoutes[userRole]);
+      }
+    } else {
+      // If we get here and the profile is not complete but we didn't redirect to registration,
+      // we should force a redirect to the appropriate dashboard
+      if (userRole) {
+        const dashboardRoutes: Record<UserRole, string> = {
+          'family': '/dashboard/family',
+          'professional': '/dashboard/professional',
+          'community': '/dashboard/community'
+        };
+        
+        console.log('Forcing navigation to dashboard for role:', userRole);
         navigate(dashboardRoutes[userRole]);
       }
     }
@@ -297,7 +311,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   const signOut = async () => {
     try {
