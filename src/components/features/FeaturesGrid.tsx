@@ -18,7 +18,7 @@ const FeaturesGrid = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const databaseFeatures = [
+  const databaseFeatures: Feature[] = [
     {
       id: '1',
       title: 'Calendar Integration',
@@ -129,3 +129,4 @@ const FeaturesGrid = () => {
 };
 
 export default FeaturesGrid;
+
