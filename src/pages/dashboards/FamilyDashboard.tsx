@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Clock, Bell } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [
@@ -14,7 +14,7 @@ const FamilyDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
@@ -24,73 +24,57 @@ const FamilyDashboard = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900">Family Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Manage care coordination for your loved ones.
+          <h1 className="text-3xl font-bold">Family Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Complete your registration to start connecting with care providers.
           </p>
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Care Team
-                </CardTitle>
-                <CardDescription>
-                  Coordinate with your family's care team
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Manage Care Team</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Complete Your Registration</CardTitle>
+              <CardDescription>
+                Set up your family profile to start connecting with care providers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Complete Registration
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Care Schedule
-                </CardTitle>
-                <CardDescription>
-                  View and manage care appointments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">View Schedule</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Find Care Providers</CardTitle>
+              <CardDescription>
+                Search and connect with qualified care providers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Search Providers
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Care Updates
-                </CardTitle>
-                <CardDescription>Stay updated on care progress</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">View Updates</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Care Planning</CardTitle>
+              <CardDescription>
+                Create and manage care plans for your loved ones
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Start Planning
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

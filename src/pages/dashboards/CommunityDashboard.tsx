@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, MessageSquare, Heart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const CommunityDashboard = () => {
   const breadcrumbItems = [
@@ -14,7 +14,7 @@ const CommunityDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
@@ -24,73 +24,72 @@ const CommunityDashboard = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900">
-            Community Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Connect and engage with your care community.
+          <h1 className="text-3xl font-bold">Community Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Connect and contribute to your local care community.
           </p>
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Community Groups
-                </CardTitle>
-                <CardDescription>Join care support groups</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Browse Groups</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Complete Your Registration</CardTitle>
+              <CardDescription>
+                Set up your community profile to start supporting families
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Complete Registration
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Discussion Forums
-                </CardTitle>
-                <CardDescription>
-                  Participate in community discussions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">View Forums</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Join Care Circles</CardTitle>
+              <CardDescription>
+                Connect with families and other community members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Find Circles
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  Support Network
-                </CardTitle>
-                <CardDescription>Connect with care supporters</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">View Network</Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Community Events</CardTitle>
+              <CardDescription>
+                Discover and participate in local care events
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                View Events
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Support Network</CardTitle>
+              <CardDescription>
+                Offer and receive community support
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full flex items-center justify-center">
+                Get Involved
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
