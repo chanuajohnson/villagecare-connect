@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Calendar, Heart } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const CommunityDashboard = () => {
+  const { user, isProfileComplete } = useAuth();
+  
   const breadcrumbItems = [
     {
       label: "Community",
@@ -26,15 +29,27 @@ const CommunityDashboard = () => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <div className="bg-blue-50 p-6 rounded-lg mb-8">
-            <h2 className="text-xl mb-2">Preview Mode</h2>
-            <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
-            <Link to="/auth">
-              <Button variant="default" size="lg" className="float-right">
-                Sign Up Now
-              </Button>
-            </Link>
-          </div>
+          {!user ? (
+            <div className="bg-blue-50 p-6 rounded-lg mb-8">
+              <h2 className="text-xl mb-2">Preview Mode</h2>
+              <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
+              <Link to="/auth">
+                <Button variant="default" size="lg" className="float-right">
+                  Sign Up Now
+                </Button>
+              </Link>
+            </div>
+          ) : !isProfileComplete ? (
+            <div className="bg-yellow-50 p-6 rounded-lg mb-8">
+              <h2 className="text-xl mb-2">Complete Your Profile</h2>
+              <p className="text-gray-600 mb-4">Please complete your profile to access all features.</p>
+              <Link to="/registration/community">
+                <Button variant="default" size="lg" className="float-right">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          ) : null}
 
           <h1 className="text-3xl font-bold">Community Dashboard</h1>
           <p className="text-muted-foreground mt-2">
@@ -43,21 +58,25 @@ const CommunityDashboard = () => {
         </motion.div>
 
         <div className="grid gap-6 mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Complete Your Registration</CardTitle>
-              <CardDescription>
-                Set up your community profile to start supporting families
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full flex items-center justify-center">
-                Complete Registration
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <UpvoteFeatureButton featureTitle="Community Registration" buttonText="Upvote this Feature" />
-            </CardContent>
-          </Card>
+          {!user || !isProfileComplete ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Complete Your Registration</CardTitle>
+                <CardDescription>
+                  Set up your community profile to start supporting families
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Link to={user ? "/registration/community" : "/auth"}>
+                  <Button className="w-full flex items-center justify-center">
+                    {user ? "Complete Registration" : "Sign Up Now"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <UpvoteFeatureButton featureTitle="Community Registration" buttonText="Upvote this Feature" />
+              </CardContent>
+            </Card>
+          ) : null}
 
           <div className="grid md:grid-cols-2 gap-6">
             <Card>

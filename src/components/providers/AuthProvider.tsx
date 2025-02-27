@@ -15,6 +15,7 @@ interface AuthContextType {
   requireAuth: (action: string, redirectPath?: string) => boolean;
   clearLastAction: () => void;
   checkPendingUpvote: () => Promise<void>;
+  isProfileComplete: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   requireAuth: () => false,
   clearLastAction: () => {},
   checkPendingUpvote: async () => {},
+  isProfileComplete: false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -33,8 +35,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Function to check if the user's profile is complete
+  const checkProfileCompletion = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      // Profile is considered complete if they have at least a full name
+      const profileComplete = !!profile.full_name;
+      setIsProfileComplete(profileComplete);
+      return profileComplete;
+    } catch (error) {
+      console.error('Error checking profile completion:', error);
+      return false;
+    }
+  };
 
   // Function to handle pending feature upvotes after login
   const checkPendingUpvote = async () => {
@@ -80,6 +104,87 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Function to check and handle any pending actions after login
+  const checkPendingActions = async () => {
+    if (!user) return;
+    
+    // Check if the user has completed their profile
+    const profileComplete = await checkProfileCompletion(user.id);
+    
+    // List of possible actions stored in sessionStorage
+    const pendingActions = [
+      'pendingFeatureUpvote',
+      'pendingBooking',
+      'pendingMessage',
+      'pendingProfileUpdate'
+    ];
+    
+    // Check if any of these actions exist in sessionStorage
+    const hasPendingAction = pendingActions.some(action => sessionStorage.getItem(action));
+    
+    // If the user hasn't completed their profile, redirect to the appropriate registration page
+    if (!profileComplete && !hasPendingAction) {
+      if (userRole) {
+        const registrationRoutes: Record<UserRole, string> = {
+          'family': '/registration/family',
+          'professional': '/registration/professional',
+          'community': '/registration/community'
+        };
+        
+        const route = registrationRoutes[userRole];
+        toast.info('Please complete your profile to continue');
+        navigate(route);
+        return;
+      }
+    }
+    
+    // Handle feature upvote if present (already implemented)
+    await checkPendingUpvote();
+    
+    // Handle pending booking if present
+    const pendingBooking = sessionStorage.getItem('pendingBooking');
+    if (pendingBooking) {
+      sessionStorage.removeItem('pendingBooking');
+      navigate(pendingBooking);
+      return;
+    }
+    
+    // Handle pending message if present
+    const pendingMessage = sessionStorage.getItem('pendingMessage');
+    if (pendingMessage) {
+      sessionStorage.removeItem('pendingMessage');
+      navigate(pendingMessage);
+      return;
+    }
+    
+    // Handle pending profile update if present
+    const pendingProfileUpdate = sessionStorage.getItem('pendingProfileUpdate');
+    if (pendingProfileUpdate) {
+      sessionStorage.removeItem('pendingProfileUpdate');
+      navigate(pendingProfileUpdate);
+      return;
+    }
+    
+    // If user has completed profile and there are no pending actions
+    // Check for last path and redirect there if it exists
+    const lastPath = sessionStorage.getItem('lastPath');
+    if (profileComplete && lastPath) {
+      navigate(lastPath);
+      clearLastAction();
+    } else if (profileComplete) {
+      // If no last path but profile is complete, redirect to the appropriate dashboard
+      if (userRole) {
+        const dashboardRoutes: Record<UserRole, string> = {
+          'family': '/dashboard/family',
+          'professional': '/dashboard/professional',
+          'community': '/dashboard/community'
+        };
+        
+        navigate(dashboardRoutes[userRole]);
+      }
+    }
+  };
+
   // Function to require authentication for specific actions
   const requireAuth = (action: string, redirectPath?: string) => {
     if (user) return true;
@@ -88,12 +193,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.setItem('lastAction', action);
     sessionStorage.setItem('lastPath', redirectPath || location.pathname + location.search);
     
-    // If the action is an upvote, store the feature ID
+    // Store specific actions in sessionStorage for post-login handling
     if (action.startsWith('upvote "')) {
       const featureId = sessionStorage.getItem('pendingFeatureId');
       if (featureId) {
         sessionStorage.setItem('pendingFeatureUpvote', featureId);
       }
+    } else if (action.startsWith('book care')) {
+      sessionStorage.setItem('pendingBooking', redirectPath || location.pathname);
+    } else if (action.startsWith('send message')) {
+      sessionStorage.setItem('pendingMessage', redirectPath || location.pathname);
+    } else if (action.startsWith('update profile')) {
+      sessionStorage.setItem('pendingProfileUpdate', redirectPath || location.pathname);
     }
     
     toast.error('Please sign in to ' + action);
@@ -106,6 +217,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.removeItem('lastAction');
     sessionStorage.removeItem('lastPath');
     sessionStorage.removeItem('pendingFeatureId');
+    sessionStorage.removeItem('pendingFeatureUpvote');
+    sessionStorage.removeItem('pendingBooking');
+    sessionStorage.removeItem('pendingMessage');
+    sessionStorage.removeItem('pendingProfileUpdate');
   };
 
   useEffect(() => {
@@ -120,15 +235,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const role = await getUserRole();
           setUserRole(role);
           
-          // If user just logged in, check for pending upvotes
-          await checkPendingUpvote();
-          
-          // If user just logged in and there was a last action, redirect back
-          const lastPath = sessionStorage.getItem('lastPath');
-          if (location.pathname === '/auth' && lastPath && !sessionStorage.getItem('pendingFeatureUpvote')) {
-            navigate(lastPath);
-            clearLastAction();
-          }
+          // Check user profile completion and handle pending actions
+          await checkPendingActions();
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -149,17 +257,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const role = await getUserRole();
         setUserRole(role);
 
-        // Check for pending upvotes when auth state changes
-        await checkPendingUpvote();
-
-        // Check for last action on auth state change
-        const lastPath = sessionStorage.getItem('lastPath');
-        if (lastPath && !sessionStorage.getItem('pendingFeatureUpvote')) {
-          navigate(lastPath);
-          clearLastAction();
-        }
+        // Check user profile completion and handle pending actions when auth state changes
+        await checkPendingActions();
       } else {
         setUserRole(null);
+        setIsProfileComplete(false);
       }
     });
 
@@ -186,7 +288,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isLoading,
       requireAuth,
       clearLastAction,
-      checkPendingUpvote
+      checkPendingUpvote,
+      isProfileComplete
     }}>
       {children}
     </AuthContext.Provider>
