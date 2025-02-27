@@ -194,7 +194,7 @@ const FamilyDashboard = () => {
           </div>
 
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -203,10 +203,11 @@ const FamilyDashboard = () => {
                 </CardTitle>
                 <CardDescription>Pick a date for meal planning</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="border rounded-lg p-4">
                   <p className="text-gray-500 text-sm">Pick a date</p>
                 </div>
+                <UpvoteFeatureButton featureTitle="Meal Planning Date Selection" className="w-full" />
               </CardContent>
             </Card>
 
@@ -218,7 +219,7 @@ const FamilyDashboard = () => {
                 </CardTitle>
                 <CardDescription>Choose meal types for planning</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-gray-500">Morning Drink</p>
@@ -231,40 +232,35 @@ const FamilyDashboard = () => {
                     <p className="text-gray-500">Dinner</p>
                   </div>
                 </div>
+                <UpvoteFeatureButton featureTitle="Meal Types Selection" className="w-full" />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 text-primary" />
-                  Features
+                  <ChefHat className="h-5 w-5 text-primary" />
+                  Recipe Library
                 </CardTitle>
-                <CardDescription>Available meal planning features</CardDescription>
+                <CardDescription>Browse and manage recipes</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-gray-500">Plan meals for the whole family</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-gray-500">Browse recipe suggestions</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-gray-500">Track nutritional information</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-gray-500">Generate shopping lists</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-gray-500">Share plans with care team</span>
-                  </li>
-                </ul>
+              <CardContent className="space-y-4">
+                <Button variant="secondary" className="w-full">View Library</Button>
+                <UpvoteFeatureButton featureTitle="Recipe Library" className="w-full" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ActivitySquare className="h-5 w-5 text-primary" />
+                  Suggestions
+                </CardTitle>
+                <CardDescription>Get personalized meal suggestions</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button variant="secondary" className="w-full">View Suggestions</Button>
+                <UpvoteFeatureButton featureTitle="Meal Suggestions" className="w-full" />
               </CardContent>
             </Card>
           </div>
