@@ -14,6 +14,7 @@ export default function AuthPage() {
 
   const signUpUser = async (email: string, password: string, firstName: string, lastName: string, role: string) => {
     setIsLoading(true);
+    console.log('Starting signup process for:', email, 'with role:', role);
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -25,24 +26,41 @@ export default function AuthPage() {
       });
 
       if (error) {
+        console.error('Sign-up error:', error);
         toast.error('Sign-up error: ' + error.message);
+        setIsLoading(false);
         return null;
       }
 
-      toast.success('Sign-up successful!');
-      if (data.user) navigate('/');
+      console.log('Sign-up successful, user data:', data);
+      toast.success('Sign-up successful! Redirecting you to dashboard...');
+      
+      // Wait a moment before redirecting to ensure auth state is updated
+      setTimeout(() => {
+        console.log('Navigating to dashboard for role:', role);
+        const dashboardRoutes: Record<string, string> = {
+          'family': '/dashboard/family',
+          'professional': '/dashboard/professional',
+          'community': '/dashboard/community'
+        };
+        
+        const route = dashboardRoutes[role] || '/';
+        navigate(route);
+        setIsLoading(false);
+      }, 1000);
+      
       return data.user;
     } catch (error) {
       console.error('Unexpected error during sign-up:', error);
       toast.error('An unexpected error occurred during sign-up');
-      return null;
-    } finally {
       setIsLoading(false);
+      return null;
     }
   };
 
   const loginUser = async (email: string, password: string) => {
     setIsLoading(true);
+    console.log('Starting login process for:', email);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -51,19 +69,21 @@ export default function AuthPage() {
       });
 
       if (error) {
+        console.error('Login error:', error);
         toast.error('Login error: ' + error.message);
+        setIsLoading(false);
         return null;
       }
 
-      toast.success('Login successful!');
+      console.log('Login successful, user data:', data);
+      toast.success('Login successful! Redirecting you to dashboard...');
       navigate('/');
       return data.user;
     } catch (error) {
       console.error('Unexpected error during login:', error);
       toast.error('An unexpected error occurred during login');
-      return null;
-    } finally {
       setIsLoading(false);
+      return null;
     }
   };
 

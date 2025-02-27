@@ -23,6 +23,8 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !firstName || !lastName || !role) return;
+    
+    console.log('SignupForm submitting with role:', role);
     await onSubmit(email, password, firstName, lastName, role);
   };
 
@@ -90,7 +92,10 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
         <Label htmlFor="role">Role</Label>
         <Select 
           value={role} 
-          onValueChange={(value) => setRole(value as UserRole)}
+          onValueChange={(value) => {
+            console.log('Role selected:', value);
+            setRole(value as UserRole);
+          }}
           required
         >
           <SelectTrigger>

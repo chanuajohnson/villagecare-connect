@@ -42,16 +42,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Function to check if the user's profile is complete
   const checkProfileCompletion = async (userId: string) => {
     try {
+      console.log('Checking profile completion for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking profile completion:', error);
+        throw error;
+      }
+      
+      console.log('Profile data retrieved:', profile);
       
       // Profile is considered complete if they have at least a full name
-      const profileComplete = !!profile.full_name;
+      const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
       return profileComplete;
     } catch (error) {
@@ -108,8 +114,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkPendingActions = async () => {
     if (!user) return;
     
+    console.log('Checking pending actions for user:', user.id);
+    console.log('Current user role:', userRole);
+    
     // Check if the user has completed their profile
     const profileComplete = await checkProfileCompletion(user.id);
+    console.log('Profile complete:', profileComplete);
     
     // List of possible actions stored in sessionStorage
     const pendingActions = [
@@ -121,6 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Check if any of these actions exist in sessionStorage
     const hasPendingAction = pendingActions.some(action => sessionStorage.getItem(action));
+    console.log('Has pending action:', hasPendingAction);
     
     // If the user hasn't completed their profile, redirect to the appropriate registration page
     if (!profileComplete && !hasPendingAction) {
@@ -132,13 +143,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
         
         const route = registrationRoutes[userRole];
+        console.log('Redirecting to registration page:', route);
         toast.info('Please complete your profile to continue');
         navigate(route);
         return;
       }
     }
     
-    // Handle feature upvote if present (already implemented)
+    // Handle feature upvote if present
     await checkPendingUpvote();
     
     // Handle pending booking if present
@@ -168,12 +180,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // If user has completed profile and there are no pending actions
     // Check for last path and redirect there if it exists
     const lastPath = sessionStorage.getItem('lastPath');
+    console.log('Last path:', lastPath);
+    
     if (profileComplete && lastPath) {
+      console.log('Navigating to last path:', lastPath);
       navigate(lastPath);
       clearLastAction();
     } else if (profileComplete) {
       // If no last path but profile is complete, redirect to the appropriate dashboard
       if (userRole) {
+        console.log('Navigating to dashboard for role:', userRole);
         const dashboardRoutes: Record<UserRole, string> = {
           'family': '/dashboard/family',
           'professional': '/dashboard/professional',
@@ -227,16 +243,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       setIsLoading(true);
       try {
+        console.log('Initializing auth...');
         const { data: { session } } = await supabase.auth.getSession();
+        
+        console.log('Session retrieved:', session ? 'Yes' : 'No');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log('User is signed in, getting role...');
           const role = await getUserRole();
+          console.log('User role:', role);
           setUserRole(role);
           
           // Check user profile completion and handle pending actions
           await checkPendingActions();
+        } else {
+          console.log('No active session found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -249,16 +272,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session ? 'Has session' : 'No session');
+      
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        console.log('User signed in or updated, getting role...');
         const role = await getUserRole();
+        console.log('User role from auth state change:', role);
         setUserRole(role);
 
         // Check user profile completion and handle pending actions when auth state changes
-        await checkPendingActions();
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          console.log('User signed in or updated, checking pending actions');
+          await checkPendingActions();
+        }
       } else {
         setUserRole(null);
         setIsProfileComplete(false);

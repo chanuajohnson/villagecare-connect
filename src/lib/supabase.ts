@@ -21,16 +21,33 @@ export const supabase = createClient(
 
 // Helper function to get user role
 export const getUserRole = async () => {
+  console.log('Getting user role...');
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
   
-  const { data } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  if (!user) {
+    console.log('No user found in getUserRole');
+    return null;
+  }
+  
+  try {
+    console.log('Fetching role for user ID:', user.id);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error fetching user role:', error);
+      return null;
+    }
     
-  return data?.role;
+    console.log('Role data returned:', data);
+    return data?.role;
+  } catch (error) {
+    console.error('Unexpected error in getUserRole:', error);
+    return null;
+  }
 };
 
 // Insert initial recipes if they don't exist
