@@ -210,23 +210,7 @@ const FamilyDashboard = () => {
                 <CardDescription>Plan medication routines</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Select date
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dates['planning']}
-                      onSelect={(date) => setDates(prev => ({ ...prev, planning: date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button className="w-full mt-4" variant="secondary">View Planning</Button>
+                <Button className="w-full" variant="secondary">View Planning</Button>
                 <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
               </CardContent>
             </Card>
@@ -279,4 +263,3 @@ const FamilyDashboard = () => {
 };
 
 export default FamilyDashboard;
-
