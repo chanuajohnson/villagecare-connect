@@ -39,6 +39,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
         <div className="space-y-2">
@@ -49,6 +50,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -61,6 +63,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={isLoading}
           autoComplete="email"
         />
       </div>
@@ -74,6 +77,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
             autoComplete="new-password"
             minLength={6}
           />
@@ -83,6 +87,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             size="icon"
             className="absolute right-0 top-0 h-full px-3"
             onClick={() => setShowPassword(!showPassword)}
+            disabled={isLoading}
           >
             {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
           </Button>
@@ -96,6 +101,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             console.log('Role selected:', value);
             setRole(value as UserRole);
           }}
+          disabled={isLoading}
           required
         >
           <SelectTrigger>

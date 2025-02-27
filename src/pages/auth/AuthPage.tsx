@@ -17,7 +17,7 @@ export default function AuthPage() {
     console.log('Starting signup process for:', email, 'with role:', role);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -32,24 +32,27 @@ export default function AuthPage() {
         return null;
       }
 
-      console.log('Sign-up successful, user data:', data);
+      if (!user) {
+        toast.error('No user data returned after signup');
+        setIsLoading(false);
+        return null;
+      }
+
+      console.log('Sign-up successful, user data:', user);
       toast.success('Sign-up successful! Redirecting you to dashboard...');
       
-      // Wait a moment before redirecting to ensure auth state is updated
-      setTimeout(() => {
-        console.log('Navigating to dashboard for role:', role);
-        const dashboardRoutes: Record<string, string> = {
-          'family': '/dashboard/family',
-          'professional': '/dashboard/professional',
-          'community': '/dashboard/community'
-        };
-        
-        const route = dashboardRoutes[role] || '/';
-        navigate(route);
-        setIsLoading(false);
-      }, 1000);
+      const dashboardRoutes: Record<string, string> = {
+        'family': '/dashboard/family',
+        'professional': '/dashboard/professional',
+        'community': '/dashboard/community'
+      };
       
-      return data.user;
+      const route = dashboardRoutes[role] || '/';
+      console.log('Navigating to dashboard:', route);
+      navigate(route);
+      setIsLoading(false);
+      return user;
+
     } catch (error) {
       console.error('Unexpected error during sign-up:', error);
       toast.error('An unexpected error occurred during sign-up');
@@ -77,7 +80,18 @@ export default function AuthPage() {
 
       console.log('Login successful, user data:', data);
       toast.success('Login successful! Redirecting you to dashboard...');
-      navigate('/');
+      
+      // Get the user's role from their metadata
+      const role = data.user?.user_metadata?.role || 'family';
+      const dashboardRoutes: Record<string, string> = {
+        'family': '/dashboard/family',
+        'professional': '/dashboard/professional',
+        'community': '/dashboard/community'
+      };
+      
+      const route = dashboardRoutes[role] || '/';
+      console.log('Navigating to dashboard:', route);
+      navigate(route);
       return data.user;
     } catch (error) {
       console.error('Unexpected error during login:', error);
