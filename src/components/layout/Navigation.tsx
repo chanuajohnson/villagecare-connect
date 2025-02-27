@@ -7,7 +7,6 @@ import {
   LogIn,
   LayoutDashboard,
   ChevronDown,
-  User
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -18,8 +17,6 @@ import {
 
 export function Navigation() {
   const { user, signOut, isLoading } = useAuth();
-  
-  console.log("Navigation render - User state:", user ? "Logged in" : "Not logged in");
 
   return (
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
