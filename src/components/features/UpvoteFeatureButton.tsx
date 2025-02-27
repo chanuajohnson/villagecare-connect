@@ -13,10 +13,11 @@ interface UpvoteFeatureButtonProps {
   buttonText?: string;
 }
 
-export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
+export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFeatureId, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
   const [isVoting, setIsVoting] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
+  const [localFeatureId, setLocalFeatureId] = useState<string | null>(null);
   const { user, requireAuth } = useAuth();
   
   const getOrCreateFeatureId = async (title: string) => {
@@ -26,6 +27,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
         .select('id')
         .eq('title', title)
         .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       if (existingFeature) {
         return existingFeature.id;
@@ -82,8 +85,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
 
   useEffect(() => {
     const initializeFeature = async () => {
-      const featureId = await getOrCreateFeatureId(featureTitle);
+      const featureId = propFeatureId || await getOrCreateFeatureId(featureTitle);
       if (featureId) {
+        setLocalFeatureId(featureId);
         await fetchVoteCount(featureId);
         if (user) {
           const userHasVoted = await checkUserVote(featureId);
@@ -93,10 +97,10 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
     };
 
     initializeFeature();
-  }, [featureTitle, user]);
+  }, [featureTitle, propFeatureId, user]);
 
   const handleUpvote = async () => {
-    const featureId = await getOrCreateFeatureId(featureTitle);
+    const featureId = localFeatureId || await getOrCreateFeatureId(featureTitle);
     if (!featureId) {
       toast.error('Unable to process vote at this time.');
       return;
@@ -132,7 +136,10 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
             user_id: user!.id
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting upvote:', error);
+          throw error;
+        }
         setHasVoted(true);
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
