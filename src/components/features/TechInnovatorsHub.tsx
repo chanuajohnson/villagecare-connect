@@ -47,6 +47,7 @@ export const TechInnovatorsHub = () => {
           <UpvoteFeatureButton
             featureTitle="Insider Access & Tech Innovators Hub"
             className="w-full"
+            buttonText="Upvote this Feature"
           />
         </div>
       </CardContent>

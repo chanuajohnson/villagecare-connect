@@ -52,6 +52,7 @@ export const DatabaseFeatureCard = ({ feature }: { feature: DatabaseFeature }) =
             featureId={feature.id}
             featureTitle={feature.title}
             className="w-full"
+            buttonText="Upvote this Feature"
           />
         </div>
       </CardContent>
