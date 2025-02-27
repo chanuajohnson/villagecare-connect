@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   LogOut,
+  LogIn,
   LayoutDashboard,
   ChevronDown,
   User
@@ -60,7 +61,9 @@ export function Navigation() {
           </DropdownMenu>
 
           {isLoading ? (
-            <Button variant="outline" size="sm" disabled>Loading...</Button>
+            <div className="animate-pulse">
+              <Button variant="outline" size="sm" disabled>Loading...</Button>
+            </div>
           ) : user ? (
             <Button 
               onClick={signOut}
@@ -73,7 +76,10 @@ export function Navigation() {
             </Button>
           ) : (
             <Link to="/auth">
-              <Button size="sm">Sign In</Button>
+              <Button variant="default" size="sm" className="flex items-center gap-2">
+                <LogIn className="h-4 w-4" />
+                <span>Sign In</span>
+              </Button>
             </Link>
           )}
         </div>
