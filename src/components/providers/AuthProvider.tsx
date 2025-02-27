@@ -36,50 +36,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Function to ensure user profile exists
-  const ensureUserProfileExists = async (userId: string) => {
-    try {
-      // Check if profile exists
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-
-      // If profile doesn't exist, create it
-      if (!existingProfile) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([{ id: userId, role: 'family' }])
-          .select()
-          .maybeSingle();
-
-        if (insertError) throw insertError;
-        console.log('Created missing profile for user', userId);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error ensuring user profile exists:', error);
-      return false;
-    }
-  };
-
   // Function to handle pending feature upvotes after login
   const checkPendingUpvote = async () => {
     const featureId = sessionStorage.getItem('pendingFeatureUpvote');
     
     if (featureId && user) {
       try {
-        // Ensure user profile exists before trying to insert the upvote
-        const profileExists = await ensureUserProfileExists(user.id);
-        if (!profileExists) {
-          toast.error('Unable to process your vote due to profile creation issue');
-          return;
-        }
-
         // Check if user has already voted for this feature
         const { data: existingVote, error: checkError } = await supabase
           .from('feature_upvotes')
@@ -144,7 +106,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionStorage.removeItem('lastAction');
     sessionStorage.removeItem('lastPath');
     sessionStorage.removeItem('pendingFeatureId');
-    sessionStorage.removeItem('pendingFeatureUpvote');
   };
 
   useEffect(() => {
@@ -156,9 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Ensure profile exists when session is initialized
-          await ensureUserProfileExists(session.user.id);
-          
           const role = await getUserRole();
           setUserRole(role);
           
@@ -188,9 +146,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Ensure profile exists when auth state changes
-        await ensureUserProfileExists(session.user.id);
-        
         const role = await getUserRole();
         setUserRole(role);
 

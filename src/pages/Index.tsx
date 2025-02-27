@@ -1,12 +1,10 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 const roles = [
   {
@@ -66,19 +64,13 @@ const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const comparisonRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
 
   const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
     const role = roles.find((r) => r.id === roleId);
     if (role) {
-      if (user) {
-        navigate(role.path);
-        toast.success(`Welcome to the ${role.title} dashboard!`);
-      } else {
-        // If not logged in, navigate to auth page with role as query param
-        navigate(`/auth?role=${roleId}`);
-      }
+      window.location.href = role.path;
+      toast.success(`Welcome to the ${role.title} dashboard!`);
     }
   };
 
@@ -250,12 +242,12 @@ const Index = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button
+                    <button
                       onClick={() => handleRoleSelect(role.id)}
-                      className="w-full mt-6"
+                      className="w-full mt-6 inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600"
                     >
                       {role.cta}
-                    </Button>
+                    </button>
                   </CardContent>
                 </Card>
               </motion.div>
