@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [
@@ -24,10 +25,20 @@ const FamilyDashboard = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold">Family Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Complete your registration to start connecting with care providers.
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Family Dashboard</h1>
+              <p className="text-muted-foreground mt-2">
+                Complete your registration to start connecting with care providers.
+              </p>
+            </div>
+            <Link to="/features">
+              <Button variant="outline">
+                View Features
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </motion.div>
 
         <div className="grid gap-6">
