@@ -44,7 +44,7 @@ const CommunityDashboard = () => {
                 Complete Registration
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <UpvoteFeatureButton featureTitle="Community Registration" />
+              <UpvoteFeatureButton featureTitle="Community Registration" buttonText="Upvote this Feature" />
             </CardContent>
           </Card>
 
@@ -64,7 +64,7 @@ const CommunityDashboard = () => {
                   Find Circles
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <UpvoteFeatureButton featureTitle="Care Circles" />
+                <UpvoteFeatureButton featureTitle="Care Circles" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
 
@@ -83,7 +83,7 @@ const CommunityDashboard = () => {
                   View Events
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <UpvoteFeatureButton featureTitle="Community Events" />
+                <UpvoteFeatureButton featureTitle="Community Events" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
             
@@ -102,7 +102,7 @@ const CommunityDashboard = () => {
                   Get Involved
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <UpvoteFeatureButton featureTitle="Support Network" />
+                <UpvoteFeatureButton featureTitle="Support Network" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
           </div>

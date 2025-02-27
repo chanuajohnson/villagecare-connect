@@ -9,9 +9,10 @@ interface UpvoteFeatureButtonProps {
   featureTitle: string;
   className?: string;
   featureId?: string;
+  buttonText?: string;
 }
 
-export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureButtonProps) => {
+export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upvote" }: UpvoteFeatureButtonProps) => {
   const [isVoting, setIsVoting] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
   
@@ -109,8 +110,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className }: UpvoteFeatureBu
       disabled={isVoting}
     >
       <ThumbsUp className="w-4 h-4 mr-2" />
-      Upvote {voteCount > 0 && `(${voteCount})`}
+      {buttonText} {voteCount > 0 && `(${voteCount})`}
     </Button>
   );
 };
-
