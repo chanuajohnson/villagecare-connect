@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -195,28 +194,31 @@ const FamilyDashboard = () => {
           </div>
 
           <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
-          <div className="bg-white rounded-lg p-6 mb-8">
-            <div className="flex mb-4 gap-4 text-sm">
-              <span className="text-gray-500">Meal Planner</span>
-              <span className="text-gray-500">Recipe Library</span>
-              <span className="text-gray-500">Suggestions</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
                   Select Date
-                </h3>
+                </CardTitle>
+                <CardDescription>Pick a date for meal planning</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="border rounded-lg p-4">
                   <p className="text-gray-500 text-sm">Pick a date</p>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="h-5 w-5 text-primary" />
                   Meal Types
-                </h3>
+                </CardTitle>
+                <CardDescription>Choose meal types for planning</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-gray-500">Morning Drink</p>
@@ -229,13 +231,18 @@ const FamilyDashboard = () => {
                     <p className="text-gray-500">Dinner</p>
                   </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-primary" />
                   Features
-                </h3>
+                </CardTitle>
+                <CardDescription>Available meal planning features</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
                     <span className="text-primary">✓</span>
@@ -258,8 +265,8 @@ const FamilyDashboard = () => {
                     <span className="text-gray-500">Share plans with care team</span>
                   </li>
                 </ul>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
