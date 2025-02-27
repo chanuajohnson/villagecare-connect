@@ -1,16 +1,29 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { UserRole } from '@/types/database';
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Extract role from query parameters if present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const role = params.get('role');
+    if (role) {
+      // If a role is specified, default to signup tab
+      setActiveTab('signup');
+    }
+  }, [location]);
 
   const signUpUser = async (email: string, password: string, firstName: string, lastName: string, role: string) => {
     setIsLoading(true);
@@ -78,7 +91,7 @@ export default function AuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
