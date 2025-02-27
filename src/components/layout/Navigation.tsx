@@ -5,7 +5,8 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   LogOut,
   LayoutDashboard,
-  ChevronDown
+  ChevronDown,
+  User
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -60,18 +61,19 @@ export function Navigation() {
           {!isLoading && (
             <>
               {user ? (
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline text-xs text-gray-600 max-w-[120px] truncate">
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+                  <User className="h-4 w-4 text-green-600" />
+                  <span className="text-xs text-green-700 font-medium max-w-[120px] truncate hidden sm:inline">
                     {user.email}
                   </span>
                   <Button 
                     onClick={signOut} 
                     variant="outline" 
                     size="sm" 
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 ml-1 bg-white hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span className="inline sm:inline">Sign Out</span>
+                    <span className="inline">Sign Out</span>
                   </Button>
                 </div>
               ) : (
