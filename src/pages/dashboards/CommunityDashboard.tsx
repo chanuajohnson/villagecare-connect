@@ -23,15 +23,23 @@ const CommunityDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="space-y-6"
         >
+          <div className="bg-blue-50 p-6 rounded-lg mb-8">
+            <h2 className="text-xl mb-2">Preview Mode</h2>
+            <p className="text-gray-600 mb-4">Sign up to access your personalized dashboard and start coordinating care.</p>
+            <Button variant="default" size="lg" className="float-right">
+              Sign Up Now
+            </Button>
+          </div>
+
           <h1 className="text-3xl font-bold">Community Dashboard</h1>
           <p className="text-muted-foreground mt-2">
             Connect and contribute to your local care community.
           </p>
         </motion.div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-6 mt-8">
           <Card>
             <CardHeader>
               <CardTitle>Complete Your Registration</CardTitle>
