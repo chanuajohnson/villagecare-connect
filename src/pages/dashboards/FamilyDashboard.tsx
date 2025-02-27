@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useState } from "react";
 import MealTypeSelector from "@/components/meal-planning/components/MealTypeSelector";
 import RecipeBrowser from "@/components/meal-planning/RecipeBrowser";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const FamilyDashboard = () => {
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
@@ -81,12 +81,22 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full mt-4" />
               </CardContent>
             </Card>
@@ -142,12 +152,22 @@ const FamilyDashboard = () => {
                 <CardDescription>Schedule and manage appointments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Button className="w-full mt-4" variant="secondary">View Calendar</Button>
                 <UpvoteFeatureButton featureTitle="Appointments Management" className="w-full" />
               </CardContent>
@@ -193,12 +213,22 @@ const FamilyDashboard = () => {
                 <CardDescription>Plan medication routines</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Button className="w-full mt-4" variant="secondary">View Planning</Button>
                 <UpvoteFeatureButton featureTitle="Medication Planning" className="w-full" />
               </CardContent>
@@ -229,12 +259,22 @@ const FamilyDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </CardContent>
             </Card>
 
