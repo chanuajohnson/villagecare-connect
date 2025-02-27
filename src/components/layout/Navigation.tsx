@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { 
-  UserCircle, 
   LogOut,
   LayoutDashboard,
   ChevronDown
@@ -68,10 +67,10 @@ export function Navigation() {
                     onClick={signOut} 
                     variant="outline" 
                     size="sm" 
-                    className="flex items-center gap-1 whitespace-nowrap"
+                    className="flex items-center gap-1"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span className="hidden xs:inline">Sign Out</span>
+                    <span className="inline sm:inline">Sign Out</span>
                   </Button>
                 </div>
               ) : (
