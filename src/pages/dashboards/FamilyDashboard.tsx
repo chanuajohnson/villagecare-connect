@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -199,6 +198,36 @@ const FamilyDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          <h2 className="text-2xl font-bold mb-6">Meal Planning</h2>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ChefHat className="h-5 w-5 text-primary" />
+                Meal Planning
+              </CardTitle>
+              <CardDescription>Sign up to access our meal planning features and create personalized meal schedules.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button className="w-full" variant="secondary">Start Planning Meals</Button>
+              <UpvoteFeatureButton featureTitle="Meal Planning" className="w-full" />
+            </CardContent>
+          </Card>
+
+          <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ActivitySquare className="h-5 w-5 text-primary" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Sign up to track your care activities and meal planning</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button className="w-full" variant="secondary">Sign Up to Track Activities</Button>
+              <UpvoteFeatureButton featureTitle="Recent Activity" className="w-full" />
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>
