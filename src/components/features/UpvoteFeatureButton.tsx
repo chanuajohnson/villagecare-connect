@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ThumbsUp } from "lucide-react";
@@ -17,7 +16,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
   const [isVoting, setIsVoting] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
-  const { user } = useAuth();
+  const { user, requireAuth } = useAuth();
   
   const getOrCreateFeatureId = async (title: string) => {
     try {
@@ -96,8 +95,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
   }, [featureTitle, user]);
 
   const handleUpvote = async () => {
-    if (!user) {
-      toast.error('Please sign in to upvote features');
+    if (!requireAuth(`upvote "${featureTitle}"`)) {
       return;
     }
     
@@ -113,24 +111,22 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
       }
 
       if (hasVoted) {
-        // Remove upvote
         const { error } = await supabase
           .from('feature_upvotes')
           .delete()
           .eq('feature_id', featureId)
-          .eq('user_id', user.id);
+          .eq('user_id', user!.id);
 
         if (error) throw error;
         setHasVoted(false);
         setVoteCount(prev => prev - 1);
         toast.success('Your vote has been removed');
       } else {
-        // Add upvote
         const { error } = await supabase
           .from('feature_upvotes')
           .insert([{
             feature_id: featureId,
-            user_id: user.id
+            user_id: user!.id
           }]);
 
         if (error) throw error;

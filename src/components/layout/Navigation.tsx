@@ -16,22 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
-  const { user, signOut, userRole, isLoading } = useAuth();
-  
-  const getDashboardLink = () => {
-    if (!userRole) return '/';
-    
-    switch (userRole) {
-      case 'family':
-        return '/dashboard/family';
-      case 'professional':
-        return '/dashboard/professional';
-      case 'community':
-        return '/dashboard/community';
-      default:
-        return '/';
-    }
-  };
+  const { user, signOut, isLoading } = useAuth();
 
   return (
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
@@ -72,12 +57,6 @@ export function Navigation() {
             <>
               {user ? (
                 <>
-                  <Link to={getDashboardLink()}>
-                    <Button variant="ghost" className="flex items-center gap-2">
-                      <UserCircle className="h-5 w-5" />
-                      <span className="hidden sm:inline">Dashboard</span>
-                    </Button>
-                  </Link>
                   <Button onClick={signOut} variant="outline" size="sm" className="flex items-center gap-2">
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">Sign Out</span>

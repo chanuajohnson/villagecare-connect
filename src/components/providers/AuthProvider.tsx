@@ -12,6 +12,8 @@ interface AuthContextType {
   userRole: UserRole | null;
   signOut: () => Promise<void>;
   isLoading: boolean;
+  requireAuth: (action: string, redirectPath?: string) => boolean;
+  clearLastAction: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   userRole: null,
   signOut: async () => {},
   isLoading: true,
+  requireAuth: () => false,
+  clearLastAction: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -30,8 +34,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Function to require authentication for specific actions
+  const requireAuth = (action: string, redirectPath?: string) => {
+    if (user) return true;
+
+    // Store the last action and current path
+    sessionStorage.setItem('lastAction', action);
+    sessionStorage.setItem('lastPath', redirectPath || location.pathname + location.search);
+    
+    toast.error('Please sign in to ' + action);
+    navigate('/auth');
+    return false;
+  };
+
+  // Function to clear the last action after completion
+  const clearLastAction = () => {
+    sessionStorage.removeItem('lastAction');
+    sessionStorage.removeItem('lastPath');
+  };
+
   useEffect(() => {
-    // Get initial session
     const initializeAuth = async () => {
       setIsLoading(true);
       try {
@@ -43,16 +65,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const role = await getUserRole();
           setUserRole(role);
           
-          // If user is authenticated and trying to access auth page, redirect to home
-          if (location.pathname === '/auth') {
-            navigate('/');
-          }
-        } else {
-          // If user is not authenticated and trying to access protected routes, redirect to auth
-          const protectedRoutes = ['/dashboard/family', '/dashboard/professional', '/dashboard/community', '/dashboard/admin'];
-          if (protectedRoutes.includes(location.pathname)) {
-            toast.error('Please sign in to access this page');
-            navigate('/auth');
+          // If user just logged in and there was a last action, redirect back
+          const lastPath = sessionStorage.getItem('lastPath');
+          if (location.pathname === '/auth' && lastPath) {
+            navigate(lastPath);
+            clearLastAction();
           }
         }
       } catch (error) {
@@ -64,7 +81,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -74,6 +90,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         const role = await getUserRole();
         setUserRole(role);
+
+        // Check for last action on auth state change
+        const lastPath = sessionStorage.getItem('lastPath');
+        if (lastPath) {
+          navigate(lastPath);
+          clearLastAction();
+        }
       } else {
         setUserRole(null);
       }
@@ -94,7 +117,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, userRole, signOut, isLoading }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      userRole, 
+      signOut, 
+      isLoading,
+      requireAuth,
+      clearLastAction
+    }}>
       {children}
     </AuthContext.Provider>
   );
