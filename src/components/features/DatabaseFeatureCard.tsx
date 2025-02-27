@@ -1,6 +1,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { UpvoteFeatureButton } from '@/components/features/UpvoteFeatureButton';
+import { ReactNode } from "react";
 
 interface DatabaseFeature {
   id: string;
@@ -10,6 +11,7 @@ interface DatabaseFeature {
   _count?: {
     votes: number;
   };
+  icon?: ReactNode;
 }
 
 export const DatabaseFeatureCard = ({ feature }: { feature: DatabaseFeature }) => {
@@ -31,7 +33,10 @@ export const DatabaseFeatureCard = ({ feature }: { feature: DatabaseFeature }) =
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg">{feature.title}</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              {feature.icon && feature.icon}
+              {feature.title}
+            </CardTitle>
             <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${statusColors[feature.status]}`}>
               {formatStatus(feature.status)}
             </span>

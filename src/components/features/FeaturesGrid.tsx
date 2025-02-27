@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { DatabaseFeatureCard } from './DatabaseFeatureCard';
 import { TechInnovatorsHub } from './TechInnovatorsHub';
+import { User, Briefcase, ClipboardList, Calculator, FileText, Clock, UserCog, Building2, BookOpen, Calendar, Users, Heart } from 'lucide-react';
 
 interface Feature {
   id: string;
@@ -12,6 +13,7 @@ interface Feature {
   _count?: {
     votes: number;
   };
+  icon?: React.ReactNode;
 }
 
 const FeaturesGrid = () => {
@@ -102,6 +104,83 @@ const FeaturesGrid = () => {
       title: 'On-Demand Care Requests',
       description: 'A short-notice request system for quickly finding and booking available caregivers. Provides immediate relief for unexpected care needs and flexible work opportunities.',
       status: 'planned'
+    },
+    {
+      id: '15',
+      title: 'Professional Dashboard (After Registration - Caregiver)',
+      description: 'A dedicated dashboard for professional caregivers with job opportunities, care management tools, certifications, and career growth resources.',
+      status: 'planned',
+      icon: <User className="h-5 w-5" />
+    },
+    {
+      id: '16',
+      title: 'Professional Dashboard (After Registration - Agency)',
+      description: 'A comprehensive agency management hub for overseeing caregivers, handling client relationships, and streamlining operations.',
+      status: 'planned',
+      icon: <Briefcase className="h-5 w-5" />
+    },
+    {
+      id: '17',
+      title: 'Update Profile (Caregiver)',
+      description: 'A profile management tool for professional caregivers to update credentials, experience, and skills.',
+      status: 'planned',
+      icon: <UserCog className="h-5 w-5" />
+    },
+    {
+      id: '18',
+      title: 'Update Profile (Agency)',
+      description: 'A dynamic agency profile management tool for services, caregiver availability, and operational details.',
+      status: 'planned',
+      icon: <Building2 className="h-5 w-5" />
+    },
+    {
+      id: '19',
+      title: 'Access Professional Tools',
+      description: 'A resource hub providing administrative tools, job letter requests, and workflow management for caregivers and agencies.',
+      status: 'planned',
+      icon: <ClipboardList className="h-5 w-5" />
+    },
+    {
+      id: '20',
+      title: 'Learn More – Caregiver Learning Hub',
+      description: 'A dedicated learning space with courses, certifications, and best practices for career advancement.',
+      status: 'planned',
+      icon: <BookOpen className="h-5 w-5" />
+    },
+    {
+      id: '21',
+      title: 'Learn More – Agency Training & Development Hub',
+      description: 'A training center for agencies offering certifications, compliance training, and workforce development.',
+      status: 'planned',
+      icon: <BookOpen className="h-5 w-5" />
+    },
+    {
+      id: '22',
+      title: 'Community Dashboard (After Registration)',
+      description: 'A centralized hub for community engagement, support, and caregiving advocacy.',
+      status: 'planned',
+      icon: <Users className="h-5 w-5" />
+    },
+    {
+      id: '23',
+      title: 'Find Care Circles',
+      description: 'A community-driven support system for knowledge sharing and mutual support.',
+      status: 'planned',
+      icon: <Heart className="h-5 w-5" />
+    },
+    {
+      id: '24',
+      title: 'View Events',
+      description: 'A calendar system for community meetups, workshops, and advocacy events.',
+      status: 'planned',
+      icon: <Calendar className="h-5 w-5" />
+    },
+    {
+      id: '25',
+      title: 'Get Involved',
+      description: 'A volunteer portal for supporting families and caregivers through mentorship and assistance.',
+      status: 'planned',
+      icon: <Heart className="h-5 w-5" />
     }
   ];
 
@@ -129,4 +208,3 @@ const FeaturesGrid = () => {
 };
 
 export default FeaturesGrid;
-
