@@ -26,6 +26,10 @@ export function Navigation() {
         </div>
         
         <div className="flex items-center gap-4">
+          <Link to="/features" className="text-gray-700 hover:text-primary">
+            Features
+          </Link>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
@@ -56,12 +60,15 @@ export function Navigation() {
           {!isLoading && (
             <>
               {user ? (
-                <>
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline text-sm">
+                    {user.email}
+                  </span>
                   <Button onClick={signOut} variant="outline" size="sm" className="flex items-center gap-2">
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">Sign Out</span>
                   </Button>
-                </>
+                </div>
               ) : (
                 <Link to="/auth">
                   <Button size="sm">Sign In</Button>
