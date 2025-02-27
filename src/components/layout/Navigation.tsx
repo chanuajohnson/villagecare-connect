@@ -25,17 +25,17 @@ export function Navigation() {
           <Link to="/" className="text-xl font-bold">Takes a Village</Link>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link to="/features" className="text-gray-700 hover:text-primary">
             Features
           </Link>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <LayoutDashboard className="h-5 w-5" />
+              <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                <LayoutDashboard className="h-4 w-4" />
                 <span className="hidden sm:inline">Dashboards</span>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -61,12 +61,17 @@ export function Navigation() {
             <>
               {user ? (
                 <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline text-sm">
+                  <span className="hidden sm:inline text-xs text-gray-600 max-w-[120px] truncate">
                     {user.email}
                   </span>
-                  <Button onClick={signOut} variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button 
+                    onClick={signOut} 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1 whitespace-nowrap"
+                  >
                     <LogOut className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sign Out</span>
+                    <span className="hidden xs:inline">Sign Out</span>
                   </Button>
                 </div>
               ) : (
