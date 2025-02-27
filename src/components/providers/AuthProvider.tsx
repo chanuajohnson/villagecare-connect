@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Profile is considered complete if they have at least a full name
       const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
+      console.log('Profile complete:', profileComplete);
       return profileComplete;
     } catch (error) {
       console.error('Error checking profile completion:', error);

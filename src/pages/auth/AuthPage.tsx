@@ -39,17 +39,11 @@ export default function AuthPage() {
       }
 
       console.log('Sign-up successful, user data:', user);
-      toast.success('Sign-up successful! Redirecting you to dashboard...');
+      toast.success('Sign-up successful! Redirecting you to complete your profile...');
       
-      const dashboardRoutes: Record<string, string> = {
-        'family': '/dashboard/family',
-        'professional': '/dashboard/professional',
-        'community': '/dashboard/community'
-      };
+      // After signup, we'll be redirected to the registration page by the auth provider
+      // based on the user's role, so we don't need to navigate here
       
-      const route = dashboardRoutes[role] || '/';
-      console.log('Navigating to dashboard:', route);
-      navigate(route);
       setIsLoading(false);
       return user;
 
@@ -79,19 +73,12 @@ export default function AuthPage() {
       }
 
       console.log('Login successful, user data:', data);
-      toast.success('Login successful! Redirecting you to dashboard...');
+      toast.success('Login successful! Redirecting you...');
       
-      // Get the user's role from their metadata
-      const role = data.user?.user_metadata?.role || 'family';
-      const dashboardRoutes: Record<string, string> = {
-        'family': '/dashboard/family',
-        'professional': '/dashboard/professional',
-        'community': '/dashboard/community'
-      };
+      // After login, the auth provider will redirect based on profile completion
+      // so we don't need to navigate here
       
-      const route = dashboardRoutes[role] || '/';
-      console.log('Navigating to dashboard:', route);
-      navigate(route);
+      setIsLoading(false);
       return data.user;
     } catch (error) {
       console.error('Unexpected error during login:', error);

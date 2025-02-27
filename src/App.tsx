@@ -14,6 +14,9 @@ import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
 import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
 import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
 import AuthPage from "./pages/auth/AuthPage";
+import FamilyRegistration from "./pages/registration/FamilyRegistration";
+import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
+import CommunityRegistration from "./pages/registration/CommunityRegistration";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ const AppContent = () => {
           <Route path="/dashboard/family" element={<FamilyDashboard />} />
           <Route path="/dashboard/community" element={<CommunityDashboard />} />
           <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+          <Route path="/registration/family" element={<FamilyRegistration />} />
+          <Route path="/registration/professional" element={<ProfessionalRegistration />} />
+          <Route path="/registration/community" element={<CommunityRegistration />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
