@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to handle pending feature upvotes after login
   const checkPendingUpvote = async () => {
-    const featureId = sessionStorage.getItem('pendingFeatureUpvote');
+    const featureId = localStorage.getItem('pendingFeatureUpvote');
     
     if (featureId && user) {
       try {
@@ -98,8 +98,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           toast.info('You have already voted for this feature');
         }
         
-        // Remove the pending vote from session storage
-        sessionStorage.removeItem('pendingFeatureUpvote');
+        // Remove the pending vote from local storage
+        localStorage.removeItem('pendingFeatureUpvote');
         
         // Redirect to the features page
         navigate('/features');
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const profileComplete = await checkProfileCompletion(user.id);
     console.log('Profile complete:', profileComplete);
     
-    // List of possible actions stored in sessionStorage
+    // List of possible actions stored in localStorage
     const pendingActions = [
       'pendingFeatureUpvote',
       'pendingBooking',
@@ -129,8 +129,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       'pendingProfileUpdate'
     ];
     
-    // Check if any of these actions exist in sessionStorage
-    const hasPendingAction = pendingActions.some(action => sessionStorage.getItem(action));
+    // Check if any of these actions exist in localStorage
+    const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
     console.log('Has pending action:', hasPendingAction);
     
     // If the user hasn't completed their profile, redirect to the appropriate registration page
@@ -154,32 +154,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await checkPendingUpvote();
     
     // Handle pending booking if present
-    const pendingBooking = sessionStorage.getItem('pendingBooking');
+    const pendingBooking = localStorage.getItem('pendingBooking');
     if (pendingBooking) {
-      sessionStorage.removeItem('pendingBooking');
+      localStorage.removeItem('pendingBooking');
       navigate(pendingBooking);
       return;
     }
     
     // Handle pending message if present
-    const pendingMessage = sessionStorage.getItem('pendingMessage');
+    const pendingMessage = localStorage.getItem('pendingMessage');
     if (pendingMessage) {
-      sessionStorage.removeItem('pendingMessage');
+      localStorage.removeItem('pendingMessage');
       navigate(pendingMessage);
       return;
     }
     
     // Handle pending profile update if present
-    const pendingProfileUpdate = sessionStorage.getItem('pendingProfileUpdate');
+    const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
     if (pendingProfileUpdate) {
-      sessionStorage.removeItem('pendingProfileUpdate');
+      localStorage.removeItem('pendingProfileUpdate');
       navigate(pendingProfileUpdate);
       return;
     }
     
     // If user has completed profile and there are no pending actions
     // Check for last path and redirect there if it exists
-    const lastPath = sessionStorage.getItem('lastPath');
+    const lastPath = localStorage.getItem('lastPath');
     console.log('Last path:', lastPath);
     
     if (profileComplete && lastPath) {
@@ -206,21 +206,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) return true;
 
     // Store the last action and current path
-    sessionStorage.setItem('lastAction', action);
-    sessionStorage.setItem('lastPath', redirectPath || location.pathname + location.search);
+    localStorage.setItem('lastAction', action);
+    localStorage.setItem('lastPath', redirectPath || location.pathname + location.search);
     
-    // Store specific actions in sessionStorage for post-login handling
+    // Store specific actions in localStorage for post-login handling
     if (action.startsWith('upvote "')) {
-      const featureId = sessionStorage.getItem('pendingFeatureId');
+      const featureId = localStorage.getItem('pendingFeatureId');
       if (featureId) {
-        sessionStorage.setItem('pendingFeatureUpvote', featureId);
+        localStorage.setItem('pendingFeatureUpvote', featureId);
       }
     } else if (action.startsWith('book care')) {
-      sessionStorage.setItem('pendingBooking', redirectPath || location.pathname);
+      localStorage.setItem('pendingBooking', redirectPath || location.pathname);
     } else if (action.startsWith('send message')) {
-      sessionStorage.setItem('pendingMessage', redirectPath || location.pathname);
+      localStorage.setItem('pendingMessage', redirectPath || location.pathname);
     } else if (action.startsWith('update profile')) {
-      sessionStorage.setItem('pendingProfileUpdate', redirectPath || location.pathname);
+      localStorage.setItem('pendingProfileUpdate', redirectPath || location.pathname);
     }
     
     toast.error('Please sign in to ' + action);
@@ -230,13 +230,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to clear the last action after completion
   const clearLastAction = () => {
-    sessionStorage.removeItem('lastAction');
-    sessionStorage.removeItem('lastPath');
-    sessionStorage.removeItem('pendingFeatureId');
-    sessionStorage.removeItem('pendingFeatureUpvote');
-    sessionStorage.removeItem('pendingBooking');
-    sessionStorage.removeItem('pendingMessage');
-    sessionStorage.removeItem('pendingProfileUpdate');
+    localStorage.removeItem('lastAction');
+    localStorage.removeItem('lastPath');
+    localStorage.removeItem('pendingFeatureId');
+    localStorage.removeItem('pendingFeatureUpvote');
+    localStorage.removeItem('pendingBooking');
+    localStorage.removeItem('pendingMessage');
+    localStorage.removeItem('pendingProfileUpdate');
   };
 
   useEffect(() => {

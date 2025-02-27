@@ -103,7 +103,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
     }
     
     // Store the feature ID for post-login handling
-    sessionStorage.setItem('pendingFeatureId', featureId);
+    localStorage.setItem('pendingFeatureId', featureId);
     
     if (!requireAuth(`upvote "${featureTitle}"`)) {
       return;
@@ -142,8 +142,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, buttonText = "Upv
       toast.error(error.message || 'Failed to process your vote. Please try again.');
     } finally {
       setIsVoting(false);
-      // Clean up session storage after successful vote
-      sessionStorage.removeItem('pendingFeatureId');
+      // Clean up local storage after successful vote
+      localStorage.removeItem('pendingFeatureId');
     }
   };
 
