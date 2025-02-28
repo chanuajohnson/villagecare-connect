@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<any>;
@@ -14,12 +15,30 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
-    await onSubmit(email, password);
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+    
+    try {
+      setLocalLoading(true);
+      console.log("[LoginForm] Submitting login form...");
+      await onSubmit(email, password);
+      console.log("[LoginForm] Login form submission completed");
+    } catch (error) {
+      console.error("[LoginForm] Error during form submission:", error);
+    } finally {
+      setLocalLoading(false);
+    }
   };
+
+  // Use either the passed in loading state or our local one
+  const showLoading = isLoading || localLoading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -33,6 +52,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
+          disabled={showLoading}
         />
       </div>
       <div className="space-y-2">
@@ -46,6 +66,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
+            disabled={showLoading}
           />
           <Button
             type="button"
@@ -53,6 +74,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
             size="icon"
             className="absolute right-0 top-0 h-full px-3"
             onClick={() => setShowPassword(!showPassword)}
+            disabled={showLoading}
           >
             {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
           </Button>
@@ -61,9 +83,9 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
       <Button 
         type="submit" 
         className="w-full mt-6" 
-        disabled={isLoading}
+        disabled={showLoading}
       >
-        {isLoading ? (
+        {showLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Logging in...

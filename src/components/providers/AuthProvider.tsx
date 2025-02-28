@@ -7,7 +7,7 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 5000; // Reduced from 10s to 5s to respond faster to issues
+const LOADING_TIMEOUT_MS = 8000; // Increased from 5s to 8s to give more time for auth operations
 
 interface AuthContextType {
   session: Session | null;
@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Track initialization
   const isInitializedRef = useRef(false);
+  // Track if we're in the middle of redirecting
+  const isRedirectingRef = useRef(false);
 
   // Helper to clear any existing timeouts
   const clearLoadingTimeout = () => {
@@ -162,117 +164,127 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Function to check and handle any pending actions after login
-  const checkPendingActions = async () => {
-    if (!user) return;
+  // Function to handle redirections after authentication
+  const handlePostLoginRedirection = async () => {
+    if (!user || isRedirectingRef.current) return;
     
-    console.log('[AuthProvider] Checking pending actions for user:', user.id);
-    console.log('[AuthProvider] Current user role:', userRole);
+    // Mark that we're in the middle of redirecting to prevent duplicate redirects
+    isRedirectingRef.current = true;
     
-    // Check if the user has completed their profile
-    const profileComplete = await checkProfileCompletion(user.id);
-    console.log('[AuthProvider] Profile complete:', profileComplete);
-    
-    // List of possible actions stored in localStorage
-    const pendingActions = [
-      'pendingFeatureUpvote',
-      'pendingBooking',
-      'pendingMessage',
-      'pendingProfileUpdate'
-    ];
-    
-    // Check if any of these actions exist in localStorage
-    const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
-    console.log('[AuthProvider] Has pending action:', hasPendingAction);
-    
-    // If the user hasn't completed their profile and there are no pending actions,
-    // redirect to the appropriate registration page
-    if (!profileComplete && !hasPendingAction) {
-      if (userRole) {
-        const registrationRoutes: Record<UserRole, string> = {
-          'family': '/registration/family',
-          'professional': '/registration/professional',
-          'community': '/registration/community',
-          'admin': '/dashboard/admin' // Admin users don't need registration
-        };
-        
-        const route = registrationRoutes[userRole];
-        console.log('[AuthProvider] Redirecting to registration page:', route);
-        toast.info('Please complete your profile to continue');
-        navigate(route);
+    try {
+      console.log('[AuthProvider] Handling post-login redirection for user:', user.id);
+      console.log('[AuthProvider] Current user role:', userRole);
+      
+      // Check if the user has completed their profile
+      const profileComplete = await checkProfileCompletion(user.id);
+      console.log('[AuthProvider] Profile complete:', profileComplete);
+      
+      // List of possible actions stored in localStorage
+      const pendingActions = [
+        'pendingFeatureUpvote',
+        'pendingBooking',
+        'pendingMessage',
+        'pendingProfileUpdate'
+      ];
+      
+      // Check if any of these actions exist in localStorage
+      const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
+      console.log('[AuthProvider] Has pending action:', hasPendingAction);
+      
+      // If the user hasn't completed their profile and there are no pending actions,
+      // redirect to the appropriate registration page
+      if (!profileComplete && !hasPendingAction) {
+        if (userRole) {
+          const registrationRoutes: Record<UserRole, string> = {
+            'family': '/registration/family',
+            'professional': '/registration/professional',
+            'community': '/registration/community',
+            'admin': '/dashboard/admin' // Admin users don't need registration
+          };
+          
+          const route = registrationRoutes[userRole];
+          console.log('[AuthProvider] Redirecting to registration page:', route);
+          toast.info('Please complete your profile to continue');
+          navigate(route);
+          return;
+        }
+      }
+      
+      // Handle feature upvote if present
+      const pendingFeatureUpvote = localStorage.getItem('pendingFeatureUpvote');
+      if (pendingFeatureUpvote) {
+        await checkPendingUpvote();
         return;
       }
-    }
-    
-    // Handle feature upvote if present
-    const pendingFeatureUpvote = localStorage.getItem('pendingFeatureUpvote');
-    if (pendingFeatureUpvote) {
-      await checkPendingUpvote();
-      return;
-    }
-    
-    // Handle pending booking if present
-    const pendingBooking = localStorage.getItem('pendingBooking');
-    if (pendingBooking) {
-      localStorage.removeItem('pendingBooking');
-      navigate(pendingBooking);
-      return;
-    }
-    
-    // Handle pending message if present
-    const pendingMessage = localStorage.getItem('pendingMessage');
-    if (pendingMessage) {
-      localStorage.removeItem('pendingMessage');
-      navigate(pendingMessage);
-      return;
-    }
-    
-    // Handle pending profile update if present
-    const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
-    if (pendingProfileUpdate) {
-      localStorage.removeItem('pendingProfileUpdate');
-      navigate(pendingProfileUpdate);
-      return;
-    }
-    
-    // If user has completed profile and there are no pending actions
-    // Check for last path and redirect there if it exists
-    const lastPath = localStorage.getItem('lastPath');
-    console.log('[AuthProvider] Last path:', lastPath);
-    
-    if (profileComplete && lastPath) {
-      console.log('[AuthProvider] Navigating to last path:', lastPath);
-      navigate(lastPath);
-      clearLastAction();
-    } else if (profileComplete) {
-      // If no last path but profile is complete, redirect to the appropriate dashboard
-      if (userRole) {
-        const dashboardRoutes: Record<UserRole, string> = {
-          'family': '/dashboard/family',
-          'professional': '/dashboard/professional',
-          'community': '/dashboard/community',
-          'admin': '/dashboard/admin'
-        };
-        
-        console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
-        navigate(dashboardRoutes[userRole]);
-        toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
+      
+      // Handle pending booking if present
+      const pendingBooking = localStorage.getItem('pendingBooking');
+      if (pendingBooking) {
+        localStorage.removeItem('pendingBooking');
+        navigate(pendingBooking);
+        return;
       }
-    } else {
-      // If we get here and the profile is not complete but we didn't redirect to registration,
-      // we should force a redirect to the appropriate dashboard
-      if (userRole) {
-        const dashboardRoutes: Record<UserRole, string> = {
-          'family': '/dashboard/family',
-          'professional': '/dashboard/professional',
-          'community': '/dashboard/community',
-          'admin': '/dashboard/admin'
-        };
-        
-        console.log('[AuthProvider] Forcing navigation to dashboard for role:', userRole);
-        navigate(dashboardRoutes[userRole]);
-        toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
+      
+      // Handle pending message if present
+      const pendingMessage = localStorage.getItem('pendingMessage');
+      if (pendingMessage) {
+        localStorage.removeItem('pendingMessage');
+        navigate(pendingMessage);
+        return;
       }
+      
+      // Handle pending profile update if present
+      const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
+      if (pendingProfileUpdate) {
+        localStorage.removeItem('pendingProfileUpdate');
+        navigate(pendingProfileUpdate);
+        return;
+      }
+      
+      // If user has completed profile and there are no pending actions
+      // Check for last path and redirect there if it exists
+      const lastPath = localStorage.getItem('lastPath');
+      console.log('[AuthProvider] Last path:', lastPath);
+      
+      if (profileComplete && lastPath) {
+        console.log('[AuthProvider] Navigating to last path:', lastPath);
+        navigate(lastPath);
+        clearLastAction();
+      } else if (profileComplete) {
+        // If no last path but profile is complete, redirect to the appropriate dashboard
+        if (userRole) {
+          const dashboardRoutes: Record<UserRole, string> = {
+            'family': '/dashboard/family',
+            'professional': '/dashboard/professional',
+            'community': '/dashboard/community',
+            'admin': '/dashboard/admin'
+          };
+          
+          console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
+          navigate(dashboardRoutes[userRole]);
+          toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
+        }
+      } else {
+        // If we get here and the profile is not complete but we didn't redirect to registration,
+        // we should force a redirect to the appropriate dashboard
+        if (userRole) {
+          const dashboardRoutes: Record<UserRole, string> = {
+            'family': '/dashboard/family',
+            'professional': '/dashboard/professional',
+            'community': '/dashboard/community',
+            'admin': '/dashboard/admin'
+          };
+          
+          console.log('[AuthProvider] Forcing navigation to dashboard for role:', userRole);
+          navigate(dashboardRoutes[userRole]);
+          toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
+        }
+      }
+    } catch (error) {
+      console.error('[AuthProvider] Error during post-login redirection:', error);
+    } finally {
+      // Reset the redirecting flag
+      isRedirectingRef.current = false;
     }
   };
 
@@ -342,8 +354,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('[AuthProvider] User role:', role);
         setUserRole(role);
         
-        // Check pending actions only if we have a user
-        await checkPendingActions();
+        // Check profile completion
+        await checkProfileCompletion(currentSession.user.id);
       } else {
         console.log('[AuthProvider] No user in session');
         setUserRole(null);
@@ -357,6 +369,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isInitializedRef.current = true;
     }
   };
+  
+  // Effect to handle post-login redirection when user/role is set
+  useEffect(() => {
+    if (user && userRole && isInitializedRef.current) {
+      console.log('[AuthProvider] User and role available, handling redirection');
+      handlePostLoginRedirection();
+    }
+  }, [user, userRole]);
 
   // Force clear stale auth state when component mounts if previous state was problematic
   useEffect(() => {
@@ -415,10 +435,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (event === 'SIGNED_IN') {
               console.log('[AuthProvider] Processing post-signin actions');
-              await checkPendingActions();
               toast.success('You have successfully logged in!');
+              // Don't call handlePostLoginRedirection here - it will be triggered by the effect
+              // that watches for user and userRole changes
             }
           }
+          
+          // Make sure to turn off loading state
+          setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
         } else if (event === 'SIGNED_OUT') {
           console.log('[AuthProvider] User signed out');
           setLoadingWithTimeout(true, 'auth-state-change-SIGNED_OUT');
@@ -433,20 +457,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           toast.success('You have been signed out successfully');
           navigate('/');
+          
+          // Make sure to turn off loading state
+          setLoadingWithTimeout(false, 'auth-state-change-complete-SIGNED_OUT');
         } else if (event === 'USER_UPDATED') {
           console.log('[AuthProvider] User updated');
           if (newSession?.user) {
             const role = await getUserRole();
             setUserRole(role);
           }
+          
+          // Make sure to turn off loading state
+          setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
+        } else {
+          // For any other events, make sure loading state is turned off
+          setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
         }
       } catch (error) {
         console.error('[AuthProvider] Error handling auth state change:', error);
         // Mark that we encountered an auth error for recovery on next load
         localStorage.setItem('authStateError', 'true');
-      } finally {
-        console.log('[AuthProvider] Auth state change handler complete, setting isLoading to false');
-        setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
+        setLoadingWithTimeout(false, `auth-state-change-error-${event}`);
       }
     });
 

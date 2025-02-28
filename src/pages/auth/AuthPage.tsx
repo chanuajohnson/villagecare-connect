@@ -1,148 +1,121 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoginForm } from '@/components/auth/LoginForm';
-import { SignupForm } from '@/components/auth/SignupForm';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { SignupForm } from "@/components/auth/SignupForm";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const signUpUser = async (email: string, password: string, firstName: string, lastName: string, role: string) => {
-    setIsLoading(true);
-    console.log('Starting signup process for:', email, 'with role:', role);
-    
+  // If user is already logged in, redirect to home
+  if (user) {
+    navigate("/");
+    return null;
+  }
+
+  const handleLogin = async (email: string, password: string) => {
     try {
-      // Clear any existing session first to ensure a clean state
-      await supabase.auth.signOut();
-      
-      const { data: { user }, error } = await supabase.auth.signUp({
+      console.log("[AuthPage] Starting login process...");
+      setIsLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: { first_name: firstName, last_name: lastName, role }
-        }
       });
 
       if (error) {
-        console.error('Sign-up error:', error);
-        toast.error('Sign-up error: ' + error.message);
-        setIsLoading(false);
-        return null;
+        console.error("[AuthPage] Login error:", error.message);
+        throw error;
       }
 
-      if (!user) {
-        toast.error('No user data returned after signup');
-        setIsLoading(false);
-        return null;
-      }
+      console.log("[AuthPage] Login successful:", data.session ? "Has session" : "No session");
+      // We don't need to navigate here, the AuthProvider will handle it
 
-      console.log('Sign-up successful, user data:', user);
-      toast.success('Sign-up successful! Redirecting you to complete your profile...');
-      
-      // After a successful signup, we should explicitly set the session
-      // This helps ensure the auth state is properly updated
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Error getting session after signup:', sessionError);
-      } else {
-        console.log('Session established after signup:', sessionData.session ? 'Yes' : 'No');
-      }
-      
-      // Delay setting isLoading to false to give auth state time to propagate
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-      
-      return user;
-
-    } catch (error) {
-      console.error('Unexpected error during sign-up:', error);
-      toast.error('An unexpected error occurred during sign-up');
+    } catch (error: any) {
+      console.error("[AuthPage] Login error:", error);
+      toast.error(error.message || "Failed to log in");
+      throw error;
+    } finally {
       setIsLoading(false);
-      return null;
+      console.log("[AuthPage] Login process completed");
     }
   };
 
-  const loginUser = async (email: string, password: string) => {
-    setIsLoading(true);
-    console.log('Starting login process for:', email);
-    
+  const handleSignup = async (email: string, password: string, role: string) => {
     try {
-      // Clear any existing session first to ensure a clean state
-      await supabase.auth.signOut();
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log("[AuthPage] Starting signup process...");
+      setIsLoading(true);
+
+      const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            role,
+          },
+        },
       });
 
       if (error) {
-        console.error('Login error:', error);
-        toast.error('Login error: ' + error.message);
-        setIsLoading(false);
-        return null;
+        console.error("[AuthPage] Signup error:", error.message);
+        throw error;
       }
 
-      console.log('Login successful, user data:', data);
-      toast.success('Login successful! Redirecting you...');
+      console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
+      toast.success("Account created successfully! Please check your email to confirm your account.");
       
-      // After a successful login, we should explicitly check that the session is established
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Error getting session after login:', sessionError);
+      // Check if auto-confirm is disabled
+      if (data.session) {
+        console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
+        // We don't need to navigate here, the AuthProvider will handle it
       } else {
-        console.log('Session established after login:', sessionData.session ? 'Yes' : 'No');
+        console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
       }
-      
-      // Delay setting isLoading to false to give auth state time to propagate
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-      
-      return data.user;
-    } catch (error) {
-      console.error('Unexpected error during login:', error);
-      toast.error('An unexpected error occurred during login');
+
+    } catch (error: any) {
+      console.error("[AuthPage] Signup error:", error);
+      toast.error(error.message || "Failed to create account");
+      throw error;
+    } finally {
       setIsLoading(false);
-      return null;
+      console.log("[AuthPage] Signup process completed");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-md">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome</CardTitle>
-            <CardDescription className="text-center">
-              Sign in to your account or create a new one
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <LoginForm onSubmit={loginUser} isLoading={isLoading} />
-              </TabsContent>
-              <TabsContent value="signup">
-                <SignupForm onSubmit={signUpUser} isLoading={isLoading} />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex flex-col items-center justify-center text-sm text-muted-foreground">
-            <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
-          </CardFooter>
-        </Card>
-      </div>
+    <div className="container flex items-center justify-center py-20">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Welcome</CardTitle>
+          <CardDescription className="text-center">
+            Sign in to your account or create a new one
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login">
+              <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+            </TabsContent>
+            <TabsContent value="signup">
+              <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        <CardFooter className="flex justify-center text-sm text-muted-foreground">
+          Takes a Village &copy; {new Date().getFullYear()}
+        </CardFooter>
+      </Card>
     </div>
   );
 }
-
