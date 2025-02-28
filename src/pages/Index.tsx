@@ -1,12 +1,13 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
+import { Users, UserCog, Heart, ArrowRight, Check, Vote, Plus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import { Fab } from "@/components/ui/fab";
 
 const roles = [
   {
@@ -84,6 +85,11 @@ const Index = () => {
 
   const goToFeatures = () => {
     navigate('/features');
+  };
+
+  const handleFabClick = () => {
+    toast.success("Choose a role to get started!");
+    handleGetStarted();
   };
 
   return (
@@ -260,6 +266,12 @@ const Index = () => {
           </div>
         </div>
       </div>
+      
+      <Fab 
+        onClick={handleFabClick} 
+        label="Get Started"
+        className="bg-primary-500 hover:bg-primary-600 text-white"
+      />
     </div>
   );
 };
