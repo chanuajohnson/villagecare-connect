@@ -46,49 +46,38 @@ const FamilyDashboard = () => {
                 </Link>
               </div>
             </div>
-          ) : !isProfileComplete ? (
-            <div className="bg-yellow-50 p-6 rounded-lg mb-8">
-              <h2 className="text-xl mb-2">Complete Your Profile</h2>
-              <p className="text-gray-600 mb-4">Please complete your profile to access all features.</p>
-              <Link to="/registration/family">
-                <Button variant="default" size="lg" className="float-right">
-                  Complete Profile
-                </Button>
-              </Link>
-            </div>
           ) : null}
 
           <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
-          {/* Edit Profile Card - Replacing Preview Mode Card */}
-          {(user && isProfileComplete) && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCog className="h-5 w-5 text-primary" />
+          {/* Profile Management Card */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5 text-primary" />
+                Profile Management
+              </CardTitle>
+              <CardDescription>Manage your profile information and preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
+              <Link to="/profile">
+                <Button 
+                  variant="default" 
+                  className="w-full"
+                >
                   Edit Profile
-                </CardTitle>
-                <CardDescription>Update your profile information and preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Link to="/profile">
-                  <Button 
-                    variant="default" 
-                    className="w-full"
-                  >
-                    Manage Profile
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <UpvoteFeatureButton 
-                  featureTitle="Profile Management" 
-                  className="w-full" 
-                  buttonText="Upvote this Feature" 
-                />
-              </CardContent>
-            </Card>
-          )}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <UpvoteFeatureButton 
+                featureTitle="Profile Management" 
+                className="w-full" 
+                buttonText="Upvote this Feature" 
+              />
+            </CardContent>
+          </Card>
 
           {/* Care Management Section */}
           <div className="space-y-6 mb-8">
