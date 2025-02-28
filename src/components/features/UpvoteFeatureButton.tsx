@@ -22,13 +22,19 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   const { user, requireAuth } = useAuth();
   const navigate = useNavigate();
   
+  // Validate if a string is a valid UUID
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+  
   // Get or create the feature ID if it doesn't exist
   const getOrCreateFeatureId = async (title: string) => {
     try {
       console.log(`Attempting to get/create feature ID for: "${title}"`);
       
       // First, check if we already have this feature ID stored
-      if (featureId) {
+      if (featureId && isValidUUID(featureId)) {
         console.log(`Using existing feature ID: ${featureId}`);
         return featureId;
       }
@@ -45,7 +51,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         return null;
       }
 
-      if (existingFeature) {
+      if (existingFeature && existingFeature.id) {
         console.log(`Found existing feature with ID: ${existingFeature.id}`);
         setFeatureId(existingFeature.id);
         return existingFeature.id;
@@ -64,7 +70,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         return null;
       }
       
-      if (newFeature) {
+      if (newFeature && newFeature.id) {
         console.log(`Created new feature with ID: ${newFeature.id}`);
         setFeatureId(newFeature.id);
         return newFeature.id;
@@ -79,7 +85,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
   // Check if user has already voted for this feature
   const checkUserVote = async (fId: string) => {
-    if (!user) return false;
+    if (!user || !isValidUUID(fId)) return false;
     
     try {
       console.log(`Checking if user ${user.id} has voted for feature ${fId}`);
@@ -108,6 +114,11 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   // Fetch vote count for the feature
   const fetchVoteCount = async (fId: string) => {
     try {
+      if (!isValidUUID(fId)) {
+        console.error(`Invalid UUID format for feature ID: ${fId}`);
+        return;
+      }
+      
       console.log(`Fetching vote count for feature ${fId}`);
       
       const { count, error } = await supabase
@@ -132,14 +143,14 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     const initializeFeature = async () => {
       console.log(`Initializing feature component for: "${featureTitle}"`);
       const fId = await getOrCreateFeatureId(featureTitle);
-      if (fId) {
+      if (fId && isValidUUID(fId)) {
         await fetchVoteCount(fId);
         if (user) {
           const userHasVoted = await checkUserVote(fId);
           setHasVoted(userHasVoted);
         }
       } else {
-        console.error(`Failed to get/create feature ID for "${featureTitle}"`);
+        console.error(`Failed to get/create valid feature ID for "${featureTitle}"`);
       }
     };
 
@@ -152,8 +163,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     
     // Get feature ID first
     const fId = await getOrCreateFeatureId(featureTitle);
-    if (!fId) {
-      console.error(`Could not get/create feature ID for "${featureTitle}"`);
+    if (!fId || !isValidUUID(fId)) {
+      console.error(`Could not get/create valid feature ID for "${featureTitle}"`);
       toast.error('Unable to process vote at this time.');
       return;
     }
