@@ -31,6 +31,12 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   // Get or create the feature ID if it doesn't exist
   const getOrCreateFeatureId = async (title: string) => {
     try {
+      // Special debug for Profile Management
+      const isProfileManagement = title.toLowerCase().includes('profile management');
+      if (isProfileManagement) {
+        console.log(`DEBUG: Processing "Profile Management" feature request`);
+      }
+      
       console.log(`Attempting to get/create feature ID for: "${title}"`);
       
       // First, check if we already have this feature ID stored
@@ -48,6 +54,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
       if (fetchError) {
         console.error('Error fetching feature:', fetchError);
+        if (isProfileManagement) {
+          console.error('DEBUG: Error fetching Profile Management feature:', fetchError);
+        }
         return null;
       }
 
@@ -59,6 +68,11 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
       // Create new feature if it doesn't exist
       console.log(`Feature not found, creating new one for: "${title}"`);
+      
+      if (isProfileManagement) {
+        console.log(`DEBUG: Creating new feature for Profile Management`);
+      }
+      
       const { data: newFeature, error: insertError } = await supabase
         .from('features')
         .insert([{ title, description: `Feature request for ${title}` }])
@@ -67,6 +81,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
       if (insertError) {
         console.error('Error creating feature:', insertError);
+        if (isProfileManagement) {
+          console.error('DEBUG: Failed to create Profile Management feature:', insertError);
+        }
         return null;
       }
       
@@ -159,11 +176,15 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
   // Handle upvote click
   const handleUpvote = async () => {
+    const isProfileManagement = featureTitle.toLowerCase().includes('profile management');
     console.log(`Upvote button clicked for "${featureTitle}"`);
     
     // Get feature ID first
     const fId = await getOrCreateFeatureId(featureTitle);
     if (!fId || !isValidUUID(fId)) {
+      if (isProfileManagement) {
+        console.error(`DEBUG: Failed to get/create valid feature ID for "Profile Management"`);
+      }
       console.error(`Could not get/create valid feature ID for "${featureTitle}"`);
       toast.error('Unable to process vote at this time.');
       return;
