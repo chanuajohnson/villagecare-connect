@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to handle pending feature upvotes after login
   const checkPendingUpvote = async () => {
-    const pendingFeatureId = localStorage.getItem('pendingFeatureId');
+    const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
     
     if (pendingFeatureId && user) {
       try {
@@ -168,8 +168,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem('pendingFeatureId');
         localStorage.removeItem('pendingFeatureUpvote');
         
-        // Redirect to the features page
-        navigate('/features');
+        // Redirect to the family dashboard instead of features page
+        navigate('/dashboard/family');
       } catch (error: any) {
         console.error('[AuthProvider] Error handling pending upvote:', error);
         toast.error(error.message || 'Failed to process your vote');
@@ -225,7 +225,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       // Handle feature upvote if present
-      const pendingFeatureId = localStorage.getItem('pendingFeatureId');
+      const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
       if (pendingFeatureId) {
         await checkPendingUpvote();
         return;
@@ -565,3 +565,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

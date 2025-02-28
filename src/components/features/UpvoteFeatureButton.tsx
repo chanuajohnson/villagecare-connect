@@ -162,10 +162,12 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     
     // Store the feature ID for post-login handling
     localStorage.setItem('pendingFeatureId', fId);
+    localStorage.setItem('pendingFeatureUpvote', fId);
     
     // Check if user is authenticated
     if (!requireAuth(`upvote "${featureTitle}"`)) {
       console.log('User not authenticated, redirecting to auth page');
+      toast.error('Please sign in to upvote this feature.');
       return; // requireAuth will handle redirect to login page
     }
     
@@ -214,9 +216,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
         
-        // Navigate to profile features page after successful vote
-        console.log('Navigating to features page');
-        navigate('/features');
+        // Navigate to family dashboard after successful vote (changed from features page)
+        console.log('Navigating to family dashboard');
+        navigate('/dashboard/family');
       }
     } catch (error: any) {
       console.error('Error handling vote:', error);
@@ -225,6 +227,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       setIsVoting(false);
       // Clean up local storage after successful vote
       localStorage.removeItem('pendingFeatureId');
+      localStorage.removeItem('pendingFeatureUpvote');
     }
   };
 
