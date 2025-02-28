@@ -16,8 +16,7 @@ export const supabase = createClient(
       storageKey: 'supabase.auth.token',
       detectSessionInUrl: false, // Disable automatic URL detection to avoid issues
       flowType: 'pkce',
-      // The correct property is 'flowTimeout' for auth timeout, not 'timeoutDuration'
-      flowTimeout: 60000 // Increased timeout from default to 60 seconds
+      // Remove the 'flowTimeout' property as it's not supported in the current version
     }
   }
 );
