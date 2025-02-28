@@ -282,9 +282,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
         
-        // Navigate to family dashboard after successful vote (changed from features page)
-        console.log('Navigating to family dashboard');
-        navigate('/dashboard/family');
+        // Navigate to features page after successful vote (changed from family dashboard)
+        console.log('Navigating to features page');
+        navigate('/features');
       }
     } catch (error: any) {
       console.error('Error handling vote:', error);
@@ -297,6 +297,14 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     }
   };
 
+  // Determine button text based on vote status
+  const getButtonText = () => {
+    if (hasVoted) {
+      return "Upvoted";
+    }
+    return buttonText;
+  };
+
   return (
     <Button
       variant={hasVoted ? "default" : "outline"}
@@ -306,7 +314,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       disabled={isVoting}
     >
       <ThumbsUp className={`w-4 h-4 mr-2 ${hasVoted ? 'fill-current' : ''}`} />
-      {buttonText} {voteCount > 0 && `(${voteCount})`}
+      {getButtonText()} {voteCount > 0 && `(${voteCount})`}
     </Button>
   );
 };
