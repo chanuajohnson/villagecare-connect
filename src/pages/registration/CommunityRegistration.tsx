@@ -1,717 +1,591 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../../lib/supabase';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Button } from '../../components/ui/button';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Separator } from '../../components/ui/separator';
+import { Textarea } from '../../components/ui/textarea';
+import { useToast } from '../../hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import { Switch } from '../../components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 
-export default function CommunityRegistration() {
-  const { user, userRole, isLoading } = useAuth();
+const CommunityRegistration = () => {
+  const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [location, setLocation] = useState('');
+  const [website, setWebsite] = useState('');
+  const [communityRoles, setCommunityRoles] = useState<string[]>([]);
+  const [contributionInterests, setContributionInterests] = useState<string[]>([]);
+  const [caregivingExperience, setCaregivingExperience] = useState('');
+  const [caregivingAreas, setCaregivingAreas] = useState<string[]>([]);
+  const [techInterests, setTechInterests] = useState<string[]>([]);
+  const [involvementPreferences, setInvolvementPreferences] = useState<string[]>([]);
+  const [communicationChannels, setCommunicationChannels] = useState<string[]>([]);
+  const [communityMotivation, setCommunityMotivation] = useState('');
+  const [improvementIdeas, setImprovementIdeas] = useState('');
+  const [listInDirectory, setListInDirectory] = useState(false);
+  const [enableNotifications, setEnableNotifications] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
-  
-  // State for form sections
-  const [currentSection, setCurrentSection] = useState(1);
-  const totalSections = 5;
-  
-  // State for form submission
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Form data state
-  const [formData, setFormData] = useState({
-    // Personal & Contact Information
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    location: "",
-    website: "",
-    avatarUrl: "",
-    avatarFile: null as File | null,
-    
-    // Community Role & Interests
-    communityRoles: [] as string[],
-    contributionInterests: [] as string[],
-    
-    // Expertise & Knowledge Sharing
-    caregivingExperience: "",
-    caregivingAreas: [] as string[],
-    techInterests: [] as string[],
-    
-    // Community Engagement & Preferences
-    involvementPreferences: [] as string[],
-    communicationChannels: [] as string[],
-    
-    // Additional Information
-    communityMotivation: "",
-    improvementIdeas: "",
-    listInCommunityDirectory: false,
-    enableCommunityNotifications: true,
-  });
-  
-  // Prefill email from user data
+  const { toast } = useToast();
+
   useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        email: user.email || "",
-      }));
-    }
-  }, [user]);
-  
-  // Redirect if not logged in or not a community member
-  useEffect(() => {
-    if (!isLoading && !user) {
-      toast.error("You must be logged in to access this page");
-      navigate("/auth");
-    } else if (!isLoading && userRole && userRole !== 'community') {
-      toast.error(`This registration form is for community members only. You are registered as a ${userRole}`);
-      navigate(`/registration/${userRole}`);
-    }
-  }, [user, userRole, isLoading, navigate]);
-  
-  // Handle file upload
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({
-        ...formData,
-        avatarFile: e.target.files[0]
-      });
-    }
-  };
-  
-  // Handle checkbox changes
-  const handleCheckboxChange = (field: string, value: string, checked: boolean) => {
-    setFormData(prev => {
-      const currentValues = prev[field as keyof typeof prev] as string[];
-      
-      if (checked) {
-        return { ...prev, [field]: [...currentValues, value] };
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+        // Check if profile already exists and pre-fill form
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileData) {
+          setAvatarUrl(profileData.avatar_url);
+          setFirstName(profileData.full_name?.split(' ')[0] || '');
+          setLastName(profileData.full_name?.split(' ')[1] || '');
+          setPhoneNumber(profileData.phone_number || '');
+          setLocation(profileData.location || '');
+          setWebsite(profileData.website || '');
+          setCommunityRoles(profileData.community_roles || []);
+          setContributionInterests(profileData.contribution_interests || []);
+          setCaregivingExperience(profileData.caregiving_experience || '');
+          setCaregivingAreas(profileData.caregiving_areas || []);
+          setTechInterests(profileData.tech_interests || []);
+          setInvolvementPreferences(profileData.involvement_preferences || []);
+          setCommunicationChannels(profileData.communication_channels || []);
+          setCommunityMotivation(profileData.community_motivation || '');
+          setImprovementIdeas(profileData.improvement_ideas || '');
+          setListInDirectory(profileData.list_in_community_directory || false);
+          setEnableNotifications(profileData.enable_community_notifications || true);
+        }
       } else {
-        return { ...prev, [field]: currentValues.filter(v => v !== value) };
+        // If not logged in, redirect to auth page
+        navigate('/auth');
       }
-    });
-  };
-  
-  // Handle text input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  // Handle radio input changes
-  const handleRadioChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-  
-  // Handle toggle changes
-  const handleToggleChange = (field: string, checked: boolean) => {
-    setFormData(prev => ({ ...prev, [field]: checked }));
-  };
-  
-  // Navigate between form sections
-  const goToNextSection = () => {
-    if (currentSection < totalSections) {
-      setCurrentSection(currentSection + 1);
-      window.scrollTo(0, 0);
-    }
-  };
-  
-  const goToPreviousSection = () => {
-    if (currentSection > 1) {
-      setCurrentSection(currentSection - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-  
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast.error("You must be logged in to submit this form");
+    };
+
+    getUser();
+  }, [navigate]);
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
       return;
     }
     
-    setIsSubmitting(true);
+    const file = event.target.files[0];
+    setAvatarFile(file);
     
+    // Create a preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      let avatarUrl = formData.avatarUrl;
-      
-      // Upload avatar if provided
-      if (formData.avatarFile) {
-        const fileExt = formData.avatarFile.name.split('.').pop();
+      if (!user) {
+        throw new Error('No user found');
+      }
+
+      // Upload avatar if selected
+      let uploadedAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, formData.avatarFile);
-          
+          .upload(filePath, avatarFile);
+
         if (uploadError) {
           throw uploadError;
         }
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-          
-        avatarUrl = publicUrl;
+
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        uploadedAvatarUrl = data.publicUrl;
       }
-      
-      // Format the full name
-      const full_name = `${formData.firstName} ${formData.lastName}`.trim();
-      
-      // Prepare profile data
-      const profileData = {
-        full_name,
-        phone_number: formData.phoneNumber,
-        avatar_url: avatarUrl,
-        location: formData.location,
-        website: formData.website,
-        community_roles: formData.communityRoles,
-        contribution_interests: formData.contributionInterests,
-        caregiving_experience: formData.caregivingExperience,
-        caregiving_areas: formData.caregivingAreas,
-        tech_interests: formData.techInterests,
-        involvement_preferences: formData.involvementPreferences,
-        communication_channels: formData.communicationChannels,
-        community_motivation: formData.communityMotivation,
-        improvement_ideas: formData.improvementIdeas,
-        list_in_community_directory: formData.listInCommunityDirectory,
-        enable_community_notifications: formData.enableCommunityNotifications,
+
+      // Update profile
+      const fullName = `${firstName} ${lastName}`.trim();
+      const updates = {
+        id: user.id,
+        full_name: fullName,
+        avatar_url: uploadedAvatarUrl,
+        phone_number: phoneNumber,
+        role: 'community' as const,
+        updated_at: new Date().toISOString(),
+        location,
+        website,
+        community_roles: communityRoles,
+        contribution_interests: contributionInterests,
+        caregiving_experience,
+        caregiving_areas: caregivingAreas,
+        tech_interests: techInterests,
+        involvement_preferences: involvementPreferences,
+        communication_channels: communicationChannels,
+        community_motivation: communityMotivation,
+        improvement_ideas: improvementIdeas,
+        list_in_community_directory: listInDirectory,
+        enable_community_notifications: enableNotifications
       };
+
+      const { error } = await supabase.from('profiles').upsert(updates);
       
-      // Update the profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(profileData)
-        .eq('id', user.id);
-        
-      if (updateError) {
-        throw updateError;
+      if (error) {
+        throw error;
       }
-      
-      toast.success("Your community member profile has been saved!");
-      navigate("/dashboard/community");
-      
-    } catch (error: any) {
-      console.error("Error saving profile:", error);
-      toast.error(error.message || "An error occurred while saving your profile");
+
+      toast({
+        title: 'Registration Complete',
+        description: 'Your community member profile has been updated.'
+      });
+
+      // Redirect to community dashboard
+      navigate('/dashboards/community');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update profile. Please try again.'
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
-  
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
+
+  // Helper for checkbox arrays
+  const handleCheckboxArrayChange = (
+    value: string, 
+    currentArray: string[], 
+    setFunction: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (currentArray.includes(value)) {
+      setFunction(currentArray.filter(item => item !== value));
+    } else {
+      setFunction([...currentArray, value]);
+    }
+  };
+
   return (
-    <div className="container py-10">
-      <Card className="mx-auto max-w-4xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Community Member Registration</CardTitle>
-          <CardDescription className="text-center">
-            Complete your profile to join the VillageCare community
-          </CardDescription>
-          <div className="flex justify-center w-full mt-4">
-            <div className="flex space-x-2">
-              {Array.from({ length: totalSections }, (_, i) => (
-                <div 
-                  key={i}
-                  className={`h-2 w-10 rounded-full ${
-                    i + 1 <= currentSection ? 'bg-primary' : 'bg-muted'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </CardHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {/* Section 1: Personal & Contact Information */}
-            {currentSection === 1 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Personal & Contact Information</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="avatar">Profile Picture (optional)</Label>
-                  <div className="flex items-center space-x-4">
-                    {formData.avatarFile && (
-                      <div className="h-16 w-16 rounded-full overflow-hidden">
-                        <img
-                          src={URL.createObjectURL(formData.avatarFile)}
-                          alt="Avatar preview"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <Label
-                      htmlFor="avatar"
-                      className="cursor-pointer flex items-center space-x-2 border rounded-md p-2 hover:bg-muted"
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span>Upload photo</span>
-                    </Label>
-                    <Input
-                      id="avatar"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    disabled
-                  />
-                  <p className="text-xs text-muted-foreground">Auto-filled from your account</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="For community discussions and updates"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location (City & Country) <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="e.g. San Francisco, USA"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="website">LinkedIn, GitHub, or Personal Website (Optional)</Label>
-                  <Input
-                    id="website"
-                    name="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                  />
-                  <p className="text-xs text-muted-foreground">For tech contributors and networking</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Section 2: Community Role & Interests */}
-            {currentSection === 2 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Community Role & Interests</h3>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">What brings you to the VillageCare Community?</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="role-care-champion" 
-                        checked={formData.communityRoles.includes("Care Champion")}
-                        onCheckedChange={(checked) => 
-                          handleCheckboxChange("communityRoles", "Care Champion", checked as boolean)
-                        }
-                      />
-                      <div className="space-y-1">
-                        <Label 
-                          htmlFor="role-care-champion" 
-                          className="font-normal cursor-pointer"
-                        >
-                          Care Champion
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          I want to support families and caregivers through mentorship, resources, and advocacy.
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="role-tech-enthusiast" 
-                        checked={formData.communityRoles.includes("Tech & Innovation Enthusiast")}
-                        onCheckedChange={(checked) => 
-                          handleCheckboxChange("communityRoles", "Tech & Innovation Enthusiast", checked as boolean)
-                        }
-                      />
-                      <div className="space-y-1">
-                        <Label 
-                          htmlFor="role-tech-enthusiast" 
-                          className="font-normal cursor-pointer"
-                        >
-                          Tech & Innovation Enthusiast
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          I'm here for behind-the-scenes insights on how AI, automation, and digital platforms are shaping care.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">How would you like to contribute?</Label>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        id: "emotional-support",
-                        label: "Providing Emotional Support",
-                        description: "Offering encouragement, sharing experiences, or being part of support groups."
-                      },
-                      {
-                        id: "volunteering",
-                        label: "Volunteering & Advocacy",
-                        description: "Participating in caregiving-related initiatives, fundraising, or policy advocacy."
-                      },
-                      {
-                        id: "tech-insights",
-                        label: "AI & Tech Insights",
-                        description: "Exploring AI solutions for caregiving, providing product feedback, or contributing to beta testing."
-                      },
-                      {
-                        id: "networking",
-                        label: "Networking & Collaboration",
-                        description: "Connecting with other caregivers, professionals, and innovators."
-                      },
-                      {
-                        id: "content",
-                        label: "Content & Storytelling",
-                        description: "Writing blog posts, creating videos, or sharing real-life caregiving experiences."
-                      }
-                    ].map((item) => (
-                      <div key={item.id} className="flex items-start space-x-2">
-                        <Checkbox 
-                          id={item.id} 
-                          checked={formData.contributionInterests.includes(item.label)}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange("contributionInterests", item.label, checked as boolean)
-                          }
-                        />
-                        <div className="space-y-1">
-                          <Label htmlFor={item.id} className="font-normal cursor-pointer">{item.label}</Label>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Section 3: Expertise & Knowledge Sharing */}
-            {currentSection === 3 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Expertise & Knowledge Sharing</h3>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">Do you have any experience in caregiving or healthcare?</Label>
-                  <RadioGroup
-                    value={formData.caregivingExperience}
-                    onValueChange={(value) => handleRadioChange("caregivingExperience", value)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="personal" id="exp-personal" />
-                        <Label htmlFor="exp-personal">Yes, I have personal caregiving experience.</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="professional" id="exp-professional" />
-                        <Label htmlFor="exp-professional">Yes, I am a healthcare professional or have industry knowledge.</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="passionate" id="exp-passionate" />
-                        <Label htmlFor="exp-passionate">No, but I'm passionate about supporting caregivers.</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="tech-interested" id="exp-tech" />
-                        <Label htmlFor="exp-tech">No, but I'm interested in the tech and AI aspects of caregiving.</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">If applicable, what areas of caregiving do you have experience in?</Label>
-                  <div className="space-y-2">
-                    {[
-                      "Elderly Care",
-                      "Special Needs Care",
-                      "Alzheimer's & Dementia Support",
-                      "Home Health Assistance",
-                      "Palliative & Hospice Care",
-                      "Pediatric or Family Care"
-                    ].map((area) => (
-                      <div key={area} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`area-${area}`}
-                          checked={formData.caregivingAreas.includes(area)}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange("caregivingAreas", area, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`area-${area}`} className="font-normal cursor-pointer">{area}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">If you're a tech enthusiast, what areas interest you the most?</Label>
-                  <div className="space-y-2">
-                    {[
-                      "AI for Healthcare & Caregiving",
-                      "Automation & Workflow Optimization",
-                      "Data & Predictive Analytics in Care Coordination",
-                      "Ethical AI & Responsible Technology in Health",
-                      "UI/UX & Human-Centered Design for Digital Health"
-                    ].map((tech) => (
-                      <div key={tech} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`tech-${tech}`}
-                          checked={formData.techInterests.includes(tech)}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange("techInterests", tech, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`tech-${tech}`} className="font-normal cursor-pointer">{tech}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Section 4: Community Engagement & Preferences */}
-            {currentSection === 4 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Community Engagement & Preferences</h3>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">How would you like to be involved?</Label>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        id: "care-circles",
-                        label: "Join Care Circles",
-                        description: "Participate in peer-support groups & discussions."
-                      },
-                      {
-                        id: "events",
-                        label: "Attend Events & Webinars",
-                        description: "Get invited to caregiver support sessions & tech innovation talks."
-                      },
-                      {
-                        id: "testing",
-                        label: "Test New Features",
-                        description: "Be part of beta testing for caregiving tools & platform updates."
-                      },
-                      {
-                        id: "platform",
-                        label: "Help Shape the Platform",
-                        description: "Vote on features & provide feedback on user experience."
-                      },
-                      {
-                        id: "collaboration",
-                        label: "AI & Tech Developer Collaborations",
-                        description: "Engage with AI builders & product innovators."
-                      }
-                    ].map((involvement) => (
-                      <div key={involvement.id} className="flex items-start space-x-2">
-                        <Checkbox 
-                          id={involvement.id}
-                          checked={formData.involvementPreferences.includes(involvement.label)}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange("involvementPreferences", involvement.label, checked as boolean)
-                          }
-                        />
-                        <div className="space-y-1">
-                          <Label htmlFor={involvement.id} className="font-normal cursor-pointer">{involvement.label}</Label>
-                          <p className="text-sm text-muted-foreground">{involvement.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">Preferred Communication Channels</Label>
-                  <div className="space-y-2">
-                    {[
-                      "Email",
-                      "WhatsApp",
-                      "Community Forum",
-                      "Slack / Discord"
-                    ].map((channel) => (
-                      <div key={channel} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`channel-${channel}`}
-                          checked={formData.communicationChannels.includes(channel)}
-                          onCheckedChange={(checked) => 
-                            handleCheckboxChange("communicationChannels", channel, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`channel-${channel}`} className="font-normal cursor-pointer">{channel}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Section 5: Additional Information & Commitment */}
-            {currentSection === 5 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Additional Information & Commitment</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="communityMotivation">Why do you want to be part of the VillageCare community?</Label>
-                  <Textarea
-                    id="communityMotivation"
-                    name="communityMotivation"
-                    value={formData.communityMotivation}
-                    onChange={handleInputChange}
-                    placeholder="Share your motivation..."
-                    className="h-24"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="improvementIdeas">Do you have any ideas for improving caregiving through community efforts or technology?</Label>
-                  <Textarea
-                    id="improvementIdeas"
-                    name="improvementIdeas"
-                    value={formData.improvementIdeas}
-                    onChange={handleInputChange}
-                    placeholder="Share your ideas..."
-                    className="h-24"
-                  />
-                </div>
-                
-                <div className="space-y-3">
-                  <Label className="font-medium">Would you like to be publicly listed in the Community Directory?</Label>
-                  <RadioGroup
-                    value={formData.listInCommunityDirectory ? "yes" : "no"}
-                    onValueChange={(value) => handleToggleChange("listInCommunityDirectory", value === "yes")}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="directory-yes" />
-                        <Label htmlFor="directory-yes">Yes, I want other community members to find and connect with me.</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="directory-no" />
-                        <Label htmlFor="directory-no">No, I prefer to contribute privately.</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="notifications"
-                    checked={formData.enableCommunityNotifications}
-                    onCheckedChange={(checked) => 
-                      handleToggleChange("enableCommunityNotifications", checked as boolean)
-                    }
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="notifications" className="font-normal cursor-pointer">Enable Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive updates about new initiatives, events, and discussions relevant to your interests.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          
-          <CardFooter className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={goToPreviousSection}
-              disabled={currentSection === 1}
-            >
-              Previous
-            </Button>
-            
-            {currentSection < totalSections ? (
-              <Button type="button" onClick={goToNextSection}>
-                Next
-              </Button>
-            ) : (
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
+    <div className="container max-w-4xl py-10">
+      <h1 className="text-3xl font-bold mb-6">Community Member Registration</h1>
+      <p className="text-gray-500 mb-8">
+        Join our vibrant community of caregivers, tech enthusiasts, and advocates.
+      </p>
+
+      <form onSubmit={handleSubmit}>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Personal & Contact Information</CardTitle>
+            <CardDescription>
+              Tell us about yourself so we can connect you with the right community members.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center mb-6">
+              <Avatar className="h-24 w-24 mb-4">
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt="Profile" />
                 ) : (
-                  "Complete Registration"
+                  <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
                 )}
-              </Button>
-            )}
-          </CardFooter>
-        </form>
-      </Card>
+              </Avatar>
+              <Label htmlFor="avatar" className="cursor-pointer text-primary">
+                {avatarUrl ? 'Change Profile Picture' : 'Upload Profile Picture'}
+                <Input 
+                  id="avatar" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange} 
+                  className="hidden" 
+                />
+              </Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input 
+                  id="firstName" 
+                  placeholder="First Name" 
+                  value={firstName} 
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => setLastName(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input id="email" type="email" value={user?.email || ''} disabled />
+              <p className="text-sm text-gray-500">Email address from your registration</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number *</Label>
+              <Input 
+                id="phoneNumber" 
+                placeholder="Phone Number" 
+                value={phoneNumber} 
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location *</Label>
+              <Input 
+                id="location" 
+                placeholder="City, Country" 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)}
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="website">LinkedIn, GitHub, or Personal Website (Optional)</Label>
+              <Input 
+                id="website" 
+                placeholder="https://" 
+                value={website} 
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Community Role & Interests</CardTitle>
+            <CardDescription>
+              Tell us why you're joining VillageCare Community and how you'd like to contribute.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>What brings you to the VillageCare Community?</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="role-care-champion" 
+                    checked={communityRoles.includes('Care Champion')}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCommunityRoles([...communityRoles, 'Care Champion']);
+                      } else {
+                        setCommunityRoles(communityRoles.filter(role => role !== 'Care Champion'));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="role-care-champion" className="font-normal">
+                    Care Champion: I want to support families and caregivers through mentorship, resources, and advocacy.
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="role-tech-enthusiast" 
+                    checked={communityRoles.includes('Tech & Innovation Enthusiast')}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCommunityRoles([...communityRoles, 'Tech & Innovation Enthusiast']);
+                      } else {
+                        setCommunityRoles(communityRoles.filter(role => role !== 'Tech & Innovation Enthusiast'));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="role-tech-enthusiast" className="font-normal">
+                    Tech & Innovation Enthusiast: I'm here for behind-the-scenes insights on how AI, automation, and digital platforms are shaping care.
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>How would you like to contribute? (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'contrib-support', label: 'Providing Emotional Support', value: 'Emotional Support' },
+                  { id: 'contrib-volunteer', label: 'Volunteering & Advocacy', value: 'Volunteering & Advocacy' },
+                  { id: 'contrib-tech', label: 'AI & Tech Insights', value: 'AI & Tech Insights' },
+                  { id: 'contrib-network', label: 'Networking & Collaboration', value: 'Networking & Collaboration' },
+                  { id: 'contrib-content', label: 'Content & Storytelling', value: 'Content & Storytelling' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={contributionInterests.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        contributionInterests, 
+                        setContributionInterests
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Expertise & Knowledge Sharing</CardTitle>
+            <CardDescription>
+              Share your experience and interests to help us connect you with relevant opportunities.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>Do you have any experience in caregiving or healthcare?</Label>
+              <RadioGroup value={caregivingExperience} onValueChange={setCaregivingExperience}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Personal caregiving experience" id="exp-personal" />
+                  <Label htmlFor="exp-personal" className="font-normal">Yes, I have personal caregiving experience.</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Healthcare professional" id="exp-professional" />
+                  <Label htmlFor="exp-professional" className="font-normal">Yes, I am a healthcare professional or have industry knowledge.</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Passionate about supporting" id="exp-passionate" />
+                  <Label htmlFor="exp-passionate" className="font-normal">No, but I'm passionate about supporting caregivers.</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Interested in tech aspects" id="exp-tech" />
+                  <Label htmlFor="exp-tech" className="font-normal">No, but I'm interested in the tech and AI aspects of caregiving.</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>If applicable, what areas of caregiving do you have experience in? (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'area-elderly', label: 'Elderly Care', value: 'Elderly Care' },
+                  { id: 'area-special', label: 'Special Needs Care', value: 'Special Needs Care' },
+                  { id: 'area-dementia', label: 'Alzheimer\'s & Dementia Support', value: 'Alzheimer\'s & Dementia Support' },
+                  { id: 'area-home', label: 'Home Health Assistance', value: 'Home Health Assistance' },
+                  { id: 'area-hospice', label: 'Palliative & Hospice Care', value: 'Palliative & Hospice Care' },
+                  { id: 'area-pediatric', label: 'Pediatric or Family Care', value: 'Pediatric or Family Care' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={caregivingAreas.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        caregivingAreas, 
+                        setCaregivingAreas
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>If you're a tech enthusiast, what areas interest you the most? (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'tech-ai', label: 'AI for Healthcare & Caregiving', value: 'AI for Healthcare & Caregiving' },
+                  { id: 'tech-automation', label: 'Automation & Workflow Optimization', value: 'Automation & Workflow Optimization' },
+                  { id: 'tech-data', label: 'Data & Predictive Analytics in Care Coordination', value: 'Data & Predictive Analytics' },
+                  { id: 'tech-ethics', label: 'Ethical AI & Responsible Technology in Health', value: 'Ethical AI & Responsible Technology' },
+                  { id: 'tech-design', label: 'UI/UX & Human-Centered Design for Digital Health', value: 'UI/UX & Human-Centered Design' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={techInterests.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        techInterests, 
+                        setTechInterests
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Community Engagement & Preferences</CardTitle>
+            <CardDescription>
+              Let us know how you'd like to participate in the community.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>How would you like to be involved? (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'involve-circles', label: 'Join Care Circles', value: 'Join Care Circles' },
+                  { id: 'involve-events', label: 'Attend Events & Webinars', value: 'Attend Events & Webinars' },
+                  { id: 'involve-test', label: 'Test New Features', value: 'Test New Features' },
+                  { id: 'involve-shape', label: 'Help Shape the Platform', value: 'Help Shape the Platform' },
+                  { id: 'involve-dev', label: 'AI & Tech Developer Collaborations', value: 'AI & Tech Developer Collaborations' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={involvementPreferences.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        involvementPreferences, 
+                        setInvolvementPreferences
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Preferred Communication Channels: (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'comm-email', label: 'Email', value: 'Email' },
+                  { id: 'comm-whatsapp', label: 'WhatsApp', value: 'WhatsApp' },
+                  { id: 'comm-forum', label: 'Community Forum', value: 'Community Forum' },
+                  { id: 'comm-slack', label: 'Slack / Discord', value: 'Slack / Discord' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={communicationChannels.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        communicationChannels, 
+                        setCommunicationChannels
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Additional Information & Commitment</CardTitle>
+            <CardDescription>
+              Share your motivation and ideas for the community.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="motivation">Why do you want to be part of the VillageCare community?</Label>
+              <Textarea 
+                id="motivation" 
+                placeholder="Share your motivation..." 
+                value={communityMotivation} 
+                onChange={(e) => setCommunityMotivation(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ideas">Do you have any ideas for improving caregiving through community efforts or technology?</Label>
+              <Textarea 
+                id="ideas" 
+                placeholder="Share your ideas..." 
+                value={improvementIdeas} 
+                onChange={(e) => setImprovementIdeas(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Would you like to be publicly listed in the Community Directory?</Label>
+              <RadioGroup value={listInDirectory ? 'yes' : 'no'} onValueChange={(value) => setListInDirectory(value === 'yes')}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="directory-yes" />
+                  <Label htmlFor="directory-yes" className="font-normal">Yes, I want other community members to find and connect with me.</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="directory-no" />
+                  <Label htmlFor="directory-no" className="font-normal">No, I prefer to contribute privately.</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="notifications" 
+                checked={enableNotifications}
+                onCheckedChange={setEnableNotifications}
+              />
+              <Label htmlFor="notifications" className="font-normal">
+                Enable Notifications
+              </Label>
+            </div>
+            <p className="text-sm text-gray-500">
+              Receive updates about new initiatives, events, and discussions relevant to your interests.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/')}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Submitting...' : 'Complete Registration'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
-}
+};
+
+export default CommunityRegistration;

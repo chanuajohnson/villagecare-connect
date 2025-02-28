@@ -232,9 +232,20 @@ export type Database = {
           care_types: string[] | null
           caregiver_preferences: string | null
           caregiver_type: string | null
+          caregiving_areas: string[] | null
+          caregiving_experience: string | null
+          communication_channels: string[] | null
+          community_motivation: string | null
+          community_roles: string[] | null
+          contribution_interests: string[] | null
           created_at: string | null
+          enable_community_notifications: boolean | null
           full_name: string | null
           id: string
+          improvement_ideas: string | null
+          involvement_preferences: string[] | null
+          list_in_community_directory: boolean | null
+          location: string | null
           other_special_needs: string | null
           phone_number: string | null
           preferred_contact_method: string | null
@@ -242,7 +253,9 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           special_needs: string[] | null
           specialized_care: string[] | null
+          tech_interests: string[] | null
           updated_at: string | null
+          website: string | null
         }
         Insert: {
           additional_notes?: string | null
@@ -254,9 +267,20 @@ export type Database = {
           care_types?: string[] | null
           caregiver_preferences?: string | null
           caregiver_type?: string | null
+          caregiving_areas?: string[] | null
+          caregiving_experience?: string | null
+          communication_channels?: string[] | null
+          community_motivation?: string | null
+          community_roles?: string[] | null
+          contribution_interests?: string[] | null
           created_at?: string | null
+          enable_community_notifications?: boolean | null
           full_name?: string | null
           id: string
+          improvement_ideas?: string | null
+          involvement_preferences?: string[] | null
+          list_in_community_directory?: boolean | null
+          location?: string | null
           other_special_needs?: string | null
           phone_number?: string | null
           preferred_contact_method?: string | null
@@ -264,7 +288,9 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           special_needs?: string[] | null
           specialized_care?: string[] | null
+          tech_interests?: string[] | null
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
           additional_notes?: string | null
@@ -276,9 +302,20 @@ export type Database = {
           care_types?: string[] | null
           caregiver_preferences?: string | null
           caregiver_type?: string | null
+          caregiving_areas?: string[] | null
+          caregiving_experience?: string | null
+          communication_channels?: string[] | null
+          community_motivation?: string | null
+          community_roles?: string[] | null
+          contribution_interests?: string[] | null
           created_at?: string | null
+          enable_community_notifications?: boolean | null
           full_name?: string | null
           id?: string
+          improvement_ideas?: string | null
+          involvement_preferences?: string[] | null
+          list_in_community_directory?: boolean | null
+          location?: string | null
           other_special_needs?: string | null
           phone_number?: string | null
           preferred_contact_method?: string | null
@@ -286,7 +323,9 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           special_needs?: string[] | null
           specialized_care?: string[] | null
+          tech_interests?: string[] | null
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
