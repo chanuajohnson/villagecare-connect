@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, Heart } from "lucide-react";
+import { ArrowRight, Users, Calendar, Heart, UserCog } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { TechInnovatorsHub } from "@/components/features/TechInnovatorsHub";
 
 const CommunityDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -70,27 +71,34 @@ const CommunityDashboard = () => {
         </motion.div>
 
         <div className="grid gap-6 mt-8">
-          {!user || !isProfileComplete ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Preview Mode</CardTitle>
+                <div className="mb-4">
+                  <UserCog className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle>Profile Management</CardTitle>
                 <CardDescription>
-                  Sign up to access your personalized dashboard and start coordinating care
+                  Manage your community profile and preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Link to="/auth">
+                <div className="space-y-2 mb-4 text-left">
+                  <p className="text-sm text-gray-600">Update Personal Information</p>
+                  <p className="text-sm text-gray-600">Set Community Preferences</p>
+                  <p className="text-sm text-gray-600">Manage Notification Settings</p>
+                  <p className="text-sm text-gray-600">Update Privacy Settings</p>
+                </div>
+                <Link to="/profile/community">
                   <Button className="w-full flex items-center justify-center">
-                    Sign Up Now
+                    Manage Profile
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <UpvoteFeatureButton featureTitle="Community Registration" buttonText="Upvote this Feature" />
+                <UpvoteFeatureButton featureTitle="Community Profile Management" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
-          ) : null}
 
-          <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <div className="mb-4">
@@ -129,7 +137,7 @@ const CommunityDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="md:col-span-2">
+            <Card>
               <CardHeader>
                 <div className="mb-4">
                   <Heart className="h-8 w-8 text-primary" />
@@ -147,6 +155,8 @@ const CommunityDashboard = () => {
                 <UpvoteFeatureButton featureTitle="Support Network" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
+
+            <TechInnovatorsHub />
           </div>
         </div>
       </div>
