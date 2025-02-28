@@ -122,30 +122,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to handle pending feature upvotes after login
   const checkPendingUpvote = async () => {
-    const featureId = localStorage.getItem('pendingFeatureUpvote');
+    const pendingFeatureId = localStorage.getItem('pendingFeatureId');
     
-    if (featureId && user) {
+    if (pendingFeatureId && user) {
       try {
+        console.log(`[AuthProvider] Processing pending upvote for feature: ${pendingFeatureId}`);
+        
         // Check if user has already voted for this feature
         const { data: existingVote, error: checkError } = await supabase
           .from('feature_upvotes')
           .select('id')
-          .eq('feature_id', featureId)
+          .eq('feature_id', pendingFeatureId)
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (checkError) throw checkError;
+        if (checkError) {
+          console.error('[AuthProvider] Error checking existing vote:', checkError);
+          throw checkError;
+        }
         
         // If user hasn't voted yet, add the vote
         if (!existingVote) {
           const { error: voteError } = await supabase
             .from('feature_upvotes')
             .insert([{
-              feature_id: featureId,
+              feature_id: pendingFeatureId,
               user_id: user.id
             }]);
           
-          if (voteError) throw voteError;
+          if (voteError) {
+            console.error('[AuthProvider] Error recording vote:', voteError);
+            throw voteError;
+          }
           
           toast.success('Your vote has been recorded!');
         } else {
@@ -153,6 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         // Remove the pending vote from local storage
+        localStorage.removeItem('pendingFeatureId');
         localStorage.removeItem('pendingFeatureUpvote');
         
         // Redirect to the features page
@@ -181,6 +190,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // List of possible actions stored in localStorage
       const pendingActions = [
+        'pendingFeatureId',
         'pendingFeatureUpvote',
         'pendingBooking',
         'pendingMessage',
@@ -211,8 +221,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       // Handle feature upvote if present
-      const pendingFeatureUpvote = localStorage.getItem('pendingFeatureUpvote');
-      if (pendingFeatureUpvote) {
+      const pendingFeatureId = localStorage.getItem('pendingFeatureId');
+      if (pendingFeatureId) {
         await checkPendingUpvote();
         return;
       }
