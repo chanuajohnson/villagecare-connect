@@ -265,9 +265,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      setIsLoading(true);
       try {
         console.log('Initializing auth...');
+        setIsLoading(true);
+        
         const { data: { session } } = await supabase.auth.getSession();
         
         console.log('Session retrieved:', session ? 'Yes' : 'No');
@@ -300,13 +301,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session ? 'Has session' : 'No session');
       
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Always set loading to true when auth state changes, then back to false when done
+      // Set loading to true when auth state changes
       setIsLoading(true);
       
       try {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
         if (session?.user) {
           console.log('User signed in or updated, getting role...');
           const role = await getUserRole();
@@ -340,20 +341,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signOut = async () => {
     try {
       setIsLoading(true); // Set loading to true during sign out process
-      await supabase.auth.signOut();
-      // Don't set loading to false here, let the auth state change handler handle it
-      // The toast will be shown by the onAuthStateChange handler
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       navigate('/');
+      // The toast will be shown by the onAuthStateChange handler
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
-      setIsLoading(false); // Only set loading to false here if there was an error
+    } finally {
+      // Always set loading to false after sign out attempt, whether successful or not
+      setIsLoading(false);
     }
   };
 
