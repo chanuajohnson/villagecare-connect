@@ -39,7 +39,7 @@ export const TechInnovatorsHub = () => {
           </div>
         </div>
         <div className="mt-6 space-y-4">
-          <Link to="/auth" className="block w-full">
+          <Link to="/community/features-overview" className="block w-full">
             <Button className="w-full">
               Join the Innovators Hub 🚀
             </Button>

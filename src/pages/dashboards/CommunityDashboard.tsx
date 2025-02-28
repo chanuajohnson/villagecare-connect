@@ -89,7 +89,7 @@ const CommunityDashboard = () => {
                   <p className="text-sm text-gray-600">Manage Notification Settings</p>
                   <p className="text-sm text-gray-600">Update Privacy Settings</p>
                 </div>
-                <Link to="/profile/community">
+                <Link to="/community/features-overview">
                   <Button className="w-full flex items-center justify-center">
                     Manage Profile
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -110,10 +110,12 @@ const CommunityDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full flex items-center justify-center">
-                  Find Circles
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/community/features-overview">
+                  <Button className="w-full flex items-center justify-center">
+                    Find Circles
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Care Circles" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
@@ -129,10 +131,12 @@ const CommunityDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full flex items-center justify-center">
-                  View Events
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/community/features-overview">
+                  <Button className="w-full flex items-center justify-center">
+                    View Events
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Community Events" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>
@@ -148,10 +152,12 @@ const CommunityDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full flex items-center justify-center">
-                  Get Involved
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/community/features-overview">
+                  <Button className="w-full flex items-center justify-center">
+                    Get Involved
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Support Network" buttonText="Upvote this Feature" />
               </CardContent>
             </Card>

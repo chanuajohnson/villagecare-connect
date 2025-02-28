@@ -17,6 +17,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import FamilyRegistration from "./pages/registration/FamilyRegistration";
 import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
 import CommunityRegistration from "./pages/registration/CommunityRegistration";
+import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const AppContent = () => {
           <Route path="/registration/family" element={<FamilyRegistration />} />
           <Route path="/registration/professional" element={<ProfessionalRegistration />} />
           <Route path="/registration/community" element={<CommunityRegistration />} />
+          <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
