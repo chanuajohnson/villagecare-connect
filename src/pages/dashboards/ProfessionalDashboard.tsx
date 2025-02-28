@@ -53,7 +53,7 @@ const ProfessionalDashboard = () => {
                 <p className="text-sm text-gray-600">Update Skills & Experience</p>
                 <p className="text-sm text-gray-600">Set Availability & Preferences</p>
               </div>
-              <Link to="/profile/professional">
+              <Link to="/professional/features-overview">
                 <Button 
                   variant="default"
                   className="w-full bg-primary hover:bg-primary-600 text-white"
@@ -88,13 +88,15 @@ const ProfessionalDashboard = () => {
                 <p className="text-sm text-gray-600">Document Management</p>
                 <p className="text-sm text-gray-600">Administrative Support</p>
               </div>
-              <Button 
-                variant="default"
-                className="w-full bg-primary hover:bg-primary-600 text-white"
-              >
-                Access Tools
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link to="/professional/features-overview">
+                <Button 
+                  variant="default"
+                  className="w-full bg-primary hover:bg-primary-600 text-white"
+                >
+                  Access Tools
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <div className="pt-4">
                 <UpvoteFeatureButton
                   featureTitle="Admin Assistant Tools"
@@ -121,13 +123,15 @@ const ProfessionalDashboard = () => {
                 <p className="text-sm text-gray-600">Best Practices Guides</p>
                 <p className="text-sm text-gray-600">Specialized Care Training</p>
               </div>
-              <Button 
-                variant="default"
-                className="w-full bg-primary hover:bg-primary-600 text-white"
-              >
-                Learn More
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link to="/professional/features-overview">
+                <Button 
+                  variant="default"
+                  className="w-full bg-primary hover:bg-primary-600 text-white"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <div className="pt-4">
                 <UpvoteFeatureButton
                   featureTitle="Training Resources"
@@ -168,7 +172,17 @@ const ProfessionalDashboard = () => {
                 </div>
               </div>
               
-              <div className="pt-2">
+              <Link to="/professional/features-overview">
+                <Button 
+                  variant="default"
+                  className="w-full bg-primary hover:bg-primary-600 text-white"
+                >
+                  Learn About Agency Features
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              
+              <div className="pt-4">
                 <UpvoteFeatureButton
                   featureTitle="Professional Agency Management"
                   buttonText="Upvote this Feature"
