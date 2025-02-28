@@ -137,7 +137,7 @@ const CommunityRegistration = () => {
         website,
         community_roles: communityRoles,
         contribution_interests: contributionInterests,
-        caregiving_experience,
+        caregiving_experience: caregivingExperience,
         caregiving_areas: caregivingAreas,
         tech_interests: techInterests,
         involvement_preferences: involvementPreferences,
