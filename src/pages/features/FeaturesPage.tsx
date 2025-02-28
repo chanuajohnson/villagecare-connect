@@ -1,8 +1,17 @@
 
+import { useEffect } from "react";
 import FeaturesGrid from "@/components/features/FeaturesGrid";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const FeaturesPage = () => {
+  const { clearLastAction } = useAuth();
+
+  // Clear any pending actions when visiting the features page directly
+  useEffect(() => {
+    clearLastAction();
+  }, [clearLastAction]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-12 mx-auto">
