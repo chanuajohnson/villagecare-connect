@@ -194,7 +194,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
       console.log('[AuthProvider] Has pending action:', hasPendingAction);
       
-      if (!profileComplete && !hasPendingAction) {
+      // Check current location to avoid redirect loops
+      const isOnRegistrationPage = location.pathname.includes('/registration/');
+      
+      // Force registration completion if profile is incomplete
+      if (!profileComplete && !isOnRegistrationPage) {
         if (userRole) {
           const registrationRoutes: Record<UserRole, string> = {
             'family': '/registration/family',
@@ -211,66 +215,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
       
-      const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
-      if (pendingFeatureId) {
-        await checkPendingUpvote();
+      // If we're already on a registration page and profile is incomplete, don't redirect elsewhere
+      if (!profileComplete && isOnRegistrationPage) {
+        isRedirectingRef.current = false;
         return;
       }
       
-      const pendingBooking = localStorage.getItem('pendingBooking');
-      if (pendingBooking) {
-        localStorage.removeItem('pendingBooking');
-        navigate(pendingBooking);
-        return;
-      }
-      
-      const pendingMessage = localStorage.getItem('pendingMessage');
-      if (pendingMessage) {
-        localStorage.removeItem('pendingMessage');
-        navigate(pendingMessage);
-        return;
-      }
-      
-      const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
-      if (pendingProfileUpdate) {
-        localStorage.removeItem('pendingProfileUpdate');
-        navigate(pendingProfileUpdate);
-        return;
-      }
-      
-      const lastPath = localStorage.getItem('lastPath');
-      console.log('[AuthProvider] Last path:', lastPath);
-      
-      if (profileComplete && lastPath) {
-        console.log('[AuthProvider] Navigating to last path:', lastPath);
-        navigate(lastPath);
-        clearLastAction();
-      } else if (profileComplete) {
-        if (userRole) {
-          const dashboardRoutes: Record<UserRole, string> = {
-            'family': '/dashboard/family',
-            'professional': '/dashboard/professional',
-            'community': '/dashboard/community',
-            'admin': '/dashboard/admin'
-          };
-          
-          console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
-          navigate(dashboardRoutes[userRole]);
-          toast.success(`Welcome to your ${userRole} dashboard!`);
+      // Handle pending actions only if profile is complete
+      if (profileComplete) {
+        const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
+        if (pendingFeatureId) {
+          await checkPendingUpvote();
+          return;
         }
-      } else {
-        if (userRole) {
-          const dashboardRoutes: Record<UserRole, string> = {
-            'family': '/dashboard/family',
-            'professional': '/dashboard/professional',
-            'community': '/dashboard/community',
-            'admin': '/dashboard/admin'
-          };
-          
-          console.log('[AuthProvider] Forcing navigation to dashboard for role:', userRole);
-          navigate(dashboardRoutes[userRole]);
-          toast.success(`Welcome to your ${userRole} dashboard!`);
+        
+        const pendingBooking = localStorage.getItem('pendingBooking');
+        if (pendingBooking) {
+          localStorage.removeItem('pendingBooking');
+          navigate(pendingBooking);
+          return;
         }
+        
+        const pendingMessage = localStorage.getItem('pendingMessage');
+        if (pendingMessage) {
+          localStorage.removeItem('pendingMessage');
+          navigate(pendingMessage);
+          return;
+        }
+        
+        const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
+        if (pendingProfileUpdate) {
+          localStorage.removeItem('pendingProfileUpdate');
+          navigate(pendingProfileUpdate);
+          return;
+        }
+        
+        const lastPath = localStorage.getItem('lastPath');
+        console.log('[AuthProvider] Last path:', lastPath);
+        
+        if (lastPath) {
+          console.log('[AuthProvider] Navigating to last path:', lastPath);
+          navigate(lastPath);
+          clearLastAction();
+          return;
+        }
+      }
+      
+      // Default navigation if no specific redirects were triggered
+      if (profileComplete && userRole) {
+        const dashboardRoutes: Record<UserRole, string> = {
+          'family': '/dashboard/family',
+          'professional': '/dashboard/professional',
+          'community': '/dashboard/community',
+          'admin': '/dashboard/admin'
+        };
+        
+        console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
+        navigate(dashboardRoutes[userRole]);
+        toast.success(`Welcome to your ${userRole} dashboard!`);
       }
     } catch (error) {
       console.error('[AuthProvider] Error during post-login redirection:', error);
@@ -357,7 +359,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] User and role available, handling redirection');
       handlePostLoginRedirection();
     }
-  }, [user, userRole]);
+  }, [user, userRole, location.pathname]);
 
   useEffect(() => {
     const clearStaleState = async () => {
