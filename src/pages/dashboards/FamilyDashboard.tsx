@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight } from "lucide-react";
+import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight, UserCog } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -60,24 +61,28 @@ const FamilyDashboard = () => {
           <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
-          {(!user || !isProfileComplete) && (
+          {/* Edit Profile Card - Replacing Preview Mode Card */}
+          {(user && isProfileComplete) && (
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>Preview Mode</CardTitle>
-                <CardDescription>Sign up to access your personalized dashboard and start coordinating care</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCog className="h-5 w-5 text-primary" />
+                  Edit Profile
+                </CardTitle>
+                <CardDescription>Update your profile information and preferences</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Link to="/auth">
+                <Link to="/profile">
                   <Button 
                     variant="default" 
                     className="w-full"
                   >
-                    Sign Up Now
+                    Manage Profile
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <UpvoteFeatureButton 
-                  featureTitle="Family Registration" 
+                  featureTitle="Profile Management" 
                   className="w-full" 
                   buttonText="Upvote this Feature" 
                 />
@@ -85,96 +90,107 @@ const FamilyDashboard = () => {
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
+          {/* Care Management Section */}
+          <div className="space-y-6 mb-8">
+            <Card className="mb-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <FileText className="h-5 w-5 text-primary" />
-                  New Care Plan
-                </CardTitle>
+                <CardTitle className="text-2xl font-semibold">Care Management</CardTitle>
+                <CardDescription>Manage care plans, team members, appointments and more</CardDescription>
               </CardHeader>
               <CardContent>
-                <UpvoteFeatureButton featureTitle="New Care Plan" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
+                <UpvoteFeatureButton featureTitle="Care Management" className="w-full mb-6" buttonText="Upvote this Feature" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Quick Action Cards */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <FileText className="h-5 w-5 text-primary" />
+                        New Care Plan
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">Create Plan</Button>
+                    </CardContent>
+                  </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 text-primary" />
-                  Add Team Member
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpvoteFeatureButton featureTitle="Add Team Member" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Users className="h-5 w-5 text-primary" />
+                        Add Team Member
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">Add Member</Button>
+                    </CardContent>
+                  </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Schedule Appointment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpvoteFeatureButton featureTitle="Schedule Appointment" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        Schedule Appointment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">Schedule</Button>
+                    </CardContent>
+                  </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Bell className="h-5 w-5 text-primary" />
-                  Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpvoteFeatureButton featureTitle="Notifications" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
-          </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Bell className="h-5 w-5 text-primary" />
+                        Notifications
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">View</Button>
+                    </CardContent>
+                  </Card>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Care Plans
-                </CardTitle>
-                <CardDescription>View and manage care plans</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="secondary" className="w-full">View Plans</Button>
-                <UpvoteFeatureButton featureTitle="Care Plans" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        Care Plans
+                      </CardTitle>
+                      <CardDescription>View and manage care plans</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">View Plans</Button>
+                    </CardContent>
+                  </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Care Team
-                </CardTitle>
-                <CardDescription>Manage your care team members</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="secondary" className="w-full">View Team</Button>
-                <UpvoteFeatureButton featureTitle="Care Team" className="w-full" buttonText="Upvote this Feature" />
-              </CardContent>
-            </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        Care Team
+                      </CardTitle>
+                      <CardDescription>Manage your care team members</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">View Team</Button>
+                    </CardContent>
+                  </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Appointments
-                </CardTitle>
-                <CardDescription>Schedule and manage appointments</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="secondary" className="w-full">View Calendar</Button>
-                <UpvoteFeatureButton featureTitle="Appointments" className="w-full" buttonText="Upvote this Feature" />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        Appointments
+                      </CardTitle>
+                      <CardDescription>Schedule and manage appointments</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="secondary" className="w-full">View Calendar</Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </div>
