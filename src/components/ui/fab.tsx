@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FabProps {
@@ -13,7 +13,7 @@ interface FabProps {
 }
 
 export const Fab = ({
-  icon = <Plus className="h-5 w-5" />,
+  icon = <HelpCircle className="h-5 w-5" />,
   onClick,
   className,
   position = "bottom-right",
