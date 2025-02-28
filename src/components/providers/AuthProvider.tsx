@@ -200,6 +200,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Force registration completion if profile is incomplete
       if (!profileComplete && !isOnRegistrationPage) {
         if (userRole) {
+          console.log('[AuthProvider] Profile is incomplete, redirecting to registration page for role:', userRole);
+          
+          // This is the key fix - ensure we're using the correct mapping for registration routes
           const registrationRoutes: Record<UserRole, string> = {
             'family': '/registration/family',
             'professional': '/registration/professional',
@@ -217,6 +220,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // If we're already on a registration page and profile is incomplete, don't redirect elsewhere
       if (!profileComplete && isOnRegistrationPage) {
+        // Check if we're on the CORRECT registration page for our role
+        if (userRole) {
+          const correctRegistrationPath = `/registration/${userRole.toLowerCase()}`;
+          const currentPath = location.pathname;
+          
+          // If we're on the wrong registration page, redirect to the correct one
+          if (currentPath !== correctRegistrationPath) {
+            console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
+            toast.info(`Redirecting to the ${userRole} registration form`);
+            navigate(correctRegistrationPath);
+            return;
+          } else {
+            console.log(`[AuthProvider] Already on the correct registration page ${currentPath}`);
+          }
+        }
+        
         isRedirectingRef.current = false;
         return;
       }
