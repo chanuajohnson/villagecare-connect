@@ -45,7 +45,51 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         return featureId;
       }
       
-      // Check if feature exists in database
+      // For Profile Management, we'll use a direct approach
+      if (isProfileManagement) {
+        // First check if we already have a Profile Management feature
+        const { data: existingFeatures, error: searchError } = await supabase
+          .from('features')
+          .select('id, title')
+          .ilike('title', '%profile management%');
+          
+        if (searchError) {
+          console.error('Error searching for Profile Management feature:', searchError);
+          return null;
+        }
+        
+        if (existingFeatures && existingFeatures.length > 0) {
+          console.log(`Found existing Profile Management feature: ${existingFeatures[0].id}`);
+          setFeatureId(existingFeatures[0].id);
+          return existingFeatures[0].id;
+        }
+        
+        // Create a new feature for Profile Management
+        console.log(`Creating new feature for Profile Management`);
+        const { data: newFeature, error: insertError } = await supabase
+          .from('features')
+          .insert([{ 
+            title: 'Profile Management', 
+            description: 'Feature request for Profile Management' 
+          }])
+          .select('id')
+          .single();
+          
+        if (insertError) {
+          console.error('Error creating Profile Management feature:', insertError);
+          return null;
+        }
+        
+        if (newFeature) {
+          console.log(`Created new Profile Management feature with ID: ${newFeature.id}`);
+          setFeatureId(newFeature.id);
+          return newFeature.id;
+        }
+        
+        return null;
+      }
+      
+      // Check if feature exists in database (for non-Profile Management features)
       const { data: existingFeature, error: fetchError } = await supabase
         .from('features')
         .select('id')
@@ -54,9 +98,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
       if (fetchError) {
         console.error('Error fetching feature:', fetchError);
-        if (isProfileManagement) {
-          console.error('DEBUG: Error fetching Profile Management feature:', fetchError);
-        }
         return null;
       }
 
@@ -69,10 +110,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       // Create new feature if it doesn't exist
       console.log(`Feature not found, creating new one for: "${title}"`);
       
-      if (isProfileManagement) {
-        console.log(`DEBUG: Creating new feature for Profile Management`);
-      }
-      
       const { data: newFeature, error: insertError } = await supabase
         .from('features')
         .insert([{ title, description: `Feature request for ${title}` }])
@@ -81,9 +118,6 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
       if (insertError) {
         console.error('Error creating feature:', insertError);
-        if (isProfileManagement) {
-          console.error('DEBUG: Failed to create Profile Management feature:', insertError);
-        }
         return null;
       }
       
