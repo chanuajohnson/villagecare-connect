@@ -8,6 +8,48 @@ export interface Profile {
   role: UserRole;
   full_name: string;
   avatar_url?: string;
+  phone_number?: string;
+  address?: string;
+  
+  // Family-specific fields
+  care_recipient_name?: string;
+  relationship?: string;
+  care_types?: string[];
+  special_needs?: string[];
+  specialized_care?: string[];
+  other_special_needs?: string;
+  caregiver_type?: string;
+  preferred_contact_method?: string;
+  care_schedule?: string;
+  budget_preferences?: string;
+  caregiver_preferences?: string;
+  additional_notes?: string;
+  
+  // Professional-specific fields
+  professional_type?: string;
+  license_number?: string;
+  certifications?: string[];
+  other_certification?: string;
+  certification_proof_url?: string;
+  care_services?: string[];
+  languages?: string[];
+  years_of_experience?: string;
+  work_type?: string;
+  availability?: string[];
+  background_check?: boolean;
+  background_check_proof_url?: string;
+  legally_authorized?: boolean;
+  expected_rate?: string;
+  payment_methods?: string[];
+  bio?: string;
+  why_choose_caregiving?: string;
+  preferred_work_locations?: string;
+  commute_mode?: string;
+  list_in_directory?: boolean;
+  enable_job_alerts?: boolean;
+  job_notification_method?: string;
+  job_matching_criteria?: string[];
+  custom_availability_alerts?: string;
 }
 
 export interface CarePlan {
