@@ -83,17 +83,24 @@ export default function AuthPage() {
         
         // Redirect based on role
         if (role) {
-          console.log("[AuthPage] Redirecting to dashboard for role:", role);
-          // Use the correct dashboard URLs
-          const dashboardRoutes: Record<string, string> = {
-            'family': '/dashboard/family',
-            'professional': '/dashboard/professional',
-            'community': '/dashboard/community',
-            'admin': '/dashboard/admin'
-          };
+          console.log("[AuthPage] Redirecting based on role:", role);
           
-          if (dashboardRoutes[role]) {
-            navigate(dashboardRoutes[role]);
+          if (role === 'family') {
+            // Redirect family users to the registration page to complete their profile
+            console.log("[AuthPage] Redirecting family user to registration page");
+            navigate('/registration/family');
+          } else {
+            // For other roles, redirect to their dashboards
+            console.log("[AuthPage] Redirecting to dashboard for role:", role);
+            const dashboardRoutes: Record<string, string> = {
+              'professional': '/dashboard/professional',
+              'community': '/dashboard/community',
+              'admin': '/dashboard/admin'
+            };
+            
+            if (dashboardRoutes[role]) {
+              navigate(dashboardRoutes[role]);
+            }
           }
         }
       } else {
