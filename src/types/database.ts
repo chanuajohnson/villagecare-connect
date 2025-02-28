@@ -50,6 +50,21 @@ export interface Profile {
   job_notification_method?: string;
   job_matching_criteria?: string[];
   custom_availability_alerts?: string;
+  
+  // Community-specific fields
+  location?: string;
+  website?: string;
+  community_roles?: string[];
+  contribution_interests?: string[];
+  caregiving_experience?: string;
+  caregiving_areas?: string[];
+  tech_interests?: string[];
+  involvement_preferences?: string[];
+  communication_channels?: string[];
+  community_motivation?: string;
+  improvement_ideas?: string;
+  list_in_community_directory?: boolean;
+  enable_community_notifications?: boolean;
 }
 
 export interface CarePlan {
