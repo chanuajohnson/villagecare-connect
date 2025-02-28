@@ -62,14 +62,15 @@ const FamilyDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
-              <Button 
-                variant="secondary" 
-                className="w-full cursor-not-allowed opacity-70"
-                disabled
-              >
-                Edit Profile
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link to="/family/features-overview">
+                <Button 
+                  variant="default" 
+                  className="w-full"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <UpvoteFeatureButton 
                 featureTitle="Profile Management" 
                 className="w-full" 
@@ -86,6 +87,15 @@ const FamilyDashboard = () => {
                 <CardDescription>Manage care plans, team members, appointments and more</CardDescription>
               </CardHeader>
               <CardContent>
+                <Link to="/family/features-overview">
+                  <Button 
+                    variant="default" 
+                    className="w-full mb-6"
+                  >
+                    Learn More
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <UpvoteFeatureButton featureTitle="Care Management" className="w-full mb-6" buttonText="Upvote this Feature" />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -98,7 +108,9 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">Create Plan</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">Create Plan</Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -110,7 +122,9 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">Add Member</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">Add Member</Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -122,7 +136,9 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">Schedule</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">Schedule</Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -134,7 +150,9 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">View</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">View</Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>
@@ -149,7 +167,9 @@ const FamilyDashboard = () => {
                       <CardDescription>View and manage care plans</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">View Plans</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">View Plans</Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -162,7 +182,9 @@ const FamilyDashboard = () => {
                       <CardDescription>Manage your care team members</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">View Team</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">View Team</Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -175,7 +197,9 @@ const FamilyDashboard = () => {
                       <CardDescription>Schedule and manage appointments</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button variant="secondary" className="w-full">View Calendar</Button>
+                      <Link to="/family/features-overview">
+                        <Button variant="secondary" className="w-full">View Calendar</Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>
@@ -190,6 +214,15 @@ const FamilyDashboard = () => {
               <CardDescription>Track and manage medications, schedules, and administration</CardDescription>
             </CardHeader>
             <CardContent>
+              <Link to="/family/features-overview">
+                <Button 
+                  variant="default" 
+                  className="w-full mb-6"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <UpvoteFeatureButton featureTitle="Medication Management" className="w-full mb-6" buttonText="Upvote this Feature" />
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -202,7 +235,9 @@ const FamilyDashboard = () => {
                     <CardDescription>View and manage medications</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Medications</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Medications</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -215,7 +250,9 @@ const FamilyDashboard = () => {
                     <CardDescription>Manage medication schedules</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Schedule</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Schedule</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -228,7 +265,9 @@ const FamilyDashboard = () => {
                     <CardDescription>Plan medication routines</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Planning</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Planning</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -241,7 +280,9 @@ const FamilyDashboard = () => {
                     <CardDescription>Track medication administration</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Administration</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Administration</Button>
+                    </Link>
                   </CardContent>
                 </Card>
               </div>
@@ -255,6 +296,15 @@ const FamilyDashboard = () => {
               <CardDescription>Plan and manage meals, recipes, and nutrition</CardDescription>
             </CardHeader>
             <CardContent>
+              <Link to="/family/features-overview">
+                <Button 
+                  variant="default" 
+                  className="w-full mb-6"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <UpvoteFeatureButton featureTitle="Meal Planning" className="w-full mb-6" buttonText="Upvote this Feature" />
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -270,6 +320,9 @@ const FamilyDashboard = () => {
                     <div className="border rounded-lg p-4">
                       <p className="text-gray-500 text-sm">Pick a date</p>
                     </div>
+                    <Link to="/family/features-overview" className="block mt-4">
+                      <Button variant="secondary" className="w-full">Select Date</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -294,6 +347,9 @@ const FamilyDashboard = () => {
                         <p className="text-gray-500">Dinner</p>
                       </div>
                     </div>
+                    <Link to="/family/features-overview" className="block mt-4">
+                      <Button variant="secondary" className="w-full">Select Types</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -306,7 +362,9 @@ const FamilyDashboard = () => {
                     <CardDescription>Browse and manage recipes</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Library</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Library</Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
@@ -319,7 +377,9 @@ const FamilyDashboard = () => {
                     <CardDescription>Get personalized meal suggestions</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button variant="secondary" className="w-full">View Suggestions</Button>
+                    <Link to="/family/features-overview">
+                      <Button variant="secondary" className="w-full">View Suggestions</Button>
+                    </Link>
                   </CardContent>
                 </Card>
               </div>
