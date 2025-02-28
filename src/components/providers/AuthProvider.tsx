@@ -1,10 +1,13 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getUserRole } from '@/lib/supabase';
 import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
+
+// Define timeout duration for loading states (in milliseconds)
+const LOADING_TIMEOUT_MS = 10000; // 10 seconds
 
 interface AuthContextType {
   session: Session | null;
@@ -38,11 +41,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isProfileComplete, setIsProfileComplete] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Add loading timeout reference
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper to set loading state with timeout safeguard
+  const setLoadingWithTimeout = (loading: boolean, operation: string) => {
+    console.log(`[AuthProvider] ${loading ? 'START' : 'END'} loading state for: ${operation}`);
+    
+    // Clear any existing timeout
+    if (loadingTimeoutRef.current) {
+      console.log(`[AuthProvider] Clearing previous loading timeout for: ${operation}`);
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    
+    // Set the loading state
+    setIsLoading(loading);
+    
+    // If we're starting a loading state, set a timeout to clear it
+    if (loading) {
+      console.log(`[AuthProvider] Setting loading timeout for: ${operation} (${LOADING_TIMEOUT_MS}ms)`);
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.log(`[AuthProvider] TIMEOUT reached for: ${operation} - forcibly ending loading state`);
+        setIsLoading(false);
+        toast.error(`Operation timed out: ${operation}. Please try again.`);
+      }, LOADING_TIMEOUT_MS);
+    }
+  };
 
   // Function to check if the user's profile is complete
   const checkProfileCompletion = async (userId: string) => {
     try {
-      console.log('Checking profile completion for user:', userId);
+      console.log('[AuthProvider] Checking profile completion for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, role')
@@ -50,19 +81,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
       
       if (error) {
-        console.error('Error checking profile completion:', error);
+        console.error('[AuthProvider] Error checking profile completion:', error);
         throw error;
       }
       
-      console.log('Profile data retrieved:', profile);
+      console.log('[AuthProvider] Profile data retrieved:', profile);
       
       // Profile is considered complete if they have at least a full name
       const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
-      console.log('Profile complete:', profileComplete);
+      console.log('[AuthProvider] Profile complete:', profileComplete);
       return profileComplete;
     } catch (error) {
-      console.error('Error checking profile completion:', error);
+      console.error('[AuthProvider] Error checking profile completion:', error);
       return false;
     }
   };
@@ -105,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Redirect to the features page
         navigate('/features');
       } catch (error: any) {
-        console.error('Error handling pending upvote:', error);
+        console.error('[AuthProvider] Error handling pending upvote:', error);
         toast.error(error.message || 'Failed to process your vote');
       }
     }
@@ -115,12 +146,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkPendingActions = async () => {
     if (!user) return;
     
-    console.log('Checking pending actions for user:', user.id);
-    console.log('Current user role:', userRole);
+    console.log('[AuthProvider] Checking pending actions for user:', user.id);
+    console.log('[AuthProvider] Current user role:', userRole);
     
     // Check if the user has completed their profile
     const profileComplete = await checkProfileCompletion(user.id);
-    console.log('Profile complete:', profileComplete);
+    console.log('[AuthProvider] Profile complete:', profileComplete);
     
     // List of possible actions stored in localStorage
     const pendingActions = [
@@ -132,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Check if any of these actions exist in localStorage
     const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
-    console.log('Has pending action:', hasPendingAction);
+    console.log('[AuthProvider] Has pending action:', hasPendingAction);
     
     // If the user hasn't completed their profile and there are no pending actions,
     // redirect to the appropriate registration page
@@ -146,7 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
         
         const route = registrationRoutes[userRole];
-        console.log('Redirecting to registration page:', route);
+        console.log('[AuthProvider] Redirecting to registration page:', route);
         toast.info('Please complete your profile to continue');
         navigate(route);
         return;
@@ -187,10 +218,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // If user has completed profile and there are no pending actions
     // Check for last path and redirect there if it exists
     const lastPath = localStorage.getItem('lastPath');
-    console.log('Last path:', lastPath);
+    console.log('[AuthProvider] Last path:', lastPath);
     
     if (profileComplete && lastPath) {
-      console.log('Navigating to last path:', lastPath);
+      console.log('[AuthProvider] Navigating to last path:', lastPath);
       navigate(lastPath);
       clearLastAction();
     } else if (profileComplete) {
@@ -203,7 +234,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           'admin': '/dashboard/admin'
         };
         
-        console.log('Navigating to dashboard for role:', userRole);
+        console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
         navigate(dashboardRoutes[userRole]);
         toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
       }
@@ -218,7 +249,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           'admin': '/dashboard/admin'
         };
         
-        console.log('Forcing navigation to dashboard for role:', userRole);
+        console.log('[AuthProvider] Forcing navigation to dashboard for role:', userRole);
         navigate(dashboardRoutes[userRole]);
         toast.success(`Welcome to your ${userRole} dashboard!`); // Welcome message on successful login
       }
@@ -266,53 +297,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Function to initialize authentication state
   const fetchSessionAndUser = async () => {
     try {
-      console.log('Fetching session and user...');
-      setIsLoading(true);
+      console.log('[AuthProvider] Fetching session and user...');
+      setLoadingWithTimeout(true, 'fetch-session');
       
       // Directly request the current session
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error fetching session:', error);
-        setIsLoading(false);
+        console.error('[AuthProvider] Error fetching session:', error);
+        setLoadingWithTimeout(false, 'fetch-session-error');
         return;
       }
       
-      console.log('Session retrieved:', currentSession ? 'Session exists' : 'No session');
+      console.log('[AuthProvider] Session retrieved:', currentSession ? 'Session exists' : 'No session');
       
       // Update state with session data
       setSession(currentSession);
       setUser(currentSession?.user || null);
       
       if (currentSession?.user) {
-        console.log('User found in session:', currentSession.user.id);
+        console.log('[AuthProvider] User found in session:', currentSession.user.id);
         // Get user role from profiles table
         const role = await getUserRole();
-        console.log('User role:', role);
+        console.log('[AuthProvider] User role:', role);
         setUserRole(role);
         
         // Check pending actions only if we have a user
         await checkPendingActions();
       } else {
-        console.log('No user in session');
+        console.log('[AuthProvider] No user in session');
         setUserRole(null);
         setIsProfileComplete(false);
       }
     } catch (error) {
-      console.error('Unexpected error in fetchSessionAndUser:', error);
+      console.error('[AuthProvider] Unexpected error in fetchSessionAndUser:', error);
     } finally {
-      console.log('Session fetch complete, setting isLoading to false');
-      setIsLoading(false);
+      console.log('[AuthProvider] Session fetch complete, setting isLoading to false');
+      setLoadingWithTimeout(false, 'fetch-session-complete');
     }
   };
 
   useEffect(() => {
+    // Add cleanup for the loading timeout on unmount
+    return () => {
+      if (loadingTimeoutRef.current) {
+        console.log('[AuthProvider] Cleaning up loading timeout on unmount');
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     // Fetch initial session
+    console.log('[AuthProvider] Initial auth check started');
     fetchSessionAndUser();
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state changed:', event, newSession ? 'Has session' : 'No session');
+      console.log('[AuthProvider] Auth state changed:', event, newSession ? 'Has session' : 'No session');
       
       try {
         // Update state with new session
@@ -320,56 +362,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(newSession?.user || null);
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log('User signed in or token refreshed');
-          setIsLoading(true);
+          console.log('[AuthProvider] User signed in or token refreshed');
+          setLoadingWithTimeout(true, `auth-state-change-${event}`);
           
           if (newSession?.user) {
-            console.log('Getting role for signed in user...');
+            console.log('[AuthProvider] Getting role for signed in user...');
             const role = await getUserRole();
-            console.log('User role from auth state change:', role);
+            console.log('[AuthProvider] User role from auth state change:', role);
             setUserRole(role);
             
             if (event === 'SIGNED_IN') {
-              console.log('Processing post-signin actions');
+              console.log('[AuthProvider] Processing post-signin actions');
               await checkPendingActions();
               toast.success('You have successfully logged in!');
             }
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
-          setIsLoading(true);
+          console.log('[AuthProvider] User signed out');
+          setLoadingWithTimeout(true, 'auth-state-change-SIGNED_OUT');
           setUserRole(null);
           setIsProfileComplete(false);
           toast.success('You have been signed out successfully');
           navigate('/');
         } else if (event === 'USER_UPDATED') {
-          console.log('User updated');
+          console.log('[AuthProvider] User updated');
           if (newSession?.user) {
             const role = await getUserRole();
             setUserRole(role);
           }
         }
       } catch (error) {
-        console.error('Error handling auth state change:', error);
+        console.error('[AuthProvider] Error handling auth state change:', error);
       } finally {
-        console.log('Auth state change handler complete, setting isLoading to false');
-        setIsLoading(false);
+        console.log('[AuthProvider] Auth state change handler complete, setting isLoading to false');
+        setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
       }
     });
 
     return () => {
-      console.log('Cleaning up auth subscription');
+      console.log('[AuthProvider] Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, [navigate]);
 
   const signOut = async () => {
     try {
-      console.log('Signing out...');
-      setIsLoading(true);
+      console.log('[AuthProvider] Signing out...');
+      setLoadingWithTimeout(true, 'sign-out');
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('[AuthProvider] Sign out error:', error);
         throw error;
       }
       
@@ -381,15 +423,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/');
       toast.success('You have been signed out successfully');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('[AuthProvider] Error signing out:', error);
       toast.error('Failed to sign out');
     } finally {
-      console.log('Sign out complete, setting isLoading to false');
-      setIsLoading(false);
+      console.log('[AuthProvider] Sign out complete, setting isLoading to false');
+      setLoadingWithTimeout(false, 'sign-out-complete');
     }
   };
 
-  console.log('AuthProvider render state:', { 
+  console.log('[AuthProvider] Render state:', { 
     hasSession: !!session, 
     hasUser: !!user, 
     userRole, 
