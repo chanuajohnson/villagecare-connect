@@ -20,6 +20,8 @@ import CommunityRegistration from "./pages/registration/CommunityRegistration";
 import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
 import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeaturesOverview";
 import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
+import FAQPage from "./pages/support/FAQPage";
+import { Fab } from "@/components/ui/fab";
 
 const queryClient = new QueryClient();
 
@@ -58,10 +60,31 @@ const AppContent = () => {
           <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
           <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
+          <Route path="/faq" element={<FAQPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      
+      {/* Global FAB that appears on all pages except the homepage and FAQ page where we have specific implementations */}
+      <GlobalFAB />
     </div>
+  );
+};
+
+// Component to handle showing the FAB on all pages except certain ones
+const GlobalFAB = () => {
+  const pathname = window.location.pathname;
+  
+  // Don't show the global FAB on the homepage or FAQ page since they have their own implementations
+  if (pathname === "/" || pathname === "/faq") {
+    return null;
+  }
+  
+  return (
+    <Fab 
+      className="bg-primary-500 hover:bg-primary-600 text-white"
+      label="Support options"
+    />
   );
 };
 

@@ -1,7 +1,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Heart, ArrowRight, Check, Vote, Plus } from "lucide-react";
+import { Users, UserCog, Heart, ArrowRight, Check, Vote, Phone } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -271,6 +271,7 @@ const Index = () => {
         onClick={handleFabClick} 
         label="Get Started"
         className="bg-primary-500 hover:bg-primary-600 text-white"
+        showMenu={false}
       />
     </div>
   );
