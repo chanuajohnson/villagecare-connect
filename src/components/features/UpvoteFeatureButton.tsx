@@ -25,14 +25,19 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   // Get or create the feature ID if it doesn't exist
   const getOrCreateFeatureId = async (title: string) => {
     try {
+      console.log(`Attempting to get/create feature ID for: "${title}"`);
+      
       // First, check if we already have this feature ID stored
-      if (featureId) return featureId;
+      if (featureId) {
+        console.log(`Using existing feature ID: ${featureId}`);
+        return featureId;
+      }
       
       // Check if feature exists in database
       const { data: existingFeature, error: fetchError } = await supabase
         .from('features')
         .select('id')
-        .eq('title', title)
+        .ilike('title', title)
         .maybeSingle();
 
       if (fetchError) {
@@ -41,11 +46,13 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       }
 
       if (existingFeature) {
+        console.log(`Found existing feature with ID: ${existingFeature.id}`);
         setFeatureId(existingFeature.id);
         return existingFeature.id;
       }
 
       // Create new feature if it doesn't exist
+      console.log(`Feature not found, creating new one for: "${title}"`);
       const { data: newFeature, error: insertError } = await supabase
         .from('features')
         .insert([{ title, description: `Feature request for ${title}` }])
@@ -58,6 +65,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
       }
       
       if (newFeature) {
+        console.log(`Created new feature with ID: ${newFeature.id}`);
         setFeatureId(newFeature.id);
         return newFeature.id;
       }
@@ -74,6 +82,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     if (!user) return false;
     
     try {
+      console.log(`Checking if user ${user.id} has voted for feature ${fId}`);
+      
       const { data, error } = await supabase
         .from('feature_upvotes')
         .select('id')
@@ -86,7 +96,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         return false;
       }
 
-      return !!data;
+      const hasVoted = !!data;
+      console.log(`User ${user.id} has ${hasVoted ? '' : 'not '}voted for feature ${fId}`);
+      return hasVoted;
     } catch (error) {
       console.error('Error checking user vote:', error);
       return false;
@@ -96,6 +108,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   // Fetch vote count for the feature
   const fetchVoteCount = async (fId: string) => {
     try {
+      console.log(`Fetching vote count for feature ${fId}`);
+      
       const { count, error } = await supabase
         .from('feature_upvotes')
         .select('id', { count: 'exact' })
@@ -106,6 +120,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         return;
       }
       
+      console.log(`Vote count for feature ${fId}: ${count || 0}`);
       setVoteCount(count || 0);
     } catch (error) {
       console.error('Error fetching vote count:', error);
@@ -115,6 +130,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
   // Initialize component - get feature ID, check vote status, fetch vote count
   useEffect(() => {
     const initializeFeature = async () => {
+      console.log(`Initializing feature component for: "${featureTitle}"`);
       const fId = await getOrCreateFeatureId(featureTitle);
       if (fId) {
         await fetchVoteCount(fId);
@@ -122,6 +138,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
           const userHasVoted = await checkUserVote(fId);
           setHasVoted(userHasVoted);
         }
+      } else {
+        console.error(`Failed to get/create feature ID for "${featureTitle}"`);
       }
     };
 
@@ -130,27 +148,38 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
 
   // Handle upvote click
   const handleUpvote = async () => {
+    console.log(`Upvote button clicked for "${featureTitle}"`);
+    
     // Get feature ID first
     const fId = await getOrCreateFeatureId(featureTitle);
     if (!fId) {
+      console.error(`Could not get/create feature ID for "${featureTitle}"`);
       toast.error('Unable to process vote at this time.');
       return;
     }
+    
+    console.log(`Processing upvote for feature ID: ${fId}`);
     
     // Store the feature ID for post-login handling
     localStorage.setItem('pendingFeatureId', fId);
     
     // Check if user is authenticated
     if (!requireAuth(`upvote "${featureTitle}"`)) {
+      console.log('User not authenticated, redirecting to auth page');
       return; // requireAuth will handle redirect to login page
     }
     
     // Prevent multiple clicks
-    if (isVoting) return;
+    if (isVoting) {
+      console.log('Already processing a vote, ignoring click');
+      return;
+    }
+    
     setIsVoting(true);
     
     try {
       if (hasVoted) {
+        console.log(`User has already voted for feature ${fId}, removing vote`);
         // Remove vote if user already voted
         const { error } = await supabase
           .from('feature_upvotes')
@@ -158,12 +187,16 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
           .eq('feature_id', fId)
           .eq('user_id', user!.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing vote:', error);
+          throw error;
+        }
         
         setHasVoted(false);
         setVoteCount(prev => Math.max(0, prev - 1));
         toast.success('Your vote has been removed');
       } else {
+        console.log(`Adding vote for feature ${fId} by user ${user!.id}`);
         // Add vote
         const { error } = await supabase
           .from('feature_upvotes')
@@ -172,13 +205,17 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
             user_id: user!.id
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error adding vote:', error);
+          throw error;
+        }
         
         setHasVoted(true);
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
         
         // Navigate to profile features page after successful vote
+        console.log('Navigating to features page');
         navigate('/features');
       }
     } catch (error: any) {
