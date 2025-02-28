@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -6,7 +7,7 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 60000; // Increased to 60s to match the Supabase timeout setting
+const LOADING_TIMEOUT_MS = 10000; // Reduced to 10s to avoid long waits
 
 interface AuthContextType {
   session: Session | null;
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
   const isRedirectingRef = useRef(false);
+  const isSigningOutRef = useRef(false);
 
   const clearLoadingTimeout = () => {
     if (loadingTimeoutRef.current) {
@@ -67,9 +69,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsLoading(false);
         
         if (operation.includes('sign-out') || operation.includes('fetch-session')) {
-          console.log('[AuthProvider] Clearing localStorage due to timeout');
+          console.log('[AuthProvider] Clearing auth state due to timeout');
           
           try {
+            // Reset local state regardless of Supabase signOut success
+            setSession(null);
+            setUser(null);
+            setUserRole(null);
+            
+            if (isSigningOutRef.current) {
+              isSigningOutRef.current = false;
+              navigate('/');
+              toast.success('You have been signed out successfully');
+            }
+            
+            // Try to sign out from Supabase, but don't wait for it
             supabase.auth.signOut().catch(err => console.error('[AuthProvider] Error during forced signout:', err));
           } catch (error) {
             console.error('[AuthProvider] Error during forced signout:', error);
@@ -401,16 +415,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
         } else if (event === 'SIGNED_OUT') {
           console.log('[AuthProvider] User signed out');
-          setLoadingWithTimeout(true, 'auth-state-change-SIGNED_OUT');
+          setLoadingWithTimeout(false, 'auth-state-change-SIGNED_OUT');
           setUserRole(null);
           setIsProfileComplete(false);
           
           localStorage.removeItem('authStateError');
           
-          toast.success('You have been signed out successfully');
-          navigate('/');
-          
-          setLoadingWithTimeout(false, 'auth-state-change-complete-SIGNED_OUT');
+          if (isSigningOutRef.current) {
+            isSigningOutRef.current = false;
+            toast.success('You have been signed out successfully');
+            navigate('/');
+          }
         } else if (event === 'USER_UPDATED') {
           console.log('[AuthProvider] User updated');
           if (newSession?.user) {
@@ -438,32 +453,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       console.log('[AuthProvider] Signing out...');
+      isSigningOutRef.current = true;
       setLoadingWithTimeout(true, 'sign-out');
+      
+      // First update our local state - this ensures UI shows signed out immediately
+      setSession(null);
+      setUser(null);
+      setUserRole(null);
+      setIsProfileComplete(false);
+      
+      // Then try to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('[AuthProvider] Sign out error:', error);
         throw error;
       }
       
-      setSession(null);
-      setUser(null);
-      setUserRole(null);
-      
+      // Navigate and show toast, even if we don't get the auth state change event
       navigate('/');
       toast.success('You have been signed out successfully');
+      
+      // Set loading to false after signing out
+      setLoadingWithTimeout(false, 'sign-out-complete');
+      isSigningOutRef.current = false;
     } catch (error) {
       console.error('[AuthProvider] Error signing out:', error);
       toast.error('Failed to sign out');
       
+      // Still reset everything even if there's an error
       setSession(null);
       setUser(null);
       setUserRole(null);
       setIsLoading(false);
+      isSigningOutRef.current = false;
       
       localStorage.setItem('authStateError', 'true');
-    } finally {
-      console.log('[AuthProvider] Sign out complete, setting isLoading to false');
-      setLoadingWithTimeout(false, 'sign-out-complete');
+      navigate('/');
     }
   };
 

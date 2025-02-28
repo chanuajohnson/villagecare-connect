@@ -22,6 +22,14 @@ export function Navigation() {
   // Log state for debugging purposes
   console.log('Navigation render -', { user: !!user, isLoading });
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error in Navigation signOut handler:', error);
+    }
+  };
+
   return (
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
       <div className="container mx-auto flex justify-between items-center">
@@ -68,7 +76,7 @@ export function Navigation() {
             </Button>
           ) : user ? (
             <Button 
-              onClick={signOut}
+              onClick={handleSignOut}
               variant="destructive"
               size="sm"
               className="flex items-center gap-2"
