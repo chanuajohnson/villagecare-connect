@@ -35,40 +35,42 @@ const ProfessionalDashboard = () => {
           </p>
         </motion.div>
 
-        {/* Welcome Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="my-8"
-        >
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="pt-6">
-              <h2 className="text-2xl font-bold text-primary">Welcome to Takes a Village! 🚀 Your Care Coordination Hub.</h2>
-              <p className="mt-2 text-muted-foreground">
-                We're building this platform with you in mind. Explore features, connect with clients, and help shape the future of care by voting on features!
-              </p>
-              
-              <div className="flex flex-wrap gap-3 mt-6">
-                <Link to="/professional/features-overview">
-                  <Button variant="default" size="sm">
-                    View Professional Tools
-                  </Button>
-                </Link>
-                <Link to="/professional/features-overview">
-                  <Button variant="outline" size="sm">
-                    Connect with Clients
-                  </Button>
-                </Link>
-                <Link to="/professional/features-overview">
-                  <Button variant="outline" size="sm">
-                    Upvote Features
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Welcome Card - Conditionally shown based on authentication status */}
+        {!user ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="my-8"
+          >
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+              <CardContent className="p-0">
+                <h2 className="text-2xl font-bold">Welcome to Takes a Village! 🚀 Your Care Coordination Hub.</h2>
+                <p className="mt-2 text-gray-600">
+                  We're building this platform with you in mind. Explore features, connect with clients, and help shape the future of care by voting on features!
+                </p>
+                
+                <div className="flex flex-wrap gap-3 mt-6">
+                  <Link to="/auth">
+                    <Button variant="default" size="sm">
+                      View Professional Tools
+                    </Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm">
+                      Connect with Clients
+                    </Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm">
+                      Upvote Features
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : null}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <Card className="bg-white shadow-sm">
