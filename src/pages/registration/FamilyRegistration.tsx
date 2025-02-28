@@ -211,8 +211,7 @@ export default function FamilyRegistration() {
           additional_notes: formData.additionalNotes,
           role: 'family'
         }, { 
-          onConflict: 'id',
-          returning: 'minimal' // Don't need to return the record
+          onConflict: 'id'
         });
       
       if (error) {
