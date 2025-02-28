@@ -76,7 +76,6 @@ export default function AuthPage() {
       toast.success('Login successful! Redirecting you...');
       
       // The auth provider will handle redirection based on profile completion
-      
       setIsLoading(false);
       return data.user;
     } catch (error) {

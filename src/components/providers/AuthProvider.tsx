@@ -263,105 +263,139 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('pendingProfileUpdate');
   };
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing auth...');
-        setIsLoading(true);
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        console.log('Session retrieved:', session ? 'Yes' : 'No');
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('User is signed in, getting role...');
-          const role = await getUserRole();
-          console.log('User role:', role);
-          setUserRole(role);
-          
-          // Check user profile completion and handle pending actions
-          await checkPendingActions();
-        } else {
-          console.log('No active session found');
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        // Ensure isLoading is set to false even if there were errors
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session ? 'Has session' : 'No session');
-      
-      // Set loading to true when auth state changes
+  // Function to initialize authentication state
+  const fetchSessionAndUser = async () => {
+    try {
+      console.log('Fetching session and user...');
       setIsLoading(true);
       
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
+      // Directly request the current session
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error fetching session:', error);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('Session retrieved:', currentSession ? 'Session exists' : 'No session');
+      
+      // Update state with session data
+      setSession(currentSession);
+      setUser(currentSession?.user || null);
+      
+      if (currentSession?.user) {
+        console.log('User found in session:', currentSession.user.id);
+        // Get user role from profiles table
+        const role = await getUserRole();
+        console.log('User role:', role);
+        setUserRole(role);
         
-        if (session?.user) {
-          console.log('User signed in or updated, getting role...');
-          const role = await getUserRole();
-          console.log('User role from auth state change:', role);
-          setUserRole(role);
+        // Check pending actions only if we have a user
+        await checkPendingActions();
+      } else {
+        console.log('No user in session');
+        setUserRole(null);
+        setIsProfileComplete(false);
+      }
+    } catch (error) {
+      console.error('Unexpected error in fetchSessionAndUser:', error);
+    } finally {
+      console.log('Session fetch complete, setting isLoading to false');
+      setIsLoading(false);
+    }
+  };
 
-          // Check user profile completion and handle pending actions when auth state changes
-          if (event === 'SIGNED_IN') {
-            console.log('User signed in, checking pending actions');
-            await checkPendingActions();
-            // Display welcome message on successful login
-            toast.success('You have successfully logged in!');
-          } else if (event === 'USER_UPDATED') {
-            console.log('User updated, checking pending actions');
-            await checkPendingActions();
+  useEffect(() => {
+    // Fetch initial session
+    fetchSessionAndUser();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state changed:', event, newSession ? 'Has session' : 'No session');
+      
+      try {
+        // Update state with new session
+        setSession(newSession);
+        setUser(newSession?.user || null);
+        
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
+          setIsLoading(true);
+          
+          if (newSession?.user) {
+            console.log('Getting role for signed in user...');
+            const role = await getUserRole();
+            console.log('User role from auth state change:', role);
+            setUserRole(role);
+            
+            if (event === 'SIGNED_IN') {
+              console.log('Processing post-signin actions');
+              await checkPendingActions();
+              toast.success('You have successfully logged in!');
+            }
           }
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setIsLoading(true);
           setUserRole(null);
           setIsProfileComplete(false);
-          
-          // If user signed out, show a message
-          if (event === 'SIGNED_OUT') {
-            toast.success('You have been signed out successfully');
+          toast.success('You have been signed out successfully');
+          navigate('/');
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated');
+          if (newSession?.user) {
+            const role = await getUserRole();
+            setUserRole(role);
           }
         }
       } catch (error) {
-        console.error('Error in auth state change handler:', error);
+        console.error('Error handling auth state change:', error);
       } finally {
-        // Make sure we always set isLoading to false, even if there were errors
+        console.log('Auth state change handler complete, setting isLoading to false');
         setIsLoading(false);
       }
     });
 
     return () => {
+      console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, [navigate]);
 
   const signOut = async () => {
     try {
-      setIsLoading(true); // Set loading to true during sign out process
+      console.log('Signing out...');
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      // Clear user state immediately
+      setSession(null);
+      setUser(null);
+      setUserRole(null);
       
       navigate('/');
-      // The toast will be shown by the onAuthStateChange handler
+      toast.success('You have been signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
     } finally {
-      // Always set loading to false after sign out attempt, whether successful or not
+      console.log('Sign out complete, setting isLoading to false');
       setIsLoading(false);
     }
   };
+
+  console.log('AuthProvider render state:', { 
+    hasSession: !!session, 
+    hasUser: !!user, 
+    userRole, 
+    isLoading,
+    isProfileComplete
+  });
 
   return (
     <AuthContext.Provider value={{ 
