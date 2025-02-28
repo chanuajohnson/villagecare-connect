@@ -13,7 +13,8 @@ export const supabase = createClient(
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
+      storageKey: 'supabase.auth.token',
+      detectSessionInUrl: false, // Disable automatic URL detection to avoid issues
       flowType: 'pkce'
     }
   }
@@ -168,18 +169,40 @@ export const insertInitialRecipes = async () => {
     }
   ];
 
-  // Insert recipes one by one
-  for (const recipe of recipes) {
-    const { error } = await supabase
+  try {
+    // Check if recipes already exist
+    const { count, error: countError } = await supabase
       .from('recipes')
-      .insert([recipe])
-      .select();
+      .select('*', { count: 'exact', head: true });
       
-    if (error) {
-      console.error('Error inserting recipe:', error);
+    if (countError) {
+      console.error('Error checking existing recipes:', countError);
+      return;
     }
+    
+    // Only insert if no recipes exist
+    if (count === 0) {
+      console.log('No recipes found, inserting initial data...');
+      
+      // Insert recipes one by one
+      for (const recipe of recipes) {
+        const { error } = await supabase
+          .from('recipes')
+          .insert([recipe]);
+          
+        if (error) {
+          console.error('Error inserting recipe:', error);
+        }
+      }
+      
+      console.log('Initial recipes inserted successfully');
+    } else {
+      console.log(`${count} recipes already exist, skipping initial data`);
+    }
+  } catch (error) {
+    console.error('Error in insertInitialRecipes:', error);
   }
 };
 
-// Call insertInitialRecipes when the app starts
+// Call insertInitialRecipes when the app starts, but don't block rendering
 insertInitialRecipes().catch(console.error);

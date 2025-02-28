@@ -7,7 +7,7 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 8000; // Increased from 5s to 8s to give more time for auth operations
+const LOADING_TIMEOUT_MS = 15000; // Increased from 8s to 15s to give more time for auth operations
 
 interface AuthContextType {
   session: Session | null;
@@ -76,17 +76,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log(`[AuthProvider] TIMEOUT reached for: ${operation} - forcibly ending loading state`);
         setIsLoading(false);
         
-        // Clear browser storage when timeout occurs to prevent persistence of stale data
+        // Only show toast and clear storage in specific circumstances
         if (operation.includes('sign-out') || operation.includes('fetch-session')) {
           console.log('[AuthProvider] Clearing localStorage due to timeout');
-          localStorage.removeItem('supabase.auth.token');
+          
           try {
-            // Try to sign out to reset all auth state
-            supabase.auth.signOut().catch(console.error);
+            // Try to sign out to reset all auth state, but don't wait for it
+            supabase.auth.signOut().catch(err => console.error('[AuthProvider] Error during forced signout:', err));
           } catch (error) {
             console.error('[AuthProvider] Error during forced signout:', error);
           }
-          toast.error(`Authentication operation timed out. Please refresh the page and try again.`);
+          
+          // Only show the toast message if we're not on the auth page already
+          if (!location.pathname.includes('/auth')) {
+            toast.error(`Authentication operation timed out. Please refresh the page and try again.`);
+          }
         }
       }, LOADING_TIMEOUT_MS);
     }
@@ -404,7 +408,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setUserRole(null);
           setIsProfileComplete(false);
-          localStorage.removeItem('supabase.auth.token');
         } catch (e) {
           console.error('[AuthProvider] Error clearing stale auth state:', e);
         }
@@ -419,6 +422,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // Effect to set up auth state change listener
   useEffect(() => {
     // Fetch initial session
     console.log('[AuthProvider] Initial auth check started');
@@ -461,9 +465,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Clear any potential error markers
           localStorage.removeItem('authStateError');
-          
-          // Clear browser storage
-          localStorage.removeItem('supabase.auth.token');
           
           toast.success('You have been signed out successfully');
           navigate('/');
@@ -511,9 +512,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(null);
       setUser(null);
       setUserRole(null);
-      
-      // Clear any data in localStorage related to auth
-      localStorage.removeItem('supabase.auth.token');
       
       navigate('/');
       toast.success('You have been signed out successfully');

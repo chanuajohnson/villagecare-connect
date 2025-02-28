@@ -81,28 +81,8 @@ export default function AuthPage() {
       if (data.session) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
         
-        // Redirect based on role
-        if (role) {
-          console.log("[AuthPage] Redirecting based on role:", role);
-          
-          if (role === 'family') {
-            // Redirect family users to the registration page to complete their profile
-            console.log("[AuthPage] Redirecting family user to registration page");
-            navigate('/registration/family');
-          } else {
-            // For other roles, redirect to their dashboards
-            console.log("[AuthPage] Redirecting to dashboard for role:", role);
-            const dashboardRoutes: Record<string, string> = {
-              'professional': '/dashboard/professional',
-              'community': '/dashboard/community',
-              'admin': '/dashboard/admin'
-            };
-            
-            if (dashboardRoutes[role]) {
-              navigate(dashboardRoutes[role]);
-            }
-          }
-        }
+        // Don't redirect manually, let the AuthProvider handle it
+        console.log("[AuthPage] Auth provider will handle redirects");
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
       }
