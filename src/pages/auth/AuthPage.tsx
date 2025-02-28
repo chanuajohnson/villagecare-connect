@@ -17,6 +17,9 @@ export default function AuthPage() {
     console.log('Starting signup process for:', email, 'with role:', role);
     
     try {
+      // Clear any existing session first to ensure a clean state
+      await supabase.auth.signOut();
+      
       const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
@@ -41,10 +44,20 @@ export default function AuthPage() {
       console.log('Sign-up successful, user data:', user);
       toast.success('Sign-up successful! Redirecting you to complete your profile...');
       
-      // After signup, we'll be redirected to the registration page by the auth provider
-      // based on the user's role, so we don't need to navigate here
+      // After a successful signup, we should explicitly set the session
+      // This helps ensure the auth state is properly updated
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Error getting session after signup:', sessionError);
+      } else {
+        console.log('Session established after signup:', sessionData.session ? 'Yes' : 'No');
+      }
       
-      setIsLoading(false);
+      // Delay setting isLoading to false to give auth state time to propagate
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      
       return user;
 
     } catch (error) {
@@ -60,6 +73,9 @@ export default function AuthPage() {
     console.log('Starting login process for:', email);
     
     try {
+      // Clear any existing session first to ensure a clean state
+      await supabase.auth.signOut();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -75,8 +91,19 @@ export default function AuthPage() {
       console.log('Login successful, user data:', data);
       toast.success('Login successful! Redirecting you...');
       
-      // The auth provider will handle redirection based on profile completion
-      setIsLoading(false);
+      // After a successful login, we should explicitly check that the session is established
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Error getting session after login:', sessionError);
+      } else {
+        console.log('Session established after login:', sessionData.session ? 'Yes' : 'No');
+      }
+      
+      // Delay setting isLoading to false to give auth state time to propagate
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      
       return data.user;
     } catch (error) {
       console.error('Unexpected error during login:', error);
@@ -118,3 +145,4 @@ export default function AuthPage() {
     </div>
   );
 }
+
