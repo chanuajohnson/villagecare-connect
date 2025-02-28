@@ -7,7 +7,7 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 10000; // 10 seconds
+const LOADING_TIMEOUT_MS = 5000; // Reduced from 10s to 5s to respond faster to issues
 
 interface AuthContextType {
   session: Session | null;
@@ -44,17 +44,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Add loading timeout reference
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track initialization
+  const isInitializedRef = useRef(false);
+
+  // Helper to clear any existing timeouts
+  const clearLoadingTimeout = () => {
+    if (loadingTimeoutRef.current) {
+      console.log(`[AuthProvider] Clearing loading timeout`);
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+  };
 
   // Helper to set loading state with timeout safeguard
   const setLoadingWithTimeout = (loading: boolean, operation: string) => {
     console.log(`[AuthProvider] ${loading ? 'START' : 'END'} loading state for: ${operation}`);
     
     // Clear any existing timeout
-    if (loadingTimeoutRef.current) {
-      console.log(`[AuthProvider] Clearing previous loading timeout for: ${operation}`);
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
+    clearLoadingTimeout();
     
     // Set the loading state
     setIsLoading(loading);
@@ -65,7 +73,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       loadingTimeoutRef.current = setTimeout(() => {
         console.log(`[AuthProvider] TIMEOUT reached for: ${operation} - forcibly ending loading state`);
         setIsLoading(false);
-        toast.error(`Operation timed out: ${operation}. Please try again.`);
+        
+        // Clear browser storage when timeout occurs to prevent persistence of stale data
+        if (operation.includes('sign-out') || operation.includes('fetch-session')) {
+          console.log('[AuthProvider] Clearing localStorage due to timeout');
+          localStorage.removeItem('supabase.auth.token');
+          try {
+            // Try to sign out to reset all auth state
+            supabase.auth.signOut().catch(console.error);
+          } catch (error) {
+            console.error('[AuthProvider] Error during forced signout:', error);
+          }
+          toast.error(`Authentication operation timed out. Please refresh the page and try again.`);
+        }
       }, LOADING_TIMEOUT_MS);
     }
   };
@@ -334,16 +354,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       console.log('[AuthProvider] Session fetch complete, setting isLoading to false');
       setLoadingWithTimeout(false, 'fetch-session-complete');
+      isInitializedRef.current = true;
     }
   };
 
+  // Force clear stale auth state when component mounts if previous state was problematic
   useEffect(() => {
+    const clearStaleState = async () => {
+      // If we're coming from a problematic state (from localStorage marker)
+      const hadAuthError = localStorage.getItem('authStateError');
+      if (hadAuthError) {
+        console.log('[AuthProvider] Detected previous auth error, clearing state');
+        localStorage.removeItem('authStateError');
+        
+        try {
+          await supabase.auth.signOut();
+          // Clear all potential error state
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setIsProfileComplete(false);
+          localStorage.removeItem('supabase.auth.token');
+        } catch (e) {
+          console.error('[AuthProvider] Error clearing stale auth state:', e);
+        }
+      }
+    };
+    
+    clearStaleState();
+    
     // Add cleanup for the loading timeout on unmount
     return () => {
-      if (loadingTimeoutRef.current) {
-        console.log('[AuthProvider] Cleaning up loading timeout on unmount');
-        clearTimeout(loadingTimeoutRef.current);
-      }
+      clearLoadingTimeout();
     };
   }, []);
 
@@ -382,6 +424,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoadingWithTimeout(true, 'auth-state-change-SIGNED_OUT');
           setUserRole(null);
           setIsProfileComplete(false);
+          
+          // Clear any potential error markers
+          localStorage.removeItem('authStateError');
+          
+          // Clear browser storage
+          localStorage.removeItem('supabase.auth.token');
+          
           toast.success('You have been signed out successfully');
           navigate('/');
         } else if (event === 'USER_UPDATED') {
@@ -393,6 +442,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('[AuthProvider] Error handling auth state change:', error);
+        // Mark that we encountered an auth error for recovery on next load
+        localStorage.setItem('authStateError', 'true');
       } finally {
         console.log('[AuthProvider] Auth state change handler complete, setting isLoading to false');
         setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
@@ -420,11 +471,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setUserRole(null);
       
+      // Clear any data in localStorage related to auth
+      localStorage.removeItem('supabase.auth.token');
+      
       navigate('/');
       toast.success('You have been signed out successfully');
     } catch (error) {
       console.error('[AuthProvider] Error signing out:', error);
       toast.error('Failed to sign out');
+      
+      // Force reset session state to prevent being stuck
+      setSession(null);
+      setUser(null);
+      setUserRole(null);
+      setIsLoading(false);
+      
+      // Mark that we encountered an auth error for recovery on next load
+      localStorage.setItem('authStateError', 'true');
     } finally {
       console.log('[AuthProvider] Sign out complete, setting isLoading to false');
       setLoadingWithTimeout(false, 'sign-out-complete');
