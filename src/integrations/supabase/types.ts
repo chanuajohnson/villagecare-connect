@@ -223,27 +223,69 @@ export type Database = {
       }
       profiles: {
         Row: {
+          additional_notes: string | null
+          address: string | null
           avatar_url: string | null
+          budget_preferences: string | null
+          care_recipient_name: string | null
+          care_schedule: string | null
+          care_types: string[] | null
+          caregiver_preferences: string | null
+          caregiver_type: string | null
           created_at: string | null
           full_name: string | null
           id: string
+          other_special_needs: string | null
+          phone_number: string | null
+          preferred_contact_method: string | null
+          relationship: string | null
           role: Database["public"]["Enums"]["user_role"]
+          special_needs: string[] | null
+          specialized_care: string[] | null
           updated_at: string | null
         }
         Insert: {
+          additional_notes?: string | null
+          address?: string | null
           avatar_url?: string | null
+          budget_preferences?: string | null
+          care_recipient_name?: string | null
+          care_schedule?: string | null
+          care_types?: string[] | null
+          caregiver_preferences?: string | null
+          caregiver_type?: string | null
           created_at?: string | null
           full_name?: string | null
           id: string
+          other_special_needs?: string | null
+          phone_number?: string | null
+          preferred_contact_method?: string | null
+          relationship?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          special_needs?: string[] | null
+          specialized_care?: string[] | null
           updated_at?: string | null
         }
         Update: {
+          additional_notes?: string | null
+          address?: string | null
           avatar_url?: string | null
+          budget_preferences?: string | null
+          care_recipient_name?: string | null
+          care_schedule?: string | null
+          care_types?: string[] | null
+          caregiver_preferences?: string | null
+          caregiver_type?: string | null
           created_at?: string | null
           full_name?: string | null
           id?: string
+          other_special_needs?: string | null
+          phone_number?: string | null
+          preferred_contact_method?: string | null
+          relationship?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          special_needs?: string[] | null
+          specialized_care?: string[] | null
           updated_at?: string | null
         }
         Relationships: []
