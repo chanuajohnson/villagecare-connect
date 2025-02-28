@@ -60,6 +60,14 @@ export default function AuthPage() {
     console.log('Starting login process for:', email);
     
     try {
+      // Immediately clear any existing auth session to force a clean login
+      // This helps ensure auth state is properly updated
+      const { error: signOutError } = await supabase.auth.signOut();
+      
+      if (signOutError) {
+        console.warn('Warning when clearing previous session:', signOutError);
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -78,7 +86,12 @@ export default function AuthPage() {
       // After login, the auth provider will redirect based on profile completion
       // so we don't need to navigate here
       
-      setIsLoading(false);
+      // Important: Set a short timeout before changing isLoading
+      // This gives time for the auth state to propagate
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+      
       return data.user;
     } catch (error) {
       console.error('Unexpected error during login:', error);

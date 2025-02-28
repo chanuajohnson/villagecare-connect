@@ -7,6 +7,7 @@ import {
   LogIn,
   LayoutDashboard,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,6 +18,9 @@ import {
 
 export function Navigation() {
   const { user, signOut, isLoading } = useAuth();
+
+  // Log state for debugging purposes
+  console.log('Navigation render -', { user: !!user, isLoading });
 
   return (
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
@@ -58,9 +62,10 @@ export function Navigation() {
           </DropdownMenu>
 
           {isLoading ? (
-            <div className="animate-pulse">
-              <Button variant="outline" size="sm" disabled>Loading...</Button>
-            </div>
+            <Button variant="outline" size="sm" disabled className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading...</span>
+            </Button>
           ) : user ? (
             <Button 
               onClick={signOut}

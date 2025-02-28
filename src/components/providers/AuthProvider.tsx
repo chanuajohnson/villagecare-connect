@@ -288,6 +288,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
+        // Ensure isLoading is set to false even if there were errors
         setIsLoading(false);
       }
     };
@@ -302,25 +303,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user) {
-        console.log('User signed in or updated, getting role...');
-        const role = await getUserRole();
-        console.log('User role from auth state change:', role);
-        setUserRole(role);
+      // Always set loading to true when auth state changes, then back to false when done
+      setIsLoading(true);
+      
+      try {
+        if (session?.user) {
+          console.log('User signed in or updated, getting role...');
+          const role = await getUserRole();
+          console.log('User role from auth state change:', role);
+          setUserRole(role);
 
-        // Check user profile completion and handle pending actions when auth state changes
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in, checking pending actions');
-          await checkPendingActions();
-          // Display welcome message on successful login
-          toast.success('You have successfully logged in!');
-        } else if (event === 'USER_UPDATED') {
-          console.log('User updated, checking pending actions');
-          await checkPendingActions();
+          // Check user profile completion and handle pending actions when auth state changes
+          if (event === 'SIGNED_IN') {
+            console.log('User signed in, checking pending actions');
+            await checkPendingActions();
+            // Display welcome message on successful login
+            toast.success('You have successfully logged in!');
+          } else if (event === 'USER_UPDATED') {
+            console.log('User updated, checking pending actions');
+            await checkPendingActions();
+          }
+        } else {
+          setUserRole(null);
+          setIsProfileComplete(false);
+          
+          // If user signed out, show a message
+          if (event === 'SIGNED_OUT') {
+            toast.success('You have been signed out successfully');
+          }
         }
-      } else {
-        setUserRole(null);
-        setIsProfileComplete(false);
+      } catch (error) {
+        console.error('Error in auth state change handler:', error);
+      } finally {
+        // Make sure we always set isLoading to false, even if there were errors
+        setIsLoading(false);
       }
     });
 
@@ -329,12 +345,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      setIsLoading(true); // Set loading to true during sign out process
       await supabase.auth.signOut();
-      toast.success('You have been signed out successfully');
+      // Don't set loading to false here, let the auth state change handler handle it
+      // The toast will be shown by the onAuthStateChange handler
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
+      setIsLoading(false); // Only set loading to false here if there was an error
     }
   };
 
