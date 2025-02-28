@@ -48,10 +48,13 @@ export default function AuthPage() {
     }
   };
 
-  const handleSignup = async (email: string, password: string, role: string) => {
+  const handleSignup = async (email: string, password: string, firstName: string, lastName: string, role: string) => {
     try {
       console.log("[AuthPage] Starting signup process...");
       setIsLoading(true);
+
+      // Combine first and last name for the full_name metadata
+      const fullName = `${firstName} ${lastName}`;
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -59,6 +62,9 @@ export default function AuthPage() {
         options: {
           data: {
             role,
+            full_name: fullName, // Send full name in user metadata
+            first_name: firstName,
+            last_name: lastName
           },
         },
       });
@@ -74,7 +80,21 @@ export default function AuthPage() {
       // Check if auto-confirm is disabled
       if (data.session) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
-        // We don't need to navigate here, the AuthProvider will handle it
+        
+        // Redirect based on role
+        if (role) {
+          console.log("[AuthPage] Redirecting to dashboard for role:", role);
+          const dashboardRoutes: Record<string, string> = {
+            'family': '/dashboard/family',
+            'professional': '/dashboard/professional',
+            'community': '/dashboard/community',
+            'admin': '/dashboard/admin'
+          };
+          
+          if (dashboardRoutes[role]) {
+            navigate(dashboardRoutes[role]);
+          }
+        }
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
       }
