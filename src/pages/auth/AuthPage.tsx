@@ -77,13 +77,14 @@ export default function AuthPage() {
       console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
       toast.success("Account created successfully! Please check your email to confirm your account.");
       
-      // Check if auto-confirm is disabled
+      // Check if auto-confirm is enabled
       if (data.session) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
         
         // Redirect based on role
         if (role) {
           console.log("[AuthPage] Redirecting to dashboard for role:", role);
+          // Use the correct dashboard URLs
           const dashboardRoutes: Record<string, string> = {
             'family': '/dashboard/family',
             'professional': '/dashboard/professional',
