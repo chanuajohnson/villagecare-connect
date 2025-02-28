@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 export default function FamilyRegistration() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -68,6 +69,57 @@ export default function FamilyRegistration() {
   const [selectedSpecializedCare, setSelectedSpecializedCare] = useState<string[]>([]);
   const [otherSpecialNeeds, setOtherSpecialNeeds] = useState('');
   const [caregiverType, setCaregiverType] = useState('');
+
+  useEffect(() => {
+    // Redirect if not logged in
+    if (!user) {
+      toast.error('You must be logged in to complete registration');
+      navigate('/auth');
+      return;
+    }
+
+    // Check if the user already has a profile
+    const fetchUserProfile = async () => {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+
+        // If profile exists and has full_name, pre-fill the form
+        if (profile && profile.full_name) {
+          setFormData({
+            fullName: profile.full_name || '',
+            phoneNumber: profile.phone_number || '',
+            address: profile.address || '',
+            careRecipientName: profile.care_recipient_name || '',
+            relationship: profile.relationship || '',
+            preferredContactMethod: profile.preferred_contact_method || '',
+            additionalNotes: profile.additional_notes || '',
+            careSchedule: profile.care_schedule || '',
+            budgetPreferences: profile.budget_preferences || '',
+            caregiverPreferences: profile.caregiver_preferences || '',
+          });
+          
+          setSelectedCareTypes(profile.care_types || []);
+          setSelectedSpecialNeeds(profile.special_needs || []);
+          setSelectedSpecializedCare(profile.specialized_care || []);
+          setOtherSpecialNeeds(profile.other_special_needs || '');
+          setCaregiverType(profile.caregiver_type || '');
+        }
+      } catch (error) {
+        console.error('Error in fetchUserProfile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user, navigate]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -132,6 +184,7 @@ export default function FamilyRegistration() {
     }
     
     setIsLoading(true);
+    setFormSubmitted(true);
     
     try {
       console.log('Starting profile update with user ID:', user.id);
@@ -157,23 +210,30 @@ export default function FamilyRegistration() {
           caregiver_preferences: formData.caregiverPreferences,
           additional_notes: formData.additionalNotes,
           role: 'family'
-        }, { onConflict: 'id' });
+        }, { 
+          onConflict: 'id',
+          returning: 'minimal' // Don't need to return the record
+        });
       
       if (error) {
         console.error('Error updating profile:', error);
         throw error;
       }
       
-      console.log('Profile updated successfully:', data);
+      console.log('Profile updated successfully');
+      
+      // Show success message
       toast.success('Profile completed successfully!');
       
-      // Force a small delay to ensure the toast appears before redirect
+      // Wait a moment before redirect to ensure the database has updated
       setTimeout(() => {
+        console.log('Redirecting to family dashboard...');
         navigate('/dashboard/family');
-      }, 500);
+      }, 1000);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error(error.message || 'Failed to update profile');
+      setFormSubmitted(false);
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +264,7 @@ export default function FamilyRegistration() {
                     onChange={handleTextChange}
                     placeholder="Your full name"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || formSubmitted}
                   />
                 </div>
                 
@@ -218,7 +278,7 @@ export default function FamilyRegistration() {
                     placeholder="Your phone number"
                     type="tel"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || formSubmitted}
                   />
                 </div>
               </div>
@@ -232,7 +292,7 @@ export default function FamilyRegistration() {
                   onChange={handleTextChange}
                   placeholder="Your address"
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
 
@@ -246,7 +306,7 @@ export default function FamilyRegistration() {
                     onChange={handleTextChange}
                     placeholder="Name of the person needing care"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || formSubmitted}
                   />
                 </div>
                 
@@ -255,7 +315,7 @@ export default function FamilyRegistration() {
                   <Select
                     onValueChange={(value) => handleSelectChange('relationship', value)}
                     value={formData.relationship}
-                    disabled={isLoading}
+                    disabled={isLoading || formSubmitted}
                   >
                     <SelectTrigger id="relationship">
                       <SelectValue placeholder="Select relationship" />
@@ -282,7 +342,7 @@ export default function FamilyRegistration() {
                         id={type.id} 
                         checked={selectedCareTypes.includes(type.id)}
                         onCheckedChange={(checked) => handleCareTypeChange(type.id, checked === true)}
-                        disabled={isLoading}
+                        disabled={isLoading || formSubmitted}
                       />
                       <Label htmlFor={type.id} className="cursor-pointer">{type.label}</Label>
                     </div>
@@ -295,7 +355,7 @@ export default function FamilyRegistration() {
                 <RadioGroup 
                   value={caregiverType} 
                   onValueChange={setCaregiverType}
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="certified" id="certified" />
@@ -317,7 +377,7 @@ export default function FamilyRegistration() {
                 <Select
                   onValueChange={(value) => handleSelectChange('preferredContactMethod', value)}
                   value={formData.preferredContactMethod}
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 >
                   <SelectTrigger id="preferredContactMethod">
                     <SelectValue placeholder="Select contact method" />
@@ -344,7 +404,7 @@ export default function FamilyRegistration() {
                         id={need.id} 
                         checked={selectedSpecialNeeds.includes(need.id)}
                         onCheckedChange={(checked) => handleSpecialNeedsChange(need.id, checked === true)}
-                        disabled={isLoading}
+                        disabled={isLoading || formSubmitted}
                       />
                       <Label htmlFor={need.id} className="cursor-pointer">{need.label}</Label>
                     </div>
@@ -359,7 +419,7 @@ export default function FamilyRegistration() {
                   value={otherSpecialNeeds}
                   onChange={(e) => setOtherSpecialNeeds(e.target.value)}
                   placeholder="Please specify any other special needs"
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
 
@@ -372,7 +432,7 @@ export default function FamilyRegistration() {
                         id={care.id} 
                         checked={selectedSpecializedCare.includes(care.id)}
                         onCheckedChange={(checked) => handleSpecializedCareChange(care.id, checked === true)}
-                        disabled={isLoading}
+                        disabled={isLoading || formSubmitted}
                       />
                       <Label htmlFor={care.id} className="cursor-pointer">{care.label}</Label>
                     </div>
@@ -393,7 +453,7 @@ export default function FamilyRegistration() {
                   value={formData.careSchedule}
                   onChange={handleTextChange}
                   placeholder="Preferred care hours (e.g., Mon-Fri, 8 AM - 5 PM)"
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
 
@@ -405,7 +465,7 @@ export default function FamilyRegistration() {
                   value={formData.caregiverPreferences}
                   onChange={handleTextChange}
                   placeholder="Gender, Age, Language, Experience Level preferences"
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
 
@@ -417,7 +477,7 @@ export default function FamilyRegistration() {
                   value={formData.budgetPreferences}
                   onChange={handleTextChange}
                   placeholder="Expected hourly or monthly care budget"
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
 
@@ -429,13 +489,17 @@ export default function FamilyRegistration() {
                   value={formData.additionalNotes}
                   onChange={handleTextChange}
                   placeholder="Any additional information you'd like to share"
-                  disabled={isLoading}
+                  disabled={isLoading || formSubmitted}
                 />
               </div>
             </div>
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || formSubmitted}
+            >
+              {isLoading || formSubmitted ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
