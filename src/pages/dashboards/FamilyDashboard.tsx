@@ -62,15 +62,14 @@ const FamilyDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
-              <Link to="/profile">
-                <Button 
-                  variant="default" 
-                  className="w-full"
-                >
-                  Edit Profile
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              <Button 
+                variant="secondary" 
+                className="w-full cursor-not-allowed opacity-70"
+                disabled
+              >
+                Edit Profile
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
               <UpvoteFeatureButton 
                 featureTitle="Profile Management" 
                 className="w-full" 
