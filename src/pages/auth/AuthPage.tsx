@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,10 +15,11 @@ export default function AuthPage() {
   const { user } = useAuth();
 
   // If user is already logged in, redirect to home
-  if (user) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -96,6 +97,10 @@ export default function AuthPage() {
       console.log("[AuthPage] Signup process completed");
     }
   };
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="container flex items-center justify-center py-20">

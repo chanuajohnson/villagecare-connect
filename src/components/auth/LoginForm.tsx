@@ -30,8 +30,9 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
       console.log("[LoginForm] Submitting login form...");
       await onSubmit(email, password);
       console.log("[LoginForm] Login form submission completed");
-    } catch (error) {
+    } catch (error: any) {
       console.error("[LoginForm] Error during form submission:", error);
+      toast.error(error.message || "Failed to log in");
     } finally {
       setLocalLoading(false);
     }

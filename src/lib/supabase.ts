@@ -16,7 +16,6 @@ export const supabase = createClient(
       storageKey: 'supabase.auth.token',
       detectSessionInUrl: false, // Disable automatic URL detection to avoid issues
       flowType: 'pkce',
-      // Remove the 'flowTimeout' property as it's not supported in the current version
     }
   }
 );
@@ -45,6 +44,24 @@ export const getUserRole = async () => {
     }
     
     console.log('Role data returned:', data);
+    
+    // If we have data but no role, check the user metadata
+    if (data && !data.role && user.user_metadata && user.user_metadata.role) {
+      console.log('Using role from user metadata:', user.user_metadata.role);
+      
+      // Update the profile with the role from metadata
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: user.user_metadata.role })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        console.error('Error updating profile with role:', updateError);
+      }
+      
+      return user.user_metadata.role;
+    }
+    
     return data?.role;
   } catch (error) {
     console.error('Unexpected error in getUserRole:', error);

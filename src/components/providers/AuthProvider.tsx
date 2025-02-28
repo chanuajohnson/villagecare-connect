@@ -7,7 +7,7 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 10000; // Reduced to 10s to avoid long waits
+const LOADING_TIMEOUT_MS = 5000; // Reduced to 5s to avoid long waits
 
 interface AuthContextType {
   session: Session | null;
@@ -214,6 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('[AuthProvider] Redirecting to registration page:', route);
           toast.info('Please complete your profile to continue');
           navigate(route);
+          isRedirectingRef.current = false;
           return;
         }
       }
@@ -230,6 +231,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
             toast.info(`Redirecting to the ${userRole} registration form`);
             navigate(correctRegistrationPath);
+            isRedirectingRef.current = false;
             return;
           } else {
             console.log(`[AuthProvider] Already on the correct registration page ${currentPath}`);
@@ -245,6 +247,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         if (pendingFeatureId) {
           await checkPendingUpvote();
+          isRedirectingRef.current = false;
           return;
         }
         
@@ -252,6 +255,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (pendingBooking) {
           localStorage.removeItem('pendingBooking');
           navigate(pendingBooking);
+          isRedirectingRef.current = false;
           return;
         }
         
@@ -259,6 +263,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (pendingMessage) {
           localStorage.removeItem('pendingMessage');
           navigate(pendingMessage);
+          isRedirectingRef.current = false;
           return;
         }
         
@@ -266,6 +271,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (pendingProfileUpdate) {
           localStorage.removeItem('pendingProfileUpdate');
           navigate(pendingProfileUpdate);
+          isRedirectingRef.current = false;
           return;
         }
         
@@ -276,6 +282,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('[AuthProvider] Navigating to last path:', lastPath);
           navigate(lastPath);
           clearLastAction();
+          isRedirectingRef.current = false;
           return;
         }
       }
