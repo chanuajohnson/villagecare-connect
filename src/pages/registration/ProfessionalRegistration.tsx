@@ -384,9 +384,11 @@ export default function ProfessionalRegistration() {
         }
       }
 
-      // Set up progress tracking
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      // Set up timeout for upload operations
+      const timeoutId = setTimeout(() => {
+        console.error("Upload operation timed out after 30 seconds");
+        toast.error("File upload timed out. Try again with a smaller file or better connection.");
+      }, 30000); // 30s timeout
       
       // Upload with retries
       let uploadError = null;
@@ -398,14 +400,13 @@ export default function ProfessionalRegistration() {
           // Create unique file path
           const filePath = `${path}/${user!.id}/${Date.now()}.${fileExt}`;
           
-          // Upload with progress tracking
+          // Upload with proper options (removing the signal property)
           const { data, error } = await supabase.storage
             .from(bucket)
             .upload(filePath, file, {
               cacheControl: '3600',
               upsert: true,
-              contentType: file.type,
-              signal: controller.signal
+              contentType: file.type
             });
             
           if (error) {
