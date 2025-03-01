@@ -1,77 +1,73 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { ensureUserProfile, updateUserProfile } from '@/lib/profile-utils';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
-export default function SubmitProfessionalProfile() {
+const ProfessionalRegistrationFix = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    
     if (!user) {
       toast.error("You must be logged in to complete registration");
       return;
     }
-    
+
     setIsSubmitting(true);
     
     try {
-      console.log('Submitting professional profile with form data:', formData);
-      
-      // Ensure the profile exists first
-      const profileResult = await ensureUserProfile(user.id);
-      if (!profileResult.success) {
-        throw new Error(profileResult.error || "Failed to ensure user profile exists");
+      // Verify connection to Supabase before attempting profile updates
+      const { error: connectionError } = await supabase.from('profiles').select('count').limit(1);
+      if (connectionError) {
+        throw new Error(`Connection to database failed: ${connectionError.message}`);
       }
       
-      console.log('Profile ensured, now updating with professional details');
+      // Update the user's profile with professional role
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          role: 'professional',
+          // Add any form fields here from the form values
+        })
+        .eq('id', user.id);
       
-      // Update with professional-specific fields
-      const updateResult = await updateUserProfile(user.id, {
-        role: 'professional',
-        ...formData
-      });
-      
-      if (!updateResult.success) {
-        throw new Error(updateResult.error || "Failed to update professional profile");
-      }
-      
-      console.log('Professional profile created successfully');
-      
-      // Check if a session exists after profile creation to confirm authentication context
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('Session validation failed after profile update:', sessionError);
-        throw new Error(`Authentication context issue: ${sessionError?.message || "No active session"}`);
+      if (updateError) {
+        throw new Error(`Error updating profile: ${updateError.message}`);
       }
       
       toast.success("Professional profile created successfully!");
-      
-      // Redirect to professional dashboard
-      navigate('/dashboard/professional');
+      navigate('/dashboards/professional');
     } catch (error: any) {
-      console.error('Error in professional profile submission:', error);
-      toast.error(`Error creating professional profile: ${error.message}`);
+      console.error("Error creating professional profile:", error);
+      toast.error(`Failed to create professional profile: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div>
-      {/* Render the form UI here with onSubmit={handleSubmit} */}
-      <p>Professional registration form would go here</p>
-      <button 
-        onClick={() => handleSubmit({ professionalType: 'HHA' })} 
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Submitting...' : 'Submit Profile'}
-      </button>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Complete Your Professional Profile</h1>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Form fields would go here */}
+        
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Creating Profile...' : 'Complete Registration'}
+        </Button>
+      </form>
     </div>
   );
-}
+};
+
+export default ProfessionalRegistrationFix;
