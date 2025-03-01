@@ -208,7 +208,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
     initializeFeature();
   }, [featureTitle, user]);
 
-  // Handle upvote click
+  // Handle upvote click - modified to prevent unwanted redirects
   const handleUpvote = async () => {
     const isProfileManagement = featureTitle.toLowerCase().includes('profile management');
     console.log(`Upvote button clicked for "${featureTitle}"`);
@@ -282,9 +282,7 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         setVoteCount(prev => prev + 1);
         toast.success(`Thank you for voting for "${featureTitle}"!`);
         
-        // Navigate to features page after successful vote (changed from family dashboard)
-        console.log('Navigating to features page');
-        navigate('/features');
+        // Don't navigate automatically - this was causing the momentary redirect
       }
     } catch (error: any) {
       console.error('Error handling vote:', error);
