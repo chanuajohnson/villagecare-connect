@@ -244,7 +244,6 @@ const ProfessionalRegistration = () => {
         availability: availability,
         work_type: workType,
         preferred_family_matching: preferredFamilyMatching,
-        // Updated field name
         certificate_of_character: certificateOfCharacter,
         background_check_proof_url: backgroundCheckDocUrl,
         comfort_with_tasks: comfortWithTasks,
@@ -259,7 +258,10 @@ const ProfessionalRegistration = () => {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from('profiles').upsert(updates);
+      // Fix: Remove the unsupported 'returning' option
+      const { error } = await supabase.from('profiles').upsert(updates, { 
+        onConflict: 'id' 
+      });
       
       if (error) {
         throw error;
@@ -902,4 +904,3 @@ const ProfessionalRegistration = () => {
 };
 
 export default ProfessionalRegistration;
-
