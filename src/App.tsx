@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Navigation } from "@/components/layout/Navigation";
+import { useEffect } from "react";
+import { initializeSupabase } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FeaturesPage from "./pages/features/FeaturesPage";
@@ -26,6 +28,11 @@ import { Fab } from "@/components/ui/fab";
 const queryClient = new QueryClient();
 
 const AppWithProviders = () => {
+  // Initialize Supabase early
+  useEffect(() => {
+    initializeSupabase();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
