@@ -6,22 +6,33 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocation } from "react-router-dom";
 
 const FeaturesPage = () => {
+  // Get both clearLastAction and the state we need to check
   const { clearLastAction } = useAuth();
   const location = useLocation();
 
   // Only clear pending actions when visiting the features page directly
-  // or from certain routes to avoid unnecessary state changes
+  // and only if there's actually something to clear
   useEffect(() => {
-    // If coming from certain paths, don't clear last action to avoid page flashes
-    const fromNavigation = document.referrer.includes('/dashboard') || 
-                          document.referrer.includes('/community') || 
-                          document.referrer === '';
+    // Check localStorage directly to avoid causing state changes and re-renders
+    // when no action exists to be cleared
+    const hasLastAction = localStorage.getItem('lastAction') || 
+                          localStorage.getItem('lastPath') ||
+                          localStorage.getItem('pendingFeatureId') || 
+                          localStorage.getItem('pendingFeatureUpvote') ||
+                          localStorage.getItem('pendingBooking') ||
+                          localStorage.getItem('pendingMessage') ||
+                          localStorage.getItem('pendingProfileUpdate');
     
-    if (!fromNavigation) {
+    // Skip entirely if coming from navigation paths to avoid unnecessary state changes
+    const fromNavigation = document.referrer.includes('/dashboard') || 
+                           document.referrer.includes('/community') || 
+                           document.referrer === '';
+    
+    if (hasLastAction && !fromNavigation) {
       console.log('[FeaturesPage] Clearing last action');
       clearLastAction();
     } else {
-      console.log('[FeaturesPage] Skipping clearLastAction to prevent page flash');
+      console.log('[FeaturesPage] No last action to clear or coming from navigation - skipping');
     }
   }, [clearLastAction, location.pathname]);
 
