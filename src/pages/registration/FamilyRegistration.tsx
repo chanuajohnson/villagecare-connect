@@ -21,19 +21,28 @@ const FamilyRegistration = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  
+  // Care Recipient Information
   const [careRecipientName, setCareRecipientName] = useState('');
   const [relationship, setRelationship] = useState('');
   const [careTypes, setCareTypes] = useState<string[]>([]);
+  
+  // Special Medical & Care Needs
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
-  const [specializedCare, setSpecializedCare] = useState<string[]>([]);
   const [otherSpecialNeeds, setOtherSpecialNeeds] = useState('');
+  const [specializedCare, setSpecializedCare] = useState<string[]>([]);
+  
+  // Caregiver Preferences
   const [caregiverType, setCaregiverType] = useState('');
   const [preferredContactMethod, setPreferredContactMethod] = useState('');
   const [careSchedule, setCareSchedule] = useState('');
-  const [budgetPreferences, setBudgetPreferences] = useState('');
   const [caregiverPreferences, setCaregiverPreferences] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [budgetPreferences, setBudgetPreferences] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+  
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,6 +52,8 @@ const FamilyRegistration = () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         setUser(data.user);
+        setEmail(data.user.email || '');
+        
         // Check if profile already exists and pre-fill form
         const { data: profileData } = await supabase
           .from('profiles')
@@ -67,6 +78,7 @@ const FamilyRegistration = () => {
           setCareSchedule(profileData.care_schedule || '');
           setBudgetPreferences(profileData.budget_preferences || '');
           setCaregiverPreferences(profileData.caregiver_preferences || '');
+          setEmergencyContact(profileData.emergency_contact || '');
           setAdditionalNotes(profileData.additional_notes || '');
         }
       } else {
@@ -143,6 +155,7 @@ const FamilyRegistration = () => {
         care_schedule: careSchedule,
         budget_preferences: budgetPreferences,
         caregiver_preferences: caregiverPreferences,
+        emergency_contact: emergencyContact,
         additional_notes: additionalNotes
       };
 
@@ -244,7 +257,7 @@ const FamilyRegistration = () => {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" value={user?.email || ''} disabled />
+              <Input id="email" type="email" value={email} disabled />
               <p className="text-sm text-gray-500">Email address from your registration</p>
             </div>
 
@@ -260,12 +273,13 @@ const FamilyRegistration = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Location – Address/City of the care recipient *</Label>
               <Input 
                 id="address" 
                 placeholder="Address" 
                 value={address} 
                 onChange={(e) => setAddress(e.target.value)}
+                required
               />
             </div>
           </CardContent>
@@ -280,37 +294,49 @@ const FamilyRegistration = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="careRecipientName">Care Recipient Name</Label>
+              <Label htmlFor="careRecipientName">Care Recipient's Full Name – Name of the person needing care *</Label>
               <Input 
                 id="careRecipientName" 
                 placeholder="Care Recipient Name" 
                 value={careRecipientName} 
                 onChange={(e) => setCareRecipientName(e.target.value)}
+                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="relationship">Relationship to Care Recipient</Label>
-              <Input 
-                id="relationship" 
-                placeholder="Relationship" 
-                value={relationship} 
-                onChange={(e) => setRelationship(e.target.value)}
-              />
+              <Label htmlFor="relationship">Relationship to Care Recipient *</Label>
+              <Select value={relationship} onValueChange={setRelationship} required>
+                <SelectTrigger id="relationship">
+                  <SelectValue placeholder="Select your relationship" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Parent">Parent</SelectItem>
+                  <SelectItem value="Child">Child</SelectItem>
+                  <SelectItem value="Spouse">Spouse</SelectItem>
+                  <SelectItem value="Grandparent">Grandparent</SelectItem>
+                  <SelectItem value="Sibling">Sibling</SelectItem>
+                  <SelectItem value="Legal Guardian">Legal Guardian</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Types of Care Needed</Label>
+              <Label>Primary Care Type Needed – What type of care is needed? (Select all that apply)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[
-                  { id: 'care-mobility', label: 'Mobility Assistance', value: 'Mobility Assistance' },
-                  { id: 'care-meals', label: 'Meal Preparation', value: 'Meal Preparation' },
-                  { id: 'care-medication', label: 'Medication Management', value: 'Medication Management' },
-                  { id: 'care-hygiene', label: 'Personal Hygiene', value: 'Personal Hygiene' },
-                  { id: 'care-companionship', label: 'Companionship', value: 'Companionship' },
-                  { id: 'care-transportation', label: 'Transportation', value: 'Transportation' }
+                  { id: 'care-inhome', label: '🏠 In-Home Care (Daily, Nighttime, Weekend, Live-in)', value: 'In-Home Care' },
+                  { id: 'care-medical', label: '🏥 Medical Support (Post-surgery, Chronic Condition Management, Hospice)', value: 'Medical Support' },
+                  { id: 'care-therapeutic', label: '🌱 Therapeutic Support (Physical Therapy, Occupational Therapy, Speech Therapy)', value: 'Therapeutic Support' },
+                  { id: 'care-specialneeds', label: '🎓 Child or Special Needs Support (Autism, ADHD, Learning Disabilities)', value: 'Special Needs Support' },
+                  { id: 'care-cognitive', label: '🧠 Cognitive & Memory Care (Alzheimer\'s, Dementia, Parkinson\'s)', value: 'Cognitive & Memory Care' },
+                  { id: 'care-mobility', label: '♿ Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)', value: 'Mobility Assistance' },
+                  { id: 'care-medication', label: '💊 Medication Management (Daily Medications, Insulin, Medical Equipment)', value: 'Medication Management' },
+                  { id: 'care-nutrition', label: '🍽️ Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)', value: 'Nutritional Assistance' },
+                  { id: 'care-household', label: '🏡 Household Assistance (Cleaning, Laundry, Errands, Yard/Garden Maintenance)', value: 'Household Assistance' }
                 ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
+                  <div key={item.id} className="flex items-start space-x-2">
                     <Checkbox 
                       id={item.id} 
                       checked={careTypes.includes(item.value)}
@@ -319,6 +345,7 @@ const FamilyRegistration = () => {
                         careTypes, 
                         setCareTypes
                       )}
+                      className="mt-1"
                     />
                     <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
                   </div>
@@ -327,17 +354,41 @@ const FamilyRegistration = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Special Needs</Label>
+              <Label htmlFor="caregiverType">Preferred Caregiver Type – Do you prefer care from:</Label>
+              <Select value={caregiverType} onValueChange={setCaregiverType}>
+                <SelectTrigger id="caregiverType">
+                  <SelectValue placeholder="Select Caregiver Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Certified Agency">🏥 Certified Agency</SelectItem>
+                  <SelectItem value="Independent Caregiver">🏠 Independent Caregiver</SelectItem>
+                  <SelectItem value="Either">👩‍⚕️ Either is fine</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>🟡 Special Medical & Care Needs (Required If Applicable)</CardTitle>
+            <CardDescription>
+              Detailed information about specific medical conditions and care requirements.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Does the Care Recipient Have Any of These Conditions? (Check all that apply)</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[
-                  { id: 'needs-alzheimer', label: 'Alzheimer\'s', value: 'Alzheimer\'s' },
-                  { id: 'needs-dementia', label: 'Dementia', value: 'Dementia' },
-                  { id: 'needs-parkinson', label: 'Parkinson\'s', value: 'Parkinson\'s' },
-                  { id: 'needs-diabetes', label: 'Diabetes', value: 'Diabetes' },
-                  { id: 'needs-arthritis', label: 'Arthritis', value: 'Arthritis' },
-                  { id: 'needs-cancer', label: 'Cancer', value: 'Cancer' }
+                  { id: 'needs-cognitive', label: '🧠 Cognitive Disorders – Alzheimer\'s, Dementia, Parkinson\'s', value: 'Cognitive Disorders' },
+                  { id: 'needs-physical', label: '♿ Physical Disabilities – Stroke, Paralysis, ALS, Multiple Sclerosis', value: 'Physical Disabilities' },
+                  { id: 'needs-chronic', label: '🏥 Chronic Illness – Diabetes, Heart Disease, Cancer, Kidney Disease', value: 'Chronic Illness' },
+                  { id: 'needs-specialneeds', label: '🧩 Special Needs (Child or Adult) – Autism, Down Syndrome, Cerebral Palsy, ADHD', value: 'Special Needs' },
+                  { id: 'needs-equipment', label: '💊 Medical Equipment Use – Oxygen Tank, Ventilator, Catheter, Feeding Tube', value: 'Medical Equipment Use' },
+                  { id: 'needs-vision', label: '👁️ Vision or Hearing Impairment', value: 'Vision or Hearing Impairment' }
                 ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
+                  <div key={item.id} className="flex items-start space-x-2">
                     <Checkbox 
                       id={item.id} 
                       checked={specialNeeds.includes(item.value)}
@@ -346,6 +397,7 @@ const FamilyRegistration = () => {
                         specialNeeds, 
                         setSpecialNeeds
                       )}
+                      className="mt-1"
                     />
                     <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
                   </div>
@@ -354,17 +406,27 @@ const FamilyRegistration = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Specialized Care Requirements</Label>
+              <Label htmlFor="otherSpecialNeeds">⚠️ Other Special Needs (if any)</Label>
+              <Textarea 
+                id="otherSpecialNeeds" 
+                placeholder="Please specify any other special needs" 
+                value={otherSpecialNeeds} 
+                onChange={(e) => setOtherSpecialNeeds(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Specialized Care Requirements – Do they need:</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[
-                  { id: 'care-skilled-nursing', label: 'Skilled Nursing', value: 'Skilled Nursing' },
-                  { id: 'care-physical-therapy', label: 'Physical Therapy', value: 'Physical Therapy' },
-                  { id: 'care-occupational-therapy', label: 'Occupational Therapy', value: 'Occupational Therapy' },
-                  { id: 'care-speech-therapy', label: 'Speech Therapy', value: 'Speech Therapy' },
-                  { id: 'care-hospice', label: 'Hospice Care', value: 'Hospice Care' },
-                  { id: 'care-palliative', label: 'Palliative Care', value: 'Palliative Care' }
+                  { id: 'specialized-supervision', label: '🏥 24/7 Supervision', value: '24/7 Supervision' },
+                  { id: 'specialized-nurse', label: '🩺 Nurse-Level Medical Assistance', value: 'Nurse-Level Medical Assistance' },
+                  { id: 'specialized-diet', label: '🍽️ Special Diet/Nutritional Needs', value: 'Special Diet/Nutritional Needs' },
+                  { id: 'specialized-transport', label: '🚗 Transportation to Appointments', value: 'Transportation to Appointments' },
+                  { id: 'specialized-language', label: '💬 Sign Language/Language-Specific Care', value: 'Sign Language/Language-Specific Care' }
                 ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
+                  <div key={item.id} className="flex items-start space-x-2">
                     <Checkbox 
                       id={item.id} 
                       checked={specializedCare.includes(item.value)}
@@ -373,46 +435,63 @@ const FamilyRegistration = () => {
                         specializedCare, 
                         setSpecializedCare
                       )}
+                      className="mt-1"
                     />
                     <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="otherSpecialNeeds">Other Special Needs (if any)</Label>
-              <Textarea 
-                id="otherSpecialNeeds" 
-                placeholder="Other Special Needs" 
-                value={otherSpecialNeeds} 
-                onChange={(e) => setOtherSpecialNeeds(e.target.value)}
-                rows={3}
-              />
-            </div>
           </CardContent>
         </Card>
 
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Caregiver Preferences</CardTitle>
+            <CardTitle>🟡 Additional Preferences (Optional but Recommended)</CardTitle>
             <CardDescription>
-              Let us know your preferences for the caregiver.
+              Help us better understand your specific needs and preferences.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="caregiverType">Preferred Caregiver Type</Label>
-              <Select value={caregiverType} onValueChange={setCaregiverType}>
-                <SelectTrigger id="caregiverType">
-                  <SelectValue placeholder="Select Caregiver Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional Caregiver</SelectItem>
-                  <SelectItem value="familyFriend">Family Friend</SelectItem>
-                  <SelectItem value="volunteer">Volunteer</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="careSchedule">Care Schedule & Availability – Preferred care hours</Label>
+              <Input 
+                id="careSchedule" 
+                placeholder="e.g., Mon-Fri, 8 AM - 5 PM" 
+                value={careSchedule} 
+                onChange={(e) => setCareSchedule(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="caregiverPreferences">Caregiver Preferences – Gender, Age, Language, Experience Level</Label>
+              <Textarea 
+                id="caregiverPreferences" 
+                placeholder="Please specify any preferences regarding your caregiver" 
+                value={caregiverPreferences} 
+                onChange={(e) => setCaregiverPreferences(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="emergencyContact">Emergency Contact Details – Secondary contact in case of urgent needs</Label>
+              <Input 
+                id="emergencyContact" 
+                placeholder="Name, relationship, phone number" 
+                value={emergencyContact} 
+                onChange={(e) => setEmergencyContact(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="budgetPreferences">Budget Preferences – Expected hourly or monthly care budget</Label>
+              <Input 
+                id="budgetPreferences" 
+                placeholder="Your budget for care services" 
+                value={budgetPreferences} 
+                onChange={(e) => setBudgetPreferences(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -430,41 +509,10 @@ const FamilyRegistration = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="careSchedule">Care Schedule</Label>
-              <Input 
-                id="careSchedule" 
-                placeholder="Care Schedule" 
-                value={careSchedule} 
-                onChange={(e) => setCareSchedule(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="budgetPreferences">Budget Preferences</Label>
-              <Input 
-                id="budgetPreferences" 
-                placeholder="Budget Preferences" 
-                value={budgetPreferences} 
-                onChange={(e) => setBudgetPreferences(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="caregiverPreferences">Caregiver Preferences</Label>
-              <Textarea 
-                id="caregiverPreferences" 
-                placeholder="Caregiver Preferences" 
-                value={caregiverPreferences} 
-                onChange={(e) => setCaregiverPreferences(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="additionalNotes">Additional Notes</Label>
               <Textarea 
                 id="additionalNotes" 
-                placeholder="Additional Notes" 
+                placeholder="Any other information you would like to share" 
                 value={additionalNotes} 
                 onChange={(e) => setAdditionalNotes(e.target.value)}
                 rows={3}
