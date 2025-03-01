@@ -239,6 +239,7 @@ export type Database = {
           community_roles: string[] | null
           contribution_interests: string[] | null
           created_at: string | null
+          emergency_contact: string | null
           enable_community_notifications: boolean | null
           full_name: string | null
           id: string
@@ -274,6 +275,7 @@ export type Database = {
           community_roles?: string[] | null
           contribution_interests?: string[] | null
           created_at?: string | null
+          emergency_contact?: string | null
           enable_community_notifications?: boolean | null
           full_name?: string | null
           id: string
@@ -309,6 +311,7 @@ export type Database = {
           community_roles?: string[] | null
           contribution_interests?: string[] | null
           created_at?: string | null
+          emergency_contact?: string | null
           enable_community_notifications?: boolean | null
           full_name?: string | null
           id?: string
