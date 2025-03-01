@@ -6,7 +6,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import { Fab } from "@/components/ui/fab";
 
 const roles = [
@@ -174,39 +173,41 @@ const Index = () => {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
               Help us build the features that matter most to you. Visit our feature roadmap to upvote the capabilities you'd like to see next and influence our development priorities.
             </p>
-            <Card className="p-6 text-left bg-white cursor-pointer hover:shadow-lg transition-shadow" onClick={goToFeatures}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Vote className="w-5 h-5 text-primary-600" />
-                  Feature Voting System
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Our feature voting system lets you:
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <Check className="w-4 h-4 text-green-500" />
-                    Vote for features you want to see implemented
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <Check className="w-4 h-4 text-green-500" />
-                    Track feature development progress
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <Check className="w-4 h-4 text-green-500" />
-                    Get notified when features are launched
-                  </li>
-                </ul>
-                <div className="mt-6 flex justify-end">
-                  <button className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium">
-                    View Feature Roadmap
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
+            <Link to="/features">
+              <Card className="p-6 text-left bg-white cursor-pointer hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Vote className="w-5 h-5 text-primary-600" />
+                    Feature Voting System
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">
+                    Our feature voting system lets you:
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-gray-600">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Vote for features you want to see implemented
+                    </li>
+                    <li className="flex items-center gap-2 text-gray-600">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Track feature development progress
+                    </li>
+                    <li className="flex items-center gap-2 text-gray-600">
+                      <Check className="w-4 h-4 text-green-500" />
+                      Get notified when features are launched
+                    </li>
+                  </ul>
+                  <div className="mt-6 flex justify-end">
+                    <span className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium">
+                      View Feature Roadmap
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         </div>
 
