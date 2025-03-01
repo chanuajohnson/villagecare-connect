@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Switch } from '../../components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { toast } from 'sonner';
 
 const CommunityRegistration = () => {
   const [loading, setLoading] = useState(false);
@@ -37,47 +38,102 @@ const CommunityRegistration = () => {
   const [listInDirectory, setListInDirectory] = useState(false);
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [authSession, setAuthSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: useToastFn } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-        // Check if profile already exists and pre-fill form
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileData) {
-          setAvatarUrl(profileData.avatar_url);
-          setFirstName(profileData.full_name?.split(' ')[0] || '');
-          setLastName(profileData.full_name?.split(' ')[1] || '');
-          setPhoneNumber(profileData.phone_number || '');
-          setLocation(profileData.location || '');
-          setWebsite(profileData.website || '');
-          setCommunityRoles(profileData.community_roles || []);
-          setContributionInterests(profileData.contribution_interests || []);
-          setCaregivingExperience(profileData.caregiving_experience || '');
-          setCaregivingAreas(profileData.caregiving_areas || []);
-          setTechInterests(profileData.tech_interests || []);
-          setInvolvementPreferences(profileData.involvement_preferences || []);
-          setCommunicationChannels(profileData.communication_channels || []);
-          setCommunityMotivation(profileData.community_motivation || '');
-          setImprovementIdeas(profileData.improvement_ideas || '');
-          setListInDirectory(profileData.list_in_community_directory || false);
-          setEnableNotifications(profileData.enable_community_notifications || true);
+      try {
+        // Get the current session first
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error fetching session:', sessionError);
+          toast.error('Authentication error. Please sign in again.');
+          navigate('/auth');
+          return;
         }
-      } else {
-        // If not logged in, redirect to auth page
+        
+        if (!sessionData.session) {
+          console.log('No active session found');
+          toast.error('Please sign in to complete your registration.');
+          navigate('/auth');
+          return;
+        }
+        
+        setAuthSession(sessionData.session);
+        
+        // Now get the user data
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !userData?.user) {
+          console.error('Error fetching user:', userError);
+          toast.error('Authentication error. Please sign in again.');
+          navigate('/auth');
+          return;
+        }
+        
+        setUser(userData.user);
+        
+        // Fetch existing profile data
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userData.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            // Don't show an error for new users
+            return;
+          }
+
+          if (profileData) {
+            setAvatarUrl(profileData.avatar_url);
+            setFirstName(profileData.full_name?.split(' ')[0] || '');
+            setLastName(profileData.full_name?.split(' ')[1] || '');
+            setPhoneNumber(profileData.phone_number || '');
+            setLocation(profileData.location || '');
+            setWebsite(profileData.website || '');
+            setCommunityRoles(profileData.community_roles || []);
+            setContributionInterests(profileData.contribution_interests || []);
+            setCaregivingExperience(profileData.caregiving_experience || '');
+            setCaregivingAreas(profileData.caregiving_areas || []);
+            setTechInterests(profileData.tech_interests || []);
+            setInvolvementPreferences(profileData.involvement_preferences || []);
+            setCommunicationChannels(profileData.communication_channels || []);
+            setCommunityMotivation(profileData.community_motivation || '');
+            setImprovementIdeas(profileData.improvement_ideas || '');
+            setListInDirectory(profileData.list_in_community_directory || false);
+            setEnableNotifications(profileData.enable_community_notifications || true);
+          }
+        } catch (profileErr) {
+          console.error('Error in profile fetch:', profileErr);
+        }
+      } catch (err) {
+        console.error('Error in authentication flow:', err);
+        toast.error('Authentication error. Please sign in again.');
         navigate('/auth');
       }
     };
 
     getUser();
+    
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      } else if (session) {
+        setAuthSession(session);
+      }
+    });
+    
+    // Clean up listener
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,8 +157,24 @@ const CommunityRegistration = () => {
     setLoading(true);
 
     try {
+      // Verify auth session is still valid
+      if (!authSession) {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+        
+        setAuthSession(sessionData.session);
+      }
+      
       if (!user) {
-        throw new Error('No user found');
+        throw new Error('No user found. Please sign in again.');
+      }
+
+      // Validate required fields
+      if (!firstName || !lastName || !phoneNumber || !location) {
+        throw new Error('Please fill in all required fields');
       }
 
       // Upload avatar if selected
@@ -112,17 +184,58 @@ const CommunityRegistration = () => {
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, avatarFile);
-
-        if (uploadError) {
-          throw uploadError;
+        // First ensure the avatars bucket exists
+        try {
+          const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+          
+          if (bucketError) {
+            console.error('Error checking buckets:', bucketError);
+            throw new Error('Could not verify storage availability. Please try again.');
+          }
+          
+          const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
+          
+          if (!avatarsBucketExists) {
+            const { error: createError } = await supabase.storage.createBucket('avatars', {
+              public: true,
+              fileSizeLimit: 1024 * 1024 * 2, // 2MB
+            });
+            
+            if (createError) {
+              console.error('Error creating avatars bucket:', createError);
+              throw new Error('Could not set up storage. Please try again or skip profile picture.');
+            }
+          }
+        } catch (bucketErr) {
+          console.error('Error setting up storage:', bucketErr);
+          throw new Error('Storage system unavailable. Try again or skip profile picture.');
         }
 
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        uploadedAvatarUrl = data.publicUrl;
+        const { error: uploadError, data } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, {
+            contentType: avatarFile.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error('Error uploading avatar:', uploadError);
+          throw new Error('Failed to upload profile picture. Please try again.');
+        }
+
+        if (data) {
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+          uploadedAvatarUrl = urlData.publicUrl;
+        }
       }
+
+      // Ensure arrays are properly initialized
+      const processedCommunityRoles = communityRoles || [];
+      const processedContributionInterests = contributionInterests || [];
+      const processedCaregivingAreas = caregivingAreas || [];
+      const processedTechInterests = techInterests || [];
+      const processedInvolvementPreferences = involvementPreferences || [];
+      const processedCommunicationChannels = communicationChannels || [];
 
       // Update profile
       const fullName = `${firstName} ${lastName}`.trim();
@@ -135,39 +248,37 @@ const CommunityRegistration = () => {
         updated_at: new Date().toISOString(),
         location,
         website,
-        community_roles: communityRoles,
-        contribution_interests: contributionInterests,
+        community_roles: processedCommunityRoles,
+        contribution_interests: processedContributionInterests,
         caregiving_experience: caregivingExperience,
-        caregiving_areas: caregivingAreas,
-        tech_interests: techInterests,
-        involvement_preferences: involvementPreferences,
-        communication_channels: communicationChannels,
+        caregiving_areas: processedCaregivingAreas,
+        tech_interests: processedTechInterests,
+        involvement_preferences: processedInvolvementPreferences,
+        communication_channels: processedCommunicationChannels,
         community_motivation: communityMotivation,
         improvement_ideas: improvementIdeas,
         list_in_community_directory: listInDirectory,
         enable_community_notifications: enableNotifications
       };
 
-      const { error } = await supabase.from('profiles').upsert(updates);
+      console.log('Updating community profile with data:', updates);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updates, { 
+          onConflict: 'id' 
+        });
       
       if (error) {
+        console.error('Error updating community profile:', error);
         throw error;
       }
 
-      toast({
-        title: 'Registration Complete',
-        description: 'Your community member profile has been updated.'
-      });
-
-      // Redirect to community dashboard
+      toast.success('Registration Complete! Your community member profile has been updated.');
       navigate('/dashboards/community');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update profile. Please try again.'
-      });
+    } catch (error: any) {
+      console.error('Error updating community profile:', error);
+      toast.error(error.message || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }

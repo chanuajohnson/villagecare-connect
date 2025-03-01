@@ -10,9 +10,10 @@ import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Separator } from '../../components/ui/separator';
 import { Textarea } from '../../components/ui/textarea';
-import { useToast } from '../../hooks/use-toast';
+import { useToast } from '../../components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { toast } from 'sonner';
 
 const FamilyRegistration = () => {
   const [loading, setLoading] = useState(false);
@@ -41,26 +42,54 @@ const FamilyRegistration = () => {
   const [additionalNotes, setAdditionalNotes] = useState('');
   
   const [user, setUser] = useState<any>(null);
+  const [authSession, setAuthSession] = useState<any>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          setUser(data.user);
-          setEmail(data.user.email || '');
-          
-          // Fetch existing profile data
-          const { data: profileData, error } = await supabase
+        // Get the current session first
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error fetching session:', sessionError);
+          toast.error('Authentication error. Please sign in again.');
+          navigate('/auth');
+          return;
+        }
+        
+        if (!sessionData.session) {
+          console.log('No active session found');
+          toast.error('Please sign in to complete your registration.');
+          navigate('/auth');
+          return;
+        }
+        
+        setAuthSession(sessionData.session);
+        
+        // Now get the user data
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !userData?.user) {
+          console.error('Error fetching user:', userError);
+          toast.error('Authentication error. Please sign in again.');
+          navigate('/auth');
+          return;
+        }
+        
+        setUser(userData.user);
+        setEmail(userData.user.email || '');
+        
+        // Fetch existing profile data
+        try {
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', data.user.id)
+            .eq('id', userData.user.id)
             .single();
 
-          if (error) {
-            console.error('Error fetching profile:', error);
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
             // Don't show an error toast here as this might be a new user
             return;
           }
@@ -85,22 +114,32 @@ const FamilyRegistration = () => {
             setEmergencyContact(profileData.emergency_contact || '');
             setAdditionalNotes(profileData.additional_notes || '');
           }
-        } else {
-          navigate('/auth');
+        } catch (profileErr) {
+          console.error('Error in profile fetch:', profileErr);
         }
       } catch (err) {
-        console.error('Error getting user:', err);
-        toast({
-          variant: 'destructive',
-          title: 'Authentication Error',
-          description: 'Please sign in again to continue.'
-        });
+        console.error('Error in authentication flow:', err);
+        toast.error('Authentication error. Please sign in again.');
         navigate('/auth');
       }
     };
 
     getUser();
-  }, [navigate, toast]);
+    
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      } else if (session) {
+        setAuthSession(session);
+      }
+    });
+    
+    // Clean up listener
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
@@ -122,6 +161,17 @@ const FamilyRegistration = () => {
     setLoading(true);
 
     try {
+      // Verify auth session is still valid
+      if (!authSession) {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+        
+        setAuthSession(sessionData.session);
+      }
+      
       if (!user) {
         throw new Error('No user found. Please sign in again.');
       }
@@ -129,14 +179,6 @@ const FamilyRegistration = () => {
       // Validate required fields
       if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
         throw new Error('Please fill in all required fields');
-      }
-
-      // Create a session variable to use for authorization
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        console.error("Session error:", sessionError);
-        throw new Error('Authentication session expired. Please sign in again.');
       }
       
       // Upload avatar if selected
@@ -146,12 +188,39 @@ const FamilyRegistration = () => {
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        // We'll use the session token for authentication
+        // First ensure the avatars bucket exists
+        try {
+          const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+          
+          if (bucketError) {
+            console.error('Error checking buckets:', bucketError);
+            throw new Error('Could not verify storage availability. Please try again.');
+          }
+          
+          const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
+          
+          if (!avatarsBucketExists) {
+            const { error: createError } = await supabase.storage.createBucket('avatars', {
+              public: true,
+              fileSizeLimit: 1024 * 1024 * 2, // 2MB
+            });
+            
+            if (createError) {
+              console.error('Error creating avatars bucket:', createError);
+              throw new Error('Could not set up storage. Please try again or skip profile picture.');
+            }
+          }
+        } catch (bucketErr) {
+          console.error('Error setting up storage:', bucketErr);
+          throw new Error('Storage system unavailable. Try again or skip profile picture.');
+        }
+
+        // Now upload the file
         const { error: uploadError, data } = await supabase.storage
           .from('avatars')
           .upload(filePath, avatarFile, {
             contentType: avatarFile.type,
-            upsert: false,
+            upsert: true, // Replace if exists
           });
 
         if (uploadError) {
@@ -207,19 +276,12 @@ const FamilyRegistration = () => {
         throw error;
       }
 
-      toast({
-        title: 'Registration Complete',
-        description: 'Your family caregiver profile has been updated.'
-      });
+      toast.success('Registration Complete! Your family caregiver profile has been updated.');
 
       navigate('/dashboards/family');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update profile. Please try again.'
-      });
+      toast.error(error.message || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
