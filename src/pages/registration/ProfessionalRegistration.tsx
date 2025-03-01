@@ -201,7 +201,6 @@ const ProfessionalRegistration = () => {
     }
   };
 
-  // Helper for checkbox arrays
   const handleCheckboxArrayChange = (
     value: string, 
     currentArray: string[], 
@@ -212,6 +211,11 @@ const ProfessionalRegistration = () => {
     } else {
       setFunction([...currentArray, value]);
     }
+  };
+
+  const handleJobMatchingCriteriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const criteriaArray = e.target.value.split(',').map(item => item.trim()).filter(item => item !== '');
+    setJobMatchingCriteria(criteriaArray);
   };
 
   return (
@@ -230,7 +234,6 @@ const ProfessionalRegistration = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add avatar upload section */}
             <div className="flex flex-col items-center mb-6">
               <Avatar className="h-24 w-24 mb-4">
                 {avatarUrl ? (
@@ -671,10 +674,11 @@ const ProfessionalRegistration = () => {
               <Label htmlFor="jobMatchingCriteria">Job Matching Criteria</Label>
               <Input 
                 id="jobMatchingCriteria" 
-                placeholder="e.g., Location, Skills" 
-                value={jobMatchingCriteria} 
-                onChange={(e) => setJobMatchingCriteria(e.target.value)}
+                placeholder="e.g., Location, Skills (comma-separated)" 
+                value={jobMatchingCriteria.join(', ')} 
+                onChange={handleJobMatchingCriteriaChange}
               />
+              <p className="text-xs text-gray-500">Enter criteria separated by commas</p>
             </div>
 
             <div className="space-y-2">
