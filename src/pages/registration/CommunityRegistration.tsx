@@ -1,702 +1,1002 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../../lib/supabase';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Button } from '../../components/ui/button';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Separator } from '../../components/ui/separator';
-import { Textarea } from '../../components/ui/textarea';
-import { useToast } from '../../hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
-import { Switch } from '../../components/ui/switch';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { Loader2, Upload, Check, X, User } from 'lucide-react';
 
-const CommunityRegistration = () => {
-  const [loading, setLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [location, setLocation] = useState('');
-  const [website, setWebsite] = useState('');
-  const [communityRoles, setCommunityRoles] = useState<string[]>([]);
-  const [contributionInterests, setContributionInterests] = useState<string[]>([]);
-  const [caregivingExperience, setCaregivingExperience] = useState('');
-  const [caregivingAreas, setCaregivingAreas] = useState<string[]>([]);
-  const [techInterests, setTechInterests] = useState<string[]>([]);
-  const [involvementPreferences, setInvolvementPreferences] = useState<string[]>([]);
-  const [communicationChannels, setCommunicationChannels] = useState<string[]>([]);
-  const [communityMotivation, setCommunityMotivation] = useState('');
-  const [improvementIdeas, setImprovementIdeas] = useState('');
-  const [listInDirectory, setListInDirectory] = useState(false);
-  const [enableNotifications, setEnableNotifications] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [authSession, setAuthSession] = useState<any>(null);
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { UserRole } from '@/types/database';
+
+const COMMUNITY_ROLES = [
+  { id: 'volunteer', label: '🤝 Community Volunteer' },
+  { id: 'organizer', label: '📋 Community Organizer' },
+  { id: 'advocate', label: '🔊 Patient/Caregiver Advocate' },
+  { id: 'educator', label: '🎓 Educator/Trainer' },
+  { id: 'support_group', label: '👥 Support Group Leader' },
+  { id: 'resource_provider', label: '📚 Resource Provider' },
+  { id: 'tech_innovator', label: '💻 Technology Innovator' },
+  { id: 'researcher', label: '🔬 Researcher' }
+];
+
+const CONTRIBUTION_INTERESTS = [
+  { id: 'resources', label: '📚 Sharing Resources & Information' },
+  { id: 'events', label: '📅 Organizing Community Events' },
+  { id: 'support', label: '🤗 Running Support Groups' },
+  { id: 'mentoring', label: '👨‍🏫 Mentoring New Caregivers' },
+  { id: 'advocacy', label: '📢 Advocacy & Awareness Campaigns' },
+  { id: 'fundraising', label: '💰 Fundraising for Caregiver Causes' },
+  { id: 'technology', label: '💻 Technology Solutions for Caregiving' },
+  { id: 'education', label: '🎓 Educational Programs & Workshops' }
+];
+
+const CAREGIVING_AREAS = [
+  { id: 'elderly', label: '👵 Elderly Care' },
+  { id: 'children', label: '👶 Childcare' },
+  { id: 'special_needs', label: '🧩 Special Needs Care' },
+  { id: 'disability', label: '♿ Disability Support' },
+  { id: 'mental_health', label: '🧠 Mental Health Support' },
+  { id: 'chronic_illness', label: '🏥 Chronic Illness Management' },
+  { id: 'palliative', label: '🕊️ Palliative/End-of-Life Care' }
+];
+
+const TECH_INTERESTS = [
+  { id: 'apps', label: '📱 Caregiver Mobile Apps' },
+  { id: 'wearables', label: '⌚ Health Wearables & Monitors' },
+  { id: 'telehealth', label: '🩺 Telehealth Solutions' },
+  { id: 'smart_home', label: '🏠 Smart Home Technology' },
+  { id: 'ai', label: '🤖 AI & Machine Learning for Care' },
+  { id: 'accessibility', label: '♿ Accessibility Technology' }
+];
+
+const INVOLVEMENT_PREFERENCES = [
+  { id: 'online', label: '💻 Online/Virtual Participation' },
+  { id: 'in_person', label: '🏙️ In-Person Local Events' },
+  { id: 'leadership', label: '👑 Leadership Roles' },
+  { id: 'background', label: '🕰️ Behind-the-Scenes Support' },
+  { id: 'one_time', label: '📅 One-Time Projects' },
+  { id: 'ongoing', label: '🔄 Ongoing Commitments' }
+];
+
+const COMMUNICATION_CHANNELS = [
+  { id: 'email', label: '📧 Email Updates' },
+  { id: 'newsletter', label: '📰 Newsletter' },
+  { id: 'app', label: '📱 Mobile App Notifications' },
+  { id: 'text', label: '📱 Text Messages' },
+  { id: 'social', label: '👥 Social Media' },
+  { id: 'forum', label: '💬 Community Forum' }
+];
+
+export default function CommunityRegistration() {
   const navigate = useNavigate();
-  const { toast: useToastFn } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
 
+  const form = useForm({
+    defaultValues: {
+      fullName: '',
+      location: '',
+      phoneNumber: '',
+      email: '',
+      website: '',
+      communityRoles: [] as string[],
+      contributionInterests: [] as string[],
+      caregivingExperience: '',
+      caregivingAreas: [] as string[],
+      techInterests: [] as string[],
+      involvementPreferences: [] as string[],
+      communicationChannels: [] as string[],
+      communityMotivation: '',
+      improvementIdeas: '',
+      listInCommunityDirectory: false,
+      enableCommunityNotifications: true
+    }
+  });
+
+  // Check connection status on mount
   useEffect(() => {
-    const getUser = async () => {
+    const checkConnection = async () => {
       try {
-        // Get the current session first
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: session } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error('Error fetching session:', sessionError);
-          toast.error('Authentication error. Please sign in again.');
+        if (!session.session) {
           navigate('/auth');
+          toast.error("You must be logged in to complete registration");
           return;
         }
         
-        if (!sessionData.session) {
-          console.log('No active session found');
-          toast.error('Please sign in to complete your registration.');
-          navigate('/auth');
-          return;
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        setConnectionStatus(error ? false : true);
+        
+        if (error) {
+          console.error("Connection check failed:", error);
+          toast.error("Database connection issue detected. Please try again later.");
         }
-        
-        setAuthSession(sessionData.session);
-        
-        // Now get the user data
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !userData?.user) {
-          console.error('Error fetching user:', userError);
-          toast.error('Authentication error. Please sign in again.');
-          navigate('/auth');
-          return;
-        }
-        
-        setUser(userData.user);
-        
-        // Fetch existing profile data
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userData.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
-            // Don't show an error for new users
-            return;
-          }
-
-          if (profileData) {
-            setAvatarUrl(profileData.avatar_url);
-            setFirstName(profileData.full_name?.split(' ')[0] || '');
-            setLastName(profileData.full_name?.split(' ')[1] || '');
-            setPhoneNumber(profileData.phone_number || '');
-            setLocation(profileData.location || '');
-            setWebsite(profileData.website || '');
-            setCommunityRoles(profileData.community_roles || []);
-            setContributionInterests(profileData.contribution_interests || []);
-            setCaregivingExperience(profileData.caregiving_experience || '');
-            setCaregivingAreas(profileData.caregiving_areas || []);
-            setTechInterests(profileData.tech_interests || []);
-            setInvolvementPreferences(profileData.involvement_preferences || []);
-            setCommunicationChannels(profileData.communication_channels || []);
-            setCommunityMotivation(profileData.community_motivation || '');
-            setImprovementIdeas(profileData.improvement_ideas || '');
-            setListInDirectory(profileData.list_in_community_directory || false);
-            setEnableNotifications(profileData.enable_community_notifications || true);
-          }
-        } catch (profileErr) {
-          console.error('Error in profile fetch:', profileErr);
-        }
-      } catch (err) {
-        console.error('Error in authentication flow:', err);
-        toast.error('Authentication error. Please sign in again.');
-        navigate('/auth');
+      } catch (error) {
+        console.error("Connection check error:", error);
+        setConnectionStatus(false);
+        toast.error("Failed to connect to our services. Please check your internet connection.");
       }
     };
-
-    getUser();
     
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      } else if (session) {
-        setAuthSession(session);
-      }
-    });
-    
-    // Clean up listener
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
+    checkConnection();
   }, [navigate]);
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) {
+  // Handle profile picture preview
+  useEffect(() => {
+    if (profilePicture) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(profilePicture);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [profilePicture]);
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB max
+        toast.error("Profile picture must be less than 5MB");
+        return;
+      }
+      setProfilePicture(file);
+    }
+  };
+
+  // Generic file upload function with retries and progress
+  const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
+    if (!file || !connectionStatus) {
+      console.error("Cannot upload: Missing file or connection issues");
+      return null;
+    }
+    
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadError(null);
+      
+      // Create file name with extension
+      const fileExt = file.name.split('.').pop();
+      if (!fileExt) {
+        throw new Error("Invalid file type");
+      }
+      
+      // Check if storage bucket exists first
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error("Failed to list buckets:", bucketsError);
+        throw new Error("Storage system unavailable");
+      }
+      
+      // Create bucket if it doesn't exist
+      if (!buckets.find(b => b.name === bucket)) {
+        const { error: createError } = await supabase.storage.createBucket(bucket, {
+          public: false,
+        });
+        
+        if (createError) {
+          console.error("Failed to create bucket:", createError);
+          throw new Error("Failed to initialize storage");
+        }
+      }
+
+      // Set up timeout for upload operations
+      const timeoutId = setTimeout(() => {
+        console.error("Upload operation timed out after 30 seconds");
+        toast.error("File upload timed out. Try again with a smaller file or better connection.");
+      }, 30000); // 30s timeout
+      
+      // Upload with retries
+      let uploadError = null;
+      let uploadResult = null;
+      
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          setUploadProgress(10 + attempt * 20); // Show progress advancing with each retry
+          
+          // Create unique file path
+          const filePath = `${path}/${Date.now()}.${fileExt}`;
+          
+          // Upload with proper options
+          const { data, error } = await supabase.storage
+            .from(bucket)
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: file.type
+            });
+            
+          if (error) {
+            console.error(`Upload attempt ${attempt + 1} failed:`, error);
+            uploadError = error;
+            
+            if (attempt < 2) {
+              // Wait with exponential backoff before retry
+              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+              continue;
+            } else {
+              throw error;
+            }
+          }
+          
+          // Get public URL for the file
+          const { data: publicURLData } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+            
+          uploadResult = publicURLData.publicUrl;
+          uploadError = null;
+          break; // Success, exit retry loop
+        } catch (err) {
+          console.error(`Upload attempt ${attempt + 1} exception:`, err);
+          uploadError = err as Error;
+          
+          if (attempt < 2) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+          }
+        }
+      }
+      
+      // Clear timeout if upload completed or failed
+      clearTimeout(timeoutId);
+      
+      if (uploadError) {
+        setUploadError(`Upload failed after multiple attempts: ${uploadError.message}`);
+        toast.error("Failed to upload file after multiple attempts");
+        return null;
+      }
+      
+      setUploadProgress(100);
+      return uploadResult;
+    } catch (error: any) {
+      console.error("File upload error:", error);
+      setUploadError(error.message || "Upload failed");
+      toast.error(`Upload error: ${error.message}`);
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const onSubmit = async (data: any) => {
+    if (!connectionStatus) {
+      toast.error("Cannot submit registration: No connection to our services");
       return;
     }
     
-    const file = event.target.files[0];
-    setAvatarFile(file);
+    setIsLoading(true);
+    let avatarUrl = null;
     
-    // Create a preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
     try {
-      // Verify auth session is still valid
-      if (!authSession) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !sessionData.session) {
-          throw new Error('Your session has expired. Please sign in again.');
-        }
-        
-        setAuthSession(sessionData.session);
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error("Authentication error: " + (userError?.message || "Not logged in"));
       }
       
-      if (!user) {
-        throw new Error('No user found. Please sign in again.');
-      }
-
-      // Validate required fields
-      if (!firstName || !lastName || !phoneNumber || !location) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      // Upload avatar if selected
-      let uploadedAvatarUrl = avatarUrl;
-      if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${uuidv4()}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        // First ensure the avatars bucket exists
-        try {
-          const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-          
-          if (bucketError) {
-            console.error('Error checking buckets:', bucketError);
-            throw new Error('Could not verify storage availability. Please try again.');
-          }
-          
-          const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
-          
-          if (!avatarsBucketExists) {
-            const { error: createError } = await supabase.storage.createBucket('avatars', {
-              public: true,
-              fileSizeLimit: 1024 * 1024 * 2, // 2MB
-            });
-            
-            if (createError) {
-              console.error('Error creating avatars bucket:', createError);
-              throw new Error('Could not set up storage. Please try again or skip profile picture.');
-            }
-          }
-        } catch (bucketErr) {
-          console.error('Error setting up storage:', bucketErr);
-          throw new Error('Storage system unavailable. Try again or skip profile picture.');
-        }
-
-        const { error: uploadError, data } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, avatarFile, {
-            contentType: avatarFile.type,
-            upsert: true,
-          });
-
-        if (uploadError) {
-          console.error('Error uploading avatar:', uploadError);
-          throw new Error('Failed to upload profile picture. Please try again.');
-        }
-
-        if (data) {
-          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-          uploadedAvatarUrl = urlData.publicUrl;
+      const userId = userData.user.id;
+      
+      // Upload profile picture if provided
+      if (profilePicture) {
+        toast.info("Uploading profile picture...");
+        avatarUrl = await uploadFile(profilePicture, 'avatars', `community/${userId}`);
+        
+        if (!avatarUrl) {
+          toast.error("Failed to upload profile picture, but continuing with registration");
+        } else {
+          toast.success("Profile picture uploaded successfully");
         }
       }
-
-      // Ensure arrays are properly initialized
-      const processedCommunityRoles = communityRoles || [];
-      const processedContributionInterests = contributionInterests || [];
-      const processedCaregivingAreas = caregivingAreas || [];
-      const processedTechInterests = techInterests || [];
-      const processedInvolvementPreferences = involvementPreferences || [];
-      const processedCommunicationChannels = communicationChannels || [];
-
-      // Update profile
-      const fullName = `${firstName} ${lastName}`.trim();
-      const updates = {
-        id: user.id,
-        full_name: fullName,
-        avatar_url: uploadedAvatarUrl,
-        phone_number: phoneNumber,
-        role: 'community' as const,
-        updated_at: new Date().toISOString(),
-        location,
-        website,
-        community_roles: processedCommunityRoles,
-        contribution_interests: processedContributionInterests,
-        caregiving_experience: caregivingExperience,
-        caregiving_areas: processedCaregivingAreas,
-        tech_interests: processedTechInterests,
-        involvement_preferences: processedInvolvementPreferences,
-        communication_channels: processedCommunicationChannels,
-        community_motivation: communityMotivation,
-        improvement_ideas: improvementIdeas,
-        list_in_community_directory: listInDirectory,
-        enable_community_notifications: enableNotifications
+      
+      // Prepare profile data
+      const profileData = {
+        id: userId,
+        full_name: data.fullName,
+        role: 'community' as UserRole,
+        avatar_url: avatarUrl,
+        phone_number: data.phoneNumber,
+        location: data.location,
+        
+        // Community-specific fields
+        website: data.website,
+        community_roles: data.communityRoles,
+        contribution_interests: data.contributionInterests,
+        caregiving_experience: data.caregivingExperience,
+        caregiving_areas: data.caregivingAreas,
+        tech_interests: data.techInterests,
+        involvement_preferences: data.involvementPreferences,
+        communication_channels: data.communicationChannels,
+        community_motivation: data.communityMotivation,
+        improvement_ideas: data.improvementIdeas,
+        list_in_community_directory: data.listInCommunityDirectory,
+        enable_community_notifications: data.enableCommunityNotifications
       };
-
-      console.log('Updating community profile with data:', updates);
       
-      const { error } = await supabase
+      // Update profile in database
+      const { error: updateError } = await supabase
         .from('profiles')
-        .upsert(updates, { 
-          onConflict: 'id' 
-        });
+        .upsert(profileData);
       
-      if (error) {
-        console.error('Error updating community profile:', error);
-        throw error;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw new Error(`Failed to update profile: ${updateError.message}`);
       }
-
-      toast.success('Registration Complete! Your community member profile has been updated.');
-      navigate('/dashboards/community');
+      
+      toast.success("Registration completed successfully!");
+      
+      // Navigate to appropriate dashboard after short delay
+      setTimeout(() => {
+        navigate('/dashboards/community');
+      }, 1500);
+      
     } catch (error: any) {
-      console.error('Error updating community profile:', error);
-      toast.error(error.message || 'Failed to update profile. Please try again.');
+      console.error("Registration error:", error);
+      toast.error(`Registration failed: ${error.message || "Unknown error"}`);
+      
+      // Preserve form data in case of failure
+      localStorage.setItem('community_registration_data', JSON.stringify(form.getValues()));
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Helper for checkbox arrays
-  const handleCheckboxArrayChange = (
-    value: string, 
-    currentArray: string[], 
-    setFunction: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    if (currentArray.includes(value)) {
-      setFunction(currentArray.filter(item => item !== value));
-    } else {
-      setFunction([...currentArray, value]);
+  // Restore form data if previously saved
+  useEffect(() => {
+    const savedData = localStorage.getItem('community_registration_data');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        form.reset(parsedData);
+        toast.info("Restored your previous form data");
+      } catch (e) {
+        console.error("Failed to parse saved form data:", e);
+        localStorage.removeItem('community_registration_data');
+      }
     }
-  };
+  }, [form]);
+
+  if (connectionStatus === false) {
+    return (
+      <div className="container max-w-4xl py-8">
+        <Card className="w-full">
+          <CardHeader className="bg-red-50 border-b border-red-200">
+            <CardTitle className="text-red-700">Connection Error</CardTitle>
+            <CardDescription className="text-red-600">
+              We're having trouble connecting to our services. Please check your internet connection and try again.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Button onClick={() => window.location.reload()}>
+              Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container max-w-4xl py-10">
-      <h1 className="text-3xl font-bold mb-6">Community Member Registration</h1>
-      <p className="text-gray-500 mb-8">
-        Join our vibrant community of caregivers, tech enthusiasts, and advocates.
-      </p>
-
-      <form onSubmit={handleSubmit}>
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Personal & Contact Information</CardTitle>
-            <CardDescription>
-              Tell us about yourself so we can connect you with the right community members.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col items-center mb-6">
-              <Avatar className="h-24 w-24 mb-4">
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt="Profile" />
-                ) : (
-                  <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
-              <Label htmlFor="avatar" className="cursor-pointer text-primary">
-                {avatarUrl ? 'Change Profile Picture' : 'Upload Profile Picture'}
-                <Input 
-                  id="avatar" 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleAvatarChange} 
-                  className="hidden" 
-                />
-              </Label>
-            </div>
+    <div className="container max-w-4xl py-8">
+      <Card className="w-full">
+        <CardHeader className="bg-blue-50 border-b">
+          <CardTitle>Community Member Registration</CardTitle>
+          <CardDescription>
+            Join our community network to connect, contribute, and make a difference for caregivers and their families.
+          </CardDescription>
+        </CardHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="pt-6 space-y-8">
+              {/* Profile Picture Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Profile Picture</h3>
+                <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
+                  <div className="relative w-32 h-32 border rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {previewUrl ? (
+                      <img src={previewUrl} alt="Profile preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-16 h-16 text-gray-400" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="profile-upload">Upload a photo</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="profile-upload" 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleProfilePictureChange}
+                        className="w-full"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Upload a profile picture to help others recognize you in the community. Max size: 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Personal Information Section */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Personal Information</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="City, State, Country" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your email address" type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 sm:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website or Social Media (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your website, LinkedIn, or other social profile" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Community Roles Section */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Community Involvement</h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="communityRoles"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>What roles would you like to take in our community?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {COMMUNITY_ROLES.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="communityRoles"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="contributionInterests"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>What types of contributions interest you?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {CONTRIBUTION_INTERESTS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="contributionInterests"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Caregiving Experience */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Caregiving Experience</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="caregivingExperience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your caregiving experience (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Tell us about your personal or professional experience with caregiving (if any)"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          This helps us understand your perspective and how you might contribute
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="caregivingAreas"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>Areas of caregiving you're interested in or experienced with</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {CAREGIVING_AREAS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="caregivingAreas"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Technology & Innovation */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Technology & Innovation</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="techInterests"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>What caregiving technologies interest you?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {TECH_INTERESTS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="techInterests"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Participation Preferences */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Participation Preferences</h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="involvementPreferences"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>How would you prefer to be involved?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {INVOLVEMENT_PREFERENCES.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="involvementPreferences"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="communicationChannels"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>Preferred communication channels</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {COMMUNICATION_CHANNELS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="communicationChannels"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Motivation & Ideas */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Motivation & Ideas</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="communityMotivation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Why are you interested in joining our community?</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Share your motivation for participating in this community"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="improvementIdeas"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Do you have ideas for improving caregiving in your community?</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Share any ideas you have for improving caregiving support systems"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Directory & Notifications */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Directory & Notifications</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="listInCommunityDirectory"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            List me in the community directory
+                          </FormLabel>
+                          <FormDescription>
+                            Make your profile visible to other community members
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="enableCommunityNotifications"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            Enable community notifications
+                          </FormLabel>
+                          <FormDescription>
+                            Receive updates about events, opportunities, and community news
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </CardContent>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input 
-                  id="firstName" 
-                  placeholder="First Name" 
-                  value={firstName} 
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input 
-                  id="lastName" 
-                  placeholder="Last Name" 
-                  value={lastName} 
-                  onChange={(e) => setLastName(e.target.value)}
-                  required 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" value={user?.email || ''} disabled />
-              <p className="text-sm text-gray-500">Email address from your registration</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number *</Label>
-              <Input 
-                id="phoneNumber" 
-                placeholder="Phone Number" 
-                value={phoneNumber} 
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Input 
-                id="location" 
-                placeholder="City, Country" 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)}
-                required 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">LinkedIn, GitHub, or Personal Website (Optional)</Label>
-              <Input 
-                id="website" 
-                placeholder="https://" 
-                value={website} 
-                onChange={(e) => setWebsite(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Community Role & Interests</CardTitle>
-            <CardDescription>
-              Tell us why you're joining VillageCare Community and how you'd like to contribute.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Label>What brings you to the VillageCare Community?</Label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="role-care-champion" 
-                    checked={communityRoles.includes('Care Champion')}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setCommunityRoles([...communityRoles, 'Care Champion']);
-                      } else {
-                        setCommunityRoles(communityRoles.filter(role => role !== 'Care Champion'));
-                      }
-                    }}
-                  />
-                  <Label htmlFor="role-care-champion" className="font-normal">
-                    Care Champion: I want to support families and caregivers through mentorship, resources, and advocacy.
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="role-tech-enthusiast" 
-                    checked={communityRoles.includes('Tech & Innovation Enthusiast')}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setCommunityRoles([...communityRoles, 'Tech & Innovation Enthusiast']);
-                      } else {
-                        setCommunityRoles(communityRoles.filter(role => role !== 'Tech & Innovation Enthusiast'));
-                      }
-                    }}
-                  />
-                  <Label htmlFor="role-tech-enthusiast" className="font-normal">
-                    Tech & Innovation Enthusiast: I'm here for behind-the-scenes insights on how AI, automation, and digital platforms are shaping care.
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <Label>How would you like to contribute? (Select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { id: 'contrib-support', label: 'Providing Emotional Support', value: 'Emotional Support' },
-                  { id: 'contrib-volunteer', label: 'Volunteering & Advocacy', value: 'Volunteering & Advocacy' },
-                  { id: 'contrib-tech', label: 'AI & Tech Insights', value: 'AI & Tech Insights' },
-                  { id: 'contrib-network', label: 'Networking & Collaboration', value: 'Networking & Collaboration' },
-                  { id: 'contrib-content', label: 'Content & Storytelling', value: 'Content & Storytelling' }
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={item.id} 
-                      checked={contributionInterests.includes(item.value)}
-                      onCheckedChange={() => handleCheckboxArrayChange(
-                        item.value, 
-                        contributionInterests, 
-                        setContributionInterests
-                      )}
-                    />
-                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Expertise & Knowledge Sharing</CardTitle>
-            <CardDescription>
-              Share your experience and interests to help us connect you with relevant opportunities.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Label>Do you have any experience in caregiving or healthcare?</Label>
-              <RadioGroup value={caregivingExperience} onValueChange={setCaregivingExperience}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Personal caregiving experience" id="exp-personal" />
-                  <Label htmlFor="exp-personal" className="font-normal">Yes, I have personal caregiving experience.</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Healthcare professional" id="exp-professional" />
-                  <Label htmlFor="exp-professional" className="font-normal">Yes, I am a healthcare professional or have industry knowledge.</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Passionate about supporting" id="exp-passionate" />
-                  <Label htmlFor="exp-passionate" className="font-normal">No, but I'm passionate about supporting caregivers.</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Interested in tech aspects" id="exp-tech" />
-                  <Label htmlFor="exp-tech" className="font-normal">No, but I'm interested in the tech and AI aspects of caregiving.</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <Label>If applicable, what areas of caregiving do you have experience in? (Select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { id: 'area-elderly', label: 'Elderly Care', value: 'Elderly Care' },
-                  { id: 'area-special', label: 'Special Needs Care', value: 'Special Needs Care' },
-                  { id: 'area-dementia', label: 'Alzheimer\'s & Dementia Support', value: 'Alzheimer\'s & Dementia Support' },
-                  { id: 'area-home', label: 'Home Health Assistance', value: 'Home Health Assistance' },
-                  { id: 'area-hospice', label: 'Palliative & Hospice Care', value: 'Palliative & Hospice Care' },
-                  { id: 'area-pediatric', label: 'Pediatric or Family Care', value: 'Pediatric or Family Care' }
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={item.id} 
-                      checked={caregivingAreas.includes(item.value)}
-                      onCheckedChange={() => handleCheckboxArrayChange(
-                        item.value, 
-                        caregivingAreas, 
-                        setCaregivingAreas
-                      )}
-                    />
-                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <Label>If you're a tech enthusiast, what areas interest you the most? (Select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { id: 'tech-ai', label: 'AI for Healthcare & Caregiving', value: 'AI for Healthcare & Caregiving' },
-                  { id: 'tech-automation', label: 'Automation & Workflow Optimization', value: 'Automation & Workflow Optimization' },
-                  { id: 'tech-data', label: 'Data & Predictive Analytics in Care Coordination', value: 'Data & Predictive Analytics' },
-                  { id: 'tech-ethics', label: 'Ethical AI & Responsible Technology in Health', value: 'Ethical AI & Responsible Technology' },
-                  { id: 'tech-design', label: 'UI/UX & Human-Centered Design for Digital Health', value: 'UI/UX & Human-Centered Design' }
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={item.id} 
-                      checked={techInterests.includes(item.value)}
-                      onCheckedChange={() => handleCheckboxArrayChange(
-                        item.value, 
-                        techInterests, 
-                        setTechInterests
-                      )}
-                    />
-                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Community Engagement & Preferences</CardTitle>
-            <CardDescription>
-              Let us know how you'd like to participate in the community.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Label>How would you like to be involved? (Select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { id: 'involve-circles', label: 'Join Care Circles', value: 'Join Care Circles' },
-                  { id: 'involve-events', label: 'Attend Events & Webinars', value: 'Attend Events & Webinars' },
-                  { id: 'involve-test', label: 'Test New Features', value: 'Test New Features' },
-                  { id: 'involve-shape', label: 'Help Shape the Platform', value: 'Help Shape the Platform' },
-                  { id: 'involve-dev', label: 'AI & Tech Developer Collaborations', value: 'AI & Tech Developer Collaborations' }
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={item.id} 
-                      checked={involvementPreferences.includes(item.value)}
-                      onCheckedChange={() => handleCheckboxArrayChange(
-                        item.value, 
-                        involvementPreferences, 
-                        setInvolvementPreferences
-                      )}
-                    />
-                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <Label>Preferred Communication Channels: (Select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { id: 'comm-email', label: 'Email', value: 'Email' },
-                  { id: 'comm-whatsapp', label: 'WhatsApp', value: 'WhatsApp' },
-                  { id: 'comm-forum', label: 'Community Forum', value: 'Community Forum' },
-                  { id: 'comm-slack', label: 'Slack / Discord', value: 'Slack / Discord' }
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={item.id} 
-                      checked={communicationChannels.includes(item.value)}
-                      onCheckedChange={() => handleCheckboxArrayChange(
-                        item.value, 
-                        communicationChannels, 
-                        setCommunicationChannels
-                      )}
-                    />
-                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Additional Information & Commitment</CardTitle>
-            <CardDescription>
-              Share your motivation and ideas for the community.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="motivation">Why do you want to be part of the VillageCare community?</Label>
-              <Textarea 
-                id="motivation" 
-                placeholder="Share your motivation..." 
-                value={communityMotivation} 
-                onChange={(e) => setCommunityMotivation(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ideas">Do you have any ideas for improving caregiving through community efforts or technology?</Label>
-              <Textarea 
-                id="ideas" 
-                placeholder="Share your ideas..." 
-                value={improvementIdeas} 
-                onChange={(e) => setImprovementIdeas(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <Label>Would you like to be publicly listed in the Community Directory?</Label>
-              <RadioGroup value={listInDirectory ? 'yes' : 'no'} onValueChange={(value) => setListInDirectory(value === 'yes')}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="directory-yes" />
-                  <Label htmlFor="directory-yes" className="font-normal">Yes, I want other community members to find and connect with me.</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="directory-no" />
-                  <Label htmlFor="directory-no" className="font-normal">No, I prefer to contribute privately.</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="notifications" 
-                checked={enableNotifications}
-                onCheckedChange={setEnableNotifications}
-              />
-              <Label htmlFor="notifications" className="font-normal">
-                Enable Notifications
-              </Label>
-            </div>
-            <p className="text-sm text-gray-500">
-              Receive updates about new initiatives, events, and discussions relevant to your interests.
-            </p>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/')}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Submitting...' : 'Complete Registration'}
-          </Button>
-        </div>
-      </form>
+            <CardFooter className="flex flex-col sm:flex-row gap-4 justify-between border-t pt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate(-1)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading || isUploading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Complete Registration"
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
     </div>
   );
-};
-
-export default CommunityRegistration;
+}

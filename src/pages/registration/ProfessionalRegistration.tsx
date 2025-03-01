@@ -1,386 +1,249 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Loader2, ArrowLeft, ImagePlus } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { Loader2, Upload, Check, X, User } from 'lucide-react';
 
-import { supabase, ensureAuthContext, checkSupabaseConnection } from "@/lib/supabase";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { UserRole } from '@/types/database';
 
-// Define the form schema with Zod
-const formSchema = z.object({
-  professionalType: z.string().min(1, "Professional type is required"),
-  licenseNumber: z.string().optional(),
-  certifications: z.array(z.string()).optional(),
-  otherCertification: z.string().optional(),
-  careServices: z.array(z.string()).min(1, "Please select at least one care service"),
-  languages: z.array(z.string()).min(1, "Please select at least one language"),
-  yearsOfExperience: z.string().min(1, "Years of experience is required"),
-  workType: z.string().min(1, "Work type is required"),
-  availability: z.array(z.string()).min(1, "Please select at least one availability option"),
-  backgroundCheck: z.boolean().optional(),
-  legallyAuthorized: z.boolean(),
-  expectedRate: z.string().min(1, "Expected rate is required"),
-  paymentMethods: z.array(z.string()).min(1, "Please select at least one payment method"),
-  bio: z.string().min(10, "Bio should be at least 10 characters"),
-  whyChooseCaregiving: z.string().min(10, "Please provide at least 10 characters"),
-  preferredWorkLocations: z.string().min(1, "Preferred work locations is required"),
-  commuteMode: z.string().optional(),
-  listInDirectory: z.boolean().optional(),
-  enableJobAlerts: z.boolean().optional(),
-  fullName: z.string().min(1, "Full name is required"),
-  phoneNumber: z.string().min(10, "Valid phone number is required"),
-  address: z.string().min(1, "Address is required"),
-});
-
-// Professional types
-const professionalTypes = [
-  "Registered Nurse (RN)",
-  "Licensed Practical Nurse (LPN)",
-  "Certified Nursing Assistant (CNA)",
-  "Home Health Aide (HHA)",
-  "Personal Care Aide",
-  "Physical Therapist",
-  "Occupational Therapist",
-  "Speech Therapist",
-  "Respiratory Therapist",
-  "Medical Social Worker",
-  "Geriatric Care Manager",
-  "Hospice Specialist",
-  "Medical Doctor (MD)",
-  "Physician Assistant (PA)",
-  "Nurse Practitioner (NP)",
-  "Other",
+const PROFESSIONAL_TYPES = [
+  { value: 'agency', label: '👨‍👦 Professional Agency' },
+  { value: 'nurse', label: '🏥 Licensed Nurse (LPN/RN/BSN)' },
+  { value: 'hha', label: '🏠 Home Health Aide (HHA)' },
+  { value: 'cna', label: '👩‍⚕️ Certified Nursing Assistant (CNA)' },
+  { value: 'special_needs', label: '🧠 Special Needs Caregiver' },
+  { value: 'therapist', label: '🏋️ Physical / Occupational Therapist' },
+  { value: 'nutrition', label: '🍽️ Nutritional & Dietary Specialist' },
+  { value: 'medication', label: '💊 Medication Management Expert' },
+  { value: 'elderly', label: '👨‍🦽 Elderly & Mobility Support' },
+  { value: 'holistic', label: '🌱 Holistic Care & Wellness' },
+  { value: 'gapp', label: '👨‍👦 The Geriatric Adolescent Partnership Programme (GAPP)' },
+  { value: 'other', label: '⚕️ Other (Please specify)' }
 ];
 
-// Certification options
-const certificationOptions = [
-  "CPR Certified",
-  "First Aid Certified",
-  "Certified Nursing Assistant (CNA)",
-  "Basic Life Support (BLS)",
-  "Advanced Cardiac Life Support (ACLS)",
-  "Medication Administration",
-  "Hospice and Palliative Care",
-  "Dementia Care",
-  "Alzheimer's Care",
-  "Parkinson's Care",
-  "Diabetes Management",
-  "Wound Care",
-  "Respiratory Care",
-  "IV Therapy",
-  "Tracheostomy Care",
-  "Ventilator Management",
-  "Other",
+const EXPERIENCE_RANGES = [
+  { value: '0-1', label: '0-1 years' },
+  { value: '2-5', label: '2-5 years' },
+  { value: '5-10', label: '5-10 years' },
+  { value: '10+', label: '10+ years' }
 ];
 
-// Care service options
-const careServiceOptions = [
-  "Personal Care",
-  "Medication Management",
-  "Wound Care",
-  "Mobility Assistance",
-  "Meal Preparation",
-  "Housekeeping",
-  "Transportation",
-  "Shopping",
-  "Companionship",
-  "Respite Care",
-  "Hospice Care",
-  "Physical Therapy",
-  "Occupational Therapy",
-  "Speech Therapy",
-  "Skilled Nursing",
-  "Dementia Care",
-  "Pain Management",
-  "24-Hour Care",
-  "Live-In Care",
-  "Overnight Care",
-  "Other",
+const CARE_SERVICES = [
+  { id: 'in_home', label: '🏠 In-Home Care (Daily, Nighttime, Weekend, Live-in)' },
+  { id: 'medical', label: '🏥 Medical Support (Post-surgery, Chronic Condition Management, Hospice)' },
+  { id: 'special_needs', label: '🎓 Child or Special Needs Support (Autism, ADHD, Learning Disabilities)' },
+  { id: 'cognitive', label: '🧠 Cognitive & Memory Care (Alzheimer\'s, Dementia, Parkinson\'s)' },
+  { id: 'mobility', label: '♿ Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)' },
+  { id: 'medication', label: '💊 Medication Management (Administering Medication, Insulin, Medical Equipment)' },
+  { id: 'nutrition', label: '🍽️ Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)' },
+  { id: 'household', label: '🏡 Household Assistance (Cleaning, Laundry, Errands, Yard/Garden Maintenance)' }
 ];
 
-// Language options
-const languageOptions = [
-  "English",
-  "Spanish",
-  "French",
-  "Mandarin",
-  "Cantonese",
-  "Vietnamese",
-  "Korean",
-  "Russian",
-  "Arabic",
-  "Tagalog",
-  "American Sign Language",
-  "Other",
+const MEDICAL_CONDITIONS = [
+  { id: 'alzheimers', label: '🧠 Alzheimer\'s / Dementia / Cognitive Decline' },
+  { id: 'cancer', label: '🏥 Cancer Patients (Palliative/Hospice Care)' },
+  { id: 'parkinsons', label: '👨‍🦽 Parkinson\'s / Stroke Recovery / Paralysis' },
+  { id: 'special_needs', label: '🧩 Special Needs (Autism, ADHD, Cerebral Palsy, etc.)' },
+  { id: 'chronic', label: '💊 Chronic Illnesses (Diabetes, Heart Disease, Kidney Disease, etc.)' },
+  { id: 'post_surgical', label: '🩺 Post-Surgical Rehabilitation' },
+  { id: 'bedridden', label: '🛏️ Bedridden Patients (Full-time care, Hygiene Assistance, etc.)' }
 ];
 
-// Work type options
-const workTypeOptions = [
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Temporary",
-  "Per Diem",
-  "On-Call",
+const AVAILABILITY_OPTIONS = [
+  { id: 'daytime', label: '☀️ Daytime (8 AM - 5 PM)' },
+  { id: 'night', label: '🌙 Night Shifts (5 PM - 8 AM)' },
+  { id: 'weekends', label: '📆 Weekends Only' },
+  { id: 'live_in', label: '🏡 Live-In Care (Full-time in-home support)' },
+  { id: 'flexible', label: '⏳ Flexible / On-Demand Availability' }
 ];
 
-// Availability options
-const availabilityOptions = [
-  "Weekdays",
-  "Weekends",
-  "Mornings",
-  "Afternoons",
-  "Evenings",
-  "Overnight",
-  "24-Hour Care",
-  "Live-In",
+const WORK_TYPE_OPTIONS = [
+  { value: 'agency', label: '🏥 Care Agencies' },
+  { value: 'independent', label: '👩‍⚕️ Private Independent Care (Freelance)' },
+  { value: 'both', label: '🔀 Both (Agency & Independent Work Available)' }
 ];
 
-// Payment method options
-const paymentMethodOptions = [
-  "Direct Deposit",
-  "Check",
-  "Cash",
-  "PayPal",
-  "Venmo",
-  "Insurance",
-  "Medicare",
-  "Medicaid",
-  "Private Insurance",
-  "Long-Term Care Insurance",
-  "Other",
+const FAMILY_MATCH_OPTIONS = [
+  { id: 'elderly', label: '🏡 Elderly Care Only' },
+  { id: 'children', label: '🧒 Children / Special Needs Care Only' },
+  { id: 'medical', label: '🏥 Medical & Rehabilitation Patients' },
+  { id: 'mobility', label: '♿ Mobility & Hospice Care' },
+  { id: 'all', label: '🔀 Open to All Matches' }
 ];
 
-// Commute mode options
-const commuteModeOptions = [
-  "Own Vehicle",
-  "Public Transportation",
-  "Rideshare",
-  "Walking",
-  "Biking",
-  "Other",
+const CONTACT_METHOD_OPTIONS = [
+  { value: 'call', label: 'Phone Call' },
+  { value: 'text', label: 'Text Message' },
+  { value: 'email', label: 'Email' },
+  { value: 'app', label: 'App Messaging' }
 ];
 
 export default function ProfessionalRegistration() {
-  const { user, userRole, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [certificationFile, setCertificationFile] = useState<File | null>(null);
   const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
-  const [backgroundCheckUrl, setBackgroundCheckUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [formPreserved, setFormPreserved] = useState(false);
 
-  // Define form with default values
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm({
     defaultValues: {
-      professionalType: "",
-      licenseNumber: "",
-      certifications: [],
-      otherCertification: "",
-      careServices: [],
-      languages: ["English"],
-      yearsOfExperience: "",
-      workType: "",
-      availability: [],
-      backgroundCheck: false,
-      legallyAuthorized: false,
-      expectedRate: "",
-      paymentMethods: [],
-      bio: "",
-      whyChooseCaregiving: "",
-      preferredWorkLocations: "",
-      commuteMode: "",
-      listInDirectory: false,
-      enableJobAlerts: false,
-      fullName: user?.user_metadata?.full_name || "",
-      phoneNumber: "",
-      address: "",
-    },
+      fullName: '',
+      professionalType: '',
+      otherProfessionalType: '',
+      experienceYears: '',
+      phoneNumber: '',
+      email: '',
+      location: '',
+      preferredContactMethod: 'email',
+      licenseNumber: '',
+      careServices: [] as string[],
+      medicalConditions: [] as string[],
+      otherMedicalCondition: '',
+      availability: [] as string[],
+      workType: 'independent',
+      familyMatchPreferences: [] as string[],
+      comfortAreas: {
+        medication: false,
+        housekeeping: false,
+        transportation: false,
+        medicalEquipment: false
+      },
+      emergencyContact: '',
+      hasLiabilityInsurance: false,
+      expectedRate: '',
+      additionalNotes: ''
+    }
   });
 
-  // Check connection status on component mount
+  // Check connection status on mount
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const isConnected = await checkSupabaseConnection();
-        setConnectionStatus(isConnected);
-        if (!isConnected && retryCount < 3) {
-          // Exponential backoff retry: 1s, 2s, 4s
-          const backoffTime = 1000 * Math.pow(2, retryCount);
-          console.log(`Connection failed, retrying in ${backoffTime}ms...`);
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-          }, backoffTime);
-        } else if (!isConnected) {
-          toast.error("Unable to connect to the database. Please check your internet connection and try again later.");
-        }
-      } catch (err) {
-        console.error("Error checking connection:", err);
-        setConnectionStatus(false);
-      }
-    };
-
-    checkConnection();
-  }, [retryCount]);
-
-  // Load existing professional profile if available
-  useEffect(() => {
-    const loadExistingProfile = async () => {
-      if (!user) return;
-      
-      try {
-        await ensureAuthContext();
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-          toast.error("Could not load your profile information. Please try again later.");
+        const { data: session } = await supabase.auth.getSession();
+        
+        if (!session.session) {
+          navigate('/auth');
+          toast.error("You must be logged in to complete registration");
           return;
         }
-
-        if (profile) {
-          console.log("Loaded profile:", profile);
-          
-          // Set form values from profile
-          form.reset({
-            professionalType: profile.professional_type || "",
-            licenseNumber: profile.license_number || "",
-            certifications: profile.certifications || [],
-            otherCertification: profile.other_certification || "",
-            careServices: profile.care_services || [],
-            languages: profile.languages || ["English"],
-            yearsOfExperience: profile.years_of_experience || "",
-            workType: profile.work_type || "",
-            availability: profile.availability || [],
-            backgroundCheck: profile.background_check || false,
-            legallyAuthorized: profile.legally_authorized || false,
-            expectedRate: profile.expected_rate || "",
-            paymentMethods: profile.payment_methods || [],
-            bio: profile.bio || "",
-            whyChooseCaregiving: profile.why_choose_caregiving || "",
-            preferredWorkLocations: profile.preferred_work_locations || "",
-            commuteMode: profile.commute_mode || "",
-            listInDirectory: profile.list_in_directory || false,
-            enableJobAlerts: profile.enable_job_alerts || false,
-            fullName: profile.full_name || user?.user_metadata?.full_name || "",
-            phoneNumber: profile.phone_number || "",
-            address: profile.address || "",
-          });
-
-          // Set avatar if exists
-          if (profile.avatar_url) {
-            setAvatarUrl(profile.avatar_url);
-          }
-
-          // Set certificate URL if exists
-          if (profile.certification_proof_url) {
-            setCertificateUrl(profile.certification_proof_url);
-          }
-
-          // Set background check URL if exists
-          if (profile.background_check_proof_url) {
-            setBackgroundCheckUrl(profile.background_check_proof_url);
-          }
-
-          setFormPreserved(true);
+        
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        setConnectionStatus(error ? false : true);
+        
+        if (error) {
+          console.error("Connection check failed:", error);
+          toast.error("Database connection issue detected. Please try again later.");
         }
-      } catch (err) {
-        console.error("Error in loadExistingProfile:", err);
-        toast.error("Failed to load your profile. Please try refreshing the page.");
+      } catch (error) {
+        console.error("Connection check error:", error);
+        setConnectionStatus(false);
+        toast.error("Failed to connect to our services. Please check your internet connection.");
       }
     };
+    
+    checkConnection();
+  }, [navigate]);
 
-    if (user && !authLoading) {
-      loadExistingProfile();
-    }
-  }, [user, authLoading, form]);
-
-  // Navigate away if user role is not professional
+  // Handle profile picture preview
   useEffect(() => {
-    if (!authLoading && userRole && userRole !== "professional") {
-      toast.error(`You are registered as a ${userRole}. To access this page, you must register as a professional.`);
-      navigate(`/registration/${userRole}`);
+    if (profilePicture) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(profilePicture);
+    } else {
+      setPreviewUrl(null);
     }
-  }, [userRole, authLoading, navigate]);
+  }, [profilePicture]);
 
-  // Upload files to storage
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB max
+        toast.error("Profile picture must be less than 5MB");
+        return;
+      }
+      setProfilePicture(file);
+    }
+  };
+
+  const handleCertificationUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB max
+        toast.error("Certification file must be less than 10MB");
+        return;
+      }
+      setCertificationFile(file);
+      toast.success(`Certification file "${file.name}" ready for upload`);
+    }
+  };
+
+  const handleBackgroundCheckUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB max
+        toast.error("Background check file must be less than 10MB");
+        return;
+      }
+      setBackgroundCheckFile(file);
+      toast.success(`Background check file "${file.name}" ready for upload`);
+    }
+  };
+
+  // Generic file upload function with retries and progress
   const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
-    if (!file) return null;
+    if (!file || !connectionStatus) {
+      console.error("Cannot upload: Missing file or connection issues");
+      return null;
+    }
     
     try {
-      // Validate file type and size
-      const fileExt = file.name.split('.').pop()?.toLowerCase();
-      const allowedTypes = ['jpg', 'jpeg', 'png', 'pdf'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadError(null);
       
-      if (!fileExt || !allowedTypes.includes(fileExt)) {
-        toast.error(`Invalid file type. Please upload a ${allowedTypes.join(', ')} file.`);
-        return null;
+      // Create file name with extension
+      const fileExt = file.name.split('.').pop();
+      if (!fileExt) {
+        throw new Error("Invalid file type");
       }
       
-      if (file.size > maxSize) {
-        toast.error(`File too large. Maximum size is 5MB.`);
-        return null;
-      }
-
-      // Check if storage bucket exists
-      await ensureAuthContext();
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+      // Check if storage bucket exists first
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
       
-      if (bucketError) {
-        console.error("Error checking storage buckets:", bucketError);
-        toast.error("Storage system unavailable. Profile will be saved without the file.");
-        return null;
+      if (bucketsError) {
+        console.error("Failed to list buckets:", bucketsError);
+        throw new Error("Storage system unavailable");
       }
       
       // Create bucket if it doesn't exist
-      if (!buckets.some(b => b.name === bucket)) {
-        const { error: createBucketError } = await supabase.storage.createBucket(bucket, {
-          public: bucket === 'avatars'
+      if (!buckets.find(b => b.name === bucket)) {
+        const { error: createError } = await supabase.storage.createBucket(bucket, {
+          public: false,
         });
         
-        if (createBucketError) {
-          console.error("Error creating bucket:", createBucketError);
-          toast.error("Storage system unavailable. Profile will be saved without the file.");
-          return null;
+        if (createError) {
+          console.error("Failed to create bucket:", createError);
+          throw new Error("Failed to initialize storage");
         }
       }
 
@@ -392,13 +255,14 @@ export default function ProfessionalRegistration() {
       
       // Upload with retries
       let uploadError = null;
-      let uploadData = null;
-      const maxRetries = 3;
+      let uploadResult = null;
       
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
+      for (let attempt = 0; attempt < 3; attempt++) {
         try {
+          setUploadProgress(10 + attempt * 20); // Show progress advancing with each retry
+          
           // Create unique file path
-          const filePath = `${path}/${user!.id}/${Date.now()}.${fileExt}`;
+          const filePath = `${path}/${Date.now()}.${fileExt}`;
           
           // Upload with proper options (removing the signal property)
           const { data, error } = await supabase.storage
@@ -413,1098 +277,909 @@ export default function ProfessionalRegistration() {
             console.error(`Upload attempt ${attempt + 1} failed:`, error);
             uploadError = error;
             
-            // Wait before retry (exponential backoff)
-            if (attempt < maxRetries - 1) {
-              await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+            if (attempt < 2) {
+              // Wait with exponential backoff before retry
+              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+              continue;
+            } else {
+              throw error;
             }
-          } else {
-            uploadData = data;
-            uploadError = null;
-            break; // Successful upload, exit retry loop
           }
+          
+          // Get public URL for the file
+          const { data: publicURLData } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+            
+          uploadResult = publicURLData.publicUrl;
+          uploadError = null;
+          break; // Success, exit retry loop
         } catch (err) {
           console.error(`Upload attempt ${attempt + 1} exception:`, err);
-          uploadError = err;
+          uploadError = err as Error;
+          
+          if (attempt < 2) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+          }
         }
       }
       
+      // Clear timeout if upload completed or failed
       clearTimeout(timeoutId);
       
-      if (uploadError || !uploadData) {
-        console.error("All upload attempts failed:", uploadError);
-        toast.error("Failed to upload file. Your profile will be saved without it.");
+      if (uploadError) {
+        setUploadError(`Upload failed after multiple attempts: ${uploadError.message}`);
+        toast.error("Failed to upload file after multiple attempts");
         return null;
       }
       
-      // Get public URL
-      const { data: publicUrl } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(uploadData.path);
-        
-      console.log("File uploaded successfully:", publicUrl.publicUrl);
-      return publicUrl.publicUrl;
-      
-    } catch (error) {
-      console.error("Unexpected error during file upload:", error);
-      toast.error("An unexpected error occurred during file upload. Your profile will be saved without it.");
+      setUploadProgress(100);
+      return uploadResult;
+    } catch (error: any) {
+      console.error("File upload error:", error);
+      setUploadError(error.message || "Upload failed");
+      toast.error(`Upload error: ${error.message}`);
       return null;
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  // Handle avatar upload
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setAvatar(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setAvatarUrl(event.target.result.toString());
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle certificate upload
-  const handleCertificateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setCertificateFile(file);
-      
-      // Show filename for non-image files
-      if (file.type.startsWith('application/')) {
-        setCertificateUrl(file.name);
-      } else {
-        // Create preview for images
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setCertificateUrl(event.target.result.toString());
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  };
-
-  // Handle background check document upload
-  const handleBackgroundCheckChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setBackgroundCheckFile(file);
-      
-      // Show filename for non-image files
-      if (file.type.startsWith('application/')) {
-        setBackgroundCheckUrl(file.name);
-      } else {
-        // Create preview for images
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setBackgroundCheckUrl(event.target.result.toString());
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  };
-
-  // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
-      toast.error("You must be logged in to complete registration.");
-      navigate("/auth");
-      return;
-    }
-
+  const onSubmit = async (data: any) => {
     if (!connectionStatus) {
-      toast.error("Cannot complete registration - database connection is unavailable. Please try again later.");
+      toast.error("Cannot submit registration: No connection to our services");
       return;
     }
-
+    
+    setIsLoading(true);
+    let avatarUrl = null;
+    let certificationUrl = null;
+    let backgroundCheckUrl = null;
+    
     try {
-      setIsSubmitting(true);
-      setUploadProgress(10);
-      console.log("Form values:", values);
-
-      // Upload files concurrently
-      const uploadTasks = [];
-
-      if (avatar) {
-        uploadTasks.push(uploadFile(avatar, 'avatars', 'profile-pictures'));
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error("Authentication error: " + (userError?.message || "Not logged in"));
       }
-
-      if (certificateFile) {
-        uploadTasks.push(uploadFile(certificateFile, 'documents', 'certifications'));
-      } else {
-        uploadTasks.push(null);
+      
+      const userId = userData.user.id;
+      
+      // Upload profile picture if provided
+      if (profilePicture) {
+        toast.info("Uploading profile picture...");
+        avatarUrl = await uploadFile(profilePicture, 'avatars', `professional/${userId}`);
+        
+        if (!avatarUrl) {
+          toast.error("Failed to upload profile picture, but continuing with registration");
+        } else {
+          toast.success("Profile picture uploaded successfully");
+        }
       }
-
+      
+      // Upload certification if provided
+      if (certificationFile) {
+        toast.info("Uploading certification document...");
+        certificationUrl = await uploadFile(certificationFile, 'certifications', `professional/${userId}`);
+        
+        if (!certificationUrl) {
+          toast.error("Failed to upload certification, but continuing with registration");
+        } else {
+          toast.success("Certification document uploaded successfully");
+        }
+      }
+      
+      // Upload background check if provided
       if (backgroundCheckFile) {
-        uploadTasks.push(uploadFile(backgroundCheckFile, 'documents', 'background-checks'));
-      } else {
-        uploadTasks.push(null);
+        toast.info("Uploading background check document...");
+        backgroundCheckUrl = await uploadFile(backgroundCheckFile, 'background_checks', `professional/${userId}`);
+        
+        if (!backgroundCheckUrl) {
+          toast.error("Failed to upload background check, but continuing with registration");
+        } else {
+          toast.success("Background check document uploaded successfully");
+        }
       }
-
-      setUploadProgress(30);
-      const [newAvatarUrl, newCertUrl, newBackgroundUrl] = await Promise.all(uploadTasks);
-      setUploadProgress(70);
-
-      // Ensure authentication context is valid
-      const authValid = await ensureAuthContext();
-      if (!authValid) {
-        toast.error("Authentication session expired. Please login again.");
-        navigate("/auth");
-        return;
-      }
-
+      
       // Prepare profile data
       const profileData = {
-        id: user.id,
-        role: 'professional',
-        full_name: values.fullName,
-        phone_number: values.phoneNumber,
-        address: values.address,
-        avatar_url: newAvatarUrl || avatarUrl,
+        id: userId,
+        full_name: data.fullName,
+        role: 'professional' as UserRole,
+        avatar_url: avatarUrl,
+        phone_number: data.phoneNumber,
+        location: data.location,
         
         // Professional-specific fields
-        professional_type: values.professionalType,
-        license_number: values.licenseNumber,
-        certifications: values.certifications,
-        other_certification: values.otherCertification,
-        certification_proof_url: newCertUrl || certificateUrl,
-        care_services: values.careServices,
-        languages: values.languages,
-        years_of_experience: values.yearsOfExperience,
-        work_type: values.workType,
-        availability: values.availability,
-        background_check: values.backgroundCheck,
-        background_check_proof_url: newBackgroundUrl || backgroundCheckUrl,
-        legally_authorized: values.legallyAuthorized,
-        expected_rate: values.expectedRate,
-        payment_methods: values.paymentMethods,
-        bio: values.bio,
-        why_choose_caregiving: values.whyChooseCaregiving,
-        preferred_work_locations: values.preferredWorkLocations,
-        commute_mode: values.commuteMode,
-        list_in_directory: values.listInDirectory,
-        enable_job_alerts: values.enableJobAlerts
+        professional_type: data.professionalType,
+        other_professional_type: data.professionalType === 'other' ? data.otherProfessionalType : null,
+        license_number: data.licenseNumber,
+        certification_proof_url: certificationUrl,
+        background_check_proof_url: backgroundCheckUrl,
+        care_services: data.careServices,
+        years_of_experience: data.experienceYears,
+        availability: data.availability,
+        work_type: data.workType,
+        preferred_contact_method: data.preferredContactMethod,
+        caregiving_areas: data.medicalConditions,
+        other_medical_condition: data.otherMedicalCondition,
+        preferred_work_locations: data.familyMatchPreferences.join(', '),
+        administers_medication: data.comfortAreas.medication,
+        provides_housekeeping: data.comfortAreas.housekeeping,
+        provides_transportation: data.comfortAreas.transportation,
+        handles_medical_equipment: data.comfortAreas.medicalEquipment,
+        emergency_contact: data.emergencyContact,
+        has_liability_insurance: data.hasLiabilityInsurance,
+        expected_rate: data.expectedRate,
+        bio: data.additionalNotes
       };
-
-      // Update profile in database with retry logic
-      let profileError = null;
-      const maxRetries = 3;
       
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          setUploadProgress(80 + (attempt * 5));
-          console.log(`Profile update attempt ${attempt + 1}`);
-          
-          // Verify auth context again before each attempt
-          await ensureAuthContext();
-          
-          const { error } = await supabase
-            .from('profiles')
-            .upsert(profileData, { onConflict: 'id' });
-            
-          if (error) {
-            console.error(`Profile update attempt ${attempt + 1} failed:`, error);
-            profileError = error;
-            
-            if (error.message.includes("violates row-level security policy")) {
-              console.error("RLS violation detected. Attempting to verify user session...");
-              const { data } = await supabase.auth.getSession();
-              
-              if (!data.session) {
-                toast.error("Your session has expired. Please login again.");
-                navigate("/auth");
-                return;
-              }
-            }
-            
-            // Wait before retry (exponential backoff)
-            if (attempt < maxRetries - 1) {
-              await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
-            }
-          } else {
-            profileError = null;
-            break; // Successful update, exit retry loop
-          }
-        } catch (err) {
-          console.error(`Profile update attempt ${attempt + 1} exception:`, err);
-          profileError = err;
-        }
+      // Update profile in database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert(profileData);
+      
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw new Error(`Failed to update profile: ${updateError.message}`);
       }
       
-      setUploadProgress(100);
+      toast.success("Registration completed successfully!");
       
-      if (profileError) {
-        console.error("All profile update attempts failed:", profileError);
-        
-        // Preserve form data
-        localStorage.setItem('professional_form_data', JSON.stringify(values));
-        setFormPreserved(true);
-        
-        if (profileError.message?.includes("violates row-level security policy")) {
-          toast.error(
-            "Your profile couldn't be updated due to a permissions issue. This is likely due to your session expiring. Please log out and back in, then try again."
-          );
-        } else {
-          toast.error(
-            "Failed to update your profile after multiple attempts. Your form data has been saved. Please try again later."
-          );
-        }
-        
-        return;
-      }
-
-      // Success - navigate to dashboard
-      toast.success("Professional profile updated successfully!");
-      navigate("/dashboard/professional");
+      // Navigate to appropriate dashboard after short delay
+      setTimeout(() => {
+        navigate('/dashboards/professional');
+      }, 1500);
       
     } catch (error: any) {
-      console.error("Unexpected error during profile update:", error);
+      console.error("Registration error:", error);
+      toast.error(`Registration failed: ${error.message || "Unknown error"}`);
       
-      // Preserve form data
-      localStorage.setItem('professional_form_data', JSON.stringify(values));
-      setFormPreserved(true);
-      
-      toast.error(`An unexpected error occurred: ${error.message || "Unknown error"}. Your form data has been saved.`);
+      // Preserve form data in case of failure
+      localStorage.setItem('professional_registration_data', JSON.stringify(form.getValues()));
     } finally {
-      setIsSubmitting(false);
-      setUploadProgress(0);
+      setIsLoading(false);
     }
   };
 
-  const restoreForm = () => {
-    try {
-      const savedData = localStorage.getItem('professional_form_data');
-      if (savedData) {
+  // Restore form data if previously saved
+  useEffect(() => {
+    const savedData = localStorage.getItem('professional_registration_data');
+    if (savedData) {
+      try {
         const parsedData = JSON.parse(savedData);
         form.reset(parsedData);
-        toast.success("Form data restored from your last attempt");
+        toast.info("Restored your previous form data");
+      } catch (e) {
+        console.error("Failed to parse saved form data:", e);
+        localStorage.removeItem('professional_registration_data');
       }
-    } catch (err) {
-      console.error("Error restoring form data:", err);
-      toast.error("Could not restore your previous form data");
     }
-  };
+  }, [form]);
 
-  if (authLoading) {
+  if (connectionStatus === false) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container max-w-3xl mx-auto py-8 px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-6">Professional Registration</h1>
-          <p className="mb-4">You must be logged in to register as a professional.</p>
-          <Button onClick={() => navigate("/auth")}>Sign In / Sign Up</Button>
-        </div>
+      <div className="container max-w-4xl py-8">
+        <Card className="w-full">
+          <CardHeader className="bg-red-50 border-b border-red-200">
+            <CardTitle className="text-red-700">Connection Error</CardTitle>
+            <CardDescription className="text-red-600">
+              We're having trouble connecting to our services. Please check your internet connection and try again.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Button onClick={() => window.location.reload()}>
+              Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate(-1)}
-          className="mr-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">Professional Registration</h1>
-      </div>
-
-      {!connectionStatus && (
-        <Card className="bg-amber-50 p-4 mb-6 border-amber-200">
-          <p className="text-amber-800">
-            <strong>Connection Status:</strong> Offline or Unable to Connect
-          </p>
-          <p className="text-amber-600 text-sm mt-1">
-            Changes to your profile may not be saved until connection is restored.
-          </p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2" 
-            onClick={() => setRetryCount(prev => prev + 1)}
-          >
-            Retry Connection
-          </Button>
-        </Card>
-      )}
-
-      {formPreserved && (
-        <Card className="bg-blue-50 p-4 mb-6 border-blue-200">
-          <p className="text-blue-800">
-            <strong>Form Data Preserved</strong>
-          </p>
-          <p className="text-blue-600 text-sm mt-1">
-            Your previous form data has been saved. You can continue from where you left off.
-          </p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2" 
-            onClick={restoreForm}
-          >
-            Restore Saved Data
-          </Button>
-        </Card>
-      )}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Personal Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Your full name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Your phone number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Your address" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="md:col-span-2">
-                <FormLabel>Profile Picture</FormLabel>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="relative w-24 h-24 border rounded-md flex items-center justify-center overflow-hidden bg-gray-50">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+    <div className="container max-w-4xl py-8">
+      <Card className="w-full">
+        <CardHeader className="bg-blue-50 border-b">
+          <CardTitle>Professional Registration</CardTitle>
+          <CardDescription>
+            Register as a healthcare professional to connect with families in need of your services.
+          </CardDescription>
+        </CardHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="pt-6 space-y-8">
+              {/* Profile Picture Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Upload Profile Picture</h3>
+                <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
+                  <div className="relative w-32 h-32 border rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {previewUrl ? (
+                      <img src={previewUrl} alt="Profile preview" className="w-full h-full object-cover" />
                     ) : (
-                      <ImagePlus className="h-8 w-8 text-gray-400" />
+                      <User className="w-16 h-16 text-gray-400" />
                     )}
                   </div>
-                  <div>
-                    <Input 
-                      id="avatar" 
-                      type="file" 
-                      onChange={handleAvatarChange} 
-                      className="max-w-xs"
-                      accept="image/*"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Recommended: Square image, max 5MB
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Professional Information Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Professional Information</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="professionalType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Professional Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your profession" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {professionalTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="licenseNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>License Number (if applicable)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="License number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="certifications"
-                render={() => (
-                  <FormItem className="md:col-span-2">
-                    <div className="mb-2">
-                      <FormLabel>Certifications</FormLabel>
-                      <FormDescription>
-                        Select all certifications that apply
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {certificationOptions.map((certification) => (
-                        <FormField
-                          key={certification}
-                          control={form.control}
-                          name="certifications"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={certification}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(certification)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, certification])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== certification
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                  {certification}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="otherCertification"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Other Certifications</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Please specify any other certifications" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="md:col-span-2">
-                <FormLabel>Certification Proof</FormLabel>
-                <div className="flex items-center gap-4 mt-2">
-                  <div>
-                    <Input 
-                      id="certificationProof" 
-                      type="file" 
-                      onChange={handleCertificateChange} 
-                      className="max-w-xs"
-                      accept="image/*,application/pdf"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload proof of certification (PDF or image, max 5MB)
-                    </p>
-                  </div>
-                  {certificateUrl && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      {certificateUrl.startsWith('data:image') ? (
-                        <span>Image uploaded ✓</span>
-                      ) : certificateUrl.startsWith('http') ? (
-                        <span>File already uploaded ✓</span>
-                      ) : (
-                        <span>{certificateUrl} ✓</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="careServices"
-                render={() => (
-                  <FormItem className="md:col-span-2">
-                    <div className="mb-2">
-                      <FormLabel>Care Services</FormLabel>
-                      <FormDescription>
-                        Select all services you can provide
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {careServiceOptions.map((service) => (
-                        <FormField
-                          key={service}
-                          control={form.control}
-                          name="careServices"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={service}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(service)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, service])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== service
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                  {service}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="languages"
-                render={() => (
-                  <FormItem className="md:col-span-2">
-                    <div className="mb-2">
-                      <FormLabel>Languages</FormLabel>
-                      <FormDescription>
-                        Select all languages you speak fluently
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {languageOptions.map((language) => (
-                        <FormField
-                          key={language}
-                          control={form.control}
-                          name="languages"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={language}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(language)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, language])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== language
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                  {language}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="yearsOfExperience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select years of experience" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
-                        <SelectItem value="1-2 years">1-2 years</SelectItem>
-                        <SelectItem value="3-5 years">3-5 years</SelectItem>
-                        <SelectItem value="6-10 years">6-10 years</SelectItem>
-                        <SelectItem value="More than 10 years">More than 10 years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="workType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Work Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select work type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {workTypeOptions.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="availability"
-                render={() => (
-                  <FormItem className="md:col-span-2">
-                    <div className="mb-2">
-                      <FormLabel>Availability</FormLabel>
-                      <FormDescription>
-                        Select all that apply to your availability
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {availabilityOptions.map((option) => (
-                        <FormField
-                          key={option}
-                          control={form.control}
-                          name="availability"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={option}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(option)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, option])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== option
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                  {option}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="backgroundCheck"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 md:col-span-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>I have completed a background check</FormLabel>
-                      <FormDescription>
-                        Background checks help ensure safety and trust
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <div className="md:col-span-2">
-                <FormLabel>Background Check Proof</FormLabel>
-                <div className="flex items-center gap-4 mt-2">
-                  <div>
-                    <Input 
-                      id="backgroundCheckProof" 
-                      type="file" 
-                      onChange={handleBackgroundCheckChange} 
-                      className="max-w-xs"
-                      accept="image/*,application/pdf"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Upload proof of background check (PDF or image, max 5MB)
-                    </p>
-                  </div>
-                  {backgroundCheckUrl && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      {backgroundCheckUrl.startsWith('data:image') ? (
-                        <span>Image uploaded ✓</span>
-                      ) : backgroundCheckUrl.startsWith('http') ? (
-                        <span>File already uploaded ✓</span>
-                      ) : (
-                        <span>{backgroundCheckUrl} ✓</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="legallyAuthorized"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 md:col-span-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        required
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>I am legally authorized to work</FormLabel>
-                      <FormDescription>
-                        I confirm that I am legally authorized to work in this country
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="expectedRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expected Pay Rate</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="e.g. $25/hour or $250/day" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="paymentMethods"
-                render={() => (
-                  <FormItem className="md:col-span-2">
-                    <div className="mb-2">
-                      <FormLabel>Accepted Payment Methods</FormLabel>
-                      <FormDescription>
-                        Select all payment methods you accept
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {paymentMethodOptions.map((method) => (
-                        <FormField
-                          key={method}
-                          control={form.control}
-                          name="paymentMethods"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={method}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(method)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, method])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== method
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                  {method}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Bio & Additional Information */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">About You</h2>
-            <div className="space-y-6">
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Professional Bio</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        {...field} 
-                        placeholder="Tell us about your professional background and experience" 
-                        rows={4}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      This will appear on your profile for families to see
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="whyChooseCaregiving"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Why Did You Choose Caregiving?</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        {...field} 
-                        placeholder="Share why you are passionate about caregiving" 
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="preferredWorkLocations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Work Locations</FormLabel>
-                    <FormControl>
+                  
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="profile-upload">Professional Photo</Label>
+                    <div className="flex items-center gap-2">
                       <Input 
-                        {...field} 
-                        placeholder="e.g. North Seattle, Downtown, Bellevue" 
+                        id="profile-upload" 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleProfilePictureChange}
+                        className="w-full"
                       />
-                    </FormControl>
-                    <FormDescription>
-                      List areas where you're willing to work
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="commuteMode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Transportation Method</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="How do you commute?" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {commuteModeOptions.map((mode) => (
-                          <SelectItem key={mode} value={mode}>
-                            {mode}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Preferences Section */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Preferences</h2>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="listInDirectory"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Include me in care provider directory</FormLabel>
-                      <FormDescription>
-                        Allow families to find your profile in the provider directory
-                      </FormDescription>
                     </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="enableJobAlerts"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Receive job alerts</FormLabel>
-                      <FormDescription>
-                        Get notified when new care opportunities match your profile
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Submission */}
-          <div className="pt-4">
-            {uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="mb-4">
-                <p className="text-sm mb-1">Updating your profile: {uploadProgress}%</p>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full" 
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
+                    <p className="text-sm text-gray-500">
+                      Upload a professional-looking photo to help families recognize you. Max size: 5MB.
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
+              
+              {/* Personal Information Section */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">✅ Essential Personal Information</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="First and Last Name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="experienceYears"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Years of Experience</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your experience" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EXPERIENCE_RANGES.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 sm:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="professionalType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Professional Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your professional role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {PROFESSIONAL_TYPES.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {form.watch('professionalType') === 'other' && (
+                    <div className="space-y-2 sm:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="otherProfessionalType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Please specify your professional role</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your professional specialization" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2 sm:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="licenseNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>License/Certification Number (if applicable)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="License or certification number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Certifications & Licenses</Label>
+                    <Input 
+                      id="certification-upload" 
+                      type="file" 
+                      onChange={handleCertificationUpload}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Upload documents like CPR certification, nursing license, etc. Max size: 10MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Contact Information */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">Contact Information</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your email address" type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="City, State, Country" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="preferredContactMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Contact Method</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select preferred contact method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {CONTACT_METHOD_OPTIONS.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Care Services */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">🟡 Care Services & Specializations</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="careServices"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>What type of care do you provide?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {CARE_SERVICES.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="careServices"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="medicalConditions"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>What medical conditions have you worked with?</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {MEDICAL_CONDITIONS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="medicalConditions"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="otherMedicalCondition"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Other medical conditions not listed above</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Specify other conditions you've worked with" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Availability & Matching */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">🟡 Availability & Matching Preferences</h3>
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="availability"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>Preferred Work Hours</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {AVAILABILITY_OPTIONS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="availability"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="workType"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Do you work with:</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            {WORK_TYPE_OPTIONS.map(option => (
+                              <FormItem key={option.value} className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value={option.value} />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {option.label}
+                                </FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="familyMatchPreferences"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel>Preferred Family Matching</FormLabel>
+                          <FormDescription>
+                            Select all that apply
+                          </FormDescription>
+                        </div>
+                        <div className="grid gap-2">
+                          {FAMILY_MATCH_OPTIONS.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="familyMatchPreferences"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Additional Details */}
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold">🟡 Additional Details & Compliance</h3>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Background Check & References</Label>
+                    <Input 
+                      id="background-check-upload" 
+                      type="file" 
+                      onChange={handleBackgroundCheckUpload}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Upload proof of background check or consent form. Max size: 10MB.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <FormLabel>Are you comfortable with:</FormLabel>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="comfortAreas.medication"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              💊 Administering Medication
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="comfortAreas.housekeeping"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              🏡 Housekeeping / Meal Preparation
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="comfortAreas.transportation"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              🚗 Transportation for Appointments
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="comfortAreas.medicalEquipment"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              🩺 Handling Medical Equipment
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="emergencyContact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Emergency Contact</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Name and phone number" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          For your safety when providing care
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="hasLiabilityInsurance"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            I have liability insurance
+                          </FormLabel>
+                          <FormDescription>
+                            Recommended for independent caregivers
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="expectedRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hourly Rate / Salary Expectations</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your expected compensation" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="additionalNotes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional Notes for Families</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Tell families more about your experience, approach to caregiving, or any other information you'd like to share"
+                            className="min-h-[120px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </CardContent>
             
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving Profile...
-                </>
-              ) : (
-                <>Save Professional Profile</>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            <CardFooter className="flex flex-col sm:flex-row gap-4 justify-between border-t pt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate(-1)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading || isUploading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Complete Registration"
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
     </div>
   );
 }
