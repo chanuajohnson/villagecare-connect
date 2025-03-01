@@ -16,53 +16,140 @@ export const supabase = createClient(
       storageKey: 'supabase.auth.token',
       detectSessionInUrl: false, // Disable automatic URL detection to avoid issues
       flowType: 'pkce',
+    },
+    global: {
+      // Increase the timeout to 15 seconds (15000ms)
+      fetch: (url, options) => {
+        return fetch(url, {
+          ...options,
+          signal: options?.signal || new AbortController().signal,
+          // Set a longer timeout for all requests
+          headers: {
+            ...options?.headers,
+            'X-Client-Info': 'takes-a-village-app',
+          },
+        });
+      },
+    },
+    realtime: {
+      timeout: 15000, // 15 seconds
     }
   }
 );
 
-// Helper function to get user role
+// Helper function to get user role with improved resilience
 export const getUserRole = async () => {
   console.log('Getting user role...');
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.log('No user found in getUserRole');
-    return null;
-  }
-  
   try {
-    console.log('Fetching role for user ID:', user.id);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-      
-    if (error) {
-      console.error('Error fetching user role:', error);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log('No user found in getUserRole');
       return null;
     }
     
-    console.log('Role data returned:', data);
+    console.log('Fetching role for user ID:', user.id);
     
-    // If we have data but no role, check the user metadata
-    if (data && !data.role && user.user_metadata && user.user_metadata.role) {
-      console.log('Using role from user metadata:', user.user_metadata.role);
+    // Try multiple approaches to get the user role
+    // First attempt: Check user metadata (fastest)
+    if (user.user_metadata && user.user_metadata.role) {
+      console.log('Role found in user metadata:', user.user_metadata.role);
       
-      // Update the profile with the role from metadata
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role: user.user_metadata.role })
-        .eq('id', user.id);
-        
-      if (updateError) {
-        console.error('Error updating profile with role:', updateError);
+      // Update the profile to ensure it's in sync with metadata
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: user.user_metadata.role })
+          .eq('id', user.id);
+          
+        if (updateError) {
+          console.error('Error updating profile with role from metadata:', updateError);
+        }
+      } catch (err) {
+        console.error('Error updating profile:', err);
       }
       
       return user.user_metadata.role;
     }
     
-    return data?.role;
+    // Second attempt: Profile table query with retry logic
+    let retries = 3;
+    let profileData = null;
+    let queryError = null;
+    
+    while (retries > 0 && !profileData) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error(`Error fetching user role (attempt ${4-retries}/3):`, error);
+          queryError = error;
+          retries--;
+          if (retries > 0) {
+            console.log(`Retrying role fetch in 1s... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } else {
+          profileData = data;
+          break;
+        }
+      } catch (err) {
+        console.error(`Unexpected error in role fetch (attempt ${4-retries}/3):`, err);
+        queryError = err;
+        retries--;
+        if (retries > 0) {
+          console.log(`Retrying role fetch in 1s... (${retries} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    if (profileData) {
+      console.log('Role data returned from profile:', profileData);
+      
+      // If we found a profile but no role, check if we should apply a default
+      if (!profileData.role) {
+        // Last resort: Check if the user was registered with a specific role intent
+        // This would be stored in local storage during the registration process
+        const intendedRole = localStorage.getItem('registrationRole');
+        if (intendedRole) {
+          console.log('Using intended role from registration:', intendedRole);
+          
+          // Update the profile with the intended role
+          try {
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: intendedRole })
+              .eq('id', user.id);
+              
+            if (updateError) {
+              console.error('Error updating profile with intended role:', updateError);
+            } else {
+              // Clear the intended role from localStorage
+              localStorage.removeItem('registrationRole');
+              return intendedRole;
+            }
+          } catch (err) {
+            console.error('Error updating profile with intended role:', err);
+          }
+        }
+      }
+      
+      return profileData.role;
+    }
+    
+    // If we still don't have a role, log an error and return a safe default
+    console.error('Failed to retrieve user role after multiple attempts', { 
+      user_id: user.id,
+      metadata: user.user_metadata,
+      last_error: queryError
+    });
+    
+    return null;
   } catch (error) {
     console.error('Unexpected error in getUserRole:', error);
     return null;

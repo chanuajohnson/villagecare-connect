@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -7,7 +6,10 @@ import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
 
 // Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 5000; // Reduced to 5s to avoid long waits
+const LOADING_TIMEOUT_MS = 15000; // Increased to 15s to provide more time for role determination
+
+// Define maximum retry attempts for critical operations
+const MAX_RETRY_ATTEMPTS = 3;
 
 interface AuthContextType {
   session: Session | null;
@@ -46,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isInitializedRef = useRef(false);
   const isRedirectingRef = useRef(false);
   const isSigningOutRef = useRef(false);
+  const retryAttemptsRef = useRef<Record<string, number>>({});
 
   const clearLoadingTimeout = () => {
     if (loadingTimeoutRef.current) {
@@ -68,33 +71,76 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log(`[AuthProvider] TIMEOUT reached for: ${operation} - forcibly ending loading state`);
         setIsLoading(false);
         
-        if (operation.includes('sign-out') || operation.includes('fetch-session')) {
-          console.log('[AuthProvider] Clearing auth state due to timeout');
+        const isAuthOperation = operation.includes('sign-out') || 
+                               operation.includes('fetch-session') || 
+                               operation.includes('auth-state-change');
+        
+        if (isAuthOperation) {
+          console.log('[AuthProvider] Authentication operation timed out - recovering gracefully');
           
-          try {
-            // Reset local state regardless of Supabase signOut success
+          if (session && user) {
+            console.log('[AuthProvider] Session exists but role determination failed');
+            toast.error(`Authentication operation timed out. Please refresh the page and try again.`);
+            
+            try {
+              localStorage.setItem('lastAuthState', JSON.stringify({
+                userId: user.id,
+                email: user.email,
+                timeoutOperation: operation,
+                timestamp: new Date().toISOString()
+              }));
+            } catch (err) {
+              console.error('[AuthProvider] Error saving auth state for recovery:', err);
+            }
+          } else if (isSigningOutRef.current) {
+            console.log('[AuthProvider] Sign out timed out - forcing state reset');
             setSession(null);
             setUser(null);
             setUserRole(null);
             
-            if (isSigningOutRef.current) {
-              isSigningOutRef.current = false;
-              navigate('/');
-              toast.success('You have been signed out successfully');
-            }
+            isSigningOutRef.current = false;
+            navigate('/');
+            toast.success('You have been signed out successfully');
             
-            // Try to sign out from Supabase, but don't wait for it
             supabase.auth.signOut().catch(err => console.error('[AuthProvider] Error during forced signout:', err));
-          } catch (error) {
-            console.error('[AuthProvider] Error during forced signout:', error);
+          } else {
+            console.log('[AuthProvider] Authentication flow interrupted - resetting state');
+            toast.error(`Authentication operation timed out. Please try again.`);
           }
           
-          if (!location.pathname.includes('/auth')) {
-            toast.error(`Authentication operation timed out. Please refresh the page and try again.`);
-          }
+          localStorage.setItem('authTimeoutRecovery', 'true');
         }
       }, LOADING_TIMEOUT_MS);
     }
+  };
+
+  const retryOperation = async <T,>(
+    operation: string, 
+    fn: () => Promise<T>, 
+    maxRetries: number = MAX_RETRY_ATTEMPTS
+  ): Promise<T | null> => {
+    retryAttemptsRef.current[operation] = 0;
+    
+    while (retryAttemptsRef.current[operation] < maxRetries) {
+      try {
+        const result = await fn();
+        delete retryAttemptsRef.current[operation];
+        return result;
+      } catch (error) {
+        retryAttemptsRef.current[operation]++;
+        console.error(`[AuthProvider] Error in ${operation} (attempt ${retryAttemptsRef.current[operation]}/${maxRetries}):`, error);
+        
+        if (retryAttemptsRef.current[operation] < maxRetries) {
+          const delay = Math.min(1000 * retryAttemptsRef.current[operation], 3000);
+          console.log(`[AuthProvider] Retrying ${operation} in ${delay}ms (attempt ${retryAttemptsRef.current[operation] + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    console.error(`[AuthProvider] Operation ${operation} failed after ${maxRetries} attempts`);
+    delete retryAttemptsRef.current[operation];
+    return null;
   };
 
   const checkProfileCompletion = async (userId: string) => {
@@ -112,6 +158,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       console.log('[AuthProvider] Profile data retrieved:', profile);
+      
+      if (profile?.role && !userRole) {
+        console.log('[AuthProvider] Setting user role from profile:', profile.role);
+        setUserRole(profile.role);
+      }
       
       const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
@@ -180,6 +231,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Handling post-login redirection for user:', user.id);
       console.log('[AuthProvider] Current user role:', userRole);
       
+      if (!userRole && user.user_metadata?.role) {
+        console.log('[AuthProvider] Setting user role from metadata:', user.user_metadata.role);
+        setUserRole(user.user_metadata.role);
+      }
+      
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
@@ -194,15 +250,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
       console.log('[AuthProvider] Has pending action:', hasPendingAction);
       
-      // Check current location to avoid redirect loops
       const isOnRegistrationPage = location.pathname.includes('/registration/');
       
-      // Force registration completion if profile is incomplete
+      const hadTimeout = localStorage.getItem('authTimeoutRecovery');
+      if (hadTimeout) {
+        localStorage.removeItem('authTimeoutRecovery');
+        console.log('[AuthProvider] Recovering from previous timeout');
+        toast.info('Resuming your previous session');
+      }
+      
       if (!profileComplete && !isOnRegistrationPage) {
+        let registrationPath = '/registration/family';
+        
         if (userRole) {
-          console.log('[AuthProvider] Profile is incomplete, redirecting to registration page for role:', userRole);
-          
-          // This is the key fix - ensure we're using the correct mapping for registration routes
           const registrationRoutes: Record<UserRole, string> = {
             'family': '/registration/family',
             'professional': '/registration/professional',
@@ -210,26 +270,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             'admin': '/dashboard/admin'
           };
           
-          const route = registrationRoutes[userRole];
-          console.log('[AuthProvider] Redirecting to registration page:', route);
-          toast.info('Please complete your profile to continue');
-          navigate(route);
-          isRedirectingRef.current = false;
-          return;
+          registrationPath = registrationRoutes[userRole];
+        } else if (user.user_metadata?.role) {
+          registrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
+        } else if (localStorage.getItem('registrationRole')) {
+          const intendedRole = localStorage.getItem('registrationRole');
+          registrationPath = `/registration/${intendedRole?.toLowerCase()}`;
         }
+        
+        console.log('[AuthProvider] Redirecting to registration page:', registrationPath);
+        toast.info('Please complete your profile to continue');
+        navigate(registrationPath);
+        isRedirectingRef.current = false;
+        return;
       }
       
-      // If we're already on a registration page and profile is incomplete, don't redirect elsewhere
       if (!profileComplete && isOnRegistrationPage) {
-        // Check if we're on the CORRECT registration page for our role
+        let correctRegistrationPath = null;
+        
         if (userRole) {
-          const correctRegistrationPath = `/registration/${userRole.toLowerCase()}`;
+          correctRegistrationPath = `/registration/${userRole.toLowerCase()}`;
+        } else if (user.user_metadata?.role) {
+          correctRegistrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
+        } else if (localStorage.getItem('registrationRole')) {
+          const intendedRole = localStorage.getItem('registrationRole');
+          correctRegistrationPath = `/registration/${intendedRole?.toLowerCase()}`;
+        }
+        
+        if (correctRegistrationPath) {
           const currentPath = location.pathname;
           
-          // If we're on the wrong registration page, redirect to the correct one
           if (currentPath !== correctRegistrationPath) {
             console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
-            toast.info(`Redirecting to the ${userRole} registration form`);
+            const roleName = correctRegistrationPath.split('/').pop();
+            toast.info(`Redirecting to the ${roleName} registration form`);
             navigate(correctRegistrationPath);
             isRedirectingRef.current = false;
             return;
@@ -242,7 +316,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Handle pending actions only if profile is complete
       if (profileComplete) {
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         if (pendingFeatureId) {
@@ -287,7 +360,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
       
-      // Default navigation if no specific redirects were triggered
       if (profileComplete && userRole) {
         const dashboardRoutes: Record<UserRole, string> = {
           'family': '/dashboard/family',
@@ -346,6 +418,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Fetching session and user...');
       setLoadingWithTimeout(true, 'fetch-session');
       
+      const hadAuthError = localStorage.getItem('authStateError');
+      if (hadAuthError) {
+        console.log('[AuthProvider] Detected previous auth error, clearing state');
+        localStorage.removeItem('authStateError');
+        
+        try {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setIsProfileComplete(false);
+          setLoadingWithTimeout(false, 'fetch-session-error-recovery');
+          return;
+        } catch (e) {
+          console.error('[AuthProvider] Error clearing stale auth state:', e);
+        }
+      }
+      
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -361,9 +451,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (currentSession?.user) {
         console.log('[AuthProvider] User found in session:', currentSession.user.id);
-        const role = await getUserRole();
-        console.log('[AuthProvider] User role:', role);
-        setUserRole(role);
+        
+        if (currentSession.user.user_metadata?.role) {
+          console.log('[AuthProvider] Setting role from user metadata:', currentSession.user.user_metadata.role);
+          setUserRole(currentSession.user.user_metadata.role);
+        } else {
+          console.log('[AuthProvider] Getting role from database...');
+          const role = await getUserRole();
+          console.log('[AuthProvider] User role from database:', role);
+          setUserRole(role);
+        }
         
         await checkProfileCompletion(currentSession.user.id);
       } else {
@@ -381,8 +478,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   useEffect(() => {
-    if (user && userRole && isInitializedRef.current) {
-      console.log('[AuthProvider] User and role available, handling redirection');
+    if (user && isInitializedRef.current) {
+      console.log('[AuthProvider] User available, handling redirection');
       handlePostLoginRedirection();
     }
   }, [user, userRole, location.pathname]);
@@ -430,13 +527,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (newSession?.user) {
             console.log('[AuthProvider] Getting role for signed in user...');
-            const role = await getUserRole();
-            console.log('[AuthProvider] User role from auth state change:', role);
-            setUserRole(role);
+            
+            if (newSession.user.user_metadata?.role) {
+              console.log('[AuthProvider] Setting role from user metadata:', newSession.user.user_metadata.role);
+              setUserRole(newSession.user.user_metadata.role);
+            } else {
+              const role = await retryOperation(
+                'get-user-role',
+                async () => await getUserRole(),
+                3
+              );
+              
+              console.log('[AuthProvider] User role after retries:', role);
+              setUserRole(role);
+            }
             
             if (event === 'SIGNED_IN') {
               console.log('[AuthProvider] Processing post-signin actions');
               toast.success('You have successfully logged in!');
+              
+              if (location.pathname === '/auth' && localStorage.getItem('registeringAs')) {
+                const registeringAs = localStorage.getItem('registeringAs');
+                console.log(`[AuthProvider] User registering as: ${registeringAs}`);
+                localStorage.setItem('registrationRole', registeringAs);
+              }
             }
           }
           
@@ -448,6 +562,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsProfileComplete(false);
           
           localStorage.removeItem('authStateError');
+          localStorage.removeItem('authTimeoutRecovery');
+          localStorage.removeItem('registrationRole');
+          localStorage.removeItem('registeringAs');
           
           if (isSigningOutRef.current) {
             isSigningOutRef.current = false;
@@ -457,8 +574,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else if (event === 'USER_UPDATED') {
           console.log('[AuthProvider] User updated');
           if (newSession?.user) {
-            const role = await getUserRole();
-            setUserRole(role);
+            if (newSession.user.user_metadata?.role) {
+              console.log('[AuthProvider] Setting role from updated user metadata:', newSession.user.user_metadata.role);
+              setUserRole(newSession.user.user_metadata.role);
+            } else {
+              const role = await getUserRole();
+              console.log('[AuthProvider] Updated user role:', role);
+              setUserRole(role);
+            }
           }
           
           setLoadingWithTimeout(false, `auth-state-change-complete-${event}`);
@@ -484,31 +607,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isSigningOutRef.current = true;
       setLoadingWithTimeout(true, 'sign-out');
       
-      // First update our local state - this ensures UI shows signed out immediately
       setSession(null);
       setUser(null);
       setUserRole(null);
       setIsProfileComplete(false);
       
-      // Then try to sign out from Supabase
+      localStorage.removeItem('authStateError');
+      localStorage.removeItem('authTimeoutRecovery');
+      localStorage.removeItem('registrationRole');
+      localStorage.removeItem('registeringAs');
+      localStorage.removeItem('lastAuthState');
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('[AuthProvider] Sign out error:', error);
         throw error;
       }
       
-      // Navigate and show toast, even if we don't get the auth state change event
       navigate('/');
       toast.success('You have been signed out successfully');
       
-      // Set loading to false after signing out
       setLoadingWithTimeout(false, 'sign-out-complete');
       isSigningOutRef.current = false;
     } catch (error) {
       console.error('[AuthProvider] Error signing out:', error);
       toast.error('Failed to sign out');
       
-      // Still reset everything even if there's an error
       setSession(null);
       setUser(null);
       setUserRole(null);
