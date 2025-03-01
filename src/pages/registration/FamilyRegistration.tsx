@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,7 +47,6 @@ const FamilyRegistration = () => {
   useEffect(() => {
     const getUser = async () => {
       try {
-        // Get the current session first
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -67,7 +65,6 @@ const FamilyRegistration = () => {
         
         setAuthSession(sessionData.session);
         
-        // Now get the user data
         const { data: userData, error: userError } = await supabase.auth.getUser();
         
         if (userError || !userData?.user) {
@@ -80,7 +77,6 @@ const FamilyRegistration = () => {
         setUser(userData.user);
         setEmail(userData.user.email || '');
         
-        // Fetch existing profile data
         try {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -90,7 +86,6 @@ const FamilyRegistration = () => {
 
           if (profileError) {
             console.error('Error fetching profile:', profileError);
-            // Don't show an error toast here as this might be a new user
             return;
           }
 
@@ -126,7 +121,6 @@ const FamilyRegistration = () => {
 
     getUser();
     
-    // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         navigate('/auth');
@@ -135,7 +129,6 @@ const FamilyRegistration = () => {
       }
     });
     
-    // Clean up listener
     return () => {
       authListener?.subscription.unsubscribe();
     };
@@ -161,7 +154,6 @@ const FamilyRegistration = () => {
     setLoading(true);
 
     try {
-      // Verify auth session is still valid
       if (!authSession) {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
@@ -176,65 +168,70 @@ const FamilyRegistration = () => {
         throw new Error('No user found. Please sign in again.');
       }
 
-      // Validate required fields
       if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
         throw new Error('Please fill in all required fields');
       }
       
-      // Upload avatar if selected
       let uploadedAvatarUrl = avatarUrl;
       if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${uuidv4()}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        // First ensure the avatars bucket exists
         try {
-          const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+          const authenticatedSupabase = supabase;
+
+          const { data: buckets, error: bucketError } = await authenticatedSupabase.storage.listBuckets();
           
           if (bucketError) {
             console.error('Error checking buckets:', bucketError);
-            throw new Error('Could not verify storage availability. Please try again.');
-          }
-          
-          const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
-          
-          if (!avatarsBucketExists) {
-            const { error: createError } = await supabase.storage.createBucket('avatars', {
-              public: true,
-              fileSizeLimit: 1024 * 1024 * 2, // 2MB
-            });
+            console.log('Skipping profile picture upload due to storage issue');
+          } else {
+            const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
             
-            if (createError) {
-              console.error('Error creating avatars bucket:', createError);
-              throw new Error('Could not set up storage. Please try again or skip profile picture.');
+            if (!avatarsBucketExists) {
+              try {
+                const { error: createError } = await authenticatedSupabase.storage.createBucket('avatars', {
+                  public: true,
+                  fileSizeLimit: 1024 * 1024 * 2, // 2MB
+                });
+                
+                if (createError) {
+                  console.error('Error creating avatars bucket:', createError);
+                  console.log('Could not create storage bucket. Skipping profile picture.');
+                }
+              } catch (createErr) {
+                console.error('Error setting up storage bucket:', createErr);
+                console.log('Storage system error. Skipping profile picture.');
+              }
+            }
+            
+            try {
+              const fileExt = avatarFile.name.split('.').pop();
+              const fileName = `${uuidv4()}.${fileExt}`;
+              const filePath = `${user.id}/${fileName}`;
+              
+              const { error: uploadError, data } = await authenticatedSupabase.storage
+                .from('avatars')
+                .upload(filePath, avatarFile, {
+                  contentType: avatarFile.type,
+                  upsert: true, // Replace if exists
+                });
+
+              if (uploadError) {
+                console.error('Error uploading avatar:', uploadError);
+                console.log('Could not upload profile picture. Continuing with registration.');
+              } else if (data) {
+                const { data: urlData } = authenticatedSupabase.storage.from('avatars').getPublicUrl(filePath);
+                uploadedAvatarUrl = urlData.publicUrl;
+              }
+            } catch (uploadErr) {
+              console.error('Unexpected error during upload:', uploadErr);
+              console.log('Unexpected error during upload. Skipping profile picture.');
             }
           }
-        } catch (bucketErr) {
-          console.error('Error setting up storage:', bucketErr);
-          throw new Error('Storage system unavailable. Try again or skip profile picture.');
-        }
-
-        // Now upload the file
-        const { error: uploadError, data } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, avatarFile, {
-            contentType: avatarFile.type,
-            upsert: true, // Replace if exists
-          });
-
-        if (uploadError) {
-          console.error('Error uploading avatar:', uploadError);
-          throw new Error('Failed to upload profile picture. Please try again.');
-        }
-
-        if (data) {
-          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-          uploadedAvatarUrl = urlData.publicUrl;
+        } catch (storageErr) {
+          console.error('Critical storage error:', storageErr);
+          console.log('Storage system unavailable. Skipping profile picture.');
         }
       }
 
-      // Make sure arrays are initialized properly
       const processedCareTypes = careTypes || [];
       const processedSpecialNeeds = specialNeeds || [];
       const processedSpecializedCare = specializedCare || [];
