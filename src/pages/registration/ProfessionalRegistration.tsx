@@ -87,7 +87,7 @@ const professionalFormSchema = z.object({
 type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;
 
 const ProfessionalRegistration = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOtherProfessionalType, setShowOtherProfessionalType] = useState(false);
@@ -104,12 +104,12 @@ const ProfessionalRegistration = () => {
   } = useForm<ProfessionalFormValues>({
     resolver: zodResolver(professionalFormSchema),
     defaultValues: {
-      full_name: user?.full_name || '',
+      full_name: user?.userData?.full_name || '',
       professional_type: '',
       other_professional_type: '',
       years_of_experience: '',
       location: '',
-      phone_number: user?.phone_number || '',
+      phone_number: user?.userData?.phone_number || '',
       license_number: '',
       certifications: [],
       other_certification: '',
@@ -227,7 +227,9 @@ const ProfessionalRegistration = () => {
       }
       
       // Refresh user data
-      await refreshUser();
+      if (updateUser) {
+        await updateUser();
+      }
       
       toast.success('Professional profile created successfully!');
       navigate('/dashboards/professional');
