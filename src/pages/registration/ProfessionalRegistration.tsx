@@ -1,934 +1,705 @@
-
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/components/providers/AuthProvider';
-import { Loader2, Upload } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../../lib/supabase';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Button } from '../../components/ui/button';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Separator } from '../../components/ui/separator';
+import { Textarea } from '../../components/ui/textarea';
+import { useToast } from '../../hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Switch } from '../../components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 
-export default function ProfessionalRegistration() {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const navigate = useNavigate();
-  
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    address: '',
-    professionalType: '',
-    licenseNumber: '',
-    yearsOfExperience: '',
-    workType: '',
-    bio: '',
-    whyChooseCaregiving: '',
-    expectedRate: '',
-    preferredWorkLocations: '',
-    commuteMode: '',
-    backgroundCheck: false,
-    legallyAuthorized: false,
-    listInDirectory: false,
-    enableJobAlerts: false,
-    jobNotificationMethod: '',
-    customAvailabilityAlerts: '',
-  });
-
-  // Define all checkbox options
-  const certifications = [
-    { id: 'cprFirstAid', label: 'CPR & First Aid Certification' },
-    { id: 'dementiaAlzheimers', label: 'Dementia & Alzheimer\'s Care Certification' },
-    { id: 'nursingLicense', label: 'Nursing License (RN, LPN)' },
-    { id: 'homeHealthAide', label: 'Home Health Aide Certification' },
-    { id: 'gapp', label: 'Geriatric Adolescent Partnership Programme (GAPP) – Trinidad and Tobago' },
-  ];
-
-  const careServices = [
-    { id: 'elderlyCare', label: '🧓 Elderly Care' },
-    { id: 'specialNeedsChild', label: '👶 Special Needs Child Care' },
-    { id: 'alzheimersDementia', label: '🧠 Alzheimer\'s / Dementia Care' },
-    { id: 'overnightCare', label: '🌙 Overnight / 24-Hour Care' },
-    { id: 'hospiceCare', label: '🏥 Hospice & Palliative Care' },
-    { id: 'companionCare', label: '🤝 Companion Care' },
-    { id: 'mealPreparation', label: '🍽️ Meal Preparation & Nutrition' },
-    { id: 'mobilityAssistance', label: '♿ Mobility Assistance & Physical Therapy Support' },
-    { id: 'medicationManagement', label: '💊 Medication Reminders & Administration' },
-    { id: 'postSurgery', label: '🩹 Post-Surgery & Rehabilitation Support' },
-    { id: 'housekeeping', label: '🏠 Housekeeping & Home Assistance' },
-  ];
-
-  const languages = [
-    { id: 'english', label: 'English' },
-    { id: 'spanish', label: 'Spanish' },
-    { id: 'french', label: 'French' },
-    { id: 'hindi', label: 'Hindi' },
-    { id: 'chinese', label: 'Chinese' },
-  ];
-
-  const availability = [
-    { id: 'weekdays', label: 'Weekdays' },
-    { id: 'weekends', label: 'Weekends' },
-    { id: 'nights', label: 'Nights' },
-    { id: 'oncall', label: '24/7 On-Call' },
-  ];
-
-  const paymentMethods = [
-    { id: 'cash', label: 'Cash' },
-    { id: 'bankTransfer', label: 'Bank Transfer' },
-  ];
-
-  const jobMatchingCriteria = [
-    { id: 'locationBased', label: 'Location-Based Matching (Only show jobs in my selected work areas)' },
-    { id: 'skillBased', label: 'Skill-Based Matching (Only show jobs that match my certifications & expertise)' },
-    { id: 'availabilityBased', label: 'Availability-Based Matching (Only show jobs that fit my selected work schedule)' },
-    { id: 'emergency', label: 'Emergency & Last-Minute Requests (Receive urgent job notifications)' },
-  ];
-
-  // State for checkboxes
-  const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
-  const [selectedCareServices, setSelectedCareServices] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>([]);
-  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
-  const [selectedJobMatchingCriteria, setSelectedJobMatchingCriteria] = useState<string[]>([]);
+const ProfessionalRegistration = () => {
+  const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [professionalType, setProfessionalType] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [certifications, setCertifications] = useState<string[]>([]);
   const [otherCertification, setOtherCertification] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({
-    profilePicture: null,
-    certificationProof: null,
-    backgroundCheckProof: null,
-  });
+  const [certificationProofUrl, setCertificationProofUrl] = useState('');
+  const [careServices, setCareServices] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [yearsOfExperience, setYearsOfExperience] = useState('');
+  const [workType, setWorkType] = useState('');
+  const [availability, setAvailability] = useState<string[]>([]);
+  const [backgroundCheck, setBackgroundCheck] = useState(false);
+  const [backgroundCheckProofUrl, setBackgroundCheckProofUrl] = useState('');
+  const [legallyAuthorized, setLegallyAuthorized] = useState(false);
+  const [expectedRate, setExpectedRate] = useState('');
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [bio, setBio] = useState('');
+  const [whyChooseCaregiving, setWhyChooseCaregiving] = useState('');
+  const [preferredWorkLocations, setPreferredWorkLocations] = useState('');
+  const [commuteMode, setCommuteMode] = useState('');
+  const [listInDirectory, setListInDirectory] = useState(false);
+  const [enableJobAlerts, setEnableJobAlerts] = useState(false);
+  const [jobNotificationMethod, setJobNotificationMethod] = useState('');
+  const [jobMatchingCriteria, setJobMatchingCriteria] = useState<string[]>([]);
+  const [customAvailabilityAlerts, setCustomAvailabilityAlerts] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect if not logged in
-    if (!user) {
-      toast.error('You must be logged in to complete registration');
-      navigate('/auth');
-      return;
-    }
-
-    // Check if the user already has a profile
-    const fetchUserProfile = async () => {
-      try {
-        const { data: profile, error } = await supabase
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+        // Check if profile already exists and pre-fill form
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', data.user.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching profile:', error);
-          return;
+        if (profileData) {
+          setAvatarUrl(profileData.avatar_url);
+          setFirstName(profileData.full_name?.split(' ')[0] || '');
+          setLastName(profileData.full_name?.split(' ')[1] || '');
+          setProfessionalType(profileData.professional_type || '');
+          setLicenseNumber(profileData.license_number || '');
+          setCertifications(profileData.certifications || []);
+          setOtherCertification(profileData.other_certification || '');
+          setCertificationProofUrl(profileData.certification_proof_url || '');
+          setCareServices(profileData.care_services || []);
+          setLanguages(profileData.languages || []);
+          setYearsOfExperience(profileData.years_of_experience || '');
+          setWorkType(profileData.work_type || '');
+          setAvailability(profileData.availability || []);
+          setBackgroundCheck(profileData.background_check || false);
+          setBackgroundCheckProofUrl(profileData.background_check_proof_url || '');
+          setLegallyAuthorized(profileData.legally_authorized || false);
+          setExpectedRate(profileData.expected_rate || '');
+          setPaymentMethods(profileData.payment_methods || []);
+          setBio(profileData.bio || '');
+          setWhyChooseCaregiving(profileData.why_choose_caregiving || '');
+          setPreferredWorkLocations(profileData.preferred_work_locations || '');
+          setCommuteMode(profileData.commute_mode || '');
+          setListInDirectory(profileData.list_in_directory || false);
+          setEnableJobAlerts(profileData.enable_job_alerts || false);
+          setJobNotificationMethod(profileData.job_notification_method || '');
+          setJobMatchingCriteria(profileData.job_matching_criteria || []);
+          setCustomAvailabilityAlerts(profileData.custom_availability_alerts || '');
         }
-
-        // If profile exists and has full_name, pre-fill the form
-        if (profile && profile.full_name) {
-          setFormData({
-            fullName: profile.full_name || '',
-            phoneNumber: profile.phone_number || '',
-            address: profile.address || '',
-            professionalType: profile.professional_type || '',
-            licenseNumber: profile.license_number || '',
-            yearsOfExperience: profile.years_of_experience || '',
-            workType: profile.work_type || '',
-            bio: profile.bio || '',
-            whyChooseCaregiving: profile.why_choose_caregiving || '',
-            expectedRate: profile.expected_rate || '',
-            preferredWorkLocations: profile.preferred_work_locations || '',
-            commuteMode: profile.commute_mode || '',
-            backgroundCheck: profile.background_check || false,
-            legallyAuthorized: profile.legally_authorized || false,
-            listInDirectory: profile.list_in_directory || false,
-            enableJobAlerts: profile.enable_job_alerts || false,
-            jobNotificationMethod: profile.job_notification_method || '',
-            customAvailabilityAlerts: profile.custom_availability_alerts || '',
-          });
-          
-          setSelectedCertifications(profile.certifications || []);
-          setSelectedCareServices(profile.care_services || []);
-          setSelectedLanguages(profile.languages || []);
-          setSelectedAvailability(profile.availability || []);
-          setSelectedPaymentMethods(profile.payment_methods || []);
-          setSelectedJobMatchingCriteria(profile.job_matching_criteria || []);
-          setOtherCertification(profile.other_certification || '');
-        }
-      } catch (error) {
-        console.error('Error in fetchUserProfile:', error);
+      } else {
+        // If not logged in, redirect to auth page
+        navigate('/auth');
       }
     };
 
-    fetchUserProfile();
-  }, [user, navigate]);
+    getUser();
+  }, [navigate]);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleCertificationChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCertifications(prev => [...prev, id]);
-    } else {
-      setSelectedCertifications(prev => prev.filter(item => item !== id));
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
     }
-  };
-
-  const handleCareServiceChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCareServices(prev => [...prev, id]);
-    } else {
-      setSelectedCareServices(prev => prev.filter(item => item !== id));
-    }
-  };
-
-  const handleLanguageChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedLanguages(prev => [...prev, id]);
-    } else {
-      setSelectedLanguages(prev => prev.filter(item => item !== id));
-    }
-  };
-
-  const handleAvailabilityChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedAvailability(prev => [...prev, id]);
-    } else {
-      setSelectedAvailability(prev => prev.filter(item => item !== id));
-    }
-  };
-
-  const handlePaymentMethodChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPaymentMethods(prev => [...prev, id]);
-    } else {
-      setSelectedPaymentMethods(prev => prev.filter(item => item !== id));
-    }
-  };
-
-  const handleJobMatchingCriteriaChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedJobMatchingCriteria(prev => [...prev, id]);
-    } else {
-      setSelectedJobMatchingCriteria(prev => prev.filter(item => item !== id));
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadedFiles({
-        ...uploadedFiles,
-        [fileType]: e.target.files[0]
-      });
-    }
-  };
-
-  const uploadFile = async (file: File, path: string): Promise<string | null> => {
-    try {
-      if (!user) return null;
-      
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${path}/${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
-      
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        return null;
-      }
-      
-      const { data: { publicUrl } } = supabase.storage.from('profiles').getPublicUrl(filePath);
-      return publicUrl;
-    } catch (error) {
-      console.error('Error in uploadFile:', error);
-      return null;
-    }
+    
+    const file = event.target.files[0];
+    setAvatarFile(file);
+    
+    // Create a preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      toast.error('You must be logged in to complete registration');
-      navigate('/auth');
-      return;
-    }
-    
-    // Validation for required fields
-    if (
-      !formData.fullName || 
-      !formData.phoneNumber || 
-      !formData.address || 
-      !formData.professionalType || 
-      selectedCareServices.length === 0 ||
-      !formData.workType ||
-      selectedAvailability.length === 0
-    ) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-    
-    setIsLoading(true);
-    setFormSubmitted(true);
-    
+    setLoading(true);
+
     try {
-      console.log('Starting profile update with user ID:', user.id);
-      
-      // Upload files if provided
-      let profilePictureUrl = null;
-      let certificationProofUrl = null;
-      let backgroundCheckProofUrl = null;
-      
-      if (uploadedFiles.profilePicture) {
-        profilePictureUrl = await uploadFile(uploadedFiles.profilePicture, 'profile-pictures');
+      if (!user) {
+        throw new Error('No user found');
       }
-      
-      if (uploadedFiles.certificationProof) {
-        certificationProofUrl = await uploadFile(uploadedFiles.certificationProof, 'certification-proofs');
+
+      // Upload avatar if selected
+      let uploadedAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        uploadedAvatarUrl = data.publicUrl;
       }
-      
-      if (uploadedFiles.backgroundCheckProof) {
-        backgroundCheckProofUrl = await uploadFile(uploadedFiles.backgroundCheckProof, 'background-checks');
-      }
-      
-      // Using upsert to either update an existing profile or create a new one
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: formData.fullName,
-          phone_number: formData.phoneNumber,
-          address: formData.address,
-          avatar_url: profilePictureUrl || undefined,
-          professional_type: formData.professionalType,
-          license_number: formData.licenseNumber,
-          certifications: selectedCertifications,
-          other_certification: otherCertification,
-          certification_proof_url: certificationProofUrl || undefined,
-          care_services: selectedCareServices,
-          languages: selectedLanguages,
-          years_of_experience: formData.yearsOfExperience,
-          work_type: formData.workType,
-          availability: selectedAvailability,
-          background_check: formData.backgroundCheck,
-          background_check_proof_url: backgroundCheckProofUrl || undefined,
-          legally_authorized: formData.legallyAuthorized,
-          expected_rate: formData.expectedRate,
-          payment_methods: selectedPaymentMethods,
-          bio: formData.bio,
-          why_choose_caregiving: formData.whyChooseCaregiving,
-          preferred_work_locations: formData.preferredWorkLocations,
-          commute_mode: formData.commuteMode,
-          list_in_directory: formData.listInDirectory,
-          enable_job_alerts: formData.enableJobAlerts,
-          job_notification_method: formData.jobNotificationMethod,
-          job_matching_criteria: selectedJobMatchingCriteria,
-          custom_availability_alerts: formData.customAvailabilityAlerts,
-          role: 'professional'
-        }, { 
-          onConflict: 'id'
-        });
+
+      // Update profile
+      const fullName = `${firstName} ${lastName}`.trim();
+      const updates = {
+        id: user.id,
+        full_name: fullName,
+        avatar_url: uploadedAvatarUrl,
+        professional_type: professionalType,
+        license_number: licenseNumber,
+        certifications: certifications,
+        other_certification: otherCertification,
+        certification_proof_url: certificationProofUrl,
+        care_services: careServices,
+        languages: languages,
+        years_of_experience: yearsOfExperience,
+        work_type: workType,
+        availability: availability,
+        background_check: backgroundCheck,
+        background_check_proof_url: backgroundCheckProofUrl,
+        legally_authorized: legallyAuthorized,
+        expected_rate: expectedRate,
+        payment_methods: paymentMethods,
+        bio: bio,
+        why_choose_caregiving: whyChooseCaregiving,
+        preferred_work_locations: preferredWorkLocations,
+        commute_mode: commuteMode,
+        list_in_directory: listInDirectory,
+        enable_job_alerts: enableJobAlerts,
+        job_notification_method: jobNotificationMethod,
+        job_matching_criteria: jobMatchingCriteria,
+        custom_availability_alerts: customAvailabilityAlerts,
+        role: 'professional' as const,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from('profiles').upsert(updates);
       
       if (error) {
-        console.error('Error updating profile:', error);
         throw error;
       }
-      
-      console.log('Profile updated successfully');
-      
-      // Show success message
-      toast.success('Profile completed successfully!');
-      
-      // Wait a moment before redirect to ensure the database has updated
-      setTimeout(() => {
-        console.log('Redirecting to professional dashboard...');
-        navigate('/dashboard/professional');
-      }, 1000);
-    } catch (error: any) {
+
+      toast({
+        title: 'Registration Complete',
+        description: 'Your professional profile has been updated.'
+      });
+
+      // Redirect to professional dashboard
+      navigate('/dashboards/professional');
+    } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile');
-      setFormSubmitted(false);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update profile. Please try again.'
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // File input references for custom upload buttons
-  const profilePictureRef = useRef<HTMLInputElement>(null);
-  const certificationProofRef = useRef<HTMLInputElement>(null);
-  const backgroundCheckProofRef = useRef<HTMLInputElement>(null);
+  // Helper for checkbox arrays
+  const handleCheckboxArrayChange = (
+    value: string, 
+    currentArray: string[], 
+    setFunction: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (currentArray.includes(value)) {
+      setFunction(currentArray.filter(item => item !== value));
+    } else {
+      setFunction([...currentArray, value]);
+    }
+  };
 
   return (
-    <div className="container max-w-3xl mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete Your Professional Profile</CardTitle>
-          <CardDescription>
-            Please provide detailed information to help us connect you with families seeking care services
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Section 1: Personal & Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Personal & Contact Information</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input 
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleTextChange}
-                    placeholder="Your full name"
-                    required
-                    disabled={isLoading || formSubmitted}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input 
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleTextChange}
-                    placeholder="Your phone number"
-                    type="tel"
-                    required
-                    disabled={isLoading || formSubmitted}
-                  />
-                </div>
-              </div>
+    <div className="container max-w-4xl py-10">
+      <h1 className="text-3xl font-bold mb-6">Professional Registration</h1>
+      <p className="text-gray-500 mb-8">
+        Complete your professional profile to connect with families in need of care services.
+      </p>
 
-              <div className="space-y-2">
-                <Label htmlFor="profilePicture">Profile Picture</Label>
-                <input
-                  type="file"
-                  id="profilePicture"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e, 'profilePicture')}
-                  ref={profilePictureRef}
-                  disabled={isLoading || formSubmitted}
-                />
-                <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => profilePictureRef.current?.click()}
-                    disabled={isLoading || formSubmitted}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Photo
-                  </Button>
-                  {uploadedFiles.profilePicture && (
-                    <span className="text-sm text-green-600">
-                      {uploadedFiles.profilePicture.name} selected
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea 
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleTextChange}
-                  placeholder="Your address"
-                  required
-                  disabled={isLoading || formSubmitted}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="preferredWorkLocations">Preferred Work Locations</Label>
-                <Select
-                  onValueChange={(value) => handleSelectChange('preferredWorkLocations', value)}
-                  value={formData.preferredWorkLocations}
-                  disabled={isLoading || formSubmitted}
-                >
-                  <SelectTrigger id="preferredWorkLocations">
-                    <SelectValue placeholder="Select work location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="portOfSpain">Port of Spain</SelectItem>
-                    <SelectItem value="sanFernando">San Fernando</SelectItem>
-                    <SelectItem value="arima">Arima</SelectItem>
-                    <SelectItem value="chaguanas">Chaguanas</SelectItem>
-                    <SelectItem value="pointFortin">Point Fortin</SelectItem>
-                    <SelectItem value="anyLocation">Any Location in Trinidad & Tobago</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Commute Mode</Label>
-                <RadioGroup 
-                  value={formData.commuteMode} 
-                  onValueChange={(value) => handleSelectChange('commuteMode', value)}
-                  disabled={isLoading || formSubmitted}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="ownVehicle" id="ownVehicle" />
-                    <Label htmlFor="ownVehicle">Own Vehicle / Drive</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="publicTransport" id="publicTransport" />
-                    <Label htmlFor="publicTransport">Public Transport</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dropped" id="dropped" />
-                    <Label htmlFor="dropped">Dropped to and from work</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-
-            {/* Section 2: Professional Type & Credentials */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Professional Type & Credentials</h3>
-              
-              <div className="space-y-2">
-                <Label>Are you registering as:</Label>
-                <RadioGroup 
-                  value={formData.professionalType} 
-                  onValueChange={(value) => handleSelectChange('professionalType', value)}
-                  disabled={isLoading || formSubmitted}
-                  required
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="individual" id="individual" />
-                    <Label htmlFor="individual">Individual Care Professional</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="agency" id="agency" />
-                    <Label htmlFor="agency">Care Agency</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="licenseNumber">Professional License Number (if applicable)</Label>
-                <Input 
-                  id="licenseNumber"
-                  name="licenseNumber"
-                  value={formData.licenseNumber}
-                  onChange={handleTextChange}
-                  placeholder="Enter license number"
-                  disabled={isLoading || formSubmitted}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Certifications & Training (Select all that apply)</Label>
-                <div className="grid grid-cols-1 gap-2">
-                  {certifications.map((cert) => (
-                    <div key={cert.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={cert.id} 
-                        checked={selectedCertifications.includes(cert.id)}
-                        onCheckedChange={(checked) => handleCertificationChange(cert.id, checked === true)}
-                        disabled={isLoading || formSubmitted}
-                      />
-                      <Label htmlFor={cert.id} className="cursor-pointer">{cert.label}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="otherCertification">Other Certification</Label>
-                <Input 
-                  id="otherCertification"
-                  value={otherCertification}
-                  onChange={(e) => setOtherCertification(e.target.value)}
-                  placeholder="Specify other certifications"
-                  disabled={isLoading || formSubmitted}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="certificationProof">Upload Proof of Certifications</Label>
-                <input
-                  type="file"
-                  id="certificationProof"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e, 'certificationProof')}
-                  ref={certificationProofRef}
-                  disabled={isLoading || formSubmitted}
-                />
-                <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => certificationProofRef.current?.click()}
-                    disabled={isLoading || formSubmitted}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Documents
-                  </Button>
-                  {uploadedFiles.certificationProof && (
-                    <span className="text-sm text-green-600">
-                      {uploadedFiles.certificationProof.name} selected
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="yearsOfExperience">Years of Experience</Label>
-                <Select
-                  onValueChange={(value) => handleSelectChange('yearsOfExperience', value)}
-                  value={formData.yearsOfExperience}
-                  disabled={isLoading || formSubmitted}
-                >
-                  <SelectTrigger id="yearsOfExperience">
-                    <SelectValue placeholder="Select experience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-1">0-1 years</SelectItem>
-                    <SelectItem value="2-5">2-5 years</SelectItem>
-                    <SelectItem value="6-10">6-10 years</SelectItem>
-                    <SelectItem value="10+">10+ years</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Languages Spoken</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {languages.map((lang) => (
-                    <div key={lang.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={lang.id} 
-                        checked={selectedLanguages.includes(lang.id)}
-                        onCheckedChange={(checked) => handleLanguageChange(lang.id, checked === true)}
-                        disabled={isLoading || formSubmitted}
-                      />
-                      <Label htmlFor={lang.id} className="cursor-pointer">{lang.label}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Care Services You Offer (Select all that apply)</Label>
-                <div className="grid grid-cols-1 gap-2">
-                  {careServices.map((service) => (
-                    <div key={service.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={service.id} 
-                        checked={selectedCareServices.includes(service.id)}
-                        onCheckedChange={(checked) => handleCareServiceChange(service.id, checked === true)}
-                        disabled={isLoading || formSubmitted}
-                      />
-                      <Label htmlFor={service.id} className="cursor-pointer">{service.label}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Work Availability & Preferences */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Work Availability & Preferences</h3>
-              
-              <div className="space-y-2">
-                <Label>What type of work are you looking for?</Label>
-                <RadioGroup 
-                  value={formData.workType} 
-                  onValueChange={(value) => handleSelectChange('workType', value)}
-                  disabled={isLoading || formSubmitted}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="fullTime" id="fullTime" />
-                    <Label htmlFor="fullTime">Full-Time</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="partTime" id="partTime" />
-                    <Label htmlFor="partTime">Part-Time</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="liveIn" id="liveIn" />
-                    <Label htmlFor="liveIn">Live-In</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hourly" id="hourly" />
-                    <Label htmlFor="hourly">Hourly / On-Demand</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Availability (Select all that apply)</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {availability.map((avail) => (
-                    <div key={avail.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={avail.id} 
-                        checked={selectedAvailability.includes(avail.id)}
-                        onCheckedChange={(checked) => handleAvailabilityChange(avail.id, checked === true)}
-                        disabled={isLoading || formSubmitted}
-                      />
-                      <Label htmlFor={avail.id} className="cursor-pointer">{avail.label}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 4: Background & Security */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Background & Security</h3>
-              
-              <div className="flex flex-col space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="backgroundCheck"
-                    checked={formData.backgroundCheck}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, backgroundCheck: checked === true }))}
-                    disabled={isLoading || formSubmitted}
-                  />
-                  <Label htmlFor="backgroundCheck">Do you have a valid background check?</Label>
-                </div>
-                
-                {formData.backgroundCheck && (
-                  <div className="ml-6 mt-2">
-                    <Label htmlFor="backgroundCheckProof">Upload Proof of Background Check</Label>
-                    <input
-                      type="file"
-                      id="backgroundCheckProof"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      onChange={(e) => handleFileChange(e, 'backgroundCheckProof')}
-                      ref={backgroundCheckProofRef}
-                      disabled={isLoading || formSubmitted}
-                    />
-                    <div className="flex items-center gap-2 mt-1">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => backgroundCheckProofRef.current?.click()}
-                        disabled={isLoading || formSubmitted}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Document
-                      </Button>
-                      {uploadedFiles.backgroundCheckProof && (
-                        <span className="text-sm text-green-600">
-                          {uploadedFiles.backgroundCheckProof.name} selected
-                        </span>
-                      )}
-                    </div>
-                  </div>
+      <form onSubmit={handleSubmit}>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Personal & Contact Information</CardTitle>
+            <CardDescription>
+              Tell us about yourself so families can learn more about you.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add avatar upload section */}
+            <div className="flex flex-col items-center mb-6">
+              <Avatar className="h-24 w-24 mb-4">
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt="Profile" />
+                ) : (
+                  <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
                 )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="legallyAuthorized"
-                  checked={formData.legallyAuthorized}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, legallyAuthorized: checked === true }))}
-                  disabled={isLoading || formSubmitted}
-                />
-                <Label htmlFor="legallyAuthorized">I am legally authorized to work</Label>
-              </div>
-            </div>
-
-            {/* Section 5: Payment & Compensation */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Payment & Compensation</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="expectedRate">Expected Hourly Rate ($ per hour)</Label>
+              </Avatar>
+              <Label htmlFor="avatar" className="cursor-pointer text-primary">
+                {avatarUrl ? 'Change Profile Picture' : 'Upload Profile Picture'}
                 <Input 
-                  id="expectedRate"
-                  name="expectedRate"
-                  value={formData.expectedRate}
-                  onChange={handleTextChange}
-                  placeholder="Enter rate (e.g., 15)"
-                  type="number"
-                  min="0"
-                  disabled={isLoading || formSubmitted}
+                  id="avatar" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange} 
+                  className="hidden" 
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Accepted Payment Methods</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {paymentMethods.map((method) => (
-                    <div key={method.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={method.id} 
-                        checked={selectedPaymentMethods.includes(method.id)}
-                        onCheckedChange={(checked) => handlePaymentMethodChange(method.id, checked === true)}
-                        disabled={isLoading || formSubmitted}
-                      />
-                      <Label htmlFor={method.id} className="cursor-pointer">{method.label}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 6: Additional Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Additional Information</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="bio">About You</Label>
-                <Textarea 
-                  id="bio"
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleTextChange}
-                  placeholder="Tell us about yourself and your caregiving philosophy"
-                  disabled={isLoading || formSubmitted}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="whyChooseCaregiving">Why did you choose caregiving?</Label>
-                <Textarea 
-                  id="whyChooseCaregiving"
-                  name="whyChooseCaregiving"
-                  value={formData.whyChooseCaregiving}
-                  onChange={handleTextChange}
-                  placeholder="Share your story and motivation"
-                  disabled={isLoading || formSubmitted}
-                />
-              </div>
-            </div>
-
-            {/* Section 7: Job Alerts & Matching Preferences */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">🔹 Job Alerts & Matching Preferences</h3>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="enableJobAlerts"
-                  checked={formData.enableJobAlerts}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enableJobAlerts: checked === true }))}
-                  disabled={isLoading || formSubmitted}
-                />
-                <Label htmlFor="enableJobAlerts">Enable Job Alerts</Label>
-              </div>
-
-              {formData.enableJobAlerts && (
-                <>
-                  <div className="space-y-2 ml-6">
-                    <Label>Preferred Job Notification Method</Label>
-                    <RadioGroup 
-                      value={formData.jobNotificationMethod} 
-                      onValueChange={(value) => handleSelectChange('jobNotificationMethod', value)}
-                      disabled={isLoading || formSubmitted}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="email" id="email" />
-                        <Label htmlFor="email">Email</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="sms" id="sms" />
-                        <Label htmlFor="sms">SMS</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="whatsapp" id="whatsapp" />
-                        <Label htmlFor="whatsapp">WhatsApp</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2 ml-6">
-                    <Label>Preferred Job Matching Criteria</Label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {jobMatchingCriteria.map((criteria) => (
-                        <div key={criteria.id} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={criteria.id} 
-                            checked={selectedJobMatchingCriteria.includes(criteria.id)}
-                            onCheckedChange={(checked) => handleJobMatchingCriteriaChange(criteria.id, checked === true)}
-                            disabled={isLoading || formSubmitted}
-                          />
-                          <Label htmlFor={criteria.id} className="cursor-pointer">{criteria.label}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 ml-6">
-                    <Label>Custom Availability Alerts</Label>
-                    <RadioGroup 
-                      value={formData.customAvailabilityAlerts} 
-                      onValueChange={(value) => handleSelectChange('customAvailabilityAlerts', value)}
-                      disabled={isLoading || formSubmitted}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="daily" id="daily" />
-                        <Label htmlFor="daily">Notify me daily about new job requests</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="weekly" id="weekly" />
-                        <Label htmlFor="weekly">Notify me weekly about job opportunities</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="perfectMatch" id="perfectMatch" />
-                        <Label htmlFor="perfectMatch">Notify me only when a job perfectly matches my profile</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="listInDirectory"
-                  checked={formData.listInDirectory}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, listInDirectory: checked === true }))}
-                  disabled={isLoading || formSubmitted}
-                />
-                <Label htmlFor="listInDirectory">List me in the Caregiver Directory (families can find your profile)</Label>
-              </div>
+              </Label>
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || formSubmitted}
-            >
-              {isLoading || formSubmitted ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Complete Registration"
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input 
+                  id="firstName" 
+                  placeholder="First Name" 
+                  value={firstName} 
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => setLastName(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input id="email" type="email" value={user?.email || ''} disabled />
+              <p className="text-sm text-gray-500">Email address from your registration</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="professionalType">Type of Professional *</Label>
+              <Input 
+                id="professionalType" 
+                placeholder="e.g., Nurse, Therapist" 
+                value={professionalType} 
+                onChange={(e) => setProfessionalType(e.target.value)}
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="licenseNumber">License Number (if applicable)</Label>
+              <Input 
+                id="licenseNumber" 
+                placeholder="License Number" 
+                value={licenseNumber} 
+                onChange={(e) => setLicenseNumber(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Certifications & Services</CardTitle>
+            <CardDescription>
+              Showcase your qualifications and the services you offer.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>Certifications (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'cert-cna', label: 'Certified Nursing Assistant (CNA)', value: 'CNA' },
+                  { id: 'cert-lpn', label: 'Licensed Practical Nurse (LPN)', value: 'LPN' },
+                  { id: 'cert-rn', label: 'Registered Nurse (RN)', value: 'RN' },
+                  { id: 'cert-cpr', label: 'CPR/First Aid', value: 'CPR/First Aid' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={certifications.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        certifications, 
+                        setCertifications
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="otherCertification">Other Certification (Optional)</Label>
+              <Input 
+                id="otherCertification" 
+                placeholder="Enter other certification" 
+                value={otherCertification} 
+                onChange={(e) => setOtherCertification(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="certificationProofUrl">Certification Proof URL (Optional)</Label>
+              <Input 
+                id="certificationProofUrl" 
+                placeholder="https://" 
+                value={certificationProofUrl} 
+                onChange={(e) => setCertificationProofUrl(e.target.value)}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Care Services Offered (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'service-elderly', label: 'Elderly Care', value: 'Elderly Care' },
+                  { id: 'service-special', label: 'Special Needs Care', value: 'Special Needs Care' },
+                  { id: 'service-dementia', label: 'Dementia Care', value: 'Dementia Care' },
+                  { id: 'service-home', label: 'Home Health Assistance', value: 'Home Health Assistance' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={careServices.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        careServices, 
+                        setCareServices
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Languages Spoken (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'lang-en', label: 'English', value: 'English' },
+                  { id: 'lang-es', label: 'Spanish', value: 'Spanish' },
+                  { id: 'lang-fr', label: 'French', value: 'French' },
+                  { id: 'lang-de', label: 'German', value: 'German' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={languages.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        languages, 
+                        setLanguages
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Experience & Availability</CardTitle>
+            <CardDescription>
+              Share your experience and when you're available to work.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="yearsOfExperience">Years of Experience *</Label>
+              <Input 
+                id="yearsOfExperience" 
+                type="number" 
+                placeholder="Years of Experience" 
+                value={yearsOfExperience} 
+                onChange={(e) => setYearsOfExperience(e.target.value)}
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workType">Work Type *</Label>
+              <Select value={workType} onValueChange={setWorkType}>
+                <SelectTrigger id="workType">
+                  <SelectValue placeholder="Select Work Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Full-time">Full-time</SelectItem>
+                  <SelectItem value="Part-time">Part-time</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Temporary">Temporary</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Availability (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'avail-morning', label: 'Morning', value: 'Morning' },
+                  { id: 'avail-afternoon', label: 'Afternoon', value: 'Afternoon' },
+                  { id: 'avail-evening', label: 'Evening', value: 'Evening' },
+                  { id: 'avail-overnight', label: 'Overnight', value: 'Overnight' },
+                  { id: 'avail-weekends', label: 'Weekends', value: 'Weekends' },
+                  { id: 'avail-holidays', label: 'Holidays', value: 'Holidays' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={availability.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        availability, 
+                        setAvailability
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Background & Legal</CardTitle>
+            <CardDescription>
+              Confirm your background check status and legal authorization.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="backgroundCheck" 
+                checked={backgroundCheck}
+                onCheckedChange={setBackgroundCheck}
+              />
+              <Label htmlFor="backgroundCheck" className="font-normal">
+                I have completed a background check
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="backgroundCheckProofUrl">Background Check Proof URL (Optional)</Label>
+              <Input 
+                id="backgroundCheckProofUrl" 
+                placeholder="https://" 
+                value={backgroundCheckProofUrl} 
+                onChange={(e) => setBackgroundCheckProofUrl(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="legallyAuthorized" 
+                checked={legallyAuthorized}
+                onCheckedChange={setLegallyAuthorized}
+              />
+              <Label htmlFor="legallyAuthorized" className="font-normal">
+                I am legally authorized to work in this country
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Financial Preferences</CardTitle>
+            <CardDescription>
+              Specify your rate and preferred payment methods.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="expectedRate">Expected Rate *</Label>
+              <Input 
+                id="expectedRate" 
+                placeholder="e.g., $20/hour" 
+                value={expectedRate} 
+                onChange={(e) => setExpectedRate(e.target.value)}
+                required 
+              />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Preferred Payment Methods (Select all that apply)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { id: 'payment-cash', label: 'Cash', value: 'Cash' },
+                  { id: 'payment-check', label: 'Check', value: 'Check' },
+                  { id: 'payment-paypal', label: 'PayPal', value: 'PayPal' },
+                  { id: 'payment-venmo', label: 'Venmo', value: 'Venmo' },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={item.id} 
+                      checked={paymentMethods.includes(item.value)}
+                      onCheckedChange={() => handleCheckboxArrayChange(
+                        item.value, 
+                        paymentMethods, 
+                        setPaymentMethods
+                      )}
+                    />
+                    <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>About You</CardTitle>
+            <CardDescription>
+              Share your bio and why you chose caregiving.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea 
+                id="bio" 
+                placeholder="Write a short bio about yourself" 
+                value={bio} 
+                onChange={(e) => setBio(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whyChooseCaregiving">Why did you choose caregiving?</Label>
+              <Textarea 
+                id="whyChooseCaregiving" 
+                placeholder="Share your motivation for caregiving" 
+                value={whyChooseCaregiving} 
+                onChange={(e) => setWhyChooseCaregiving(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Preferences & Notifications</CardTitle>
+            <CardDescription>
+              Set your work preferences and notification settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="preferredWorkLocations">Preferred Work Locations</Label>
+              <Input 
+                id="preferredWorkLocations" 
+                placeholder="e.g., Home, Assisted Living" 
+                value={preferredWorkLocations} 
+                onChange={(e) => setPreferredWorkLocations(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="commuteMode">Preferred Commute Mode</Label>
+              <Input 
+                id="commuteMode" 
+                placeholder="e.g., Car, Public Transport" 
+                value={commuteMode} 
+                onChange={(e) => setCommuteMode(e.target.value)}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="listInDirectory" 
+                checked={listInDirectory}
+                onCheckedChange={setListInDirectory}
+              />
+              <Label htmlFor="listInDirectory" className="font-normal">
+                List in Directory
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="enableJobAlerts" 
+                checked={enableJobAlerts}
+                onCheckedChange={setEnableJobAlerts}
+              />
+              <Label htmlFor="enableJobAlerts" className="font-normal">
+                Enable Job Alerts
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="jobNotificationMethod">Job Notification Method</Label>
+              <Select value={jobNotificationMethod} onValueChange={setJobNotificationMethod}>
+                <SelectTrigger id="jobNotificationMethod">
+                  <SelectValue placeholder="Select Notification Method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Email">Email</SelectItem>
+                  <SelectItem value="SMS">SMS</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="jobMatchingCriteria">Job Matching Criteria</Label>
+              <Input 
+                id="jobMatchingCriteria" 
+                placeholder="e.g., Location, Skills" 
+                value={jobMatchingCriteria} 
+                onChange={(e) => setJobMatchingCriteria(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customAvailabilityAlerts">Custom Availability Alerts</Label>
+              <Input 
+                id="customAvailabilityAlerts" 
+                placeholder="e.g., Weekday Mornings Only" 
+                value={customAvailabilityAlerts} 
+                onChange={(e) => setCustomAvailabilityAlerts(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/')}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Submitting...' : 'Complete Registration'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
-}
+};
+
+export default ProfessionalRegistration;
