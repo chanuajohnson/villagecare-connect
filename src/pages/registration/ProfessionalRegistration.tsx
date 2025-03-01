@@ -302,6 +302,7 @@ const ProfessionalRegistration = () => {
                   <SelectItem value="Medication Management Expert">💊 Medication Management Expert</SelectItem>
                   <SelectItem value="Elderly & Mobility Support">👨‍🦽 Elderly & Mobility Support</SelectItem>
                   <SelectItem value="Holistic Care & Wellness">🌱 Holistic Care & Wellness</SelectItem>
+                  <SelectItem value="GAPP">👨‍👦 The Geriatric Adolescent Partnership Programme (GAPP)</SelectItem>
                   <SelectItem value="Other">⚕️ Other (please specify)</SelectItem>
                 </SelectContent>
               </Select>
