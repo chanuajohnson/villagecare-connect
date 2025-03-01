@@ -56,10 +56,14 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       // Pass the registration to the parent component
       await onSubmit(email, password, firstName, lastName, role);
       
-      // Attempt to ensure the profile was created properly
+      // After successful registration, explicitly update the profile to ensure the role is set
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
+        // Only proceed if we have a valid session
         if (session?.user) {
+          console.log('Got session after signup, user ID:', session.user.id);
+          
           // Check if profile exists for this user
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -67,27 +71,68 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             .eq('id', session.user.id)
             .maybeSingle();
           
-          if (profileError || !profile) {
-            console.log('No profile found after signup, attempting to create one manually');
+          if (profileError) {
+            console.error('Error checking for existing profile:', profileError);
+          }
+          
+          // If profile doesn't exist or there was an error, create/update it
+          console.log('Existing profile:', profile);
+          
+          const profileData = {
+            id: session.user.id,
+            full_name: `${firstName} ${lastName}`.trim(),
+            role: role
+          };
+          
+          console.log('Updating profile with data:', profileData);
+          
+          // Use upsert to create or update the profile
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .upsert(profileData);
+          
+          if (insertError) {
+            console.error('Failed to update profile after signup:', insertError);
+            toast.error(`Profile update failed: ${insertError.message}`);
+          } else {
+            console.log('Profile successfully updated after signup');
+          }
+          
+          // Double-check the profile was updated correctly
+          const { data: updatedProfile, error: checkError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
             
-            // Create profile manually if it doesn't exist
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .upsert({
-                id: session.user.id,
-                full_name: `${firstName} ${lastName}`.trim(),
-                role: role
-              });
+          if (checkError) {
+            console.error('Error verifying profile update:', checkError);
+          } else {
+            console.log('Profile after update:', updatedProfile);
             
-            if (insertError) {
-              console.error('Failed to create profile manually:', insertError);
-            } else {
-              console.log('Profile created manually after signup');
+            // If role is still not set correctly, try one more update
+            if (updatedProfile && updatedProfile.role !== role) {
+              console.warn('Role mismatch! Expected:', role, 'Got:', updatedProfile.role);
+              
+              // Try one more explicit update
+              const { error: roleUpdateError } = await supabase
+                .from('profiles')
+                .update({ role: role })
+                .eq('id', session.user.id);
+                
+              if (roleUpdateError) {
+                console.error('Failed to fix role mismatch:', roleUpdateError);
+              } else {
+                console.log('Role mismatch corrected');
+              }
             }
           }
+        } else {
+          console.error('No session available after signup');
         }
       } catch (profileError) {
-        console.error('Error checking/creating profile after signup:', profileError);
+        console.error('Error updating profile after signup:', profileError);
+        toast.error('Account created but profile setup had an error. Please try again later.');
       }
     } catch (error: any) {
       console.error("Signup error:", error);
