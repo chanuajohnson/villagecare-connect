@@ -124,7 +124,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="family">Family Caregiver</SelectItem>
+            <SelectItem value="family">Family Member</SelectItem>
             <SelectItem value="professional">Professional</SelectItem>
             <SelectItem value="community">Community Member</SelectItem>
           </SelectContent>

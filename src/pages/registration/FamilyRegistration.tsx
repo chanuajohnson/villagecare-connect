@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -184,7 +185,7 @@ const FamilyRegistration = () => {
 
   return (
     <div className="container max-w-4xl py-10">
-      <h1 className="text-3xl font-bold mb-6">Family Caregiver Registration</h1>
+      <h1 className="text-3xl font-bold mb-6">Family Member Registration</h1>
       <p className="text-gray-500 mb-8">
         Complete your profile to connect with professional caregivers and community resources.
       </p>
