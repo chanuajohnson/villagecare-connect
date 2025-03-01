@@ -99,6 +99,33 @@ Logs show that after authentication:
 
 The `userRole` remains null even though session and user exist, preventing proper redirection.
 
+## Role-Specific Redirection Issues
+
+The most critical issue is related to professional users being redirected to the family registration form. This happens because:
+
+1. **Role Retrieval Failure**:
+   - The `getUserRole` function in `supabase.ts` times out or fails to retrieve the role
+   - When role is `null`, the system can't determine the correct registration page
+   - The system might then default to family registration as a fallback
+
+2. **Race Condition in Redirection Logic**:
+   - The redirection happens before role determination completes
+   - User metadata from signup might not be properly synchronized with profile data
+   - The default role in the profiles table is set to 'family', causing incorrect redirections
+
+3. **Registration Route Mapping**:
+   ```typescript
+   // In AuthProvider.tsx - handlePostLoginRedirection
+   const registrationRoutes: Record<UserRole, string> = {
+     'family': '/registration/family',
+     'professional': '/registration/professional',
+     'community': '/registration/community',
+     'admin': '/dashboard/admin'
+   };
+   ```
+   - This mapping is correct, but it's only used when `userRole` is properly determined
+   - If `userRole` is null, this mapping isn't used at all
+
 ## Implemented Safeguards
 
 The codebase includes several safeguards to prevent indefinite loading states:
@@ -134,25 +161,6 @@ The codebase includes several safeguards to prevent indefinite loading states:
    setIsProfileComplete(false);
    ```
 
-## Debugging Attempts
-
-Several approaches have been implemented to debug the authentication issues:
-
-1. **Comprehensive Logging**:
-   - Detailed console logs throughout authentication flow
-   - Tracking of state changes and operations
-   - Timing information for authentication processes
-
-2. **Timeout Recovery**:
-   - Forcing loading state to end after timeout
-   - Attempting to clean up authentication state
-   - Providing user feedback via toast messages
-
-3. **State Verification**:
-   - Explicit checks for session establishment
-   - Verification of user role retrieval
-   - Profile completion status monitoring
-
 ## Root Causes Analysis
 
 Based on the available information, the authentication issues appear to stem from:
@@ -172,35 +180,69 @@ Based on the available information, the authentication issues appear to stem fro
    - Mismatch between user metadata and profile data
    - Missing or incorrect role information
 
+## Critical Fix for Professional Redirection
+
+To fix the professional user redirection specifically:
+
+1. **Metadata Fallback for Role Detection**:
+   - Modify `getUserRole()` to use metadata when profile query fails
+   - Add a fallback mechanism to check user_metadata.role in Supabase auth
+
+2. **Correct Path Validation**:
+   ```typescript
+   // In handlePostLoginRedirection()
+   if (!profileComplete && isOnRegistrationPage) {
+     // Check if we're on the CORRECT registration page for our role
+     if (userRole) {
+       const correctRegistrationPath = `/registration/${userRole.toLowerCase()}`;
+       const currentPath = location.pathname;
+       
+       // If we're on the wrong registration page, redirect to the correct one
+       if (currentPath !== correctRegistrationPath) {
+         console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
+         toast.info(`Redirecting to the ${userRole} registration form`);
+         navigate(correctRegistrationPath);
+         isRedirectingRef.current = false;
+         return;
+       }
+     }
+   }
+   ```
+
+3. **Error Logging Enhancement**:
+   - Add detailed console logs for role determination
+   - Monitor the specific points where redirection logic runs
+
 ## Recommended Solutions
 
 1. **Immediate Fixes**:
-   - Increase timeout duration to allow more time for role determination
+   - Increase timeout duration from 5 seconds to 10-15 seconds
    - Add fallback for role detection using user_metadata when profiles query fails
-   - Implement more robust error handling in getUserRole function
+   - Implement retry logic for critical getUserRole function
+   - Add default role fallback when metadata/profile both fail
+   
+2. **Database Optimizations**:
+   - Verify RLS policies don't block legitimate queries to profiles table
+   - Ensure indexes exist on user id column in profiles table
+   - Check for any database performance issues affecting query speed
 
-2. **Structural Improvements**:
-   - Simplify auth state management to reduce complexity
-   - Add transaction guarantees for user creation and profile creation
-   - Implement retry logic for critical operations
+3. **Profile-Role Synchronization**:
+   - Ensure user metadata role is properly synchronized with profile role
+   - Update database trigger to correctly set profile role from metadata
+   - Add validation to ensure profile creation succeeds during signup
 
-3. **Monitoring Enhancements**:
-   - Add more detailed logging around specific failure points
-   - Implement clearer user feedback during authentication
-   - Create dedicated error boundaries for authentication flows
+4. **Conditional Navigation Improvements**:
+   - Add default redirection paths when role is undetermined
+   - Implement more robust role detection with multiple fallbacks
+   - Consider caching role information in localStorage temporarily
 
-4. **Database Optimizations**:
-   - Verify RLS policies don't block legitimate queries
-   - Ensure indexes exist on frequently queried columns
-   - Check for any database performance issues
+## Testing Steps for Fix Verification
 
-## Next Steps
-
-1. Review the `getUserRole` function in `supabase.ts` for failure points
-2. Check Supabase database logs for failed queries
-3. Verify profile creation trigger is working correctly
-4. Test authentication flow with database monitoring
-5. Implement the most critical fixes from the recommendations above
+1. Login as a professional user and monitor console logs
+2. Check if role is correctly determined from metadata or profile
+3. Verify that redirection occurs to the professional registration page
+4. Test with deliberately slow database responses to check timeout handling
+5. Verify behavior when role information is unavailable or incomplete
 
 ## References
 
