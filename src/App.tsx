@@ -1,17 +1,20 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './components/providers/AuthProvider';
 import AuthPage from './pages/auth/AuthPage';
-import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
 import FamilyRegistration from "./pages/registration/FamilyRegistration";
 import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
 import CommunityRegistration from "./pages/registration/CommunityRegistration";
-import Dashboard from './pages/dashboards/Dashboard';
 import ProfessionalDashboard from './pages/dashboards/ProfessionalDashboard';
 import CommunityDashboard from './pages/dashboards/CommunityDashboard';
-import CarePlanPage from './pages/CarePlanPage';
 import { Toaster } from 'sonner';
+
+// Temporary placeholder components for missing pages
+const HomePage = () => <div className="p-8"><h1 className="text-2xl font-bold">Home Page</h1><p>This is a placeholder for the home page.</p></div>;
+const ProfilePage = () => <div className="p-8"><h1 className="text-2xl font-bold">Profile Page</h1><p>This is a placeholder for the profile page.</p></div>;
+const Dashboard = () => <div className="p-8"><h1 className="text-2xl font-bold">Dashboard</h1><p>This is a placeholder for the dashboard page.</p></div>;
+const CarePlanPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Care Plan Page</h1><p>This is a placeholder for the care plan page.</p></div>;
 
 function App() {
   return (
