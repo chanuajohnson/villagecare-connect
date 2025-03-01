@@ -32,20 +32,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'x-client-info': 'lovable-app',
+      'Content-Type': 'application/json',
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
     },
-  },
-  // Add more resilient fetch options
-  fetch: (url, options) => {
-    const fetchOptions = {
-      ...options,
-      headers: {
-        ...options?.headers,
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-    };
-    return fetch(url, fetchOptions);
   },
 });
 
