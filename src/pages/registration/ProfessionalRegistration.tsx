@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -23,7 +22,8 @@ import { v4 as uuidv4 } from 'uuid';
 // Define form schema with Zod
 const professionalFormSchema = z.object({
   // Personal Information
-  full_name: z.string().min(1, 'Name is required'),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
   professional_type: z.string().min(1, 'Professional role is required'),
   other_professional_type: z.string().optional(),
   years_of_experience: z.string().min(1, 'Years of experience is required'),
@@ -60,7 +60,7 @@ type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;
 
 const ProfessionalRegistration = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageURL, setProfileImageURL] = useState<string | null>(null);
@@ -76,7 +76,8 @@ const ProfessionalRegistration = () => {
     resolver: zodResolver(professionalFormSchema),
     defaultValues: {
       email: user?.email || '',
-      full_name: '',
+      first_name: '',
+      last_name: '',
       professional_type: '',
       years_of_experience: '',
       location: '',
@@ -129,6 +130,9 @@ const ProfessionalRegistration = () => {
   
         profileImagePath = `${filename}`;
       }
+      
+      // Combine first and last name for full_name
+      const full_name = `${data.first_name} ${data.last_name}`.trim();
   
       // Insert professional profile into database
       const { error: insertError } = await supabase
@@ -136,7 +140,9 @@ const ProfessionalRegistration = () => {
         .insert({
           user_id: user.id,
           profile_image: profileImagePath,
-          full_name: data.full_name,
+          full_name: full_name,
+          first_name: data.first_name,
+          last_name: data.last_name,
           professional_type: data.professional_type,
           other_professional_type: data.other_professional_type,
           years_of_experience: data.years_of_experience,
@@ -162,12 +168,18 @@ const ProfessionalRegistration = () => {
         throw new Error(`Error creating professional profile: ${insertError.message}`);
       }
   
-      // Update user profile with registration info
-      if (updateUser) {
-        await updateUser({
+      // Update user profile with registration info using supabase directly
+      // since updateUser is not available in the current AuthContextType
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
           registration_completed: true,
           user_type: 'professional',
-        });
+        })
+        .eq('id', user.id);
+  
+      if (updateError) {
+        throw new Error(`Error updating user profile: ${updateError.message}`);
       }
   
       toast.success("Professional registration completed successfully!");
@@ -217,15 +229,28 @@ const ProfessionalRegistration = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <Label htmlFor="full-name" className="mb-1">Full Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="first-name" className="mb-1">First Name <span className="text-red-500">*</span></Label>
                 <Input
-                  id="full-name"
-                  placeholder="Enter your full name"
-                  {...register('full_name')}
-                  className={errors.full_name ? "border-red-500" : ""}
+                  id="first-name"
+                  placeholder="Enter your first name"
+                  {...register('first_name')}
+                  className={errors.first_name ? "border-red-500" : ""}
                 />
-                {errors.full_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.full_name.message}</p>
+                {errors.first_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.first_name.message}</p>
+                )}
+              </div>
+              
+              <div>
+                <Label htmlFor="last-name" className="mb-1">Last Name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="last-name"
+                  placeholder="Enter your last name"
+                  {...register('last_name')}
+                  className={errors.last_name ? "border-red-500" : ""}
+                />
+                {errors.last_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.last_name.message}</p>
                 )}
               </div>
   
