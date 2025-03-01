@@ -19,7 +19,6 @@ export default function AuthPage() {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        console.log("Checking Supabase connection...");
         const { error } = await supabase.from('profiles').select('count').limit(1);
         if (error) {
           console.error("Supabase connection check failed:", error);
