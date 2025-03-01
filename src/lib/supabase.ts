@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
@@ -155,6 +154,38 @@ export const getUserRole = async () => {
     return null;
   }
 };
+
+// Ensure required storage buckets exist
+export const ensureStorageBuckets = async () => {
+  try {
+    // Check if avatars bucket exists
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error('Error checking storage buckets:', error);
+      return;
+    }
+    
+    const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
+    
+    if (!avatarsBucketExists) {
+      console.log('Creating avatars storage bucket');
+      const { error: createError } = await supabase.storage.createBucket('avatars', {
+        public: true, // Make files publicly accessible
+        fileSizeLimit: 1024 * 1024 * 2, // 2MB file size limit
+      });
+      
+      if (createError) {
+        console.error('Error creating avatars bucket:', createError);
+      }
+    }
+  } catch (err) {
+    console.error('Error ensuring storage buckets exist:', err);
+  }
+};
+
+// Call ensureStorageBuckets when the app starts
+ensureStorageBuckets().catch(console.error);
 
 // Insert initial recipes if they don't exist
 export const insertInitialRecipes = async () => {

@@ -52,6 +52,7 @@ const FamilyRegistration = () => {
           setUser(data.user);
           setEmail(data.user.email || '');
           
+          // Fetch existing profile data
           const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
@@ -60,11 +61,7 @@ const FamilyRegistration = () => {
 
           if (error) {
             console.error('Error fetching profile:', error);
-            toast({
-              variant: 'destructive',
-              title: 'Error',
-              description: 'Failed to fetch your profile information.'
-            });
+            // Don't show an error toast here as this might be a new user
             return;
           }
 
@@ -126,14 +123,22 @@ const FamilyRegistration = () => {
 
     try {
       if (!user) {
-        throw new Error('No user found');
+        throw new Error('No user found. Please sign in again.');
       }
 
       // Validate required fields
-      if (!firstName || !lastName || !phoneNumber || !address) {
+      if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
         throw new Error('Please fill in all required fields');
       }
 
+      // Create a session variable to use for authorization
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error("Session error:", sessionError);
+        throw new Error('Authentication session expired. Please sign in again.');
+      }
+      
       // Upload avatar if selected
       let uploadedAvatarUrl = avatarUrl;
       if (avatarFile) {
@@ -141,9 +146,13 @@ const FamilyRegistration = () => {
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
+        // We'll use the session token for authentication
         const { error: uploadError, data } = await supabase.storage
           .from('avatars')
-          .upload(filePath, avatarFile);
+          .upload(filePath, avatarFile, {
+            contentType: avatarFile.type,
+            upsert: false,
+          });
 
         if (uploadError) {
           console.error('Error uploading avatar:', uploadError);
