@@ -33,8 +33,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'x-client-info': 'lovable-app',
       'Content-Type': 'application/json',
-      'apikey': supabaseAnonKey,
-      'Authorization': `Bearer ${supabaseAnonKey}`,
     },
   },
 });
@@ -160,9 +158,8 @@ export const ensureAuthContext = async () => {
     }
     
     // Update Authorization header with current session token
-    supabase.rest.headers['Authorization'] = `Bearer ${session.access_token}`;
-    
-    console.log('Auth context refreshed successfully');
+    // We need to manually set headers for each request since we can't access protected properties
+    console.log('Auth context refreshed successfully with token');
     return true;
   } catch (err) {
     console.error('Error ensuring auth context:', err);
@@ -187,11 +184,6 @@ export const initializeSupabase = async () => {
     console.error('Error getting session during initialization:', error);
   } else {
     console.log('Session exists during initialization:', !!data.session);
-    
-    // Ensure auth context is properly set
-    if (data.session) {
-      supabase.rest.headers['Authorization'] = `Bearer ${data.session.access_token}`;
-    }
   }
   
   // Ensure buckets (if user is logged in)

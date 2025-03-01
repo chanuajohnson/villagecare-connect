@@ -146,6 +146,8 @@ const FamilyRegistration = () => {
           fullName = user.email.split('@')[0];
         }
         
+        await ensureAuthContext();
+        
         const { error } = await supabase.from('profiles').upsert({
           id: userId,
           full_name: fullName,
@@ -291,14 +293,10 @@ const FamilyRegistration = () => {
 
       console.log('Updating profile with data:', updates);
       
-      const token = sessionData.session.access_token;
-      supabase.rest.headers['Authorization'] = `Bearer ${token}`;
-      
       const { error } = await supabase
         .from('profiles')
         .upsert(updates, { 
-          onConflict: 'id',
-          returning: 'minimal'
+          onConflict: 'id'
         });
       
       if (error) {
