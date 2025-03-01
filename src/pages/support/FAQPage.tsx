@@ -1,239 +1,229 @@
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Fab } from "@/components/ui/fab";
+import { 
+  SearchIcon, 
+  Phone as PhoneIcon, 
+  MessageSquare, 
+  HelpCircle,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
-// Mock FAQ data
-const faqData = [
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+const faqs: FAQ[] = [
   {
-    id: 1,
-    category: "Account",
-    questions: [
-      {
-        id: "acc-1",
-        question: "How do I create an account?",
-        answer: "To create an account, click on the 'Sign Up' button in the top right corner of the homepage. Follow the prompts to enter your information and select your role (Family, Professional, or Community)."
-      },
-      {
-        id: "acc-2",
-        question: "How do I reset my password?",
-        answer: "Click on the 'Sign In' button, then select 'Forgot Password'. Enter your email address, and we'll send you instructions to reset your password."
-      },
-      {
-        id: "acc-3",
-        question: "Can I change my role after signing up?",
-        answer: "Yes, you can change your role by contacting our support team. Please note that changing roles may require additional information or verification."
-      }
-    ]
+    id: "faq-1",
+    question: "How do I create a family care account?",
+    answer: "To create a family care account, click on the 'Sign In' button in the top navigation bar, then select the 'Sign Up' tab. Fill in your details, select 'Family' as your role, and complete the registration process. After verification, you'll be prompted to complete your family profile.",
+    category: "Account"
   },
   {
-    id: 2,
-    category: "Family Dashboard",
-    questions: [
-      {
-        id: "fam-1",
-        question: "How do I create a care plan?",
-        answer: "From your Family Dashboard, navigate to the 'Care Plans' section and click on 'Create New Plan'. Follow the step-by-step guide to set up a personalized care plan for your loved one."
-      },
-      {
-        id: "fam-2",
-        question: "How do I invite family members to collaborate?",
-        answer: "In your Family Dashboard, go to 'Team' section and click 'Invite Members'. Enter their email addresses and select their permission level. They'll receive an invitation to join your care circle."
-      }
-    ]
+    id: "faq-2",
+    question: "Can I invite other family members to help manage care?",
+    answer: "Yes, you can invite other family members to collaborate on care management. From your family dashboard, go to 'Team Management' and select 'Invite Family Member'. Enter their email address and they'll receive an invitation to join your care network.",
+    category: "Care Management"
   },
   {
-    id: 3,
-    category: "Professional Dashboard",
-    questions: [
-      {
-        id: "pro-1",
-        question: "How do I showcase my qualifications?",
-        answer: "In your Professional Dashboard, go to 'Profile' and select 'Qualifications'. From there, you can add your education, certifications, and experience. Don't forget to upload supporting documents for verification."
-      },
-      {
-        id: "pro-2",
-        question: "How do I set my availability?",
-        answer: "Navigate to the 'Schedule' section in your Professional Dashboard. You can set your regular working hours and mark specific dates as unavailable. This helps families find times that work for both of you."
-      }
-    ]
+    id: "faq-3",
+    question: "How do I find qualified care professionals?",
+    answer: "You can find qualified care professionals by navigating to the 'Find Care' section in your family dashboard. Use filters to specify the type of care needed, location, availability, and other preferences. You can view profiles, ratings, and specialties before reaching out to potential care providers.",
+    category: "Care Services"
   },
   {
-    id: 4,
-    category: "Community Dashboard",
-    questions: [
-      {
-        id: "com-1",
-        question: "How do I create a community event?",
-        answer: "From your Community Dashboard, go to 'Events' and click 'Create New Event'. Fill in the event details, location, and time. You can also add resources needed and volunteer opportunities."
-      },
-      {
-        id: "com-2",
-        question: "How do I share resources with my community?",
-        answer: "In the 'Resources' section of your Community Dashboard, click 'Add Resource'. You can upload documents, add links, or create new content to share with your community members."
-      }
-    ]
+    id: "faq-4",
+    question: "What information do professionals need to provide when signing up?",
+    answer: "Professionals need to provide basic contact information, professional credentials, areas of expertise, service areas, availability, and references. You'll also need to complete a background verification process before your profile becomes visible to families seeking care.",
+    category: "Account"
   },
   {
-    id: 5,
-    category: "Technical Issues",
-    questions: [
-      {
-        id: "tech-1",
-        question: "The app is running slowly. What can I do?",
-        answer: "Try clearing your browser cache and cookies, then restart your browser. If the issue persists, check your internet connection or try using a different browser."
-      },
-      {
-        id: "tech-2",
-        question: "How do I upload documents to the platform?",
-        answer: "When you see an upload button or area, click on it to open your file browser. Select the document you want to upload (PDF, DOC, DOCX, JPG, PNG formats are supported). The maximum file size is 10MB."
-      }
-    ]
+    id: "faq-5",
+    question: "How does the meal planning feature work?",
+    answer: "The meal planning feature allows you to create customized meal plans for those under your care. You can input dietary restrictions, set up recurring meals, browse and save recipes, generate shopping lists, and track nutritional information. Access this feature from the 'Meal Planning' section of your dashboard.",
+    category: "Features"
+  },
+  {
+    id: "faq-6",
+    question: "Is my personal and health information secure?",
+    answer: "Yes, we take data security very seriously. All personal and health information is encrypted and stored securely. We comply with relevant data protection regulations and implement strict access controls. Your information is only shared with care team members you explicitly authorize.",
+    category: "Privacy & Security"
+  },
+  {
+    id: "faq-7",
+    question: "How can I update my availability as a care professional?",
+    answer: "To update your availability, log into your professional account and navigate to 'Schedule Management'. From there, you can modify your recurring availability or block off specific dates and times. Changes will be reflected to families who have you in their care network.",
+    category: "Care Services"
+  },
+  {
+    id: "faq-8",
+    question: "What should I do if I need immediate support?",
+    answer: "For immediate support, click on the help button (question mark icon) at the bottom right of any page. From there, you can access our WhatsApp support, submit a support ticket, or browse the FAQ section. For urgent matters, we recommend using the WhatsApp option for fastest response.",
+    category: "Support"
+  },
+  {
+    id: "faq-9",
+    question: "How do I report an issue with the platform?",
+    answer: "To report an issue, click on the help button in the bottom right corner and select 'Contact Form'. Describe the issue you're experiencing in detail, including any error messages, and submit the form. Our support team will investigate and respond as soon as possible.",
+    category: "Support"
+  },
+  {
+    id: "faq-10",
+    question: "Can community organizations post resources and events?",
+    answer: "Yes, community organizations can share resources and events. After creating a community account and completing verification, you can post resources, events, and services from your community dashboard. These will be visible to families and professionals in your service area.",
+    category: "Community"
   }
 ];
 
-const FAQPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
-  const [expandedQuestions, setExpandedQuestions] = useState<string[]>([]);
+const categories = Array.from(new Set(faqs.map(faq => faq.category)));
 
-  const toggleCategory = (categoryId: number) => {
-    setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
-  };
-
-  const toggleQuestion = (questionId: string) => {
-    setExpandedQuestions(prev => 
-      prev.includes(questionId) 
-        ? prev.filter(id => id !== questionId) 
-        : [...prev, questionId]
-    );
-  };
-
-  const filteredFAQ = faqData.map(category => ({
-    ...category,
-    questions: category.questions.filter(
-      q => 
-        q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        q.answer.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(category => category.questions.length > 0);
+export default function FAQPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  const filteredFaqs = faqs.filter(faq => {
+    const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = activeCategory ? faq.category === activeCategory : true;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-primary-50 py-12">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800 mb-4 inline-block">
-            Support Center
-          </span>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-            Find answers to common questions about our platform. If you can't find what you're looking for, 
-            don't hesitate to contact our support team.
-          </p>
-
-          <div className="relative max-w-xl mx-auto">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search FAQs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-        </motion.div>
-
-        <div className="max-w-3xl mx-auto">
-          {filteredFAQ.length > 0 ? (
-            filteredFAQ.map((category) => (
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: category.id * 0.1 }}
-                className="mb-6"
-              >
-                <Button
-                  variant="ghost"
-                  onClick={() => toggleCategory(category.id)}
-                  className="w-full flex justify-between items-center py-4 text-left bg-white rounded-lg shadow-sm hover:bg-gray-50"
-                >
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    {category.category}
-                  </h2>
-                  {expandedCategory === category.id ? (
-                    <ChevronUp className="h-5 w-5 text-gray-500" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-500" />
-                  )}
-                </Button>
-
-                {expandedCategory === category.id && (
-                  <div className="mt-2 space-y-3">
-                    {category.questions.map((q) => (
-                      <div key={q.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleQuestion(q.id)}
-                          className="w-full flex justify-between items-center p-4 text-left hover:bg-gray-50"
-                        >
-                          <h3 className="text-lg font-medium text-gray-800">
-                            {q.question}
-                          </h3>
-                          {expandedQuestions.includes(q.id) ? (
-                            <ChevronUp className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-500" />
-                          )}
-                        </Button>
-                        
-                        {expandedQuestions.includes(q.id) && (
-                          <div className="px-4 pb-4">
-                            <p className="text-gray-600">{q.answer}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ))
-          ) : (
-            <div className="text-center py-10">
-              <h3 className="text-xl font-medium text-gray-800 mb-2">No results found</h3>
-              <p className="text-gray-600">
-                Try different keywords or contact our support team for assistance.
-              </p>
-            </div>
-          )}
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Frequently Asked Questions</h1>
+        <p className="text-muted-foreground">
+          Find answers to common questions about the Takes a Village platform
+        </p>
+      </div>
+      
+      {/* Search and Filter */}
+      <div className="mb-8">
+        <div className="relative mb-4">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search for questions or answers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
-
-        <div className="text-center mt-12">
-          <p className="text-gray-600 mb-6">Still have questions?</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button 
-              className="flex items-center gap-2"
-              onClick={() => window.open("https://wa.me/+18687865357?text=Hello,%20I%20need%20support%20with%20[brief%20issue].", "_blank")}
+        
+        <div className="flex flex-wrap gap-2">
+          <Badge 
+            variant={activeCategory === null ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setActiveCategory(null)}
+          >
+            All
+          </Badge>
+          {categories.map(category => (
+            <Badge
+              key={category}
+              variant={activeCategory === category ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => setActiveCategory(category === activeCategory ? null : category)}
             >
-              <Phone className="h-5 w-5" />
-              <span>WhatsApp Support</span>
-            </Button>
+              {category}
+            </Badge>
+          ))}
+        </div>
+      </div>
+      
+      {/* FAQs */}
+      {filteredFaqs.length > 0 ? (
+        <Accordion type="single" collapsible className="w-full">
+          {filteredFaqs.map((faq) => (
+            <AccordionItem key={faq.id} value={faq.id}>
+              <AccordionTrigger className="text-left">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">{faq.answer}</p>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      ) : (
+        <div className="text-center py-8">
+          <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="font-medium text-lg mb-1">No results found</h3>
+          <p className="text-muted-foreground mb-4">
+            We couldn't find any FAQs matching your search criteria
+          </p>
+          <Button onClick={() => {
+            setSearchQuery("");
+            setActiveCategory(null);
+          }}>
+            Clear filters
+          </Button>
+        </div>
+      )}
+      
+      {/* Support Options */}
+      <div className="mt-12 bg-muted rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Still need help?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start space-x-3">
+            <div className="bg-primary/10 p-2 rounded-full">
+              <PhoneIcon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium">WhatsApp Support</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                Get quick support via WhatsApp
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  window.open(`https://wa.me/18687865357?text=${encodeURIComponent("Hello, I need support with Takes a Village platform.")}`, "_blank");
+                }}
+              >
+                Connect on WhatsApp
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex items-start space-x-3">
+            <div className="bg-primary/10 p-2 rounded-full">
+              <MessageSquare className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium">Contact Form</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                Submit a detailed support request
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  // This would open the contact form modal
+                  alert("Contact form would open here");
+                }}
+              >
+                Open Contact Form
+              </Button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default FAQPage;
+}
