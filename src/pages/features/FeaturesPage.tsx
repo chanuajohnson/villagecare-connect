@@ -3,14 +3,27 @@ import { useEffect } from "react";
 import FeaturesGrid from "@/components/features/FeaturesGrid";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocation } from "react-router-dom";
 
 const FeaturesPage = () => {
   const { clearLastAction } = useAuth();
+  const location = useLocation();
 
-  // Clear any pending actions when visiting the features page directly
+  // Only clear pending actions when visiting the features page directly
+  // or from certain routes to avoid unnecessary state changes
   useEffect(() => {
-    clearLastAction();
-  }, [clearLastAction]);
+    // If coming from certain paths, don't clear last action to avoid page flashes
+    const fromNavigation = document.referrer.includes('/dashboard') || 
+                          document.referrer.includes('/community') || 
+                          document.referrer === '';
+    
+    if (!fromNavigation) {
+      console.log('[FeaturesPage] Clearing last action');
+      clearLastAction();
+    } else {
+      console.log('[FeaturesPage] Skipping clearLastAction to prevent page flash');
+    }
+  }, [clearLastAction, location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50">
