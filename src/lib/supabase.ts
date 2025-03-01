@@ -4,10 +4,12 @@ import { UserRole } from '@/types/database';
 
 // Constants for Supabase connection
 // Using fallback values to ensure we always have valid values, even if env vars are missing
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 
+                    import.meta.env.VITE_SUPABASE_URL || 
                     'https://cpdfmyemjrefnhddyrck.supabase.co';
 
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 
+                        import.meta.env.VITE_SUPABASE_ANON_KEY || 
                         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwZGZteWVtanJlZm5oZGR5cmNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4MjcwODAsImV4cCI6MjA1NTQwMzA4MH0.9LwhYWSuTbiqvSGGPAT7nfz8IFZIgnNzYoa_hLQ_2PY';
 
 // Validation to ensure we have valid values
