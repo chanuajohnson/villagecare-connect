@@ -77,7 +77,7 @@ export const getUserRole = async (): Promise<UserRole | null> => {
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error('Error fetching user role:', error);
@@ -144,6 +144,32 @@ export const ensureStorageBuckets = async () => {
   }
 };
 
+// Function to ensure a valid authentication context for operations
+export const ensureAuthContext = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error getting auth session:', error);
+      return false;
+    }
+    
+    if (!session) {
+      console.log('No active session found');
+      return false;
+    }
+    
+    // Update Authorization header with current session token
+    supabase.rest.headers['Authorization'] = `Bearer ${session.access_token}`;
+    
+    console.log('Auth context refreshed successfully');
+    return true;
+  } catch (err) {
+    console.error('Error ensuring auth context:', err);
+    return false;
+  }
+};
+
 // Initialize Supabase - call this function early in your app
 export const initializeSupabase = async () => {
   console.log('Initializing Supabase...');
@@ -161,6 +187,11 @@ export const initializeSupabase = async () => {
     console.error('Error getting session during initialization:', error);
   } else {
     console.log('Session exists during initialization:', !!data.session);
+    
+    // Ensure auth context is properly set
+    if (data.session) {
+      supabase.rest.headers['Authorization'] = `Bearer ${data.session.access_token}`;
+    }
   }
   
   // Ensure buckets (if user is logged in)

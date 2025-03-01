@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase, ensureStorageBuckets } from '../../lib/supabase';
+import { supabase, ensureStorageBuckets, ensureAuthContext } from '../../lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -51,6 +51,8 @@ const FamilyRegistration = () => {
     
     const getUser = async () => {
       try {
+        await ensureAuthContext();
+        
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -82,18 +84,21 @@ const FamilyRegistration = () => {
         setEmail(userData.user.email || '');
         
         try {
+          console.log('Fetching profile for user ID:', userData.user.id);
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userData.user.id)
-            .single();
+            .maybeSingle();
 
           if (profileError) {
             console.error('Error fetching profile:', profileError);
+            await createBasicProfile(userData.user.id);
             return;
           }
 
           if (profileData) {
+            console.log('Profile data found:', profileData);
             setAvatarUrl(profileData.avatar_url);
             setFirstName(profileData.full_name?.split(' ')[0] || '');
             setLastName(profileData.full_name?.split(' ')[1] || '');
@@ -112,14 +117,62 @@ const FamilyRegistration = () => {
             setCaregiverPreferences(profileData.caregiver_preferences || '');
             setEmergencyContact(profileData.emergency_contact || '');
             setAdditionalNotes(profileData.additional_notes || '');
+          } else {
+            console.log('No profile found, creating basic profile');
+            await createBasicProfile(userData.user.id);
           }
         } catch (profileErr) {
           console.error('Error in profile fetch:', profileErr);
+          await createBasicProfile(userData.user.id);
         }
       } catch (err) {
         console.error('Error in authentication flow:', err);
         toast.error('Authentication error. Please sign in again.');
         navigate('/auth');
+      }
+    };
+
+    const createBasicProfile = async (userId: string) => {
+      try {
+        console.log('Creating basic profile for user:', userId);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        let fullName = '';
+        if (user?.user_metadata?.full_name) {
+          fullName = user.user_metadata.full_name;
+        } else if (user?.user_metadata?.first_name && user?.user_metadata?.last_name) {
+          fullName = `${user.user_metadata.first_name} ${user.user_metadata.last_name}`;
+        } else if (user?.email) {
+          fullName = user.email.split('@')[0];
+        }
+        
+        const { error } = await supabase.from('profiles').upsert({
+          id: userId,
+          full_name: fullName,
+          role: 'family',
+          updated_at: new Date().toISOString()
+        });
+        
+        if (error) {
+          console.error('Error creating basic profile:', error);
+          throw error;
+        }
+        
+        console.log('Basic profile created successfully');
+        
+        if (fullName) {
+          const nameParts = fullName.split(' ');
+          setFirstName(nameParts[0] || '');
+          setLastName(nameParts.slice(1).join(' ') || '');
+        }
+        
+        if (user?.email) {
+          setEmail(user.email);
+        }
+        
+      } catch (err) {
+        console.error('Failed to create basic profile:', err);
+        toast.error('Failed to create user profile. Please try again or contact support.');
       }
     };
 
@@ -158,11 +211,22 @@ const FamilyRegistration = () => {
     setLoading(true);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const contextValid = await ensureAuthContext();
+      if (!contextValid) {
+        throw new Error('Authentication context could not be established');
+      }
+      
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
         toast.error('Your session has expired. Please sign in again.');
         navigate('/auth');
         return;
+      }
+      
+      console.log('Current user ID for profile update:', user?.id);
+      
+      if (!user?.id) {
+        throw new Error('User ID is missing. Please sign in again.');
       }
       
       if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
@@ -227,10 +291,14 @@ const FamilyRegistration = () => {
 
       console.log('Updating profile with data:', updates);
       
+      const token = sessionData.session.access_token;
+      supabase.rest.headers['Authorization'] = `Bearer ${token}`;
+      
       const { error } = await supabase
         .from('profiles')
         .upsert(updates, { 
-          onConflict: 'id' 
+          onConflict: 'id',
+          returning: 'minimal'
         });
       
       if (error) {

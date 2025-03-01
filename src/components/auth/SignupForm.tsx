@@ -7,6 +7,7 @@ import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserRole } from "@/types/database";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 interface SignupFormProps {
   onSubmit: (email: string, password: string, firstName: string, lastName: string, role: string) => Promise<any>;
@@ -38,7 +39,56 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
     try {
       setFormSubmitted(true);
       console.log('SignupForm submitting with role:', role);
+      
+      // Store the registration role in localStorage for redirect handling
+      localStorage.setItem('registeringAs', role);
+      
+      // Set up user metadata with role and name for profile creation
+      const metadata = {
+        first_name: firstName,
+        last_name: lastName,
+        full_name: `${firstName} ${lastName}`.trim(),
+        role: role
+      };
+      
+      console.log('Setting user metadata:', metadata);
+      
+      // Pass the registration to the parent component
       await onSubmit(email, password, firstName, lastName, role);
+      
+      // Attempt to ensure the profile was created properly
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Check if profile exists for this user
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (profileError || !profile) {
+            console.log('No profile found after signup, attempting to create one manually');
+            
+            // Create profile manually if it doesn't exist
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                full_name: `${firstName} ${lastName}`.trim(),
+                role: role
+              });
+            
+            if (insertError) {
+              console.error('Failed to create profile manually:', insertError);
+            } else {
+              console.log('Profile created manually after signup');
+            }
+          }
+        }
+      } catch (profileError) {
+        console.error('Error checking/creating profile after signup:', profileError);
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       toast.error(error.message || "Failed to create account. Please try again.");
