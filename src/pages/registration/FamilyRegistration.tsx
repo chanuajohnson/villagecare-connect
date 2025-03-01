@@ -45,7 +45,6 @@ const FamilyRegistration = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize storage buckets
     ensureStorageBuckets().catch(err => {
       console.error('Failed to check storage buckets:', err);
     });
@@ -159,7 +158,6 @@ const FamilyRegistration = () => {
     setLoading(true);
 
     try {
-      // Refresh the session if needed
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast.error('Your session has expired. Please sign in again.');
@@ -167,7 +165,6 @@ const FamilyRegistration = () => {
         return;
       }
       
-      // Validate required fields
       if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
         toast.error('Please fill in all required fields');
         setLoading(false);
@@ -176,13 +173,10 @@ const FamilyRegistration = () => {
       
       let uploadedAvatarUrl = avatarUrl;
       
-      // Handle avatar upload if there's a new file
       if (avatarFile) {
         try {
-          // Ensure storage buckets exist
           await ensureStorageBuckets();
           
-          // Try to upload the file
           const fileExt = avatarFile.name.split('.').pop();
           const fileName = `${uuidv4()}.${fileExt}`;
           const filePath = `${user.id}/${fileName}`;
@@ -207,7 +201,6 @@ const FamilyRegistration = () => {
         }
       }
 
-      // Prepare profile data
       const fullName = `${firstName} ${lastName}`.trim();
       const updates = {
         id: user.id,
@@ -234,7 +227,6 @@ const FamilyRegistration = () => {
 
       console.log('Updating profile with data:', updates);
       
-      // Update profile in the database
       const { error } = await supabase
         .from('profiles')
         .upsert(updates, { 
@@ -248,7 +240,6 @@ const FamilyRegistration = () => {
 
       toast.success('Registration Complete! Your family caregiver profile has been updated.');
       
-      // Navigate to the dashboard
       navigate('/dashboard/family');
     } catch (error: any) {
       console.error('Error updating profile:', error);
