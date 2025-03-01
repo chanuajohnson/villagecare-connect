@@ -90,7 +90,7 @@ export const getUserRole = async (): Promise<UserRole | null> => {
   }
 };
 
-// Ensure storage buckets exist - can be called at app initialization
+// Add the missing functions that FamilyRegistration.tsx needs
 export const ensureStorageBuckets = async () => {
   try {
     console.log('Checking if storage buckets exist...');
