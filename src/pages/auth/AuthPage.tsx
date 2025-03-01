@@ -11,8 +11,32 @@ import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Check Supabase connection on component mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('profiles').select('count').limit(1);
+        if (error) {
+          console.error("Supabase connection check failed:", error);
+          setConnectionStatus('error');
+          toast.error("Could not connect to the database. Please try again later.");
+        } else {
+          console.log("Supabase connection check succeeded");
+          setConnectionStatus('connected');
+        }
+      } catch (err) {
+        console.error("Error checking Supabase connection:", err);
+        setConnectionStatus('error');
+        toast.error("Network error. Please check your connection and try again.");
+      }
+    };
+    
+    checkConnection();
+  }, []);
 
   // If user is already logged in, redirect to home
   useEffect(() => {
@@ -22,6 +46,11 @@ export default function AuthPage() {
   }, [user, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
+    if (connectionStatus !== 'connected') {
+      toast.error("Cannot authenticate while offline. Please check your connection.");
+      return;
+    }
+    
     try {
       console.log("[AuthPage] Starting login process...");
       setIsLoading(true);
@@ -33,7 +62,15 @@ export default function AuthPage() {
 
       if (error) {
         console.error("[AuthPage] Login error:", error.message);
-        throw error;
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Please confirm your email address before logging in.");
+        } else {
+          throw error;
+        }
       }
 
       console.log("[AuthPage] Login successful:", data.session ? "Has session" : "No session");
@@ -50,6 +87,11 @@ export default function AuthPage() {
   };
 
   const handleSignup = async (email: string, password: string, firstName: string, lastName: string, role: string) => {
+    if (connectionStatus !== 'connected') {
+      toast.error("Cannot register while offline. Please check your connection.");
+      return;
+    }
+    
     try {
       console.log("[AuthPage] Starting signup process...");
       setIsLoading(true);
@@ -72,7 +114,13 @@ export default function AuthPage() {
 
       if (error) {
         console.error("[AuthPage] Signup error:", error.message);
-        throw error;
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes("User already registered")) {
+          throw new Error("This email is already registered. Try logging in instead.");
+        } else {
+          throw error;
+        }
       }
 
       console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
@@ -86,6 +134,7 @@ export default function AuthPage() {
         console.log("[AuthPage] Auth provider will handle redirects");
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
+        toast.info("Please check your email to confirm your account before logging in.");
       }
 
     } catch (error: any) {
@@ -110,6 +159,11 @@ export default function AuthPage() {
           <CardDescription className="text-center">
             Sign in to your account or create a new one
           </CardDescription>
+          {connectionStatus === 'error' && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mt-2">
+              Connection issues detected. Some features may not work properly.
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
