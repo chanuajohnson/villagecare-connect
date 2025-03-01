@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +18,7 @@ import {
   User, Stethoscope, Home, Brain, Activity, 
   Pill, Heart, Clock, Calendar, Briefcase, 
   DollarSign, FileCheck, Users, MapPin, Phone,
-  Mail, Check, X, UserCheck, Wheelchair 
+  Mail, Check, X, UserCheck 
 } from 'lucide-react';
 
 const ProfessionalRegistration = () => {
@@ -39,17 +38,14 @@ const ProfessionalRegistration = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [preferredContactMethod, setPreferredContactMethod] = useState('');
   
-  // Care Services & Specializations
   const [careServices, setCareServices] = useState<string[]>([]);
   const [medicalConditions, setMedicalConditions] = useState<string[]>([]);
   const [otherMedicalCondition, setOtherMedicalCondition] = useState('');
   
-  // Availability & Matching Preferences
   const [availability, setAvailability] = useState<string[]>([]);
   const [workType, setWorkType] = useState('');
   const [preferredFamilyMatching, setPreferredFamilyMatching] = useState<string[]>([]);
   
-  // Additional Details & Compliance
   const [backgroundCheck, setBackgroundCheck] = useState(false);
   const [backgroundCheckProofUrl, setBackgroundCheckProofUrl] = useState('');
   const [comfortWithTasks, setComfortWithTasks] = useState<string[]>([]);
@@ -70,7 +66,6 @@ const ProfessionalRegistration = () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         setUser(data.user);
-        // Check if profile already exists and pre-fill form
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -109,7 +104,6 @@ const ProfessionalRegistration = () => {
           setLanguages(profileData.languages || []);
         }
       } else {
-        // If not logged in, redirect to auth page
         navigate('/auth');
       }
     };
@@ -125,7 +119,6 @@ const ProfessionalRegistration = () => {
     const file = event.target.files[0];
     setAvatarFile(file);
     
-    // Create a preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarUrl(reader.result as string);
@@ -142,7 +135,6 @@ const ProfessionalRegistration = () => {
         throw new Error('No user found');
       }
 
-      // Upload avatar if selected
       let uploadedAvatarUrl = avatarUrl;
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
@@ -161,7 +153,6 @@ const ProfessionalRegistration = () => {
         uploadedAvatarUrl = data.publicUrl;
       }
 
-      // Update profile
       const fullName = `${firstName} ${lastName}`.trim();
       const finalProfessionalRole = professionalRole === 'Other' ? otherRole : professionalRole;
       
@@ -209,7 +200,6 @@ const ProfessionalRegistration = () => {
         description: 'Your professional profile has been updated.'
       });
 
-      // Redirect to professional dashboard
       navigate('/dashboards/professional');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -519,7 +509,7 @@ const ProfessionalRegistration = () => {
                   { id: 'service-medical', icon: <Activity className="h-4 w-4" />, label: 'Medical Support (Post-surgery, Chronic Condition Management, Hospice)', value: 'Medical Support' },
                   { id: 'service-childspecial', icon: <Users className="h-4 w-4" />, label: 'Child or Special Needs Support (Autism, ADHD, Learning Disabilities)', value: 'Child/Special Needs Support' },
                   { id: 'service-cognitive', icon: <Brain className="h-4 w-4" />, label: 'Cognitive & Memory Care (Alzheimer\'s, Dementia, Parkinson\'s)', value: 'Cognitive & Memory Care' },
-                  { id: 'service-mobility', icon: <Wheelchair className="h-4 w-4" />, label: 'Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)', value: 'Mobility Assistance' },
+                  { id: 'service-mobility', icon: <Users className="h-4 w-4" />, label: 'Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)', value: 'Mobility Assistance' },
                   { id: 'service-medication', icon: <Pill className="h-4 w-4" />, label: 'Medication Management (Administering Medication, Insulin, Medical Equipment)', value: 'Medication Management' },
                   { id: 'service-nutrition', icon: <Users className="h-4 w-4" />, label: 'Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)', value: 'Nutritional Assistance' },
                   { id: 'service-household', icon: <Home className="h-4 w-4" />, label: 'Household Assistance (Cleaning, Laundry, Errands, Yard/Garden Maintenance)', value: 'Household Assistance' },
