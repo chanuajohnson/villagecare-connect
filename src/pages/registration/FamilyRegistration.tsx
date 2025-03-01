@@ -55,11 +55,21 @@ const FamilyRegistration = () => {
         setEmail(data.user.email || '');
         
         // Check if profile already exists and pre-fill form
-        const { data: profileData } = await supabase
+        const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to fetch your profile information.'
+          });
+          return;
+        }
 
         if (profileData) {
           setAvatarUrl(profileData.avatar_url);
@@ -122,16 +132,19 @@ const FamilyRegistration = () => {
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data } = await supabase.storage
           .from('avatars')
           .upload(filePath, avatarFile);
 
         if (uploadError) {
-          throw uploadError;
+          console.error('Error uploading avatar:', uploadError);
+          throw new Error('Failed to upload profile picture. Please try again.');
         }
 
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        uploadedAvatarUrl = data.publicUrl;
+        if (data) {
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+          uploadedAvatarUrl = urlData.publicUrl;
+        }
       }
 
       // Update profile
@@ -159,9 +172,17 @@ const FamilyRegistration = () => {
         additional_notes: additionalNotes
       };
 
-      const { error } = await supabase.from('profiles').upsert(updates);
+      console.log('Updating profile with data:', updates);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updates, { 
+          onConflict: 'id',
+          returning: 'minimal' 
+        });
       
       if (error) {
+        console.error('Error updating profile:', error);
         throw error;
       }
 

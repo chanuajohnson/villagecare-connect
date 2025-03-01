@@ -39,8 +39,9 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       setFormSubmitted(true);
       console.log('SignupForm submitting with role:', role);
       await onSubmit(email, password, firstName, lastName, role);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
+      toast.error(error.message || "Failed to create account. Please try again.");
       setFormSubmitted(false);
     }
   };
