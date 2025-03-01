@@ -67,7 +67,14 @@ export const updateUserProfile = async (
     console.log('Updating profile for user:', userId, 'with data:', profileData);
     
     // First ensure the profile exists
-    await ensureUserProfile(userId);
+    const profileExists = await ensureUserProfile(userId);
+    
+    if (!profileExists) {
+      return { 
+        success: false, 
+        error: { message: "Failed to ensure profile exists before update" } 
+      };
+    }
     
     // Then update it
     const { error } = await supabase
