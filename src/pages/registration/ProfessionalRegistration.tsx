@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../lib/supabase';
@@ -18,7 +19,7 @@ import {
   User, Stethoscope, Home, Brain, Activity, 
   Pill, Heart, Clock, Calendar, Briefcase, 
   DollarSign, FileCheck, Users, MapPin, Phone,
-  Mail, Check, X, UserCheck 
+  Mail, Check, X, UserCheck, Upload
 } from 'lucide-react';
 
 const ProfessionalRegistration = () => {
@@ -34,6 +35,8 @@ const ProfessionalRegistration = () => {
   const [certifications, setCertifications] = useState<string[]>([]);
   const [otherCertification, setOtherCertification] = useState('');
   const [certificationProofUrl, setCertificationProofUrl] = useState('');
+  // New state for certification document file
+  const [certificationFile, setCertificationFile] = useState<File | null>(null);
   const [location, setLocation] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [preferredContactMethod, setPreferredContactMethod] = useState('');
@@ -46,8 +49,11 @@ const ProfessionalRegistration = () => {
   const [workType, setWorkType] = useState('');
   const [preferredFamilyMatching, setPreferredFamilyMatching] = useState<string[]>([]);
   
-  const [backgroundCheck, setBackgroundCheck] = useState(false);
+  // Changed from backgroundCheck to certificateOfCharacter
+  const [certificateOfCharacter, setCertificateOfCharacter] = useState(false);
   const [backgroundCheckProofUrl, setBackgroundCheckProofUrl] = useState('');
+  // New state for background check document file
+  const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
   const [comfortWithTasks, setComfortWithTasks] = useState<string[]>([]);
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
@@ -60,6 +66,10 @@ const ProfessionalRegistration = () => {
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Refs for file inputs
+  const certificationFileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundCheckFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -92,7 +102,7 @@ const ProfessionalRegistration = () => {
           setAvailability(profileData.availability || []);
           setWorkType(profileData.work_type || '');
           setPreferredFamilyMatching(profileData.preferred_family_matching || []);
-          setBackgroundCheck(profileData.background_check || false);
+          setCertificateOfCharacter(profileData.certificate_of_character || false);
           setBackgroundCheckProofUrl(profileData.background_check_proof_url || '');
           setComfortWithTasks(profileData.comfort_with_tasks || []);
           setEmergencyContactName(profileData.emergency_contact_name || '');
@@ -126,6 +136,53 @@ const ProfessionalRegistration = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleCertificationFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    setCertificationFile(file);
+    
+    toast({
+      title: "File selected",
+      description: `${file.name} will be uploaded when you submit the form.`
+    });
+  };
+
+  const handleBackgroundCheckFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    setBackgroundCheckFile(file);
+    
+    toast({
+      title: "File selected",
+      description: `${file.name} will be uploaded when you submit the form.`
+    });
+  };
+
+  const uploadFileToStorage = async (file: File, folder: string) => {
+    if (!user) return null;
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+    const filePath = `${user.id}/${folder}/${fileName}`;
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath);
+    return urlData.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -153,6 +210,18 @@ const ProfessionalRegistration = () => {
         uploadedAvatarUrl = data.publicUrl;
       }
 
+      // Upload certification file if provided
+      let certificationDocUrl = certificationProofUrl;
+      if (certificationFile) {
+        certificationDocUrl = await uploadFileToStorage(certificationFile, 'certifications');
+      }
+
+      // Upload background check file if provided
+      let backgroundCheckDocUrl = backgroundCheckProofUrl;
+      if (backgroundCheckFile) {
+        backgroundCheckDocUrl = await uploadFileToStorage(backgroundCheckFile, 'background_checks');
+      }
+
       const fullName = `${firstName} ${lastName}`.trim();
       const finalProfessionalRole = professionalRole === 'Other' ? otherRole : professionalRole;
       
@@ -165,7 +234,7 @@ const ProfessionalRegistration = () => {
         license_number: licenseNumber,
         certifications: certifications,
         other_certification: otherCertification,
-        certification_proof_url: certificationProofUrl,
+        certification_proof_url: certificationDocUrl,
         location: location,
         phone_number: phoneNumber,
         preferred_contact_method: preferredContactMethod,
@@ -175,8 +244,9 @@ const ProfessionalRegistration = () => {
         availability: availability,
         work_type: workType,
         preferred_family_matching: preferredFamilyMatching,
-        background_check: backgroundCheck,
-        background_check_proof_url: backgroundCheckProofUrl,
+        // Updated field name
+        certificate_of_character: certificateOfCharacter,
+        background_check_proof_url: backgroundCheckDocUrl,
         comfort_with_tasks: comfortWithTasks,
         emergency_contact_name: emergencyContactName,
         emergency_contact_phone: emergencyContactPhone,
@@ -421,6 +491,7 @@ const ProfessionalRegistration = () => {
                   { id: 'cert-pt', label: 'Physical Therapist', value: 'Physical Therapist' },
                   { id: 'cert-ot', label: 'Occupational Therapist', value: 'Occupational Therapist' },
                   { id: 'cert-specialneeds', label: 'Special Needs Certification', value: 'Special Needs Certification' },
+                  { id: 'cert-gapp', label: 'The Geriatric Adolescent Partnership Programme (GAPP)', value: 'GAPP' },
                 ].map((item) => (
                   <div key={item.id} className="flex items-center space-x-2">
                     <Checkbox 
@@ -449,16 +520,32 @@ const ProfessionalRegistration = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="certificationProofUrl">Certification Document URL (optional)</Label>
-              <p className="text-sm text-gray-500 mb-2">
-                If you have your certifications available online, provide the URL.
-              </p>
+              <Label htmlFor="certificationFile">Certification Document (PDF or JPG)</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={() => certificationFileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Certification
+                </Button>
+                {certificationFile && (
+                  <span className="text-sm text-green-600">{certificationFile.name}</span>
+                )}
+              </div>
               <Input 
-                id="certificationProofUrl" 
-                placeholder="https://" 
-                value={certificationProofUrl} 
-                onChange={(e) => setCertificationProofUrl(e.target.value)}
+                id="certificationFile" 
+                type="file" 
+                accept=".pdf,.jpg,.jpeg" 
+                onChange={handleCertificationFileChange} 
+                className="hidden"
+                ref={certificationFileInputRef}
               />
+              <p className="text-sm text-gray-500 mt-1">
+                Upload your certification documents in PDF or JPG format.
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -666,29 +753,48 @@ const ProfessionalRegistration = () => {
               <UserCheck className="h-5 w-5" /> Additional Details & Compliance
             </CardTitle>
             <CardDescription>
-              Provide background check information and details about your comfort level with various tasks.
+              Provide "Certificate of Character" or proof of request of "Certificate of Character".
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center space-x-2">
               <Switch 
-                id="backgroundCheck" 
-                checked={backgroundCheck}
-                onCheckedChange={setBackgroundCheck}
+                id="certificateOfCharacter" 
+                checked={certificateOfCharacter}
+                onCheckedChange={setCertificateOfCharacter}
               />
-              <Label htmlFor="backgroundCheck" className="font-normal">
-                I have completed a background check
+              <Label htmlFor="certificateOfCharacter" className="font-normal">
+                I have received or requested a "Certificate of Character"
               </Label>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="backgroundCheckProofUrl">Background Check Document URL (Optional)</Label>
+              <Label htmlFor="backgroundCheckFile">Certificate of Character Document (PDF or JPG)</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={() => backgroundCheckFileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Certificate
+                </Button>
+                {backgroundCheckFile && (
+                  <span className="text-sm text-green-600">{backgroundCheckFile.name}</span>
+                )}
+              </div>
               <Input 
-                id="backgroundCheckProofUrl" 
-                placeholder="https://" 
-                value={backgroundCheckProofUrl} 
-                onChange={(e) => setBackgroundCheckProofUrl(e.target.value)}
+                id="backgroundCheckFile" 
+                type="file" 
+                accept=".pdf,.jpg,.jpeg" 
+                onChange={handleBackgroundCheckFileChange} 
+                className="hidden"
+                ref={backgroundCheckFileInputRef}
               />
+              <p className="text-sm text-gray-500 mt-1">
+                Upload your Certificate of Character in PDF or JPG format.
+              </p>
             </div>
 
             <Separator />
@@ -795,3 +901,4 @@ const ProfessionalRegistration = () => {
 };
 
 export default ProfessionalRegistration;
+
