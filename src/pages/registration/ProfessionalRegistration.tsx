@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,58 +27,37 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Define form schema with Zod
 const professionalFormSchema = z.object({
-  // Personal Information
+  // Essential Personal Information
   full_name: z.string().min(1, 'Name is required'),
-  professional_type: z.string().min(1, 'Professional role is required'),
-  other_professional_type: z.string().optional(),
+  professional_role: z.string().min(1, 'Professional role is required'),
   years_of_experience: z.string().min(1, 'Years of experience is required'),
+  license_number: z.string().optional(),
   
   // Contact Information
-  location: z.string().min(1, 'Location is required'),
   phone_number: z.string().min(1, 'Phone number is required'),
+  email: z.string().email('Invalid email address'),
+  location: z.string().min(1, 'Location is required'),
+  preferred_contact_method: z.string().min(1, 'Preferred contact method is required'),
   
-  // Professional Details
-  license_number: z.string().min(1, 'License number is required'),
-  certifications: z.array(z.string()).optional(),
-  other_certification: z.string().optional(),
-  
-  // Care Services
+  // Care Services & Specializations
   care_services: z.array(z.string()).min(1, 'Select at least one care service'),
-  other_care_service: z.string().optional(),
-  
-  // Languages
-  languages: z.array(z.string()).min(1, 'Select at least one language'),
-  other_language: z.string().optional(),
-  
-  // Availability & Working Preferences
-  work_type: z.string().min(1, 'Work type is required'),
-  availability: z.array(z.string()).min(1, 'Select at least one availability option'),
-  expected_rate: z.string().min(1, 'Expected rate is required'),
-  payment_methods: z.array(z.string()).min(1, 'Select at least one payment method'),
-  preferred_work_locations: z.string().min(1, 'Preferred work locations are required'),
-  commute_mode: z.string().min(1, 'Commute mode is required'),
-  
-  // Background & Verification
-  background_check: z.boolean(),
-  legally_authorized: z.boolean(),
-  
-  // Profile & Bio
-  bio: z.string().min(10, 'Bio should be at least 10 characters'),
-  why_choose_caregiving: z.string().min(10, 'This field should be at least 10 characters'),
-  
-  // Visibility & Notifications
-  list_in_directory: z.boolean().optional(),
-  enable_job_alerts: z.boolean().optional(),
-  job_notification_method: z.string().optional(),
-  job_matching_criteria: z.array(z.string()).optional(),
-  custom_availability_alerts: z.string().optional(),
-  
-  // Medical Information
   medical_conditions: z.array(z.string()).optional(),
-  other_medical_condition: z.string().optional(),
+  other_medical_conditions: z.string().optional(),
+  
+  // Availability & Matching Preferences
+  work_hours: z.array(z.string()).min(1, 'Select at least one work hour preference'),
+  work_type: z.string().min(1, 'Work type is required'),
+  family_matching: z.array(z.string()).optional(),
+  
+  // Additional Details & Compliance
+  background_check: z.boolean().optional(),
+  comfortable_with: z.array(z.string()).optional(),
+  emergency_contact: z.string().optional(),
+  liability_insurance: z.boolean().optional(),
+  hourly_rate: z.string().optional(),
+  additional_notes: z.string().optional(),
   
   // Terms & Conditions
-  // This is the key change - changing from a literal 'true' to a regular boolean
   terms_accepted: z.boolean({
     required_error: 'You must accept the terms and conditions',
   }).refine(val => val === true, {
@@ -92,130 +71,162 @@ export default function ProfessionalRegistration() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const profilePhotoRef = useRef<HTMLInputElement>(null);
+  const certificationsRef = useRef<HTMLInputElement>(null);
+  const backgroundCheckRef = useRef<HTMLInputElement>(null);
+  
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [certifications, setCertifications] = useState<File | null>(null);
+  const [backgroundCheckDoc, setBackgroundCheckDoc] = useState<File | null>(null);
   
   // Form setup
   const form = useForm<ProfessionalFormValues>({
     resolver: zodResolver(professionalFormSchema),
     defaultValues: {
       full_name: '',
-      professional_type: '',
-      other_professional_type: '',
+      professional_role: '',
       years_of_experience: '',
-      location: '',
-      phone_number: '',
       license_number: '',
-      certifications: [],
-      other_certification: '',
+      phone_number: '',
+      email: user?.email || '',
+      location: '',
+      preferred_contact_method: 'Email',
       care_services: [],
-      other_care_service: '',
-      languages: [],
-      other_language: '',
-      work_type: '',
-      availability: [],
-      expected_rate: '',
-      payment_methods: [],
-      preferred_work_locations: '',
-      commute_mode: '',
-      background_check: false,
-      legally_authorized: false,
-      bio: '',
-      why_choose_caregiving: '',
-      list_in_directory: false,
-      enable_job_alerts: false,
-      job_notification_method: '',
-      job_matching_criteria: [],
-      custom_availability_alerts: '',
       medical_conditions: [],
-      other_medical_condition: '',
-      terms_accepted: false, // This will now work with our refined schema
+      other_medical_conditions: '',
+      work_hours: [],
+      work_type: '',
+      family_matching: [],
+      background_check: false,
+      comfortable_with: [],
+      emergency_contact: '',
+      liability_insurance: false,
+      hourly_rate: '',
+      additional_notes: '',
+      terms_accepted: false,
     },
   });
   
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!user) {
-      toast.error('You need to be logged in to register as a professional');
-      navigate('/auth');
+  // Handle file input changes
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfilePhoto(e.target.files[0]);
     }
-  }, [user, navigate]);
+  };
   
+  const handleCertificationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setCertifications(e.target.files[0]);
+    }
+  };
+  
+  const handleBackgroundCheckChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setBackgroundCheckDoc(e.target.files[0]);
+    }
+  };
+  
+  // Handle form submission
   const onSubmit = async (data: ProfessionalFormValues) => {
     if (!user) {
       toast.error('You need to be logged in to register as a professional');
+      navigate('/auth');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
+      // Upload profile photo if provided
+      let profilePhotoUrl = '';
+      if (profilePhoto) {
+        const fileExt = profilePhoto.name.split('.').pop();
+        const fileName = `profile-${uuidv4()}.${fileExt}`;
+        const filePath = `profiles/${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, profilePhoto);
+          
+        if (uploadError) {
+          console.error('Error uploading profile photo:', uploadError);
+          toast.error('Error uploading profile photo');
+        } else {
+          profilePhotoUrl = filePath;
+        }
+      }
+      
+      // Upload certifications if provided
+      let certificationsUrl = '';
+      if (certifications) {
+        const fileExt = certifications.name.split('.').pop();
+        const fileName = `certification-${uuidv4()}.${fileExt}`;
+        const filePath = `documents/${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, certifications);
+          
+        if (uploadError) {
+          console.error('Error uploading certifications:', uploadError);
+          toast.error('Error uploading certifications');
+        } else {
+          certificationsUrl = filePath;
+        }
+      }
+      
+      // Upload background check if provided
+      let backgroundCheckUrl = '';
+      if (backgroundCheckDoc) {
+        const fileExt = backgroundCheckDoc.name.split('.').pop();
+        const fileName = `background-${uuidv4()}.${fileExt}`;
+        const filePath = `documents/${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, backgroundCheckDoc);
+          
+        if (uploadError) {
+          console.error('Error uploading background check:', uploadError);
+          toast.error('Error uploading background check');
+        } else {
+          backgroundCheckUrl = filePath;
+        }
+      }
+      
       // Update user profile in database
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: data.full_name,
           role: 'professional',
-          professional_type: data.professional_type,
-          other_professional_type: data.other_professional_type,
+          professional_type: data.professional_role,
           license_number: data.license_number,
-          certifications: data.certifications,
-          other_certification: data.other_certification,
-          care_services: data.care_services,
-          other_care_service: data.other_care_service,
-          languages: data.languages,
-          other_language: data.other_language,
           years_of_experience: data.years_of_experience,
-          work_type: data.work_type,
-          availability: data.availability,
-          background_check: data.background_check,
-          legally_authorized: data.legally_authorized,
-          expected_rate: data.expected_rate,
-          payment_methods: data.payment_methods,
-          bio: data.bio,
-          why_choose_caregiving: data.why_choose_caregiving,
-          preferred_work_locations: data.preferred_work_locations,
-          commute_mode: data.commute_mode,
-          list_in_directory: data.list_in_directory,
-          enable_job_alerts: data.enable_job_alerts,
-          job_notification_method: data.job_notification_method,
-          job_matching_criteria: data.job_matching_criteria,
-          custom_availability_alerts: data.custom_availability_alerts,
-          medical_conditions: data.medical_conditions,
-          other_medical_condition: data.other_medical_condition,
           phone_number: data.phone_number,
+          email: data.email,
           location: data.location,
+          preferred_contact_method: data.preferred_contact_method,
+          care_services: data.care_services,
+          medical_conditions: data.medical_conditions,
+          other_medical_conditions: data.other_medical_conditions,
+          work_hours: data.work_hours,
+          work_type: data.work_type,
+          family_matching: data.family_matching,
+          comfortable_with: data.comfortable_with,
+          emergency_contact: data.emergency_contact,
+          liability_insurance: data.liability_insurance,
+          hourly_rate: data.hourly_rate,
+          additional_notes: data.additional_notes,
+          profile_photo_url: profilePhotoUrl || null,
+          certification_proof_url: certificationsUrl || null,
+          background_check_url: backgroundCheckUrl || null,
+          background_check: data.background_check,
         })
         .eq('id', user.id);
       
       if (error) {
         throw new Error(`Registration failed: ${error.message}`);
-      }
-      
-      // Upload certification document if provided
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `certification-${uuidv4()}.${fileExt}`;
-        const filePath = `certification/${user.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(filePath, selectedFile);
-          
-        if (uploadError) {
-          console.error('Error uploading certification document:', uploadError);
-          toast.error('Error uploading certification document, but profile was updated');
-        } else {
-          // Update the certification_proof_url in the profile
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ certification_proof_url: filePath })
-            .eq('id', user.id);
-            
-          if (updateError) {
-            console.error('Error updating certification URL:', updateError);
-          }
-        }
       }
       
       toast.success('Professional profile created successfully!');
@@ -228,129 +239,58 @@ export default function ProfessionalRegistration() {
     }
   };
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-  
-  const professionalTypes = [
-    'Registered Nurse (RN)',
-    'Licensed Practical Nurse (LPN)',
-    'Certified Nursing Assistant (CNA)',
-    'Home Health Aide (HHA)',
-    'Physical Therapist',
-    'Occupational Therapist',
-    'Speech Therapist',
-    'Respiratory Therapist',
-    'Social Worker',
-    'Counselor',
-    'Psychologist',
-    'Physician',
-    'Physician Assistant',
-    'Dietitian/Nutritionist',
-    'Personal Care Aide',
-    'Companion Care',
-    'Other'
-  ];
-  
-  const certificationOptions = [
-    'Basic Life Support (BLS)',
-    'Advanced Cardiac Life Support (ACLS)',
-    'Pediatric Advanced Life Support (PALS)',
-    'Certified Nursing Assistant (CNA)',
-    'Home Health Aide (HHA)',
-    'Certified Medication Aide (CMA)',
-    'First Aid',
-    'CPR',
-    'Dementia Care',
-    'Hospice and Palliative Care',
-    'Other'
-  ];
-  
-  const careServiceOptions = [
-    'Personal Care',
-    'Medication Management',
-    'Mobility Assistance',
-    'Meal Preparation',
-    'Companionship',
-    'Light Housekeeping',
-    'Transportation',
-    'Recovery Care',
-    'Specialized Care',
-    'Respite Care',
-    'Other'
-  ];
-  
-  const languageOptions = [
-    'English',
-    'Spanish',
-    'French',
-    'Chinese',
-    'Tagalog',
-    'Vietnamese',
-    'Korean',
-    'German',
-    'Arabic',
-    'Russian',
-    'Italian',
-    'Portuguese',
-    'Hindi',
-    'Japanese',
-    'Other'
-  ];
-  
-  const availabilityOptions = [
-    'Weekday Mornings',
-    'Weekday Afternoons',
-    'Weekday Evenings',
-    'Weekday Overnight',
-    'Weekend Mornings',
-    'Weekend Afternoons',
-    'Weekend Evenings',
-    'Weekend Overnight',
-    '24-Hour Care',
-    'Live-In Care'
-  ];
-  
-  const paymentMethodOptions = [
-    'Insurance',
-    'Medicare',
-    'Medicaid',
-    'Private Pay',
-    'Long-term Care Insurance',
-    'Veterans Benefits',
-    'Credit Card',
-    'Check',
-    'Electronic Transfer'
-  ];
-  
-  const medicalConditionOptions = [
-    'None',
-    'Allergies',
-    'Asthma',
-    'Diabetes',
-    'Heart Condition',
-    'High Blood Pressure',
-    'Mobility Limitations',
-    'Other'
-  ];
-  
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      <Card className="border-none shadow-md">
+      <Card className="border-none shadow-md bg-blue-50">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Professional Registration</CardTitle>
-          <CardDescription className="text-center">
-            Create your professional profile to offer caregiving services
+          <CardTitle className="text-2xl">Professional Registration</CardTitle>
+          <CardDescription>
+            Register as a healthcare professional to connect with families in need of your services.
           </CardDescription>
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Personal Information Section */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Upload Profile Picture Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Personal Information</h3>
+              <h3 className="text-lg font-medium">Upload Profile Picture</h3>
+              <Separator />
+              
+              <div className="flex items-start space-x-4">
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                  {profilePhoto ? (
+                    <img 
+                      src={URL.createObjectURL(profilePhoto)} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                  )}
+                </div>
+                <div className="space-y-2 flex-1">
+                  <Label>Professional Photo</Label>
+                  <Input 
+                    type="file" 
+                    ref={profilePhotoRef}
+                    onChange={handleProfilePhotoChange}
+                    accept="image/*"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload a professional-looking photo to help families recognize you. Max size: 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Essential Personal Information Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="essential" checked={true} disabled />
+                <h3 className="text-lg font-medium">Essential Personal Information</h3>
+              </div>
               <Separator />
               
               <div className="grid gap-4 md:grid-cols-2">
@@ -358,7 +298,7 @@ export default function ProfessionalRegistration() {
                   <Label htmlFor="full_name">Full Name</Label>
                   <Input
                     id="full_name"
-                    placeholder="Enter your full name"
+                    placeholder="Your full name"
                     {...form.register('full_name')}
                   />
                   {form.formState.errors.full_name && (
@@ -367,47 +307,6 @@ export default function ProfessionalRegistration() {
                     </p>
                   )}
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="professional_type">Professional Role</Label>
-                  <Controller
-                    control={form.control}
-                    name="professional_type"
-                    render={({ field }) => (
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your professional role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {professionalTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {form.formState.errors.professional_type && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.professional_type.message}
-                    </p>
-                  )}
-                </div>
-                
-                {form.watch('professional_type') === 'Other' && (
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="other_professional_type">Please specify</Label>
-                    <Input
-                      id="other_professional_type"
-                      placeholder="Enter your professional role"
-                      {...form.register('other_professional_type')}
-                    />
-                  </div>
-                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="years_of_experience">Years of Experience</Label>
@@ -423,7 +322,7 @@ export default function ProfessionalRegistration() {
                           <SelectValue placeholder="Select years of experience" />
                         </SelectTrigger>
                         <SelectContent>
-                          {['Less than 1 year', '1-3 years', '3-5 years', '5-10 years', '10+ years'].map((years) => (
+                          {['0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years'].map((years) => (
                             <SelectItem key={years} value={years}>
                               {years}
                             </SelectItem>
@@ -438,6 +337,71 @@ export default function ProfessionalRegistration() {
                     </p>
                   )}
                 </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="professional_role">Professional Role</Label>
+                  <Controller
+                    control={form.control}
+                    name="professional_role"
+                    render={({ field }) => (
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your professional role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            'Registered Nurse (RN)',
+                            'Licensed Practical Nurse (LPN)',
+                            'Certified Nursing Assistant (CNA)',
+                            'Home Health Aide (HHA)',
+                            'Physical Therapist',
+                            'Occupational Therapist',
+                            'Speech Therapist',
+                            'Social Worker',
+                            'Personal Care Aide',
+                            'Companion Caregiver',
+                            'The Geriatric Adolescent Partnership Programme (GAPP)',
+                            'Other'
+                          ].map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {form.formState.errors.professional_role && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.professional_role.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="license_number">License/Certification Number (if applicable)</Label>
+                  <Input
+                    id="license_number"
+                    placeholder="License or certification number"
+                    {...form.register('license_number')}
+                  />
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Certifications & Licenses</Label>
+                  <Input 
+                    type="file" 
+                    ref={certificationsRef}
+                    onChange={handleCertificationsChange}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload documents like CPR certification, nursing license, etc. Max size: 10MB.
+                  </p>
+                </div>
               </div>
             </div>
             
@@ -448,10 +412,39 @@ export default function ProfessionalRegistration() {
               
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
+                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Input
+                    id="phone_number"
+                    placeholder="Your phone number"
+                    {...form.register('phone_number')}
+                  />
+                  {form.formState.errors.phone_number && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.phone_number.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    placeholder="Your email address"
+                    type="email"
+                    {...form.register('email')}
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
-                    placeholder="City, State"
+                    placeholder="City, State/Province"
                     {...form.register('location')}
                   />
                   {form.formState.errors.location && (
@@ -462,212 +455,444 @@ export default function ProfessionalRegistration() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="phone_number">Phone Number</Label>
-                  <Input
-                    id="phone_number"
-                    placeholder="(XXX) XXX-XXXX"
-                    {...form.register('phone_number')}
+                  <Label htmlFor="preferred_contact_method">Preferred Contact Method</Label>
+                  <Controller
+                    control={form.control}
+                    name="preferred_contact_method"
+                    render={({ field }) => (
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select preferred contact method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Email', 'Phone', 'Text Message'].map((method) => (
+                            <SelectItem key={method} value={method}>
+                              {method}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
-                  {form.formState.errors.phone_number && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.phone_number.message}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
             
-            {/* Professional Details Section */}
+            {/* Care Services & Specializations Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Professional Details</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center text-white">
+                  •
+                </div>
+                <h3 className="text-lg font-medium">Care Services & Specializations</h3>
+              </div>
               <Separator />
               
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="license_number">License/Registration Number</Label>
-                  <Input
-                    id="license_number"
-                    placeholder="Enter your license number"
-                    {...form.register('license_number')}
-                  />
-                  {form.formState.errors.license_number && (
+                  <Label>What type of care do you provide?</Label>
+                  <p className="text-sm text-muted-foreground">Select all that apply</p>
+                  
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Controller
+                      control={form.control}
+                      name="care_services"
+                      render={({ field }) => (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="in-home-care"
+                              checked={field.value?.includes('In-Home Care')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'In-Home Care']
+                                  : (field.value || []).filter(value => value !== 'In-Home Care');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="in-home-care" className="text-sm">
+                              🏠 In-Home Care (Daily, Nighttime, Weekend, Live-in)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="medical-support"
+                              checked={field.value?.includes('Medical Support')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Medical Support']
+                                  : (field.value || []).filter(value => value !== 'Medical Support');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="medical-support" className="text-sm">
+                              🏥 Medical Support (Post-surgery, Chronic Condition Management, Hospice)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="special-needs"
+                              checked={field.value?.includes('Child or Special Needs Support')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Child or Special Needs Support']
+                                  : (field.value || []).filter(value => value !== 'Child or Special Needs Support');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="special-needs" className="text-sm">
+                              👶 Child or Special Needs Support (Autism, ADHD, Learning Disabilities)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="cognitive-memory-care"
+                              checked={field.value?.includes('Cognitive & Memory Care')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Cognitive & Memory Care']
+                                  : (field.value || []).filter(value => value !== 'Cognitive & Memory Care');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="cognitive-memory-care" className="text-sm">
+                              🧠 Cognitive & Memory Care (Alzheimer's, Dementia, Parkinson's)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="mobility-assistance"
+                              checked={field.value?.includes('Mobility Assistance')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Mobility Assistance']
+                                  : (field.value || []).filter(value => value !== 'Mobility Assistance');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="mobility-assistance" className="text-sm">
+                              🧑‍🦽 Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="medication-management"
+                              checked={field.value?.includes('Medication Management')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Medication Management']
+                                  : (field.value || []).filter(value => value !== 'Medication Management');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="medication-management" className="text-sm">
+                              💊 Medication Management (Administering Medication, Insulin, Medical Equipment)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="nutritional-assistance"
+                              checked={field.value?.includes('Nutritional Assistance')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Nutritional Assistance']
+                                  : (field.value || []).filter(value => value !== 'Nutritional Assistance');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="nutritional-assistance" className="text-sm">
+                              🍽️ Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="household-assistance"
+                              checked={field.value?.includes('Household Assistance')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Household Assistance']
+                                  : (field.value || []).filter(value => value !== 'Household Assistance');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="household-assistance" className="text-sm">
+                              🧹 Household Assistance (Cleaning, Laundry, Errands, Yard/Garden Maintenance)
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                    />
+                  </div>
+                  
+                  {form.formState.errors.care_services && (
                     <p className="text-sm text-red-500">
-                      {form.formState.errors.license_number.message}
+                      {form.formState.errors.care_services.message}
                     </p>
                   )}
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Upload Certification Document (Optional)</Label>
-                  <Input 
-                    type="file" 
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Upload certification in PDF, JPG or PNG format
-                  </p>
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Certifications (Select all that apply)</Label>
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                  <Label>What medical conditions have you worked with?</Label>
+                  <p className="text-sm text-muted-foreground">Select all that apply</p>
+                  
+                  <div className="grid gap-2 md:grid-cols-2">
                     <Controller
                       control={form.control}
-                      name="certifications"
+                      name="medical_conditions"
                       render={({ field }) => (
                         <>
-                          {certificationOptions.map((certification) => (
-                            <div key={certification} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`certification-${certification}`}
-                                checked={field.value?.includes(certification)}
-                                onCheckedChange={(checked) => {
-                                  const updatedValue = checked
-                                    ? [...(field.value || []), certification]
-                                    : (field.value || []).filter((value) => value !== certification);
-                                  field.onChange(updatedValue);
-                                }}
-                              />
-                              <Label htmlFor={`certification-${certification}`} className="text-sm">
-                                {certification}
-                              </Label>
-                            </div>
-                          ))}
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="alzheimers-dementia"
+                              checked={field.value?.includes("Alzheimer's/Dementia/Cognitive Decline")}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), "Alzheimer's/Dementia/Cognitive Decline"]
+                                  : (field.value || []).filter(value => value !== "Alzheimer's/Dementia/Cognitive Decline");
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="alzheimers-dementia" className="text-sm">
+                              🧠 Alzheimer's / Dementia / Cognitive Decline
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="cancer-patients"
+                              checked={field.value?.includes('Cancer Patients')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Cancer Patients']
+                                  : (field.value || []).filter(value => value !== 'Cancer Patients');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="cancer-patients" className="text-sm">
+                              🏥 Cancer Patients (Palliative/Hospice Care)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="parkinsons-stroke"
+                              checked={field.value?.includes("Parkinson's/Stroke Recovery/Paralysis")}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), "Parkinson's/Stroke Recovery/Paralysis"]
+                                  : (field.value || []).filter(value => value !== "Parkinson's/Stroke Recovery/Paralysis");
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="parkinsons-stroke" className="text-sm">
+                              🧩 Parkinson's / Stroke Recovery / Paralysis
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="special-needs-conditions"
+                              checked={field.value?.includes('Special Needs')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Special Needs']
+                                  : (field.value || []).filter(value => value !== 'Special Needs');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="special-needs-conditions" className="text-sm">
+                              👨‍👩‍👧‍👦 Special Needs (Autism, ADHD, Cerebral Palsy, etc.)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="chronic-illnesses"
+                              checked={field.value?.includes('Chronic Illnesses')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Chronic Illnesses']
+                                  : (field.value || []).filter(value => value !== 'Chronic Illnesses');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="chronic-illnesses" className="text-sm">
+                              💔 Chronic Illnesses (Diabetes, Heart Disease, Kidney Disease, etc.)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="post-surgical"
+                              checked={field.value?.includes('Post-Surgical Rehabilitation')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Post-Surgical Rehabilitation']
+                                  : (field.value || []).filter(value => value !== 'Post-Surgical Rehabilitation');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="post-surgical" className="text-sm">
+                              🩹 Post-Surgical Rehabilitation
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="bedridden-patients"
+                              checked={field.value?.includes('Bedridden Patients')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Bedridden Patients']
+                                  : (field.value || []).filter(value => value !== 'Bedridden Patients');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="bedridden-patients" className="text-sm">
+                              🛌 Bedridden Patients (Full-time care, Hygiene Assistance, etc.)
+                            </Label>
+                          </div>
                         </>
                       )}
                     />
                   </div>
                 </div>
                 
-                {form.watch('certifications')?.includes('Other') && (
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="other_certification">Other Certification</Label>
-                    <Input
-                      id="other_certification"
-                      placeholder="Please specify other certification"
-                      {...form.register('other_certification')}
+                <div className="space-y-2">
+                  <Label htmlFor="other_medical_conditions">Other medical conditions not listed above</Label>
+                  <Input
+                    id="other_medical_conditions"
+                    placeholder="Specify other conditions you've worked with"
+                    {...form.register('other_medical_conditions')}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Availability & Matching Preferences Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center text-white">
+                  •
+                </div>
+                <h3 className="text-lg font-medium">Availability & Matching Preferences</h3>
+              </div>
+              <Separator />
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Preferred Work Hours</Label>
+                  <p className="text-sm text-muted-foreground">Select all that apply</p>
+                  
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Controller
+                      control={form.control}
+                      name="work_hours"
+                      render={({ field }) => (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="daytime"
+                              checked={field.value?.includes('Daytime')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Daytime']
+                                  : (field.value || []).filter(value => value !== 'Daytime');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="daytime" className="text-sm">
+                              ☀️ Daytime (8 AM - 5 PM)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="night-shifts"
+                              checked={field.value?.includes('Night Shifts')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Night Shifts']
+                                  : (field.value || []).filter(value => value !== 'Night Shifts');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="night-shifts" className="text-sm">
+                              🌙 Night Shifts (5 PM - 8 AM)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="weekends-only"
+                              checked={field.value?.includes('Weekends Only')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Weekends Only']
+                                  : (field.value || []).filter(value => value !== 'Weekends Only');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="weekends-only" className="text-sm">
+                              📅 Weekends Only
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="live-in-care"
+                              checked={field.value?.includes('Live-in Care')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Live-in Care']
+                                  : (field.value || []).filter(value => value !== 'Live-in Care');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="live-in-care" className="text-sm">
+                              🏡 Live-in Care (Full-time in-home support)
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="flexible"
+                              checked={field.value?.includes('Flexible / On-Demand Availability')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Flexible / On-Demand Availability']
+                                  : (field.value || []).filter(value => value !== 'Flexible / On-Demand Availability');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="flexible" className="text-sm">
+                              🕒 Flexible / On-Demand Availability
+                            </Label>
+                          </div>
+                        </>
+                      )}
                     />
                   </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Care Services Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Care Services</h3>
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label>Services You Provide (Select all that apply)</Label>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  <Controller
-                    control={form.control}
-                    name="care_services"
-                    render={({ field }) => (
-                      <>
-                        {careServiceOptions.map((service) => (
-                          <div key={service} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`service-${service}`}
-                              checked={field.value?.includes(service)}
-                              onCheckedChange={(checked) => {
-                                const updatedValue = checked
-                                  ? [...(field.value || []), service]
-                                  : (field.value || []).filter((value) => value !== service);
-                                field.onChange(updatedValue);
-                              }}
-                            />
-                            <Label htmlFor={`service-${service}`} className="text-sm">
-                              {service}
-                            </Label>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  />
+                  
+                  {form.formState.errors.work_hours && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.work_hours.message}
+                    </p>
+                  )}
                 </div>
-                {form.formState.errors.care_services && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.care_services.message}
-                  </p>
-                )}
-              </div>
-              
-              {form.watch('care_services')?.includes('Other') && (
+                
                 <div className="space-y-2">
-                  <Label htmlFor="other_care_service">Other Care Service</Label>
-                  <Input
-                    id="other_care_service"
-                    placeholder="Please specify other care service"
-                    {...form.register('other_care_service')}
-                  />
-                </div>
-              )}
-            </div>
-            
-            {/* Languages Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Languages</h3>
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label>Languages Spoken (Select all that apply)</Label>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  <Controller
-                    control={form.control}
-                    name="languages"
-                    render={({ field }) => (
-                      <>
-                        {languageOptions.map((language) => (
-                          <div key={language} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`language-${language}`}
-                              checked={field.value?.includes(language)}
-                              onCheckedChange={(checked) => {
-                                const updatedValue = checked
-                                  ? [...(field.value || []), language]
-                                  : (field.value || []).filter((value) => value !== language);
-                                field.onChange(updatedValue);
-                              }}
-                            />
-                            <Label htmlFor={`language-${language}`} className="text-sm">
-                              {language}
-                            </Label>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  />
-                </div>
-                {form.formState.errors.languages && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.languages.message}
-                  </p>
-                )}
-              </div>
-              
-              {form.watch('languages')?.includes('Other') && (
-                <div className="space-y-2">
-                  <Label htmlFor="other_language">Other Language</Label>
-                  <Input
-                    id="other_language"
-                    placeholder="Please specify other language"
-                    {...form.register('other_language')}
-                  />
-                </div>
-              )}
-            </div>
-            
-            {/* Availability & Working Preferences */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Availability & Working Preferences</h3>
-              <Separator />
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="work_type">Preferred Work Type</Label>
+                  <Label>Do you work with:</Label>
                   <Controller
                     control={form.control}
                     name="work_type"
@@ -678,16 +903,16 @@ export default function ProfessionalRegistration() {
                         className="flex flex-col space-y-1"
                       >
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Full-time" id="work-full-time" />
-                          <Label htmlFor="work-full-time">Full-time</Label>
+                          <RadioGroupItem value="Care Agencies" id="care-agencies" />
+                          <Label htmlFor="care-agencies">🏢 Care Agencies</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Part-time" id="work-part-time" />
-                          <Label htmlFor="work-part-time">Part-time</Label>
+                          <RadioGroupItem value="Private Independent Care" id="private-care" />
+                          <Label htmlFor="private-care">👨‍⚕️ Private Independent Care (Freelance)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="As-needed" id="work-as-needed" />
-                          <Label htmlFor="work-as-needed">As-needed</Label>
+                          <RadioGroupItem value="Both" id="both" />
+                          <Label htmlFor="both">📋 Both (Agency & Independent Work Available)</Label>
                         </div>
                       </RadioGroup>
                     )}
@@ -700,341 +925,253 @@ export default function ProfessionalRegistration() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Availability (Select all that apply)</Label>
-                  <div className="grid grid-cols-1 gap-2">
+                  <Label>Preferred Family Matching</Label>
+                  <p className="text-sm text-muted-foreground">Select all that apply</p>
+                  
+                  <div className="grid gap-2 md:grid-cols-2">
                     <Controller
                       control={form.control}
-                      name="availability"
+                      name="family_matching"
                       render={({ field }) => (
                         <>
-                          {availabilityOptions.map((availability) => (
-                            <div key={availability} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`availability-${availability}`}
-                                checked={field.value?.includes(availability)}
-                                onCheckedChange={(checked) => {
-                                  const updatedValue = checked
-                                    ? [...(field.value || []), availability]
-                                    : (field.value || []).filter((value) => value !== availability);
-                                  field.onChange(updatedValue);
-                                }}
-                              />
-                              <Label htmlFor={`availability-${availability}`} className="text-sm">
-                                {availability}
-                              </Label>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    />
-                  </div>
-                  {form.formState.errors.availability && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.availability.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="expected_rate">Expected Hourly Rate (USD)</Label>
-                  <Input
-                    id="expected_rate"
-                    placeholder="Enter your expected rate"
-                    {...form.register('expected_rate')}
-                  />
-                  {form.formState.errors.expected_rate && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.expected_rate.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Payment Methods Accepted (Select all that apply)</Label>
-                  <div className="grid grid-cols-1 gap-1">
-                    <Controller
-                      control={form.control}
-                      name="payment_methods"
-                      render={({ field }) => (
-                        <>
-                          {paymentMethodOptions.map((method) => (
-                            <div key={method} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`payment-${method}`}
-                                checked={field.value?.includes(method)}
-                                onCheckedChange={(checked) => {
-                                  const updatedValue = checked
-                                    ? [...(field.value || []), method]
-                                    : (field.value || []).filter((value) => value !== method);
-                                  field.onChange(updatedValue);
-                                }}
-                              />
-                              <Label htmlFor={`payment-${method}`} className="text-sm">
-                                {method}
-                              </Label>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    />
-                  </div>
-                  {form.formState.errors.payment_methods && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.payment_methods.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="preferred_work_locations">Preferred Work Locations</Label>
-                  <Input
-                    id="preferred_work_locations"
-                    placeholder="Cities, neighborhoods, or areas"
-                    {...form.register('preferred_work_locations')}
-                  />
-                  {form.formState.errors.preferred_work_locations && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.preferred_work_locations.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="commute_mode">Primary Commute Method</Label>
-                  <Controller
-                    control={form.control}
-                    name="commute_mode"
-                    render={({ field }) => (
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select commute method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {['Own vehicle', 'Public transportation', 'Walking/Biking', 'Rideshare services'].map((mode) => (
-                            <SelectItem key={mode} value={mode}>
-                              {mode}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {form.formState.errors.commute_mode && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.commute_mode.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Background & Verification Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Background & Verification</h3>
-              <Separator />
-              
-              <div className="grid gap-4">
-                <div className="flex items-start space-x-2">
-                  <Controller
-                    control={form.control}
-                    name="background_check"
-                    render={({ field }) => (
-                      <Checkbox
-                        id="background_check"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="background_check">Background Check</Label>
-                    <p className="text-sm text-muted-foreground">
-                      I am willing to undergo a background check if required
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Controller
-                    control={form.control}
-                    name="legally_authorized"
-                    render={({ field }) => (
-                      <Checkbox
-                        id="legally_authorized"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="legally_authorized">Work Authorization</Label>
-                    <p className="text-sm text-muted-foreground">
-                      I am legally authorized to work in the country
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Medical Information Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Medical Information</h3>
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label>Medical Conditions (If applicable)</Label>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  <Controller
-                    control={form.control}
-                    name="medical_conditions"
-                    render={({ field }) => (
-                      <>
-                        {medicalConditionOptions.map((condition) => (
-                          <div key={condition} className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2">
                             <Checkbox
-                              id={`condition-${condition}`}
-                              checked={field.value?.includes(condition)}
+                              id="elderly-care"
+                              checked={field.value?.includes('Elderly Care Only')}
                               onCheckedChange={(checked) => {
                                 const updatedValue = checked
-                                  ? [...(field.value || []), condition]
-                                  : (field.value || []).filter((value) => value !== condition);
+                                  ? [...(field.value || []), 'Elderly Care Only']
+                                  : (field.value || []).filter(value => value !== 'Elderly Care Only');
                                 field.onChange(updatedValue);
                               }}
                             />
-                            <Label htmlFor={`condition-${condition}`} className="text-sm">
-                              {condition}
+                            <Label htmlFor="elderly-care" className="text-sm">
+                              👵 Elderly Care Only
                             </Label>
                           </div>
-                        ))}
-                      </>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              {form.watch('medical_conditions')?.includes('Other') && (
-                <div className="space-y-2">
-                  <Label htmlFor="other_medical_condition">Other Medical Condition</Label>
-                  <Input
-                    id="other_medical_condition"
-                    placeholder="Please specify other condition"
-                    {...form.register('other_medical_condition')}
-                  />
-                </div>
-              )}
-            </div>
-            
-            {/* Profile & Bio Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Profile & Bio</h3>
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label htmlFor="bio">Professional Bio</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell families about your professional background and experience"
-                  className="min-h-32"
-                  {...form.register('bio')}
-                />
-                {form.formState.errors.bio && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.bio.message}
-                  </p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="why_choose_caregiving">Why You Choose Caregiving</Label>
-                <Textarea
-                  id="why_choose_caregiving"
-                  placeholder="Share why you're passionate about providing care"
-                  className="min-h-32"
-                  {...form.register('why_choose_caregiving')}
-                />
-                {form.formState.errors.why_choose_caregiving && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.why_choose_caregiving.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            {/* Visibility & Notifications Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Visibility & Notifications</h3>
-              <Separator />
-              
-              <div className="grid gap-4">
-                <div className="flex items-start space-x-2">
-                  <Controller
-                    control={form.control}
-                    name="list_in_directory"
-                    render={({ field }) => (
-                      <Checkbox
-                        id="list_in_directory"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="list_in_directory">Professional Directory Listing</Label>
-                    <p className="text-sm text-muted-foreground">
-                      List my profile in the public professional directory
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Controller
-                    control={form.control}
-                    name="enable_job_alerts"
-                    render={({ field }) => (
-                      <Checkbox
-                        id="enable_job_alerts"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="enable_job_alerts">Job Alerts</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications about new care opportunities
-                    </p>
-                  </div>
-                </div>
-                
-                {form.watch('enable_job_alerts') && (
-                  <div className="space-y-2 ml-6">
-                    <Label htmlFor="job_notification_method">Preferred Notification Method</Label>
-                    <Controller
-                      control={form.control}
-                      name="job_notification_method"
-                      render={({ field }) => (
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select notification preference" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {['Email', 'SMS', 'Both Email and SMS', 'In-app only'].map((method) => (
-                              <SelectItem key={method} value={method}>
-                                {method}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="children-special-needs"
+                              checked={field.value?.includes('Children / Special Needs Care Only')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Children / Special Needs Care Only']
+                                  : (field.value || []).filter(value => value !== 'Children / Special Needs Care Only');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="children-special-needs" className="text-sm">
+                              👶 Children / Special Needs Care Only
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="medical-rehabilitation"
+                              checked={field.value?.includes('Medical & Rehabilitation Patients')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Medical & Rehabilitation Patients']
+                                  : (field.value || []).filter(value => value !== 'Medical & Rehabilitation Patients');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="medical-rehabilitation" className="text-sm">
+                              🏥 Medical & Rehabilitation Patients
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="mobility-hospice"
+                              checked={field.value?.includes('Mobility & Hospice Care')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Mobility & Hospice Care']
+                                  : (field.value || []).filter(value => value !== 'Mobility & Hospice Care');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="mobility-hospice" className="text-sm">
+                              🧑‍🦽 Mobility & Hospice Care
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="open-all-matches"
+                              checked={field.value?.includes('Open to All Matches')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Open to All Matches']
+                                  : (field.value || []).filter(value => value !== 'Open to All Matches');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="open-all-matches" className="text-sm">
+                              📋 Open to All Matches
+                            </Label>
+                          </div>
+                        </>
                       )}
                     />
                   </div>
-                )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Details & Compliance Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center text-white">
+                  •
+                </div>
+                <h3 className="text-lg font-medium">Additional Details & Compliance</h3>
+              </div>
+              <Separator />
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Background Check & References</Label>
+                  <Input 
+                    type="file" 
+                    ref={backgroundCheckRef}
+                    onChange={handleBackgroundCheckChange}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload proof of background check or consent form. Max size: 10MB.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Are you comfortable with:</Label>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Controller
+                      control={form.control}
+                      name="comfortable_with"
+                      render={({ field }) => (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="administering-medication"
+                              checked={field.value?.includes('Administering Medication')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Administering Medication']
+                                  : (field.value || []).filter(value => value !== 'Administering Medication');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="administering-medication" className="text-sm">
+                              💊 Administering Medication
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="housekeeping-meal"
+                              checked={field.value?.includes('Housekeeping / Meal Preparation')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Housekeeping / Meal Preparation']
+                                  : (field.value || []).filter(value => value !== 'Housekeeping / Meal Preparation');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="housekeeping-meal" className="text-sm">
+                              🧹 Housekeeping / Meal Preparation
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="transportation"
+                              checked={field.value?.includes('Transportation for Appointments')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Transportation for Appointments']
+                                  : (field.value || []).filter(value => value !== 'Transportation for Appointments');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="transportation" className="text-sm">
+                              🚗 Transportation for Appointments
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="handling-equipment"
+                              checked={field.value?.includes('Handling Medical Equipment')}
+                              onCheckedChange={(checked) => {
+                                const updatedValue = checked
+                                  ? [...(field.value || []), 'Handling Medical Equipment']
+                                  : (field.value || []).filter(value => value !== 'Handling Medical Equipment');
+                                field.onChange(updatedValue);
+                              }}
+                            />
+                            <Label htmlFor="handling-equipment" className="text-sm">
+                              🩺 Handling Medical Equipment
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                  <Input
+                    id="emergency_contact"
+                    placeholder="Name and phone number"
+                    {...form.register('emergency_contact')}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    For your safety when providing care
+                  </p>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Controller
+                    control={form.control}
+                    name="liability_insurance"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="liability_insurance"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="liability_insurance">I have liability insurance</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended for independent caregivers
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="hourly_rate">Hourly Rate / Salary Expectations</Label>
+                  <Input
+                    id="hourly_rate"
+                    placeholder="Your expected compensation"
+                    {...form.register('hourly_rate')}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="additional_notes">Additional Notes for Families</Label>
+                  <Textarea
+                    id="additional_notes"
+                    placeholder="Tell families more about your experience, approach to caregiving, or any other information you'd like to share"
+                    className="min-h-32"
+                    {...form.register('additional_notes')}
+                  />
+                </div>
               </div>
             </div>
             
@@ -1066,7 +1203,7 @@ export default function ProfessionalRegistration() {
               )}
             </div>
             
-            <CardFooter className="flex justify-between border-t pt-6 px-0">
+            <CardFooter className="flex justify-between px-0">
               <Button
                 variant="outline"
                 onClick={() => navigate('/')}
