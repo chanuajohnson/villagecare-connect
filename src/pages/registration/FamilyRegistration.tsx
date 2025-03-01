@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -45,54 +46,64 @@ const FamilyRegistration = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-        setEmail(data.user.email || '');
-        
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .maybeSingle();
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          setUser(data.user);
+          setEmail(data.user.email || '');
+          
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching profile:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to fetch your profile information.'
-          });
-          return;
-        }
+          if (error) {
+            console.error('Error fetching profile:', error);
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: 'Failed to fetch your profile information.'
+            });
+            return;
+          }
 
-        if (profileData) {
-          setAvatarUrl(profileData.avatar_url);
-          setFirstName(profileData.full_name?.split(' ')[0] || '');
-          setLastName(profileData.full_name?.split(' ')[1] || '');
-          setPhoneNumber(profileData.phone_number || '');
-          setAddress(profileData.address || '');
-          setCareRecipientName(profileData.care_recipient_name || '');
-          setRelationship(profileData.relationship || '');
-          setCareTypes(profileData.care_types || []);
-          setSpecialNeeds(profileData.special_needs || []);
-          setSpecializedCare(profileData.specialized_care || []);
-          setOtherSpecialNeeds(profileData.other_special_needs || '');
-          setCaregiverType(profileData.caregiver_type || '');
-          setPreferredContactMethod(profileData.preferred_contact_method || '');
-          setCareSchedule(profileData.care_schedule || '');
-          setBudgetPreferences(profileData.budget_preferences || '');
-          setCaregiverPreferences(profileData.caregiver_preferences || '');
-          setEmergencyContact(profileData.emergency_contact || '');
-          setAdditionalNotes(profileData.additional_notes || '');
+          if (profileData) {
+            setAvatarUrl(profileData.avatar_url);
+            setFirstName(profileData.full_name?.split(' ')[0] || '');
+            setLastName(profileData.full_name?.split(' ')[1] || '');
+            setPhoneNumber(profileData.phone_number || '');
+            setAddress(profileData.address || '');
+            setCareRecipientName(profileData.care_recipient_name || '');
+            setRelationship(profileData.relationship || '');
+            setCareTypes(profileData.care_types || []);
+            setSpecialNeeds(profileData.special_needs || []);
+            setSpecializedCare(profileData.specialized_care || []);
+            setOtherSpecialNeeds(profileData.other_special_needs || '');
+            setCaregiverType(profileData.caregiver_type || '');
+            setPreferredContactMethod(profileData.preferred_contact_method || '');
+            setCareSchedule(profileData.care_schedule || '');
+            setBudgetPreferences(profileData.budget_preferences || '');
+            setCaregiverPreferences(profileData.caregiver_preferences || '');
+            setEmergencyContact(profileData.emergency_contact || '');
+            setAdditionalNotes(profileData.additional_notes || '');
+          }
+        } else {
+          navigate('/auth');
         }
-      } else {
+      } catch (err) {
+        console.error('Error getting user:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Error',
+          description: 'Please sign in again to continue.'
+        });
         navigate('/auth');
       }
     };
 
     getUser();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
@@ -118,6 +129,12 @@ const FamilyRegistration = () => {
         throw new Error('No user found');
       }
 
+      // Validate required fields
+      if (!firstName || !lastName || !phoneNumber || !address) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Upload avatar if selected
       let uploadedAvatarUrl = avatarUrl;
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
@@ -139,6 +156,11 @@ const FamilyRegistration = () => {
         }
       }
 
+      // Make sure arrays are initialized properly
+      const processedCareTypes = careTypes || [];
+      const processedSpecialNeeds = specialNeeds || [];
+      const processedSpecializedCare = specializedCare || [];
+
       const fullName = `${firstName} ${lastName}`.trim();
       const updates = {
         id: user.id,
@@ -150,9 +172,9 @@ const FamilyRegistration = () => {
         updated_at: new Date().toISOString(),
         care_recipient_name: careRecipientName,
         relationship: relationship,
-        care_types: careTypes,
-        special_needs: specialNeeds,
-        specialized_care: specializedCare,
+        care_types: processedCareTypes,
+        special_needs: processedSpecialNeeds,
+        specialized_care: processedSpecializedCare,
         other_special_needs: otherSpecialNeeds,
         caregiver_type: caregiverType,
         preferred_contact_method: preferredContactMethod,
@@ -182,12 +204,12 @@ const FamilyRegistration = () => {
       });
 
       navigate('/dashboards/family');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to update profile. Please try again.'
+        description: error.message || 'Failed to update profile. Please try again.'
       });
     } finally {
       setLoading(false);
