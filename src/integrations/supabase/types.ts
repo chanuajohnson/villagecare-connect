@@ -271,6 +271,7 @@ export type Database = {
           location: string | null
           medical_conditions_experience: string[] | null
           other_certification: string | null
+          other_medical_condition: string | null
           other_special_needs: string | null
           payment_methods: string[] | null
           phone_number: string | null
@@ -339,6 +340,7 @@ export type Database = {
           location?: string | null
           medical_conditions_experience?: string[] | null
           other_certification?: string | null
+          other_medical_condition?: string | null
           other_special_needs?: string | null
           payment_methods?: string[] | null
           phone_number?: string | null
@@ -407,6 +409,7 @@ export type Database = {
           location?: string | null
           medical_conditions_experience?: string[] | null
           other_certification?: string | null
+          other_medical_condition?: string | null
           other_special_needs?: string | null
           payment_methods?: string[] | null
           phone_number?: string | null
