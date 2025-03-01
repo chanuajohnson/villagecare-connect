@@ -22,82 +22,6 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
   const [role, setRole] = useState<UserRole>("family");
   const [showPassword, setShowPassword] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
-
-  // Function to create or update user profile with exponential backoff retry
-  const ensureUserProfile = async (userId: string, userData: any, currentRetry = 0): Promise<boolean> => {
-    try {
-      console.log(`Attempt ${currentRetry + 1}/${MAX_RETRIES} to ensure profile for user ${userId}`);
-      
-      // Use upsert to create or update the profile
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(userData, { 
-          onConflict: 'id',
-          ignoreDuplicates: false 
-        });
-      
-      if (error) {
-        console.error(`Profile upsert error (attempt ${currentRetry + 1}):`, error);
-        
-        // Check if we should retry
-        if (currentRetry < MAX_RETRIES - 1) {
-          // Exponential backoff: 1s, 2s, 4s, etc.
-          const delay = Math.pow(2, currentRetry) * 1000;
-          console.log(`Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return ensureUserProfile(userId, userData, currentRetry + 1);
-        } else {
-          throw error;
-        }
-      }
-      
-      console.log(`Profile successfully created/updated for user ${userId}`);
-      return true;
-    } catch (error) {
-      console.error('Failed all attempts to create/update profile:', error);
-      return false;
-    }
-  };
-
-  // Function to verify profile creation was successful
-  const verifyProfileCreation = async (userId: string, expectedRole: UserRole): Promise<{ success: boolean, profile: any }> => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error verifying profile:', error);
-        return { success: false, profile: null };
-      }
-      
-      if (!profile) {
-        console.error('No profile found during verification');
-        return { success: false, profile: null };
-      }
-      
-      // Check if role matches expected role
-      const roleMatchesExpected = profile.role === expectedRole;
-      console.log('Profile verification:', { 
-        found: true, 
-        roleMatches: roleMatchesExpected,
-        expected: expectedRole,
-        actual: profile.role
-      });
-      
-      return { 
-        success: true, 
-        profile 
-      };
-    } catch (error) {
-      console.error('Exception during profile verification:', error);
-      return { success: false, profile: null };
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +42,6 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       
       // Store the registration role in localStorage for redirect handling
       localStorage.setItem('registeringAs', role);
-      localStorage.setItem('registrationRole', role);
       
       // Set up user metadata with role and name for profile creation
       const metadata = {
@@ -133,7 +56,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       // Pass the registration to the parent component
       await onSubmit(email, password, firstName, lastName, role);
       
-      // After successful registration, explicitly ensure the profile exists with correct role
+      // After successful registration, explicitly update the profile to ensure the role is set
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -141,35 +64,57 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
         if (session?.user) {
           console.log('Got session after signup, user ID:', session.user.id);
           
-          // Prepare profile data
+          // Check if profile exists for this user
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (profileError) {
+            console.error('Error checking for existing profile:', profileError);
+          }
+          
+          // If profile doesn't exist or there was an error, create/update it
+          console.log('Existing profile:', profile);
+          
           const profileData = {
             id: session.user.id,
             full_name: `${firstName} ${lastName}`.trim(),
-            role: role,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            role: role
           };
           
-          console.log('Creating/updating profile with data:', profileData);
+          console.log('Updating profile with data:', profileData);
           
-          // First attempt: Create/update profile
-          const profileCreated = await ensureUserProfile(session.user.id, profileData);
+          // Use upsert to create or update the profile
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .upsert(profileData);
           
-          if (!profileCreated) {
-            toast.error("There was an issue creating your profile. Please try again.");
-            console.error("Failed to create/update profile after multiple attempts");
-            return;
+          if (insertError) {
+            console.error('Failed to update profile after signup:', insertError);
+            toast.error(`Profile update failed: ${insertError.message}`);
+          } else {
+            console.log('Profile successfully updated after signup');
           }
           
-          // Verify profile was created with correct role
-          const { success, profile } = await verifyProfileCreation(session.user.id, role as UserRole);
-          
-          if (success && profile) {
-            // If role is not set correctly, try one more explicit update for just the role
-            if (profile.role !== role) {
-              console.warn('Role mismatch detected! Expected:', role, 'Got:', profile.role);
+          // Double-check the profile was updated correctly
+          const { data: updatedProfile, error: checkError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          if (checkError) {
+            console.error('Error verifying profile update:', checkError);
+          } else {
+            console.log('Profile after update:', updatedProfile);
+            
+            // If role is still not set correctly, try one more update
+            if (updatedProfile && updatedProfile.role !== role) {
+              console.warn('Role mismatch! Expected:', role, 'Got:', updatedProfile.role);
               
-              // Try an explicit role update
+              // Try one more explicit update
               const { error: roleUpdateError } = await supabase
                 .from('profiles')
                 .update({ role: role })
@@ -177,22 +122,17 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
                 
               if (roleUpdateError) {
                 console.error('Failed to fix role mismatch:', roleUpdateError);
-                // Even if this fails, we'll continue since the profile exists
               } else {
-                console.log('Role mismatch corrected successfully');
+                console.log('Role mismatch corrected');
               }
             }
-          } else {
-            console.error('Profile verification failed after creation');
-            toast.error('Your account was created, but there may be an issue with your profile. Please contact support.');
           }
         } else {
           console.error('No session available after signup');
-          toast.error('Account created but session not established. Please try logging in.');
         }
-      } catch (profileError: any) {
-        console.error('Error handling profile after signup:', profileError);
-        toast.error(`Account created but profile setup had an error: ${profileError.message || 'Unknown error'}`);
+      } catch (profileError) {
+        console.error('Error updating profile after signup:', profileError);
+        toast.error('Account created but profile setup had an error. Please try again later.');
       }
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -273,9 +213,6 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
           onValueChange={(value) => {
             console.log('Role selected:', value);
             setRole(value as UserRole);
-            // Store the selected role immediately in localStorage
-            localStorage.setItem('registeringAs', value);
-            localStorage.setItem('registrationRole', value);
           }}
           disabled={isLoading || formSubmitted}
         >
