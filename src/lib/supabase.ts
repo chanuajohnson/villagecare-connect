@@ -1,4 +1,6 @@
+
 import { createClient } from '@supabase/supabase-js';
+import { UserRole } from '@/types/database';
 
 // Constants for Supabase connection
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cpdfmyemjrefnhddyrck.supabase.co';
@@ -12,6 +14,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   },
 });
+
+// Function to get user role from database
+export const getUserRole = async (): Promise<UserRole | null> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log('No session found when getting user role');
+      return null;
+    }
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching user role:', error);
+      return null;
+    }
+    
+    return data?.role || null;
+  } catch (err) {
+    console.error('Error in getUserRole:', err);
+    return null;
+  }
+};
 
 // Ensure storage buckets exist - can be called at app initialization
 export const ensureStorageBuckets = async () => {

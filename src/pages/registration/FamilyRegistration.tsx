@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../../lib/supabase';
+import { supabase, ensureStorageBuckets } from '../../lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -45,6 +45,11 @@ const FamilyRegistration = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Initialize storage buckets
+    ensureStorageBuckets().catch(err => {
+      console.error('Failed to check storage buckets:', err);
+    });
+    
     const getUser = async () => {
       try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -154,88 +159,55 @@ const FamilyRegistration = () => {
     setLoading(true);
 
     try {
-      if (!authSession) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !sessionData.session) {
-          throw new Error('Your session has expired. Please sign in again.');
-        }
-        
-        setAuthSession(sessionData.session);
+      // Refresh the session if needed
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast.error('Your session has expired. Please sign in again.');
+        navigate('/auth');
+        return;
       }
       
-      if (!user) {
-        throw new Error('No user found. Please sign in again.');
-      }
-
+      // Validate required fields
       if (!firstName || !lastName || !phoneNumber || !address || !careRecipientName || !relationship) {
-        throw new Error('Please fill in all required fields');
+        toast.error('Please fill in all required fields');
+        setLoading(false);
+        return;
       }
       
       let uploadedAvatarUrl = avatarUrl;
+      
+      // Handle avatar upload if there's a new file
       if (avatarFile) {
         try {
-          const authenticatedSupabase = supabase;
-
-          const { data: buckets, error: bucketError } = await authenticatedSupabase.storage.listBuckets();
+          // Ensure storage buckets exist
+          await ensureStorageBuckets();
           
-          if (bucketError) {
-            console.error('Error checking buckets:', bucketError);
-            console.log('Skipping profile picture upload due to storage issue');
-          } else {
-            const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
-            
-            if (!avatarsBucketExists) {
-              try {
-                const { error: createError } = await authenticatedSupabase.storage.createBucket('avatars', {
-                  public: true,
-                  fileSizeLimit: 1024 * 1024 * 2, // 2MB
-                });
-                
-                if (createError) {
-                  console.error('Error creating avatars bucket:', createError);
-                  console.log('Could not create storage bucket. Skipping profile picture.');
-                }
-              } catch (createErr) {
-                console.error('Error setting up storage bucket:', createErr);
-                console.log('Storage system error. Skipping profile picture.');
-              }
-            }
-            
-            try {
-              const fileExt = avatarFile.name.split('.').pop();
-              const fileName = `${uuidv4()}.${fileExt}`;
-              const filePath = `${user.id}/${fileName}`;
-              
-              const { error: uploadError, data } = await authenticatedSupabase.storage
-                .from('avatars')
-                .upload(filePath, avatarFile, {
-                  contentType: avatarFile.type,
-                  upsert: true, // Replace if exists
-                });
+          // Try to upload the file
+          const fileExt = avatarFile.name.split('.').pop();
+          const fileName = `${uuidv4()}.${fileExt}`;
+          const filePath = `${user.id}/${fileName}`;
+          
+          const { error: uploadError, data } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, avatarFile, {
+              contentType: avatarFile.type,
+              upsert: true,
+            });
 
-              if (uploadError) {
-                console.error('Error uploading avatar:', uploadError);
-                console.log('Could not upload profile picture. Continuing with registration.');
-              } else if (data) {
-                const { data: urlData } = authenticatedSupabase.storage.from('avatars').getPublicUrl(filePath);
-                uploadedAvatarUrl = urlData.publicUrl;
-              }
-            } catch (uploadErr) {
-              console.error('Unexpected error during upload:', uploadErr);
-              console.log('Unexpected error during upload. Skipping profile picture.');
-            }
+          if (uploadError) {
+            console.error('Error uploading avatar:', uploadError);
+            toast.warning('Could not upload profile picture. Continuing with registration.');
+          } else if (data) {
+            const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+            uploadedAvatarUrl = urlData.publicUrl;
           }
         } catch (storageErr) {
-          console.error('Critical storage error:', storageErr);
-          console.log('Storage system unavailable. Skipping profile picture.');
+          console.error('Storage operation failed:', storageErr);
+          toast.warning('Storage system unavailable. Skipping profile picture.');
         }
       }
 
-      const processedCareTypes = careTypes || [];
-      const processedSpecialNeeds = specialNeeds || [];
-      const processedSpecializedCare = specializedCare || [];
-
+      // Prepare profile data
       const fullName = `${firstName} ${lastName}`.trim();
       const updates = {
         id: user.id,
@@ -243,25 +215,26 @@ const FamilyRegistration = () => {
         avatar_url: uploadedAvatarUrl,
         phone_number: phoneNumber,
         address: address,
-        role: 'family' as const,
+        role: 'family',
         updated_at: new Date().toISOString(),
         care_recipient_name: careRecipientName,
         relationship: relationship,
-        care_types: processedCareTypes,
-        special_needs: processedSpecialNeeds,
-        specialized_care: processedSpecializedCare,
-        other_special_needs: otherSpecialNeeds,
-        caregiver_type: caregiverType,
-        preferred_contact_method: preferredContactMethod,
-        care_schedule: careSchedule,
-        budget_preferences: budgetPreferences,
-        caregiver_preferences: caregiverPreferences,
-        emergency_contact: emergencyContact,
-        additional_notes: additionalNotes
+        care_types: careTypes || [],
+        special_needs: specialNeeds || [],
+        specialized_care: specializedCare || [],
+        other_special_needs: otherSpecialNeeds || '',
+        caregiver_type: caregiverType || '',
+        preferred_contact_method: preferredContactMethod || '',
+        care_schedule: careSchedule || '',
+        budget_preferences: budgetPreferences || '',
+        caregiver_preferences: caregiverPreferences || '',
+        emergency_contact: emergencyContact || '',
+        additional_notes: additionalNotes || ''
       };
 
       console.log('Updating profile with data:', updates);
       
+      // Update profile in the database
       const { error } = await supabase
         .from('profiles')
         .upsert(updates, { 
@@ -274,8 +247,9 @@ const FamilyRegistration = () => {
       }
 
       toast.success('Registration Complete! Your family caregiver profile has been updated.');
-
-      navigate('/dashboards/family');
+      
+      // Navigate to the dashboard
+      navigate('/dashboard/family');
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error(error.message || 'Failed to update profile. Please try again.');
