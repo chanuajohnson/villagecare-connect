@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,17 +23,14 @@ const FamilyRegistration = () => {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   
-  // Care Recipient Information
   const [careRecipientName, setCareRecipientName] = useState('');
   const [relationship, setRelationship] = useState('');
   const [careTypes, setCareTypes] = useState<string[]>([]);
   
-  // Special Medical & Care Needs
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [otherSpecialNeeds, setOtherSpecialNeeds] = useState('');
   const [specializedCare, setSpecializedCare] = useState<string[]>([]);
   
-  // Caregiver Preferences
   const [caregiverType, setCaregiverType] = useState('');
   const [preferredContactMethod, setPreferredContactMethod] = useState('');
   const [careSchedule, setCareSchedule] = useState('');
@@ -54,7 +50,6 @@ const FamilyRegistration = () => {
         setUser(data.user);
         setEmail(data.user.email || '');
         
-        // Check if profile already exists and pre-fill form
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
@@ -92,7 +87,6 @@ const FamilyRegistration = () => {
           setAdditionalNotes(profileData.additional_notes || '');
         }
       } else {
-        // If not logged in, redirect to auth page
         navigate('/auth');
       }
     };
@@ -108,7 +102,6 @@ const FamilyRegistration = () => {
     const file = event.target.files[0];
     setAvatarFile(file);
     
-    // Create a preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarUrl(reader.result as string);
@@ -125,7 +118,6 @@ const FamilyRegistration = () => {
         throw new Error('No user found');
       }
 
-      // Upload avatar if selected
       let uploadedAvatarUrl = avatarUrl;
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
@@ -147,7 +139,6 @@ const FamilyRegistration = () => {
         }
       }
 
-      // Update profile
       const fullName = `${firstName} ${lastName}`.trim();
       const updates = {
         id: user.id,
@@ -174,7 +165,6 @@ const FamilyRegistration = () => {
 
       console.log('Updating profile with data:', updates);
       
-      // Fix: Remove the unsupported 'returning' option
       const { error } = await supabase
         .from('profiles')
         .upsert(updates, { 
@@ -191,7 +181,6 @@ const FamilyRegistration = () => {
         description: 'Your family caregiver profile has been updated.'
       });
 
-      // Redirect to family dashboard
       navigate('/dashboards/family');
     } catch (error) {
       console.error('Error updating profile:', error);
