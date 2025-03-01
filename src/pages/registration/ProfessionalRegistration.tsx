@@ -78,8 +78,11 @@ const professionalFormSchema = z.object({
   other_medical_condition: z.string().optional(),
   
   // Terms & Conditions
-  terms_accepted: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms and conditions' }),
+  // This is the key change - changing from a literal 'true' to a regular boolean
+  terms_accepted: z.boolean({
+    required_error: 'You must accept the terms and conditions',
+  }).refine(val => val === true, {
+    message: 'You must accept the terms and conditions',
   }),
 });
 
@@ -126,7 +129,7 @@ export default function ProfessionalRegistration() {
       custom_availability_alerts: '',
       medical_conditions: [],
       other_medical_condition: '',
-      terms_accepted: false,
+      terms_accepted: false, // This will now work with our refined schema
     },
   });
   
