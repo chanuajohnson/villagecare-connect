@@ -363,6 +363,7 @@ const ProfessionalRegistration = () => {
                   <SelectValue placeholder="Select your professional role" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Professional Agency">🏢 Professional Agency</SelectItem>
                   <SelectItem value="Licensed Nurse">🏥 Licensed Nurse (LPN/RN/BSN)</SelectItem>
                   <SelectItem value="Home Health Aide">🏠 Home Health Aide (HHA)</SelectItem>
                   <SelectItem value="Certified Nursing Assistant">👩‍⚕️ Certified Nursing Assistant (CNA)</SelectItem>
