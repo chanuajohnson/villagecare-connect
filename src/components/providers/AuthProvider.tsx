@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -49,6 +50,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isRedirectingRef = useRef(false);
   const isSigningOutRef = useRef(false);
   const retryAttemptsRef = useRef<Record<string, number>>({});
+  const navigationInProgressRef = useRef(false);
+  const lastPathRef = useRef<string | null>(null);
 
   const clearLoadingTimeout = () => {
     if (loadingTimeoutRef.current) {
@@ -222,6 +225,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const safeNavigate = (path: string, options: { replace?: boolean, skipCheck?: boolean } = {}) => {
+    if (navigationInProgressRef.current && !options.skipCheck) {
+      console.log(`[AuthProvider] Navigation already in progress, skipping navigation to: ${path}`);
+      return;
+    }
+    
+    // Don't navigate to the current path
+    if (location.pathname === path && !options.skipCheck) {
+      console.log(`[AuthProvider] Already at path: ${path}, skipping navigation`);
+      return;
+    }
+    
+    // Update the last path for tracking
+    lastPathRef.current = path;
+    
+    // Set the navigation flag
+    navigationInProgressRef.current = true;
+    console.log(`[AuthProvider] Navigating to: ${path}`);
+    
+    // Perform the navigation
+    if (options.replace) {
+      navigate(path, { replace: true });
+    } else {
+      navigate(path);
+    }
+    
+    // Reset the navigation flag after a short delay
+    setTimeout(() => {
+      navigationInProgressRef.current = false;
+    }, 500);
+  };
+
   const handlePostLoginRedirection = async () => {
     if (!user || isRedirectingRef.current) return;
     
@@ -230,7 +265,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('[AuthProvider] Handling post-login redirection for user:', user.id);
       console.log('[AuthProvider] Current user role:', userRole);
+      console.log('[AuthProvider] Current path:', location.pathname);
       
+      // Skip redirection handling for normal navigation after initial auth
+      if (isInitializedRef.current && !location.pathname.includes('/auth')) {
+        // Only process special redirects like pendingFeatureId, not regular navigation
+        const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
+        
+        // Check for specific pending actions that need immediate handling
+        if (pendingFeatureId) {
+          await checkPendingUpvote();
+          isRedirectingRef.current = false;
+          return;
+        }
+        
+        // If we're not on a registration page and we should be, redirect there
+        const isOnRegistrationPage = location.pathname.includes('/registration/');
+        const needsProfile = !(await checkProfileCompletion(user.id));
+        
+        if (needsProfile && !isOnRegistrationPage) {
+          let registrationPath = '/registration/family';
+          
+          if (userRole) {
+            registrationPath = `/registration/${userRole.toLowerCase()}`;
+          } else if (user.user_metadata?.role) {
+            registrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
+          } else if (localStorage.getItem('registrationRole')) {
+            const intendedRole = localStorage.getItem('registrationRole');
+            registrationPath = `/registration/${intendedRole?.toLowerCase()}`;
+          }
+          
+          console.log('[AuthProvider] Redirecting to registration page:', registrationPath);
+          toast.info('Please complete your profile to continue');
+          safeNavigate(registrationPath, { skipCheck: true });
+          isRedirectingRef.current = false;
+          return;
+        }
+        
+        // All other normal navigation - let it proceed without interference
+        console.log('[AuthProvider] Allowing normal navigation to continue on path:', location.pathname);
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      // Initial profile check and role determination
       if (!userRole && user.user_metadata?.role) {
         console.log('[AuthProvider] Setting user role from metadata:', user.user_metadata.role);
         setUserRole(user.user_metadata.role);
@@ -239,6 +317,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
+      // Get pending actions from localStorage
       const pendingActions = [
         'pendingFeatureId',
         'pendingFeatureUpvote',
@@ -259,6 +338,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.info('Resuming your previous session');
       }
       
+      // Registration page check and redirect
       if (!profileComplete && !isOnRegistrationPage) {
         let registrationPath = '/registration/family';
         
@@ -280,11 +360,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         console.log('[AuthProvider] Redirecting to registration page:', registrationPath);
         toast.info('Please complete your profile to continue');
-        navigate(registrationPath);
+        safeNavigate(registrationPath, { skipCheck: true });
         isRedirectingRef.current = false;
         return;
       }
       
+      // Check if on wrong registration page
       if (!profileComplete && isOnRegistrationPage) {
         let correctRegistrationPath = null;
         
@@ -304,7 +385,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
             const roleName = correctRegistrationPath.split('/').pop();
             toast.info(`Redirecting to the ${roleName} registration form`);
-            navigate(correctRegistrationPath);
+            safeNavigate(correctRegistrationPath, { skipCheck: true });
             isRedirectingRef.current = false;
             return;
           } else {
@@ -316,6 +397,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
+      // Handle pending actions for completed profiles
       if (profileComplete) {
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         if (pendingFeatureId) {
@@ -327,7 +409,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const pendingBooking = localStorage.getItem('pendingBooking');
         if (pendingBooking) {
           localStorage.removeItem('pendingBooking');
-          navigate(pendingBooking);
+          safeNavigate(pendingBooking, { skipCheck: true });
           isRedirectingRef.current = false;
           return;
         }
@@ -335,7 +417,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const pendingMessage = localStorage.getItem('pendingMessage');
         if (pendingMessage) {
           localStorage.removeItem('pendingMessage');
-          navigate(pendingMessage);
+          safeNavigate(pendingMessage, { skipCheck: true });
           isRedirectingRef.current = false;
           return;
         }
@@ -343,7 +425,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
         if (pendingProfileUpdate) {
           localStorage.removeItem('pendingProfileUpdate');
-          navigate(pendingProfileUpdate);
+          safeNavigate(pendingProfileUpdate, { skipCheck: true });
           isRedirectingRef.current = false;
           return;
         }
@@ -351,26 +433,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const lastPath = localStorage.getItem('lastPath');
         console.log('[AuthProvider] Last path:', lastPath);
         
-        if (lastPath) {
+        if (lastPath && location.pathname === '/auth') {
           console.log('[AuthProvider] Navigating to last path:', lastPath);
-          navigate(lastPath);
+          safeNavigate(lastPath, { skipCheck: true });
           clearLastAction();
           isRedirectingRef.current = false;
           return;
         }
-      }
-      
-      if (profileComplete && userRole) {
-        const dashboardRoutes: Record<UserRole, string> = {
-          'family': '/dashboard/family',
-          'professional': '/dashboard/professional',
-          'community': '/dashboard/community',
-          'admin': '/dashboard/admin'
-        };
         
-        console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
-        navigate(dashboardRoutes[userRole]);
-        toast.success(`Welcome to your ${userRole} dashboard!`);
+        // If we're still on the auth page, redirect to the appropriate dashboard
+        if (location.pathname === '/auth' && userRole) {
+          const dashboardRoutes: Record<UserRole, string> = {
+            'family': '/dashboard/family',
+            'professional': '/dashboard/professional',
+            'community': '/dashboard/community',
+            'admin': '/dashboard/admin'
+          };
+          
+          console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
+          safeNavigate(dashboardRoutes[userRole], { skipCheck: true });
+          toast.success(`Welcome to your ${userRole} dashboard!`);
+        }
       }
     } catch (error) {
       console.error('[AuthProvider] Error during post-login redirection:', error);
@@ -399,11 +482,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     toast.error('Please sign in to ' + action);
-    navigate('/auth');
+    safeNavigate('/auth', { skipCheck: true });
     return false;
   };
 
   const clearLastAction = () => {
+    console.log('[AuthProvider] Clearing last action');
     localStorage.removeItem('lastAction');
     localStorage.removeItem('lastPath');
     localStorage.removeItem('pendingFeatureId');
@@ -478,7 +562,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   useEffect(() => {
-    if (user && isInitializedRef.current) {
+    if (user && isInitializedRef.current && !navigationInProgressRef.current) {
       console.log('[AuthProvider] User available, handling redirection');
       handlePostLoginRedirection();
     }
@@ -569,7 +653,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (isSigningOutRef.current) {
             isSigningOutRef.current = false;
             toast.success('You have been signed out successfully');
-            navigate('/');
+            safeNavigate('/', { skipCheck: true });
           }
         } else if (event === 'USER_UPDATED') {
           console.log('[AuthProvider] User updated');
@@ -624,7 +708,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      navigate('/');
+      safeNavigate('/', { skipCheck: true, replace: true });
       toast.success('You have been signed out successfully');
       
       setLoadingWithTimeout(false, 'sign-out-complete');
@@ -640,7 +724,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isSigningOutRef.current = false;
       
       localStorage.setItem('authStateError', 'true');
-      navigate('/');
+      safeNavigate('/', { skipCheck: true });
     }
   };
 

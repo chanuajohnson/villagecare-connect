@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { 
@@ -18,11 +18,13 @@ import {
 
 export function Navigation() {
   const { user, signOut, isLoading } = useAuth();
+  const location = useLocation();
 
   // Log state for debugging purposes
-  console.log('Navigation render -', { user: !!user, isLoading });
+  console.log('Navigation render -', { user: !!user, isLoading, path: location.pathname });
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
     try {
       await signOut();
     } catch (error) {

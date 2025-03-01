@@ -23,14 +23,17 @@ const FeaturesPage = () => {
                           localStorage.getItem('pendingMessage') ||
                           localStorage.getItem('pendingProfileUpdate');
     
-    // Skip entirely if coming from navigation paths to avoid unnecessary state changes
+    // Skip entirely if coming from navigation paths or if there's nothing to clear
     const fromNavigation = document.referrer.includes('/dashboard') || 
                            document.referrer.includes('/community') || 
                            document.referrer === '';
     
     if (hasLastAction && !fromNavigation) {
       console.log('[FeaturesPage] Clearing last action');
-      clearLastAction();
+      // Use a setTimeout to delay the clear action slightly, giving the page time to render first
+      setTimeout(() => {
+        clearLastAction();
+      }, 100);
     } else {
       console.log('[FeaturesPage] No last action to clear or coming from navigation - skipping');
     }
