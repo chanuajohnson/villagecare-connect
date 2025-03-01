@@ -224,32 +224,61 @@ export type Database = {
       profiles: {
         Row: {
           additional_notes: string | null
+          additional_professional_notes: string | null
           address: string | null
+          administers_medication: boolean | null
+          availability: string[] | null
           avatar_url: string | null
+          background_check: boolean | null
+          background_check_proof_url: string | null
+          bio: string | null
           budget_preferences: string | null
           care_recipient_name: string | null
           care_schedule: string | null
+          care_services: string[] | null
           care_types: string[] | null
           caregiver_preferences: string | null
           caregiver_type: string | null
           caregiving_areas: string[] | null
           caregiving_experience: string | null
+          certification_proof_url: string | null
+          certifications: string[] | null
           communication_channels: string[] | null
           community_motivation: string | null
           community_roles: string[] | null
+          commute_mode: string | null
           contribution_interests: string[] | null
           created_at: string | null
+          custom_availability_alerts: string | null
           emergency_contact: string | null
           enable_community_notifications: boolean | null
+          enable_job_alerts: boolean | null
+          expected_rate: string | null
           full_name: string | null
+          handles_medical_equipment: boolean | null
+          has_liability_insurance: boolean | null
+          hourly_rate: string | null
           id: string
           improvement_ideas: string | null
           involvement_preferences: string[] | null
+          job_matching_criteria: string[] | null
+          job_notification_method: string | null
+          languages: string[] | null
+          legally_authorized: boolean | null
+          license_number: string | null
           list_in_community_directory: boolean | null
+          list_in_directory: boolean | null
           location: string | null
+          medical_conditions_experience: string[] | null
+          other_certification: string | null
           other_special_needs: string | null
+          payment_methods: string[] | null
           phone_number: string | null
           preferred_contact_method: string | null
+          preferred_work_locations: string | null
+          professional_type: string | null
+          provides_housekeeping: boolean | null
+          provides_transportation: boolean | null
           relationship: string | null
           role: Database["public"]["Enums"]["user_role"]
           special_needs: string[] | null
@@ -257,35 +286,67 @@ export type Database = {
           tech_interests: string[] | null
           updated_at: string | null
           website: string | null
+          why_choose_caregiving: string | null
+          work_type: string | null
+          years_of_experience: string | null
         }
         Insert: {
           additional_notes?: string | null
+          additional_professional_notes?: string | null
           address?: string | null
+          administers_medication?: boolean | null
+          availability?: string[] | null
           avatar_url?: string | null
+          background_check?: boolean | null
+          background_check_proof_url?: string | null
+          bio?: string | null
           budget_preferences?: string | null
           care_recipient_name?: string | null
           care_schedule?: string | null
+          care_services?: string[] | null
           care_types?: string[] | null
           caregiver_preferences?: string | null
           caregiver_type?: string | null
           caregiving_areas?: string[] | null
           caregiving_experience?: string | null
+          certification_proof_url?: string | null
+          certifications?: string[] | null
           communication_channels?: string[] | null
           community_motivation?: string | null
           community_roles?: string[] | null
+          commute_mode?: string | null
           contribution_interests?: string[] | null
           created_at?: string | null
+          custom_availability_alerts?: string | null
           emergency_contact?: string | null
           enable_community_notifications?: boolean | null
+          enable_job_alerts?: boolean | null
+          expected_rate?: string | null
           full_name?: string | null
+          handles_medical_equipment?: boolean | null
+          has_liability_insurance?: boolean | null
+          hourly_rate?: string | null
           id: string
           improvement_ideas?: string | null
           involvement_preferences?: string[] | null
+          job_matching_criteria?: string[] | null
+          job_notification_method?: string | null
+          languages?: string[] | null
+          legally_authorized?: boolean | null
+          license_number?: string | null
           list_in_community_directory?: boolean | null
+          list_in_directory?: boolean | null
           location?: string | null
+          medical_conditions_experience?: string[] | null
+          other_certification?: string | null
           other_special_needs?: string | null
+          payment_methods?: string[] | null
           phone_number?: string | null
           preferred_contact_method?: string | null
+          preferred_work_locations?: string | null
+          professional_type?: string | null
+          provides_housekeeping?: boolean | null
+          provides_transportation?: boolean | null
           relationship?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           special_needs?: string[] | null
@@ -293,35 +354,67 @@ export type Database = {
           tech_interests?: string[] | null
           updated_at?: string | null
           website?: string | null
+          why_choose_caregiving?: string | null
+          work_type?: string | null
+          years_of_experience?: string | null
         }
         Update: {
           additional_notes?: string | null
+          additional_professional_notes?: string | null
           address?: string | null
+          administers_medication?: boolean | null
+          availability?: string[] | null
           avatar_url?: string | null
+          background_check?: boolean | null
+          background_check_proof_url?: string | null
+          bio?: string | null
           budget_preferences?: string | null
           care_recipient_name?: string | null
           care_schedule?: string | null
+          care_services?: string[] | null
           care_types?: string[] | null
           caregiver_preferences?: string | null
           caregiver_type?: string | null
           caregiving_areas?: string[] | null
           caregiving_experience?: string | null
+          certification_proof_url?: string | null
+          certifications?: string[] | null
           communication_channels?: string[] | null
           community_motivation?: string | null
           community_roles?: string[] | null
+          commute_mode?: string | null
           contribution_interests?: string[] | null
           created_at?: string | null
+          custom_availability_alerts?: string | null
           emergency_contact?: string | null
           enable_community_notifications?: boolean | null
+          enable_job_alerts?: boolean | null
+          expected_rate?: string | null
           full_name?: string | null
+          handles_medical_equipment?: boolean | null
+          has_liability_insurance?: boolean | null
+          hourly_rate?: string | null
           id?: string
           improvement_ideas?: string | null
           involvement_preferences?: string[] | null
+          job_matching_criteria?: string[] | null
+          job_notification_method?: string | null
+          languages?: string[] | null
+          legally_authorized?: boolean | null
+          license_number?: string | null
           list_in_community_directory?: boolean | null
+          list_in_directory?: boolean | null
           location?: string | null
+          medical_conditions_experience?: string[] | null
+          other_certification?: string | null
           other_special_needs?: string | null
+          payment_methods?: string[] | null
           phone_number?: string | null
           preferred_contact_method?: string | null
+          preferred_work_locations?: string | null
+          professional_type?: string | null
+          provides_housekeeping?: boolean | null
+          provides_transportation?: boolean | null
           relationship?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           special_needs?: string[] | null
@@ -329,6 +422,9 @@ export type Database = {
           tech_interests?: string[] | null
           updated_at?: string | null
           website?: string | null
+          why_choose_caregiving?: string | null
+          work_type?: string | null
+          years_of_experience?: string | null
         }
         Relationships: []
       }
