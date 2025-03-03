@@ -561,12 +561,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
+ //Chan Edit for Flash Flickering User Role Login useEffect(() => {
+    //if (user && isInitializedRef.current && !navigationInProgressRef.current) {
+      //console.log('[AuthProvider] User available, handling redirection');
+      //handlePostLoginRedirection();
+    //}
+  //}, [user, userRole, location.pathname]);
+
   useEffect(() => {
-    if (user && isInitializedRef.current && !navigationInProgressRef.current) {
-      console.log('[AuthProvider] User available, handling redirection');
-      handlePostLoginRedirection();
-    }
-  }, [user, userRole, location.pathname]);
+  if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
+
+  console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
+  handlePostLoginRedirection();
+}, [isLoading, user, userRole, isProfileComplete, location.pathname]);
+
 
   useEffect(() => {
     const clearStaleState = async () => {
@@ -736,7 +744,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isProfileComplete
   });
 
-  return (
+ //Chan Edit for Flash Flickering User Role Login useEffect
+  /* return (
     <AuthContext.Provider value={{ 
       session, 
       user, 
@@ -751,6 +760,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
+*/
+  if (isLoading || !userRole || !isProfileComplete) {
+  return <LoadingScreen />; // Prevent flickering while auth state is still resolving
+}
+
+return (
+  <AuthContext.Provider value={{ 
+    session, 
+    user, 
+    userRole, 
+    signOut, 
+    isLoading,
+    requireAuth,
+    clearLastAction,
+    checkPendingUpvote,
+    isProfileComplete
+  }}>
+    {children}
+  </AuthContext.Provider>
+);
+
 };
 
 export const useAuth = () => {
