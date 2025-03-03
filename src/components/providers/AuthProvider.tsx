@@ -5,6 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase, getUserRole } from '@/lib/supabase';
 import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 // Define timeout duration for loading states (in milliseconds)
 const LOADING_TIMEOUT_MS = 15000; // Increased to 15s to provide more time for role determination
