@@ -670,8 +670,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isProfileComplete
   });
 
-  if (isLoading || !userRole || !isProfileComplete) {
-    return <LoadingScreen />;
+  if (isLoading) {
+    return <LoadingScreen message="Loading your account..." />;
   }
 
   return (
