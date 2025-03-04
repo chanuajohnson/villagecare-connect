@@ -1,4 +1,3 @@
-
 import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
@@ -26,10 +25,9 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
 
   return paths.map((path) => {
     currentPath += `/${path}`;
-    // Return early if this is a dashboard route and there's only one path segment
     if (path === "dashboard" && paths.length === 1) {
       return {
-        label: "",  // Empty label means this breadcrumb won't be shown
+        label: "",
         path: "/",
       };
     }
@@ -37,7 +35,7 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
       label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
       path: currentPath,
     };
-  }).filter(item => item.label !== ""); // Filter out empty labels
+  }).filter(item => item.label !== "");
 };
 
 export function Breadcrumb() {
@@ -60,28 +58,23 @@ export function Breadcrumb() {
           </Link>
         </li>
         {items.map((item, index) => (
-          <Fragment key={item.path}>
-            <li>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            </li>
-            <li>
-              {index === items.length - 1 ? (
-                <span className="font-medium text-gray-900" aria-current="page">
-                  {item.label}
-                </span>
-              ) : (
-                <Link
-                  to={item.path}
-                  className="hover:text-primary-600 transition-colors"
-                >
-                  {item.label}
-                </Link>
-              )}
-            </li>
-          </Fragment>
+          <li key={item.path} className="flex items-center">
+            <ChevronRight className="h-4 w-4 text-gray-400 mr-1" />
+            {index === items.length - 1 ? (
+              <span className="font-medium text-gray-900" aria-current="page">
+                {item.label}
+              </span>
+            ) : (
+              <Link
+                to={item.path}
+                className="hover:text-primary-600 transition-colors"
+              >
+                {item.label}
+              </Link>
+            )}
+          </li>
         ))}
       </ol>
     </nav>
   );
 }
-
