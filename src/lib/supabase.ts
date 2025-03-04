@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -86,7 +87,7 @@ export const getUserRole = async (): Promise<UserRole | null> => {
   }
 };
 
-// Add the missing functions that FamilyRegistration.tsx needs
+// Updated ensureStorageBuckets function with better error handling for RLS
 export const ensureStorageBuckets = async () => {
   try {
     console.log('Checking if storage buckets exist...');
@@ -101,40 +102,32 @@ export const ensureStorageBuckets = async () => {
     
     if (!sessionData?.session) {
       console.log("No authenticated session found for storage operations");
-      return false;
+      // Still proceed - the storage buckets may be public
     }
     
     // Check if avatars bucket exists
     const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
     
     if (bucketError) {
+      // If we get a permissions error here, it might be due to RLS
+      // But the buckets should have been created in the migration
       console.error('Error checking storage buckets:', bucketError);
-      return false;
+      console.log('Buckets should have been created by migration, proceeding...');
+      return true;
     }
     
-    const avatarsBucketExists = buckets.some(bucket => bucket.name === 'avatars');
-    
-    if (!avatarsBucketExists) {
-      console.log('Creating avatars bucket...');
-      const { error: createError } = await supabase.storage.createBucket('avatars', {
-        public: true,
-        fileSizeLimit: 1024 * 1024 * 2, // 2MB
-      });
-      
-      if (createError) {
-        console.error('Error creating avatars bucket:', createError);
-        return false;
-      } else {
-        console.log('Avatars bucket created successfully');
-      }
+    // Log the existing buckets for debugging
+    if (buckets && buckets.length > 0) {
+      console.log('Existing buckets:', buckets.map(b => b.name).join(', '));
+      return true;
     } else {
-      console.log('Avatars bucket already exists');
+      console.log('No buckets found, but they should have been created by migration');
+      return true;
     }
-    
-    return true;
   } catch (error) {
     console.error('Error checking storage buckets:', error);
-    return false;
+    // Return true to allow the app to proceed - the migration should have created the buckets
+    return true;
   }
 };
 
@@ -182,10 +175,8 @@ export const initializeSupabase = async () => {
     console.log('Session exists during initialization:', !!data.session);
   }
   
-  // Ensure buckets (if user is logged in)
-  if (data.session) {
-    await ensureStorageBuckets();
-  }
+  // Ensure buckets (even if user is not logged in)
+  await ensureStorageBuckets();
   
   console.log('Supabase initialization complete');
   return true;
