@@ -1,6 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
+console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+console.log("Supabase Key:", import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 // Constants for Supabase connection
 // Using fallback values to ensure we always have valid values, even if env vars are missing
