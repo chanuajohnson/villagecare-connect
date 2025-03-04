@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -55,7 +54,6 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
 // Function to get user role from database with improved error handling
 export const getUserRole = async (): Promise<UserRole | null> => {
   try {
-    console.log('Getting user session...');
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {

@@ -50,6 +50,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigationInProgressRef = useRef(false);
   const lastPathRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    console.log('[AuthProvider] Auth State:', { 
+      isLoading, 
+      userRole, 
+      isProfileComplete, 
+      user: user ? 'Authenticated' : null 
+    });
+    
+    if (isLoading) {
+      console.log('[AuthProvider] Waiting for authentication to load...');
+    }
+  }, [isLoading, userRole, isProfileComplete, user]);
+
   const clearLoadingTimeout = () => {
     if (loadingTimeoutRef.current) {
       console.log(`[AuthProvider] Clearing loading timeout`);
@@ -473,26 +486,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchSessionAndUser = async () => {
     console.log("[AuthProvider] Fetching session and user...");
+    setLoadingWithTimeout(true, 'fetch-session');
     
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log("[AuthProvider] Session:", session);
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("[AuthProvider] Error fetching session:", error);
+        toast.error("Unable to load your session. Please try again.");
+        setLoadingWithTimeout(false, 'fetch-session-error');
+        return;
+      }
+      
+      console.log("[AuthProvider] Session retrieved:", session ? "Has session" : "No session");
 
-    if (!session) {
-      console.log("[AuthProvider] No active session.");
-      setIsLoading(false);
-      return;
+      if (!session) {
+        console.log("[AuthProvider] No user in session");
+        setSession(null);
+        setUser(null);
+        setUserRole(null);
+        setIsProfileComplete(false);
+        console.log("[AuthProvider] Session fetch complete, setting isLoading to false");
+        setLoadingWithTimeout(false, 'fetch-session-complete');
+        return;
+      }
+
+      setSession(session);
+      setUser(session.user);
+
+      // Try to get role from user metadata first (fastest)
+      if (session.user.user_metadata?.role) {
+        console.log("[AuthProvider] Setting role from user metadata:", session.user.user_metadata.role);
+        setUserRole(session.user.user_metadata.role);
+      } else {
+        // Otherwise query the database
+        console.log("[AuthProvider] Fetching user role from database...");
+        const role = await getUserRole();
+        console.log("[AuthProvider] Retrieved Role:", role);
+        setUserRole(role);
+      }
+      
+      // Check if profile is complete
+      await checkProfileCompletion(session.user.id);
+      setLoadingWithTimeout(false, 'fetch-session-complete');
+    } catch (error) {
+      console.error("[AuthProvider] Error in fetchSessionAndUser:", error);
+      toast.error("An error occurred while loading your account. Please try again.");
+      setLoadingWithTimeout(false, 'fetch-session-error');
     }
-
-    setSession(session);
-    setUser(session.user);
-
-    console.log("[AuthProvider] Fetching user role...");
-    const role = await getUserRole();
-    console.log("[AuthProvider] Retrieved Role:", role);
-    
-    setUserRole(role);
-    setIsProfileComplete(true);
-    setIsLoading(false);
   };
 
   useEffect(() => {
