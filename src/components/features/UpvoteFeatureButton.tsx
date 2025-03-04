@@ -146,7 +146,9 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         .select('id')
         .eq('feature_id', fId)
         .eq('user_id', user.id)
-        .maybeSingle();
+        //Chan .maybeSingle();
+      .limit(1)
+  .single(); // Now it will only return 1 row
 
       if (error) {
         console.error('Error checking user vote:', error);
