@@ -24,6 +24,7 @@ import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeatu
 import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
 import FAQPage from "./pages/support/FAQPage";
 import { Fab } from "@/components/ui/fab";
+import "./debugEnv";
 
 const queryClient = new QueryClient();
 
