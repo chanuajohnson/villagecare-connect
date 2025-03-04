@@ -51,7 +51,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         const { data: existingFeatures, error: searchError } = await supabase
           .from('features')
           .select('id, title')
-          .ilike('title', '%profile management%');
+          .ilike('title', '%profile management%')
+          .limit(10); // Add limit to prevent potential issues with large result sets
           
         if (searchError) {
           console.error('Error searching for Profile Management feature:', searchError);
@@ -73,7 +74,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
             description: 'Feature request for Profile Management' 
           }])
           .select('id')
-          .single();
+          .limit(1)
+          .maybeSingle(); // Changed from single() to limit(1).maybeSingle()
           
         if (insertError) {
           console.error('Error creating Profile Management feature:', insertError);
@@ -94,7 +96,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         .from('features')
         .select('id')
         .ilike('title', title)
-        .maybeSingle();
+        .limit(1)
+        .maybeSingle(); // Changed from maybeSingle() to limit(1).maybeSingle()
 
       if (fetchError) {
         console.error('Error fetching feature:', fetchError);
@@ -114,7 +117,8 @@ export const UpvoteFeatureButton = ({ featureTitle, className, featureId: propFe
         .from('features')
         .insert([{ title, description: `Feature request for ${title}` }])
         .select('id')
-        .maybeSingle();
+        .limit(1)
+        .maybeSingle(); // Changed from maybeSingle() to limit(1).maybeSingle()
 
       if (insertError) {
         console.error('Error creating feature:', insertError);
