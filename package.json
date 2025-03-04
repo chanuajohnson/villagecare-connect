@@ -8,8 +8,13 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+<<<<<<< HEAD
     "preview": "vite preview",
     "test": "jest"
+=======
+    "preview": "vite preview"
+    "test": "jest" 
+>>>>>>> origin/main
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

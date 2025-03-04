@@ -1,11 +1,14 @@
-
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getUserRole } from '@/lib/supabase';
 import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
+<<<<<<< HEAD
 import LoadingScreen from "@/components/ui/LoadingScreen";
+=======
+import LoadingScreen from '../common/LoadingScreen';
+>>>>>>> origin/main
 
 // Define timeout duration for loading states (in milliseconds)
 const LOADING_TIMEOUT_MS = 15000; // Increased to 15s to provide more time for role determination
@@ -232,27 +235,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     
-    // Don't navigate to the current path
     if (location.pathname === path && !options.skipCheck) {
       console.log(`[AuthProvider] Already at path: ${path}, skipping navigation`);
       return;
     }
     
-    // Update the last path for tracking
     lastPathRef.current = path;
     
-    // Set the navigation flag
     navigationInProgressRef.current = true;
     console.log(`[AuthProvider] Navigating to: ${path}`);
     
-    // Perform the navigation
     if (options.replace) {
       navigate(path, { replace: true });
     } else {
       navigate(path);
     }
     
-    // Reset the navigation flag after a short delay
     setTimeout(() => {
       navigationInProgressRef.current = false;
     }, 500);
@@ -268,19 +266,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
-      // Skip redirection handling for normal navigation after initial auth
       if (isInitializedRef.current && !location.pathname.includes('/auth')) {
-        // Only process special redirects like pendingFeatureId, not regular navigation
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         
-        // Check for specific pending actions that need immediate handling
         if (pendingFeatureId) {
           await checkPendingUpvote();
           isRedirectingRef.current = false;
           return;
         }
         
-        // If we're not on a registration page and we should be, redirect there
         const isOnRegistrationPage = location.pathname.includes('/registration/');
         const needsProfile = !(await checkProfileCompletion(user.id));
         
@@ -303,13 +297,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        // All other normal navigation - let it proceed without interference
         console.log('[AuthProvider] Allowing normal navigation to continue on path:', location.pathname);
         isRedirectingRef.current = false;
         return;
       }
       
-      // Initial profile check and role determination
       if (!userRole && user.user_metadata?.role) {
         console.log('[AuthProvider] Setting user role from metadata:', user.user_metadata.role);
         setUserRole(user.user_metadata.role);
@@ -318,7 +310,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
-      // Get pending actions from localStorage
       const pendingActions = [
         'pendingFeatureId',
         'pendingFeatureUpvote',
@@ -339,7 +330,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.info('Resuming your previous session');
       }
       
-      // Registration page check and redirect
       if (!profileComplete && !isOnRegistrationPage) {
         let registrationPath = '/registration/family';
         
@@ -366,7 +356,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Check if on wrong registration page
       if (!profileComplete && isOnRegistrationPage) {
         let correctRegistrationPath = null;
         
@@ -398,7 +387,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Handle pending actions for completed profiles
       if (profileComplete) {
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         if (pendingFeatureId) {
@@ -442,7 +430,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        // If we're still on the auth page, redirect to the appropriate dashboard
         if (location.pathname === '/auth' && userRole) {
           const dashboardRoutes: Record<UserRole, string> = {
             'family': '/dashboard/family',
@@ -563,11 +550,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   useEffect(() => {
-    if (user && isInitializedRef.current && !navigationInProgressRef.current) {
-      console.log('[AuthProvider] User available, handling redirection');
-      handlePostLoginRedirection();
-    }
-  }, [user, userRole, location.pathname]);
+    if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
+
+    console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
+    handlePostLoginRedirection();
+  }, [isLoading, user, userRole, isProfileComplete, location.pathname]);
 
   useEffect(() => {
     const clearStaleState = async () => {
@@ -736,6 +723,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     isProfileComplete
   });
+
+  if (isLoading || !userRole || !isProfileComplete) {
+    return <LoadingScreen />;
+  }
 
   return (
     <AuthContext.Provider value={{ 
