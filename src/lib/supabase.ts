@@ -5,6 +5,8 @@ console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
 console.log("Supabase Key:", import.meta.env.VITE_SUPABASE_ANON_KEY);
 console.log("🔹 Supabase Client:", supabase);
 console.log("🔍 Checking Supabase session...");
+// Make Supabase available in the browser console for debugging
+(window as any).supabase = supabase;
 
 supabase.auth.getSession().then(({ data }) => {
   console.log("✅ Supabase Session:", data.session);
