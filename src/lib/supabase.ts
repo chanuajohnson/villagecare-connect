@@ -207,3 +207,5 @@ export const initializeSupabase = async () => {
 initializeSupabase().catch(err => {
   console.error('Error during Supabase initialization:', err);
 });
+(window as any).supabase = supabase; // Make Supabase available in the console
+
