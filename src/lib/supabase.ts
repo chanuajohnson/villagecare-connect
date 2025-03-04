@@ -36,7 +36,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',
-  },
+  },if (typeof window !== "undefined") {
+  (window as any).supabase = supabase;
+}
   global: {
     headers: {
       'x-client-info': 'lovable-app',
