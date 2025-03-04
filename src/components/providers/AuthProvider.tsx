@@ -418,18 +418,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        const lastPath = localStorage.getItem('lastPath');
-        console.log('[AuthProvider] Last path:', lastPath);
-        
-        if (lastPath && location.pathname === '/auth') {
-          console.log('[AuthProvider] Navigating to last path:', lastPath);
-          safeNavigate(lastPath, { skipCheck: true });
-          clearLastAction();
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        if (location.pathname === '/auth' && userRole) {
+        if (userRole) {
           const dashboardRoutes: Record<UserRole, string> = {
             'family': '/dashboard/family',
             'professional': '/dashboard/professional',
@@ -440,6 +429,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
           safeNavigate(dashboardRoutes[userRole], { skipCheck: true });
           toast.success(`Welcome to your ${userRole} dashboard!`);
+          clearLastAction();
+          isRedirectingRef.current = false;
+          return;
+        }
+        
+        const lastPath = localStorage.getItem('lastPath');
+        console.log('[AuthProvider] Last path:', lastPath);
+        
+        if (lastPath && location.pathname === '/auth') {
+          console.log('[AuthProvider] Navigating to last path:', lastPath);
+          safeNavigate(lastPath, { skipCheck: true });
+          clearLastAction();
+          isRedirectingRef.current = false;
+          return;
         }
       }
     } catch (error) {
