@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Navigation } from "@/components/layout/Navigation";
 import { useEffect } from "react";
@@ -61,9 +61,12 @@ const AppContent = () => {
           <Route path="/dashboard/family" element={<FamilyDashboard />} />
           <Route path="/dashboard/community" element={<CommunityDashboard />} />
           <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+          
+          {/* Registration routes with role-specific forced routing */}
           <Route path="/registration/family" element={<FamilyRegistration />} />
           <Route path="/registration/professional" element={<ProfessionalRegistration />} />
           <Route path="/registration/community" element={<CommunityRegistration />} />
+          
           <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
           <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />

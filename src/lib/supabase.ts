@@ -79,7 +79,44 @@ export const getUserRole = async (): Promise<UserRole | null> => {
       return null;
     }
     
-    console.log('User role retrieved:', data?.role);
+    // If we got a role from the database, update user metadata to match it
+    if (data?.role) {
+      console.log('User role retrieved from database:', data.role);
+      
+      // Update user metadata to match database role for consistency
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { role: data.role }
+      });
+      
+      if (updateError) {
+        console.error('Error updating user metadata with role:', updateError);
+      } else {
+        console.log('Updated user metadata with role from database:', data.role);
+      }
+      
+      return data.role;
+    }
+    
+    // If no profile role found but metadata has role, update profile
+    const metadataRole = session.user.user_metadata?.role;
+    if (metadataRole && !data?.role) {
+      console.log('User has metadata role but no profile role. Updating profile with role:', metadataRole);
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: metadataRole })
+        .eq('id', session.user.id);
+        
+      if (updateError) {
+        console.error('Error updating profile with metadata role:', updateError);
+      } else {
+        console.log('Updated profile with role from metadata:', metadataRole);
+      }
+      
+      return metadataRole as UserRole;
+    }
+    
+    console.log('No role found for user');
     return data?.role || null;
   } catch (err) {
     console.error('Error in getUserRole:', err);
