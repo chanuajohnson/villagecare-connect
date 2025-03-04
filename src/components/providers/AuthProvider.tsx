@@ -4,14 +4,9 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase, getUserRole } from '@/lib/supabase';
 import { UserRole } from '@/types/database';
 import { toast } from 'sonner';
+import LoadingScreen from '../common/LoadingScreen';
 
-import LoadingScreen from "@/components/ui/LoadingScreen";
-
-
-// Define timeout duration for loading states (in milliseconds)
-const LOADING_TIMEOUT_MS = 15000; // Increased to 15s to provide more time for role determination
-
-// Define maximum retry attempts for critical operations
+const LOADING_TIMEOUT_MS = 15000;
 const MAX_RETRY_ATTEMPTS = 3;
 
 interface AuthContextType {
@@ -332,14 +327,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let registrationPath = '/registration/family';
         
         if (userRole) {
-          const registrationRoutes: Record<UserRole, string> = {
-            'family': '/registration/family',
-            'professional': '/registration/professional',
-            'community': '/registration/community',
-            'admin': '/dashboard/admin'
-          };
-          
-          registrationPath = registrationRoutes[userRole];
+          registrationPath = `/registration/${userRole.toLowerCase()}`;
         } else if (user.user_metadata?.role) {
           registrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
         } else if (localStorage.getItem('registrationRole')) {
@@ -484,69 +472,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const fetchSessionAndUser = async () => {
-    try {
-      console.log('[AuthProvider] Fetching session and user...');
-      setLoadingWithTimeout(true, 'fetch-session');
-      
-      const hadAuthError = localStorage.getItem('authStateError');
-      if (hadAuthError) {
-        console.log('[AuthProvider] Detected previous auth error, clearing state');
-        localStorage.removeItem('authStateError');
-        
-        try {
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-          setUserRole(null);
-          setIsProfileComplete(false);
-          setLoadingWithTimeout(false, 'fetch-session-error-recovery');
-          return;
-        } catch (e) {
-          console.error('[AuthProvider] Error clearing stale auth state:', e);
-        }
-      }
-      
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('[AuthProvider] Error fetching session:', error);
-        setLoadingWithTimeout(false, 'fetch-session-error');
-        return;
-      }
-      
-      console.log('[AuthProvider] Session retrieved:', currentSession ? 'Session exists' : 'No session');
-      
-      setSession(currentSession);
-      setUser(currentSession?.user || null);
-      
-      if (currentSession?.user) {
-        console.log('[AuthProvider] User found in session:', currentSession.user.id);
-        
-        if (currentSession.user.user_metadata?.role) {
-          console.log('[AuthProvider] Setting role from user metadata:', currentSession.user.user_metadata.role);
-          setUserRole(currentSession.user.user_metadata.role);
-        } else {
-          console.log('[AuthProvider] Getting role from database...');
-          const role = await getUserRole();
-          console.log('[AuthProvider] User role from database:', role);
-          setUserRole(role);
-        }
-        
-        await checkProfileCompletion(currentSession.user.id);
-      } else {
-        console.log('[AuthProvider] No user in session');
-        setUserRole(null);
-        setIsProfileComplete(false);
-      }
-    } catch (error) {
-      console.error('[AuthProvider] Unexpected error in fetchSessionAndUser:', error);
-    } finally {
-      console.log('[AuthProvider] Session fetch complete, setting isLoading to false');
-      setLoadingWithTimeout(false, 'fetch-session-complete');
-      isInitializedRef.current = true;
+    console.log("[AuthProvider] Fetching session and user...");
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("[AuthProvider] Session:", session);
+
+    if (!session) {
+      console.log("[AuthProvider] No active session.");
+      setIsLoading(false);
+      return;
     }
+
+    setSession(session);
+    setUser(session.user);
+
+    console.log("[AuthProvider] Fetching user role...");
+    const role = await getUserRole();
+    console.log("[AuthProvider] Retrieved Role:", role);
+    
+    setUserRole(role);
+    setIsProfileComplete(true);
+    setIsLoading(false);
   };
-  
+
   useEffect(() => {
     if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
 
@@ -722,8 +670,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isProfileComplete
   });
 
-  if (isLoading || !userRole || !isProfileComplete) {
-    return <LoadingScreen />;
+  if (isLoading) {
+    return <LoadingScreen message="Loading your account..." />;
   }
 
   return (
@@ -749,4 +697,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}; 
