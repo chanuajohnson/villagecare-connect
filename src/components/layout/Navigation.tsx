@@ -64,14 +64,43 @@ export function Navigation() {
             Features
           </Link>
           
-          {user && dashboardPath && (
+          {user && dashboardPath ? (
+            // Show only user's specific dashboard when logged in
             <Link to={dashboardPath} className="flex items-center gap-1 text-gray-700 hover:text-primary">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {userRole ? `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Dashboard` : 'Dashboard'}
               </span>
             </Link>
-          )}
+          ) : !user ? (
+            // Show all dashboards dropdown when not logged in
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="hidden sm:inline">Dashboards</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/family" className="w-full cursor-pointer">
+                    Family Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/professional" className="w-full cursor-pointer">
+                    Professional Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/community" className="w-full cursor-pointer">
+                    Community Dashboard
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
 
           {isLoading ? (
             <Button variant="outline" size="sm" disabled className="flex items-center gap-2">
