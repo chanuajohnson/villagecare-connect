@@ -49,14 +49,6 @@ const FamilyFeaturesOverview = () => {
             </ul>
             
             <p className="text-sm text-gray-700 font-medium mb-3">Status: In Development</p>
-            <Link to="/features">
-              <Button 
-                className="w-full flex items-center justify-center bg-primary hover:bg-primary-600 text-white"
-              >
-                Upvote This Feature
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           {/* Care Management */}
@@ -82,14 +74,6 @@ const FamilyFeaturesOverview = () => {
             </ul>
             
             <p className="text-sm text-gray-700 font-medium mb-3">Status: In Development</p>
-            <Link to="/features">
-              <Button 
-                className="w-full flex items-center justify-center bg-primary hover:bg-primary-600 text-white"
-              >
-                Upvote This Feature
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           {/* Medication Management */}
@@ -115,14 +99,6 @@ const FamilyFeaturesOverview = () => {
             </ul>
             
             <p className="text-sm text-gray-700 font-medium mb-3">Status: In Development</p>
-            <Link to="/features">
-              <Button 
-                className="w-full flex items-center justify-center bg-primary hover:bg-primary-600 text-white"
-              >
-                Upvote This Feature
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           {/* Meal Planning */}
@@ -148,14 +124,6 @@ const FamilyFeaturesOverview = () => {
             </ul>
             
             <p className="text-sm text-gray-700 font-medium mb-3">Status: Planned</p>
-            <Link to="/features">
-              <Button 
-                className="w-full flex items-center justify-center bg-primary hover:bg-primary-600 text-white"
-              >
-                Upvote This Feature
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
 
