@@ -89,7 +89,7 @@ const CommunityDashboard = () => {
                   <p className="text-sm text-gray-600">Manage Notification Settings</p>
                   <p className="text-sm text-gray-600">Update Privacy Settings</p>
                 </div>
-                <Link to="/community/features-overview">
+                <Link to="/registration/community">
                   <Button className="w-full flex items-center justify-center">
                     Manage Profile
                     <ArrowRight className="ml-2 h-4 w-4" />
