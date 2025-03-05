@@ -273,6 +273,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
+      // Special handling for professional users - always prioritize their dashboard
+      if (user.user_metadata?.role === 'professional' || userRole === 'professional') {
+        console.log('[AuthProvider] Professional user detected, redirecting to professional dashboard');
+        initialRedirectionDoneRef.current = true;
+        safeNavigate('/dashboard/professional', { skipCheck: true });
+        toast.success('Welcome to your professional dashboard!');
+        clearLastAction();
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      console.log('[AuthProvider] Handling post-login redirection for user:', user.id);
+      console.log('[AuthProvider] Current user role:', userRole);
+      console.log('[AuthProvider] Current path:', location.pathname);
+      
       const shouldNotRedirectFrom = [
         '/features',
         '/family/features-overview',
@@ -557,6 +572,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
 
     console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
+    
+    if (user.user_metadata?.role === 'professional' || userRole === 'professional') {
+      console.log('[AuthProvider] Professional user detected in useEffect, handling redirection');
+      handlePostLoginRedirection();
+      return;
+    }
     
     if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
       handlePostLoginRedirection();
