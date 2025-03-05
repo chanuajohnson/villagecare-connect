@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Checking profile completion for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, role, professional_type')
+        .select('full_name, avatar_url, role')
         .eq('id', userId)
         .maybeSingle();
       
@@ -178,17 +178,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(profile.role);
       }
       
-      let profileComplete = false;
-      if (profile) {
-        if (profile.role === 'professional') {
-          profileComplete = !!profile.full_name && !!profile.professional_type;
-        } else {
-          profileComplete = !!profile.full_name;
-        }
-      }
-      
-      console.log('[AuthProvider] Profile complete:', profileComplete, 'for role:', profile?.role);
+      const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
+      console.log('[AuthProvider] Profile complete:', profileComplete);
       return profileComplete;
     } catch (error) {
       console.error('[AuthProvider] Error checking profile completion:', error);
@@ -285,13 +277,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const isProfessionalPath = location.pathname.includes('/professional/') || location.pathname.includes('/dashboard/professional');
       const isFeaturePage = location.pathname === '/features';
       const isHomePage = location.pathname === '/';
-      const currentPathIsRegistration = location.pathname.includes('/registration/');
-      
-      if (isProfessionalUser && location.pathname === '/registration/professional') {
-        console.log('[AuthProvider] Professional user is already on registration page, no redirection needed');
-        isRedirectingRef.current = false;
-        return;
-      }
       
       const shouldNotRedirectFrom = [
         '/features',
@@ -301,21 +286,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         '/faq'
       ];
       
-      const profileComplete = await checkProfileCompletion(user.id);
-      
       if (isProfessionalUser) {
         console.log('[AuthProvider] Professional user detected');
         
-        if (!profileComplete && !currentPathIsRegistration) {
-          console.log('[AuthProvider] Professional profile incomplete, redirecting to registration');
-          safeNavigate('/registration/professional', { skipCheck: true });
-          toast.info('Please complete your professional profile to continue');
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        if (profileComplete && (!initialRedirectionDoneRef.current || location.pathname === '/auth')) {
-          console.log('[AuthProvider] Professional profile complete, initial redirection to dashboard');
+        if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
+          console.log('[AuthProvider] Initial redirection for professional user to dashboard');
           initialRedirectionDoneRef.current = true;
           safeNavigate('/dashboard/professional', { skipCheck: true });
           toast.success('Welcome to your professional dashboard!');
@@ -344,10 +319,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        const isUserOnRegistration = location.pathname.includes('/registration/');
+        const isOnRegistrationPage = location.pathname.includes('/registration/');
         const needsProfile = !(await checkProfileCompletion(user.id));
         
-        if (needsProfile && !isUserOnRegistration) {
+        if (needsProfile && !isOnRegistrationPage) {
           let registrationPath = '/registration/family';
           
           if (userRole) {
@@ -376,6 +351,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(user.user_metadata.role);
       }
       
+      const profileComplete = await checkProfileCompletion(user.id);
+      console.log('[AuthProvider] Profile complete:', profileComplete);
+      
       const pendingActions = [
         'pendingFeatureId',
         'pendingFeatureUpvote',
@@ -387,7 +365,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
       console.log('[AuthProvider] Has pending action:', hasPendingAction);
       
-      const userIsOnRegistration = location.pathname.includes('/registration/');
+      const isOnRegistrationPage = location.pathname.includes('/registration/');
       
       const hadTimeout = localStorage.getItem('authTimeoutRecovery');
       if (hadTimeout) {
@@ -396,7 +374,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.info('Resuming your previous session');
       }
       
-      if (!profileComplete && !userIsOnRegistration) {
+      if (!profileComplete && !isOnRegistrationPage) {
         let registrationPath = '/registration/family';
         
         if (userRole) {
@@ -415,7 +393,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      if (!profileComplete && userIsOnRegistration) {
+      if (!profileComplete && isOnRegistrationPage) {
         let correctRegistrationPath = null;
         
         if (userRole) {
@@ -599,22 +577,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    if (isLoading || !user || !userRole) return; // Wait until essential data is loaded
-    
-    console.log('[AuthProvider] User and role are loaded. Checking profile completion and redirection...');
+    if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
+
+    console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
     
     const isProfessionalUser = user.user_metadata?.role === 'professional' || userRole === 'professional';
-    const isOnRegistrationPage = location.pathname.includes('/registration/');
     
-    if (isProfessionalUser && location.pathname === '/registration/professional') {
-      console.log('[AuthProvider] Professional user on registration page, skipping redirection');
+    if (isProfessionalUser) {
+      console.log('[AuthProvider] Professional user detected in useEffect');
+      if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
+        handlePostLoginRedirection();
+      }
       return;
     }
     
     if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
       handlePostLoginRedirection();
     }
-  }, [isLoading, user, userRole]);
+  }, [isLoading, user, userRole, isProfileComplete]);
 
   useEffect(() => {
     const clearStaleState = async () => {
