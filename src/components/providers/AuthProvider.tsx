@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const retryAttemptsRef = useRef<Record<string, number>>({});
   const navigationInProgressRef = useRef(false);
   const lastPathRef = useRef<string | null>(null);
+  const initialRedirectionDoneRef = useRef(false);
 
   useEffect(() => {
     console.log('[AuthProvider] Auth State:', { 
@@ -272,6 +273,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
+      const shouldNotRedirectFrom = [
+        '/features',
+        '/family/features-overview',
+        '/professional/features-overview',
+        '/community/features-overview',
+        '/faq'
+      ];
+      
+      if (shouldNotRedirectFrom.some(path => location.pathname.includes(path)) && initialRedirectionDoneRef.current) {
+        console.log(`[AuthProvider] User is on a non-redirectable page: ${location.pathname}. Skipping redirection.`);
+        isRedirectingRef.current = false;
+        return;
+      }
+      
       if (isInitializedRef.current && !location.pathname.includes('/auth')) {
         const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
         
@@ -418,13 +433,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        if (userRole) {
+        if ((userRole && (!initialRedirectionDoneRef.current || location.pathname === '/auth'))) {
           const dashboardRoutes: Record<UserRole, string> = {
             'family': '/dashboard/family',
             'professional': '/dashboard/professional',
             'community': '/dashboard/community',
             'admin': '/dashboard/admin'
           };
+          
+          initialRedirectionDoneRef.current = true;
           
           console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
           safeNavigate(dashboardRoutes[userRole], { skipCheck: true });
@@ -517,19 +534,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session.user);
 
-      // Try to get role from user metadata first (fastest)
       if (session.user.user_metadata?.role) {
         console.log("[AuthProvider] Setting role from user metadata:", session.user.user_metadata.role);
         setUserRole(session.user.user_metadata.role);
       } else {
-        // Otherwise query the database
         console.log("[AuthProvider] Fetching user role from database...");
         const role = await getUserRole();
         console.log("[AuthProvider] Retrieved Role:", role);
         setUserRole(role);
       }
       
-      // Check if profile is complete
       await checkProfileCompletion(session.user.id);
       setLoadingWithTimeout(false, 'fetch-session-complete');
     } catch (error) {
@@ -543,8 +557,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
 
     console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
-    handlePostLoginRedirection();
-  }, [isLoading, user, userRole, isProfileComplete, location.pathname]);
+    
+    if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
+      handlePostLoginRedirection();
+    }
+  }, [isLoading, user, userRole, isProfileComplete]);
 
   useEffect(() => {
     const clearStaleState = async () => {
