@@ -14,10 +14,10 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If user is already logged in, redirect to home
+  // If user is already logged in, the AuthProvider will handle the redirection
   useEffect(() => {
     if (user) {
-      navigate("/");
+      console.log("[AuthPage] User already logged in, AuthProvider will handle redirection");
     }
   }, [user, navigate]);
 
@@ -37,7 +37,7 @@ export default function AuthPage() {
       }
 
       console.log("[AuthPage] Login successful:", data.session ? "Has session" : "No session");
-      // We don't need to navigate here, the AuthProvider will handle it
+      // No need to navigate here, the AuthProvider will handle it based on user role
 
     } catch (error: any) {
       console.error("[AuthPage] Login error:", error);

@@ -273,114 +273,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
-      const isProfessionalUser = user.user_metadata?.role === 'professional' || userRole === 'professional';
-      const isProfessionalPath = location.pathname.includes('/professional/') || location.pathname.includes('/dashboard/professional');
-      const isFeaturePage = location.pathname === '/features';
-      const isHomePage = location.pathname === '/';
-      
-      const shouldNotRedirectFrom = [
-        '/features',
-        '/family/features-overview',
-        '/professional/features-overview',
-        '/community/features-overview',
-        '/faq'
-      ];
-      
-      if (isProfessionalUser) {
-        console.log('[AuthProvider] Professional user detected');
-        
-        if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
-          console.log('[AuthProvider] Initial redirection for professional user to dashboard');
-          initialRedirectionDoneRef.current = true;
-          safeNavigate('/dashboard/professional', { skipCheck: true });
-          toast.success('Welcome to your professional dashboard!');
-          clearLastAction();
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        console.log(`[AuthProvider] Allowing professional user to navigate to: ${location.pathname}`);
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      if (shouldNotRedirectFrom.some(path => location.pathname.includes(path)) && initialRedirectionDoneRef.current) {
-        console.log(`[AuthProvider] User is on a non-redirectable page: ${location.pathname}. Skipping redirection.`);
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      if (isInitializedRef.current && !location.pathname.includes('/auth')) {
-        const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
-        
-        if (pendingFeatureId) {
-          await checkPendingUpvote();
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        const isOnRegistrationPage = location.pathname.includes('/registration/');
-        const needsProfile = !(await checkProfileCompletion(user.id));
-        
-        if (needsProfile && !isOnRegistrationPage) {
-          let registrationPath = '/registration/family';
-          
-          if (userRole) {
-            registrationPath = `/registration/${userRole.toLowerCase()}`;
-          } else if (user.user_metadata?.role) {
-            registrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
-          } else if (localStorage.getItem('registrationRole')) {
-            const intendedRole = localStorage.getItem('registrationRole');
-            registrationPath = `/registration/${intendedRole?.toLowerCase()}`;
-          }
-          
-          console.log('[AuthProvider] Redirecting to registration page:', registrationPath);
-          toast.info('Please complete your profile to continue');
-          safeNavigate(registrationPath, { skipCheck: true });
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        console.log('[AuthProvider] Allowing normal navigation to continue on path:', location.pathname);
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      if (!userRole && user.user_metadata?.role) {
+      // Determine user role
+      let effectiveRole = userRole;
+      if (!effectiveRole && user.user_metadata?.role) {
         console.log('[AuthProvider] Setting user role from metadata:', user.user_metadata.role);
+        effectiveRole = user.user_metadata.role;
         setUserRole(user.user_metadata.role);
       }
       
+      // Check if profile is complete
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
-      const pendingActions = [
-        'pendingFeatureId',
-        'pendingFeatureUpvote',
-        'pendingBooking',
-        'pendingMessage',
-        'pendingProfileUpdate'
-      ];
-      
-      const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
-      console.log('[AuthProvider] Has pending action:', hasPendingAction);
-      
-      const isOnRegistrationPage = location.pathname.includes('/registration/');
-      
-      const hadTimeout = localStorage.getItem('authTimeoutRecovery');
-      if (hadTimeout) {
-        localStorage.removeItem('authTimeoutRecovery');
-        console.log('[AuthProvider] Recovering from previous timeout');
-        toast.info('Resuming your previous session');
-      }
-      
-      if (!profileComplete && !isOnRegistrationPage) {
+      // If profile is not complete, redirect to registration page
+      if (!profileComplete) {
         let registrationPath = '/registration/family';
         
-        if (userRole) {
-          registrationPath = `/registration/${userRole.toLowerCase()}`;
-        } else if (user.user_metadata?.role) {
-          registrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
+        if (effectiveRole) {
+          registrationPath = `/registration/${effectiveRole.toLowerCase()}`;
         } else if (localStorage.getItem('registrationRole')) {
           const intendedRole = localStorage.getItem('registrationRole');
           registrationPath = `/registration/${intendedRole?.toLowerCase()}`;
@@ -393,97 +303,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      if (!profileComplete && isOnRegistrationPage) {
-        let correctRegistrationPath = null;
-        
-        if (userRole) {
-          correctRegistrationPath = `/registration/${userRole.toLowerCase()}`;
-        } else if (user.user_metadata?.role) {
-          correctRegistrationPath = `/registration/${user.user_metadata.role.toLowerCase()}`;
-        } else if (localStorage.getItem('registrationRole')) {
-          const intendedRole = localStorage.getItem('registrationRole');
-          correctRegistrationPath = `/registration/${intendedRole?.toLowerCase()}`;
-        }
-        
-        if (correctRegistrationPath) {
-          const currentPath = location.pathname;
-          
-          if (currentPath !== correctRegistrationPath) {
-            console.log(`[AuthProvider] Redirecting from incorrect registration page ${currentPath} to correct page ${correctRegistrationPath}`);
-            const roleName = correctRegistrationPath.split('/').pop();
-            toast.info(`Redirecting to the ${roleName} registration form`);
-            safeNavigate(correctRegistrationPath, { skipCheck: true });
-            isRedirectingRef.current = false;
-            return;
-          } else {
-            console.log(`[AuthProvider] Already on the correct registration page ${currentPath}`);
-          }
-        }
-        
+      // Handle pending actions first if they exist
+      const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
+      if (pendingFeatureId) {
+        await checkPendingUpvote();
         isRedirectingRef.current = false;
         return;
       }
       
-      if (profileComplete) {
-        const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
-        if (pendingFeatureId) {
-          await checkPendingUpvote();
-          isRedirectingRef.current = false;
-          return;
-        }
+      // Other pending actions
+      const pendingBooking = localStorage.getItem('pendingBooking');
+      if (pendingBooking) {
+        localStorage.removeItem('pendingBooking');
+        safeNavigate(pendingBooking, { skipCheck: true });
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      const pendingMessage = localStorage.getItem('pendingMessage');
+      if (pendingMessage) {
+        localStorage.removeItem('pendingMessage');
+        safeNavigate(pendingMessage, { skipCheck: true });
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
+      if (pendingProfileUpdate) {
+        localStorage.removeItem('pendingProfileUpdate');
+        safeNavigate(pendingProfileUpdate, { skipCheck: true });
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      // If no pending actions, redirect to role-specific dashboard
+      if (effectiveRole) {
+        const dashboardRoutes: Record<UserRole, string> = {
+          'family': '/dashboard/family',
+          'professional': '/dashboard/professional',
+          'community': '/dashboard/community',
+          'admin': '/dashboard/admin'
+        };
         
-        const pendingBooking = localStorage.getItem('pendingBooking');
-        if (pendingBooking) {
-          localStorage.removeItem('pendingBooking');
-          safeNavigate(pendingBooking, { skipCheck: true });
-          isRedirectingRef.current = false;
-          return;
-        }
+        initialRedirectionDoneRef.current = true;
         
-        const pendingMessage = localStorage.getItem('pendingMessage');
-        if (pendingMessage) {
-          localStorage.removeItem('pendingMessage');
-          safeNavigate(pendingMessage, { skipCheck: true });
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        const pendingProfileUpdate = localStorage.getItem('pendingProfileUpdate');
-        if (pendingProfileUpdate) {
-          localStorage.removeItem('pendingProfileUpdate');
-          safeNavigate(pendingProfileUpdate, { skipCheck: true });
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        if ((userRole && (!initialRedirectionDoneRef.current || location.pathname === '/auth'))) {
-          const dashboardRoutes: Record<UserRole, string> = {
-            'family': '/dashboard/family',
-            'professional': '/dashboard/professional',
-            'community': '/dashboard/community',
-            'admin': '/dashboard/admin'
-          };
-          
-          initialRedirectionDoneRef.current = true;
-          
-          console.log('[AuthProvider] Navigating to dashboard for role:', userRole);
-          safeNavigate(dashboardRoutes[userRole], { skipCheck: true });
-          toast.success(`Welcome to your ${userRole} dashboard!`);
-          clearLastAction();
-          isRedirectingRef.current = false;
-          return;
-        }
-        
-        const lastPath = localStorage.getItem('lastPath');
-        console.log('[AuthProvider] Last path:', lastPath);
-        
-        if (lastPath && location.pathname === '/auth') {
-          console.log('[AuthProvider] Navigating to last path:', lastPath);
-          safeNavigate(lastPath, { skipCheck: true });
-          clearLastAction();
-          isRedirectingRef.current = false;
-          return;
-        }
+        console.log('[AuthProvider] Redirecting to dashboard for role:', effectiveRole);
+        safeNavigate(dashboardRoutes[effectiveRole], { skipCheck: true });
+        toast.success(`Welcome to your ${effectiveRole} dashboard!`);
+        clearLastAction();
+      } else {
+        console.log('[AuthProvider] No role detected, redirecting to home');
+        safeNavigate('/', { skipCheck: true });
       }
     } catch (error) {
       console.error('[AuthProvider] Error during post-login redirection:', error);
@@ -577,24 +447,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    if (isLoading || !user || !userRole || !isProfileComplete) return; // Wait until everything is fully loaded
-
-    console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
+    if (isLoading || !user) return; // Wait until auth is loaded and we have a user
     
-    const isProfessionalUser = user.user_metadata?.role === 'professional' || userRole === 'professional';
+    console.log('[AuthProvider] User loaded. Handling redirection...');
     
-    if (isProfessionalUser) {
-      console.log('[AuthProvider] Professional user detected in useEffect');
-      if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
-        handlePostLoginRedirection();
-      }
-      return;
-    }
-    
+    // Redirect to appropriate dashboard only if on auth page or if initial redirection hasn't happened
     if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
       handlePostLoginRedirection();
     }
-  }, [isLoading, user, userRole, isProfileComplete]);
+  }, [isLoading, user, userRole]);
 
   useEffect(() => {
     const clearStaleState = async () => {
