@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +34,6 @@ const ProfessionalDashboard = () => {
           </p>
         </motion.div>
 
-        {/* Welcome Card - Conditionally shown based on authentication status */}
         {!user ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -90,7 +88,7 @@ const ProfessionalDashboard = () => {
                 <p className="text-sm text-gray-600">Update Skills & Experience</p>
                 <p className="text-sm text-gray-600">Set Availability & Preferences</p>
               </div>
-              <Link to="/professional/features-overview">
+              <Link to="/registration/professional">
                 <Button 
                   variant="default"
                   className="w-full bg-primary hover:bg-primary-600 text-white"

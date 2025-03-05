@@ -41,7 +41,7 @@ export const DashboardCardGrid = () => {
               </li>
             </ul>
             <Button className="w-full" asChild>
-              <Link to="/profile">Manage Profile</Link>
+              <Link to="/registration/professional">Manage Profile</Link>
             </Button>
           </CardContent>
         </Card>
