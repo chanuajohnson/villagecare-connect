@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,22 +8,86 @@ import { Button } from "@/components/ui/button";
 import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [mode, setMode] = useState<"request" | "reset">("reset");
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if we have the hash fragment from the reset password link
-    const hash = window.location.hash;
-    if (!hash || !hash.includes('access_token')) {
-      setError("Invalid or missing reset token. Please request a new password reset link.");
-    }
-  }, []);
+    const validateResetToken = async () => {
+      try {
+        setValidatingToken(true);
+        console.log("[ResetPasswordPage] Validating reset token...");
+        
+        const fragment = location.hash;
+        const queryParams = new URLSearchParams(location.search);
+        const type = queryParams.get("type");
+        
+        // Check if this is a recovery link from email
+        if (type === "recovery") {
+          console.log("[ResetPasswordPage] Recovery flow detected");
+          // Let Supabase handle the token exchange
+          const { data, error } = await supabase.auth.exchangeCodeForSession(queryParams.get("code") || "");
+          
+          if (error) {
+            console.error("[ResetPasswordPage] Token exchange error:", error);
+            setError("Invalid or expired password reset link. Please request a new one.");
+            setMode("request");
+            setValidatingToken(false);
+            return;
+          }
+          
+          if (data?.user) {
+            console.log("[ResetPasswordPage] Valid reset token for user:", data.user.email);
+            setEmail(data.user.email || null);
+            setMode("reset");
+            setError(null);
+          } else {
+            console.error("[ResetPasswordPage] No user data returned from token exchange");
+            setError("Invalid password reset link. Please request a new one.");
+            setMode("request");
+          }
+        } 
+        // Check for access_token in hash fragment (older Supabase versions)
+        else if (fragment && fragment.includes("access_token")) {
+          console.log("[ResetPasswordPage] Hash fragment token detected");
+          // The token is handled automatically by Supabase client
+          const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+          
+          if (sessionError || !user) {
+            console.error("[ResetPasswordPage] Session error:", sessionError);
+            setError("Invalid or expired password reset link. Please request a new one.");
+            setMode("request");
+          } else {
+            console.log("[ResetPasswordPage] Valid token, user found:", user.email);
+            setEmail(user.email || null);
+            setError(null);
+          }
+        } else {
+          console.log("[ResetPasswordPage] No reset token found in URL");
+          setError("No reset token found. Please request a password reset link.");
+          setMode("request");
+        }
+      } catch (error: any) {
+        console.error("[ResetPasswordPage] Error during token validation:", error);
+        setError("An error occurred while validating your reset token. Please try again.");
+        setMode("request");
+      } finally {
+        setValidatingToken(false);
+      }
+    };
+
+    validateResetToken();
+  }, [location]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +109,8 @@ export default function ResetPasswordPage() {
     
     try {
       setIsLoading(true);
+      console.log("[ResetPasswordPage] Updating password...");
       
-      // The supabase client will automatically use the access_token from the URL
       const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
@@ -69,24 +133,76 @@ export default function ResetPasswordPage() {
     }
   };
   
+  const handleRequestReset = async (email: string) => {
+    try {
+      setIsLoading(true);
+      console.log("[ResetPasswordPage] Requesting password reset for:", email);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/auth/reset-password",
+      });
+      
+      if (error) throw error;
+      
+      console.log("[ResetPasswordPage] Password reset email sent successfully");
+      return true;
+    } catch (error: any) {
+      console.error("[ResetPasswordPage] Error requesting reset:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  if (validatingToken) {
+    return (
+      <div className="container flex items-center justify-center py-20">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
+            <CardDescription className="text-center">
+              Validating your password reset link...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
     <div className="container flex items-center justify-center py-20">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
           <CardDescription className="text-center">
-            Please enter your new password below
+            {mode === "reset" ? "Please enter your new password below" : "Request a password reset link"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error ? (
+          {mode === "request" ? (
+            <ResetPasswordForm 
+              onSubmit={handleRequestReset}
+              onBack={() => navigate("/auth")}
+              email={email || ""}
+              isLoading={isLoading}
+            />
+          ) : error ? (
             <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md mb-4">
               {error}
               <div className="mt-4">
                 <Button 
+                  onClick={() => setMode("request")} 
+                  variant="secondary"
+                  className="mr-2"
+                >
+                  Request New Link
+                </Button>
+                <Button 
                   onClick={() => navigate("/auth")} 
                   variant="outline"
-                  className="w-full"
                 >
                   Return to Login
                 </Button>
