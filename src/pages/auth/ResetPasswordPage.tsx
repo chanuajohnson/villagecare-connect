@@ -19,6 +19,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [mode, setMode] = useState<"request" | "reset">("reset");
+  const [resetComplete, setResetComplete] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,6 +52,9 @@ export default function ResetPasswordPage() {
             setEmail(data.user.email || null);
             setMode("reset");
             setError(null);
+            
+            // Display a toast notifying the user they've been automatically logged in
+            toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
           } else {
             console.error("[ResetPasswordPage] No user data returned from token exchange");
             setError("Invalid password reset link. Please request a new one.");
@@ -71,6 +75,9 @@ export default function ResetPasswordPage() {
             console.log("[ResetPasswordPage] Valid token, user found:", user.email);
             setEmail(user.email || null);
             setError(null);
+            
+            // Display a toast notifying the user they've been automatically logged in
+            toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
           }
         } else {
           console.log("[ResetPasswordPage] No reset token found in URL");
@@ -119,11 +126,9 @@ export default function ResetPasswordPage() {
       }
       
       toast.success("Password has been reset successfully");
+      setResetComplete(true);
       
-      // Redirect to login page
-      setTimeout(() => {
-        navigate("/auth");
-      }, 2000);
+      // Don't redirect immediately - let the user see the success state
     } catch (error: any) {
       console.error("[ResetPasswordPage] Error:", error);
       toast.error(error.message || "Failed to reset password");
@@ -172,6 +177,40 @@ export default function ResetPasswordPage() {
     );
   }
   
+  if (resetComplete) {
+    return (
+      <div className="container flex items-center justify-center py-20">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Password Reset Complete</CardTitle>
+            <CardDescription className="text-center">
+              Your password has been successfully reset
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-md mb-4">
+              <p className="font-medium">Success!</p>
+              <p className="text-sm mt-2">
+                Your password has been updated. You're now logged in with your new password.
+              </p>
+            </div>
+            <div className="mt-6">
+              <Button 
+                onClick={() => navigate("/")} 
+                className="w-full"
+              >
+                Continue to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-center text-sm text-muted-foreground">
+            Takes a Village &copy; {new Date().getFullYear()}
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
     <div className="container flex items-center justify-center py-20">
       <Card className="w-full max-w-md">
@@ -210,6 +249,14 @@ export default function ResetPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
+              {email && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-md mb-4">
+                  <p className="font-medium">You're logged in as {email}</p>
+                  <p className="text-sm mt-2">
+                    Please set a new password that you'll remember for future logins.
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
                 <div className="relative">
