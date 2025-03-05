@@ -273,20 +273,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
-      // Special handling for professional users - always prioritize their dashboard
-      if (user.user_metadata?.role === 'professional' || userRole === 'professional') {
-        console.log('[AuthProvider] Professional user detected, redirecting to professional dashboard');
-        initialRedirectionDoneRef.current = true;
-        safeNavigate('/dashboard/professional', { skipCheck: true });
-        toast.success('Welcome to your professional dashboard!');
-        clearLastAction();
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      console.log('[AuthProvider] Handling post-login redirection for user:', user.id);
-      console.log('[AuthProvider] Current user role:', userRole);
-      console.log('[AuthProvider] Current path:', location.pathname);
+      const isProfessionalUser = user.user_metadata?.role === 'professional' || userRole === 'professional';
+      const isProfessionalPath = location.pathname.includes('/professional/') || location.pathname.includes('/dashboard/professional');
+      const isFeaturePage = location.pathname === '/features';
+      const isHomePage = location.pathname === '/';
       
       const shouldNotRedirectFrom = [
         '/features',
@@ -295,6 +285,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         '/community/features-overview',
         '/faq'
       ];
+      
+      if (isProfessionalUser) {
+        console.log('[AuthProvider] Professional user detected');
+        
+        if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
+          console.log('[AuthProvider] Initial redirection for professional user to dashboard');
+          initialRedirectionDoneRef.current = true;
+          safeNavigate('/dashboard/professional', { skipCheck: true });
+          toast.success('Welcome to your professional dashboard!');
+          clearLastAction();
+          isRedirectingRef.current = false;
+          return;
+        }
+        
+        console.log(`[AuthProvider] Allowing professional user to navigate to: ${location.pathname}`);
+        isRedirectingRef.current = false;
+        return;
+      }
       
       if (shouldNotRedirectFrom.some(path => location.pathname.includes(path)) && initialRedirectionDoneRef.current) {
         console.log(`[AuthProvider] User is on a non-redirectable page: ${location.pathname}. Skipping redirection.`);
@@ -573,9 +581,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     console.log('[AuthProvider] User and profile are fully loaded. Handling redirection...');
     
-    if (user.user_metadata?.role === 'professional' || userRole === 'professional') {
-      console.log('[AuthProvider] Professional user detected in useEffect, handling redirection');
-      handlePostLoginRedirection();
+    const isProfessionalUser = user.user_metadata?.role === 'professional' || userRole === 'professional';
+    
+    if (isProfessionalUser) {
+      console.log('[AuthProvider] Professional user detected in useEffect');
+      if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
+        handlePostLoginRedirection();
+      }
       return;
     }
     
