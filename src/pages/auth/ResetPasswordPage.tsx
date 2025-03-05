@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,7 @@ export default function ResetPasswordPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [mode, setMode] = useState<"request" | "reset">("reset");
   const [resetComplete, setResetComplete] = useState(false);
+  const [tokenValidated, setTokenValidated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,10 +33,8 @@ export default function ResetPasswordPage() {
         const queryParams = new URLSearchParams(location.search);
         const type = queryParams.get("type");
         
-        // Check if this is a recovery link from email
         if (type === "recovery") {
           console.log("[ResetPasswordPage] Recovery flow detected");
-          // Let Supabase handle the token exchange
           const { data, error } = await supabase.auth.exchangeCodeForSession(queryParams.get("code") || "");
           
           if (error) {
@@ -52,19 +50,16 @@ export default function ResetPasswordPage() {
             setEmail(data.user.email || null);
             setMode("reset");
             setError(null);
+            setTokenValidated(true);
             
-            // Display a toast notifying the user they've been automatically logged in
             toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
           } else {
             console.error("[ResetPasswordPage] No user data returned from token exchange");
             setError("Invalid password reset link. Please request a new one.");
             setMode("request");
           }
-        } 
-        // Check for access_token in hash fragment (older Supabase versions)
-        else if (fragment && fragment.includes("access_token")) {
+        } else if (fragment && fragment.includes("access_token")) {
           console.log("[ResetPasswordPage] Hash fragment token detected");
-          // The token is handled automatically by Supabase client
           const { data: { user }, error: sessionError } = await supabase.auth.getUser();
           
           if (sessionError || !user) {
@@ -75,8 +70,8 @@ export default function ResetPasswordPage() {
             console.log("[ResetPasswordPage] Valid token, user found:", user.email);
             setEmail(user.email || null);
             setError(null);
+            setTokenValidated(true);
             
-            // Display a toast notifying the user they've been automatically logged in
             toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
           }
         } else {
@@ -127,8 +122,6 @@ export default function ResetPasswordPage() {
       
       toast.success("Password has been reset successfully");
       setResetComplete(true);
-      
-      // Don't redirect immediately - let the user see the success state
     } catch (error: any) {
       console.error("[ResetPasswordPage] Error:", error);
       toast.error(error.message || "Failed to reset password");
@@ -269,6 +262,7 @@ export default function ResetPasswordPage() {
                     required
                     disabled={isLoading}
                     minLength={6}
+                    autoComplete="new-password"
                   />
                   <Button
                     type="button"
@@ -294,6 +288,7 @@ export default function ResetPasswordPage() {
                     required
                     disabled={isLoading}
                     minLength={6}
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
