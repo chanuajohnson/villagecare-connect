@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -108,7 +107,6 @@ export default function CommunityRegistration() {
     }
   });
 
-  // Check connection status on mount
   useEffect(() => {
     const checkConnection = async () => {
       try {
@@ -137,7 +135,6 @@ export default function CommunityRegistration() {
     checkConnection();
   }, [navigate]);
 
-  // Handle profile picture preview
   useEffect(() => {
     if (profilePicture) {
       const reader = new FileReader();
@@ -161,7 +158,6 @@ export default function CommunityRegistration() {
     }
   };
 
-  // Generic file upload function with retries and progress
   const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
     if (!file || !connectionStatus) {
       console.error("Cannot upload: Missing file or connection issues");
@@ -173,13 +169,11 @@ export default function CommunityRegistration() {
       setUploadProgress(0);
       setUploadError(null);
       
-      // Create file name with extension
       const fileExt = file.name.split('.').pop();
       if (!fileExt) {
         throw new Error("Invalid file type");
       }
       
-      // Check if storage bucket exists first
       const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
       
       if (bucketsError) {
@@ -187,7 +181,6 @@ export default function CommunityRegistration() {
         throw new Error("Storage system unavailable");
       }
       
-      // Create bucket if it doesn't exist
       if (!buckets.find(b => b.name === bucket)) {
         const { error: createError } = await supabase.storage.createBucket(bucket, {
           public: false,
@@ -199,24 +192,20 @@ export default function CommunityRegistration() {
         }
       }
 
-      // Set up timeout for upload operations
       const timeoutId = setTimeout(() => {
         console.error("Upload operation timed out after 30 seconds");
         toast.error("File upload timed out. Try again with a smaller file or better connection.");
-      }, 30000); // 30s timeout
+      }, 30000);
       
-      // Upload with retries
       let uploadError = null;
       let uploadResult = null;
       
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          setUploadProgress(10 + attempt * 20); // Show progress advancing with each retry
+          setUploadProgress(10 + attempt * 20);
           
-          // Create unique file path
           const filePath = `${path}/${Date.now()}.${fileExt}`;
           
-          // Upload with proper options
           const { data, error } = await supabase.storage
             .from(bucket)
             .upload(filePath, file, {
@@ -230,7 +219,6 @@ export default function CommunityRegistration() {
             uploadError = error;
             
             if (attempt < 2) {
-              // Wait with exponential backoff before retry
               await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
               continue;
             } else {
@@ -238,26 +226,23 @@ export default function CommunityRegistration() {
             }
           }
           
-          // Get public URL for the file
           const { data: publicURLData } = supabase.storage
             .from(bucket)
             .getPublicUrl(filePath);
             
           uploadResult = publicURLData.publicUrl;
           uploadError = null;
-          break; // Success, exit retry loop
+          break;
         } catch (err) {
           console.error(`Upload attempt ${attempt + 1} exception:`, err);
           uploadError = err as Error;
           
           if (attempt < 2) {
-            // Wait before retry
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
           }
         }
       }
       
-      // Clear timeout if upload completed or failed
       clearTimeout(timeoutId);
       
       if (uploadError) {
@@ -288,7 +273,6 @@ export default function CommunityRegistration() {
     let avatarUrl = null;
     
     try {
-      // Get current user
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
       if (userError || !userData.user) {
@@ -297,7 +281,6 @@ export default function CommunityRegistration() {
       
       const userId = userData.user.id;
       
-      // Upload profile picture if provided
       if (profilePicture) {
         toast.info("Uploading profile picture...");
         avatarUrl = await uploadFile(profilePicture, 'avatars', `community/${userId}`);
@@ -309,7 +292,6 @@ export default function CommunityRegistration() {
         }
       }
       
-      // Prepare profile data
       const profileData = {
         id: userId,
         full_name: data.fullName,
@@ -318,7 +300,6 @@ export default function CommunityRegistration() {
         phone_number: data.phoneNumber,
         location: data.location,
         
-        // Community-specific fields
         website: data.website,
         community_roles: data.communityRoles,
         contribution_interests: data.contributionInterests,
@@ -333,7 +314,6 @@ export default function CommunityRegistration() {
         enable_community_notifications: data.enableCommunityNotifications
       };
       
-      // Update profile in database
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert(profileData);
@@ -345,23 +325,20 @@ export default function CommunityRegistration() {
       
       toast.success("Registration completed successfully!");
       
-      // Navigate to appropriate dashboard after short delay
       setTimeout(() => {
-        navigate('/dashboards/community');
+        navigate('/dashboard/community');
       }, 1500);
       
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error(`Registration failed: ${error.message || "Unknown error"}`);
       
-      // Preserve form data in case of failure
       localStorage.setItem('community_registration_data', JSON.stringify(form.getValues()));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Restore form data if previously saved
   useEffect(() => {
     const savedData = localStorage.getItem('community_registration_data');
     if (savedData) {
@@ -409,7 +386,6 @@ export default function CommunityRegistration() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="pt-6 space-y-8">
-              {/* Profile Picture Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Profile Picture</h3>
                 <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
@@ -439,7 +415,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Personal Information Section */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Personal Information</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -525,7 +500,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Community Roles Section */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Community Involvement</h3>
                 <div className="space-y-6">
@@ -633,7 +607,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Caregiving Experience */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Caregiving Experience</h3>
                 <div className="space-y-4">
@@ -711,7 +684,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Technology & Innovation */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Technology & Innovation</h3>
                 <div className="space-y-4">
@@ -768,7 +740,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Participation Preferences */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Participation Preferences</h3>
                 <div className="space-y-6">
@@ -876,7 +847,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Motivation & Ideas */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Motivation & Ideas</h3>
                 <div className="space-y-4">
@@ -918,7 +888,6 @@ export default function CommunityRegistration() {
                 </div>
               </div>
               
-              {/* Directory & Notifications */}
               <div className="space-y-4 border-t pt-6">
                 <h3 className="text-lg font-semibold">Directory & Notifications</h3>
                 <div className="space-y-4">
