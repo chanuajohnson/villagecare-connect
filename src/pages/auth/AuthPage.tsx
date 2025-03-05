@@ -16,7 +16,6 @@ export default function AuthPage() {
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
-  // If user is already logged in, the AuthProvider will handle the redirection
   useEffect(() => {
     if (user) {
       console.log("[AuthPage] User already logged in, AuthProvider will handle redirection");
@@ -56,7 +55,6 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting signup process...");
       setIsLoading(true);
 
-      // Combine first and last name for the full_name metadata
       const fullName = `${firstName} ${lastName}`;
 
       const { data, error } = await supabase.auth.signUp({
@@ -65,7 +63,7 @@ export default function AuthPage() {
         options: {
           data: {
             role,
-            full_name: fullName, // Send full name in user metadata
+            full_name: fullName,
             first_name: firstName,
             last_name: lastName
           },
@@ -80,11 +78,9 @@ export default function AuthPage() {
       console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
       toast.success("Account created successfully! Please check your email to confirm your account.");
       
-      // Check if auto-confirm is enabled
       if (data.session) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
         
-        // Don't redirect manually, let the AuthProvider handle it
         console.log("[AuthPage] Auth provider will handle redirects");
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");

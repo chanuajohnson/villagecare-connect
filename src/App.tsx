@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,11 +23,11 @@ import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeatu
 import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
 import FAQPage from "./pages/support/FAQPage";
 import { Fab } from "@/components/ui/fab";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
 const AppWithProviders = () => {
-  // Initialize Supabase early
   useEffect(() => {
     initializeSupabase();
   }, []);
@@ -56,13 +55,13 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
           <Route path="/dashboard/family" element={<FamilyDashboard />} />
           <Route path="/dashboard/community" element={<CommunityDashboard />} />
           <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
           
-          {/* Registration routes with role-specific forced routing */}
           <Route path="/registration/family" element={<FamilyRegistration />} />
           <Route path="/registration/professional" element={<ProfessionalRegistration />} />
           <Route path="/registration/community" element={<CommunityRegistration />} />
@@ -75,17 +74,14 @@ const AppContent = () => {
         </Routes>
       </main>
       
-      {/* Global FAB that appears on all pages except the homepage and FAQ page where we have specific implementations */}
       <GlobalFAB />
     </div>
   );
 };
 
-// Component to handle showing the FAB on all pages except certain ones
 const GlobalFAB = () => {
   const pathname = window.location.pathname;
   
-  // Don't show the global FAB on the homepage or FAQ page since they have their own implementations
   if (pathname === "/" || pathname === "/faq") {
     return null;
   }
