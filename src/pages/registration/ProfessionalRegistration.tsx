@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -181,9 +182,8 @@ const ProfessionalRegistration = () => {
           hourly_rate: data.hourly_rate,
           additional_professional_notes: data.additional_professional_notes,
           
-          // Important role and registration flags
+          // Important role flag (removed registration_completed as it doesn't exist)
           role: 'professional' as const,
-          registration_completed: true,
           location: data.location,
         })
         .eq('id', user.id);
