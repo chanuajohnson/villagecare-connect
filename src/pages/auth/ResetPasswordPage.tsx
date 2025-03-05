@@ -51,9 +51,10 @@ export default function ResetPasswordPage() {
             setEmail(data.user.email || null);
             setMode("reset");
             setError(null);
+            // Mark token as validated, which will show the password form
             setTokenValidated(true);
             
-            toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
+            toast.info("Please set a new password you'll remember.", { duration: 6000 });
           } else {
             console.error("[ResetPasswordPage] No user data returned from token exchange");
             setError("Invalid password reset link. Please request a new one.");
@@ -71,9 +72,10 @@ export default function ResetPasswordPage() {
             console.log("[ResetPasswordPage] Valid token, user found:", user.email);
             setEmail(user.email || null);
             setError(null);
+            // Mark token as validated, which will show the password form
             setTokenValidated(true);
             
-            toast.info("You've been automatically logged in. Please set a new password you'll remember.", { duration: 6000 });
+            toast.info("Please set a new password you'll remember.", { duration: 6000 });
           }
         } else {
           console.log("[ResetPasswordPage] No reset token found in URL");
@@ -241,13 +243,13 @@ export default function ResetPasswordPage() {
                 </Button>
               </div>
             </div>
-          ) : (
+          ) : tokenValidated ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               {email && (
                 <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-md mb-4">
-                  <p className="font-medium">You're logged in as {email}</p>
+                  <p className="font-medium">You're setting a new password for {email}</p>
                   <p className="text-sm mt-2">
-                    Please set a new password that you'll remember for future logins.
+                    Please enter a new password that you'll remember for future logins.
                   </p>
                 </div>
               )}
@@ -308,6 +310,23 @@ export default function ResetPasswordPage() {
                 )}
               </Button>
             </form>
+          ) : (
+            // This condition ensures we never show an empty state
+            // If token is not validated and there's no error, redirect to request mode
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-4 rounded-md mb-4">
+              <p className="font-medium">Something went wrong with your reset link</p>
+              <p className="text-sm mt-2">
+                We couldn't properly validate your password reset link. Please request a new one.
+              </p>
+              <div className="mt-4">
+                <Button 
+                  onClick={() => setMode("request")} 
+                  variant="secondary"
+                >
+                  Request New Link
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-muted-foreground">
