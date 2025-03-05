@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -127,7 +126,7 @@ const ProfessionalRegistration = () => {
         return;
       }
   
-      let profileImagePath = null;
+      let avatar_url = null;
   
       // Upload profile image if it exists
       if (profileImage) {
@@ -137,66 +136,61 @@ const ProfessionalRegistration = () => {
           .upload(filename, profileImage);
   
         if (uploadError) {
+          console.error("Error uploading image:", uploadError);
           throw new Error(`Error uploading image: ${uploadError.message}`);
         }
   
-        profileImagePath = `${filename}`;
+        avatar_url = filename;
       }
       
       // Combine first and last name for full_name
       const full_name = `${data.first_name} ${data.last_name}`.trim();
   
-      // Insert professional profile into database
-      const { error: insertError } = await supabase
-        .from('professional_profiles')
-        .insert({
-          user_id: user.id,
-          profile_image: profileImagePath,
-          full_name: full_name,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          professional_type: data.professional_type,
-          other_professional_type: data.other_professional_type,
-          years_of_experience: data.years_of_experience,
-          certifications: data.certifications,
-          location: data.location,
-          email: data.email,
-          phone: data.phone,
+      // Update profile in the profiles table (similar to family registration)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          // Basic information
+          full_name,
+          avatar_url,
+          phone_number: data.phone,
+          address: data.location,
           preferred_contact_method: data.preferred_contact_method,
+          
+          // Professional specific fields
+          professional_type: data.professional_type,
+          other_certification: data.other_professional_type,
+          years_of_experience: data.years_of_experience,
+          certifications: data.certifications ? [data.certifications] : [],
           care_services: data.care_services,
           medical_conditions_experience: data.medical_conditions_experience,
           other_medical_condition: data.other_medical_condition,
           availability: data.availability,
           work_type: data.work_type,
-          preferred_matches: data.preferred_matches,
+          
+          // Specific capabilities
           administers_medication: data.administers_medication,
           provides_housekeeping: data.provides_housekeeping,
           provides_transportation: data.provides_transportation,
           handles_medical_equipment: data.handles_medical_equipment,
           has_liability_insurance: data.has_liability_insurance,
           background_check: data.background_check,
+          
+          // Additional information
           emergency_contact: data.emergency_contact,
           hourly_rate: data.hourly_rate,
           additional_professional_notes: data.additional_professional_notes,
-          terms_accepted: data.terms_accepted,
+          
+          // Important role and registration flags
+          role: 'professional' as const,
           registration_completed: true,
-        });
-  
-      if (insertError) {
-        throw new Error(`Error creating professional profile: ${insertError.message}`);
-      }
-  
-      // Update user profile with registration info using supabase directly
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          registration_completed: true,
-          user_type: 'professional',
+          location: data.location,
         })
         .eq('id', user.id);
   
       if (updateError) {
-        throw new Error(`Error updating user profile: ${updateError.message}`);
+        console.error("Error updating profile:", updateError);
+        throw new Error(`Error updating professional profile: ${updateError.message}`);
       }
   
       toast.success("Professional registration completed successfully!");
