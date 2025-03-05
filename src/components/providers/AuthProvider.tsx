@@ -285,7 +285,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const isProfessionalPath = location.pathname.includes('/professional/') || location.pathname.includes('/dashboard/professional');
       const isFeaturePage = location.pathname === '/features';
       const isHomePage = location.pathname === '/';
-      const isOnRegistrationPage = location.pathname.includes('/registration/');
+      const currentPathIsRegistration = location.pathname.includes('/registration/');
       
       if (isProfessionalUser && location.pathname === '/registration/professional') {
         console.log('[AuthProvider] Professional user is already on registration page, no redirection needed');
@@ -306,7 +306,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isProfessionalUser) {
         console.log('[AuthProvider] Professional user detected');
         
-        if (!profileComplete && !isOnRegistrationPage) {
+        if (!profileComplete && !currentPathIsRegistration) {
           console.log('[AuthProvider] Professional profile incomplete, redirecting to registration');
           safeNavigate('/registration/professional', { skipCheck: true });
           toast.info('Please complete your professional profile to continue');
@@ -344,10 +344,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        const isOnRegistrationPage = location.pathname.includes('/registration/');
+        const isUserOnRegistration = location.pathname.includes('/registration/');
         const needsProfile = !(await checkProfileCompletion(user.id));
         
-        if (needsProfile && !isOnRegistrationPage) {
+        if (needsProfile && !isUserOnRegistration) {
           let registrationPath = '/registration/family';
           
           if (userRole) {
@@ -387,7 +387,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const hasPendingAction = pendingActions.some(action => localStorage.getItem(action));
       console.log('[AuthProvider] Has pending action:', hasPendingAction);
       
-      const isOnRegistrationPage = location.pathname.includes('/registration/');
+      const userIsOnRegistration = location.pathname.includes('/registration/');
       
       const hadTimeout = localStorage.getItem('authTimeoutRecovery');
       if (hadTimeout) {
@@ -396,7 +396,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.info('Resuming your previous session');
       }
       
-      if (!profileComplete && !isOnRegistrationPage) {
+      if (!profileComplete && !userIsOnRegistration) {
         let registrationPath = '/registration/family';
         
         if (userRole) {
@@ -415,7 +415,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      if (!profileComplete && isOnRegistrationPage) {
+      if (!profileComplete && userIsOnRegistration) {
         let correctRegistrationPath = null;
         
         if (userRole) {
