@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -13,6 +13,8 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   // If user is already logged in, the AuthProvider will handle the redirection
   useEffect(() => {
@@ -98,6 +100,39 @@ export default function AuthPage() {
     }
   };
 
+  const handleResetPassword = async (email: string) => {
+    try {
+      console.log("[AuthPage] Starting password reset process...");
+      setIsLoading(true);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        console.error("[AuthPage] Password reset error:", error.message);
+        throw error;
+      }
+
+      console.log("[AuthPage] Password reset email sent successfully");
+      toast.success("Password reset email sent. Please check your inbox.");
+      setShowResetForm(false);
+      
+    } catch (error: any) {
+      console.error("[AuthPage] Password reset error:", error);
+      toast.error(error.message || "Failed to send password reset email");
+      throw error;
+    } finally {
+      setIsLoading(false);
+      console.log("[AuthPage] Password reset process completed");
+    }
+  };
+
+  const handleForgotPassword = (email: string) => {
+    setResetEmail(email);
+    setShowResetForm(true);
+  };
+
   if (user) {
     return null;
   }
@@ -108,22 +143,37 @@ export default function AuthPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Welcome</CardTitle>
           <CardDescription className="text-center">
-            Sign in to your account or create a new one
+            {showResetForm ? 
+              "Reset your password" : 
+              "Sign in to your account or create a new one"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            <TabsContent value="login">
-              <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="signup">
-              <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
-            </TabsContent>
-          </Tabs>
+          {showResetForm ? (
+            <ResetPasswordForm 
+              onSubmit={handleResetPassword} 
+              onBack={() => setShowResetForm(false)}
+              email={resetEmail}
+              isLoading={isLoading}
+            />
+          ) : (
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="login">
+                <LoginForm 
+                  onSubmit={handleLogin} 
+                  isLoading={isLoading}
+                  onForgotPassword={handleForgotPassword} 
+                />
+              </TabsContent>
+              <TabsContent value="signup">
+                <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-muted-foreground">
           Takes a Village &copy; {new Date().getFullYear()}
