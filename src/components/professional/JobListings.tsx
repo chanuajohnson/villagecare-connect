@@ -2,8 +2,9 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, ArrowRight, Clock, MapPin, DollarSign, Filter } from "lucide-react";
+import { Briefcase, ArrowRight, Clock, MapPin, DollarSign, Filter, Calendar, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 export const JobListings = () => {
   // This would normally be fetched from the backend
@@ -16,6 +17,8 @@ export const JobListings = () => {
       postedAt: "2 days ago",
       salary: "$20-25/hr",
       match: 92,
+      urgency: "Regular",
+      startDate: "Immediate",
       tags: ["Elderly Care", "Medical Experience"]
     },
     {
@@ -26,16 +29,20 @@ export const JobListings = () => {
       postedAt: "1 day ago",
       salary: "$22-28/hr",
       match: 85,
+      urgency: "Short Notice",
+      startDate: "This Weekend",
       tags: ["Special Needs", "After School"]
     },
     {
       id: 3,
       title: "Home Health Aide",
       location: "Somerville, MA",
-      type: "Contract",
+      type: "Short-term",
       postedAt: "Just now",
       salary: "$18-22/hr",
       match: 78,
+      urgency: "Urgent",
+      startDate: "Today",
       tags: ["Medical Care", "Weekends"]
     }
   ];
@@ -62,7 +69,16 @@ export const JobListings = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {jobs.map((job) => (
-            <div key={job.id} className="p-3 bg-gray-50 rounded-lg space-y-2 hover:bg-gray-100 transition-colors cursor-pointer">
+            <div 
+              key={job.id} 
+              className={`p-3 rounded-lg space-y-2 hover:bg-gray-100 transition-colors cursor-pointer ${
+                job.urgency === "Urgent" 
+                  ? "bg-red-50 border-l-4 border-l-red-400" 
+                  : job.urgency === "Short Notice"
+                    ? "bg-amber-50 border-l-4 border-l-amber-400"
+                    : "bg-gray-50"
+              }`}
+            >
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-gray-800">{job.title}</h3>
                 <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
@@ -82,6 +98,10 @@ export const JobListings = () => {
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3" />
                   <span>{job.salary}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>{job.startDate}</span>
                 </div>
               </div>
               
@@ -103,10 +123,12 @@ export const JobListings = () => {
             </div>
           ))}
           
-          <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-            <span>Browse All Jobs</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <Link to="/professional/job-listings">
+            <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
+              <span>Browse All Jobs</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </motion.div>

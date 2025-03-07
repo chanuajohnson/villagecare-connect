@@ -10,7 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { NextStepsPanel } from "@/components/professional/NextStepsPanel";
 import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
 import { JobListings } from "@/components/professional/JobListings";
-import { CommunityEngagement } from "@/components/professional/CommunityEngagement";
+import { MessageBoard } from "@/components/professional/MessageBoard";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -82,7 +82,7 @@ const ProfessionalDashboard = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <JobListings />
-              <CommunityEngagement />
+              <MessageBoard />
             </div>
           </div>
         )}
