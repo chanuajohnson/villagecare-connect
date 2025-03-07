@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,7 @@ import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
 import FAQPage from "./pages/support/FAQPage";
 import { Fab } from "@/components/ui/fab";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import MessageBoardPage from "./pages/professional/MessageBoardPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,7 @@ const AppContent = () => {
           
           <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
           <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
+          <Route path="/professional/message-board" element={<MessageBoardPage />} />
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="*" element={<NotFound />} />

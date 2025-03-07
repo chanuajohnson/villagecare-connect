@@ -147,14 +147,18 @@ export const MessageBoard = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button variant="outline" size="sm" className="flex-1 flex justify-between items-center">
-              <span>Post Care Need</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1 flex justify-between items-center">
-              <span>Post Availability</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <Link to="/professional/message-board?action=post-need" className="flex-1">
+              <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
+                <span>Post Care Need</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/professional/message-board?action=post-availability" className="flex-1">
+              <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
+                <span>Post Availability</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
           
           <Link to="/professional/message-board">
