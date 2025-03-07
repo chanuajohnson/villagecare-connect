@@ -1,11 +1,16 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText, UserCog, BookOpen, Building } from "lucide-react";
+import { ArrowRight, FileText, UserCog, BookOpen, Building, Users, Briefcase, CheckCircle2, List } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { NextStepsPanel } from "@/components/professional/NextStepsPanel";
+import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
+import { JobListings } from "@/components/professional/JobListings";
+import { CommunityEngagement } from "@/components/professional/CommunityEngagement";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -68,7 +73,19 @@ const ProfessionalDashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
-        ) : null}
+        ) : (
+          <div className="space-y-6 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <NextStepsPanel />
+              <TrainingProgressTracker />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <JobListings />
+              <CommunityEngagement />
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <Card className="bg-white shadow-sm">
