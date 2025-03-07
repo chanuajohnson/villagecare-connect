@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -163,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Checking profile completion for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('full_name, avatar_url, role')
         .eq('id', userId)
         .maybeSingle();
       
@@ -179,25 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(profile.role);
       }
       
-      // Basic requirement for all roles
-      let profileComplete = profile && !!profile.full_name;
-      
-      // Additional requirements for professional role
-      if (profile?.role === 'professional') {
-        profileComplete = profileComplete && 
-          !!profile.full_name && 
-          !!profile.professional_type && 
-          !!profile.years_of_experience && 
-          !!profile.location && 
-          !!profile.phone_number && 
-          !!profile.preferred_contact_method && 
-          !!profile.care_services && 
-          !!profile.specialized_care && 
-          !!profile.availability && 
-          !!profile.emergency_contact && 
-          !!profile.hourly_rate;
-      }
-      
+      const profileComplete = profile && !!profile.full_name;
       setIsProfileComplete(profileComplete);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       return profileComplete;

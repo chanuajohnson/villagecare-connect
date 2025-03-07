@@ -1,4 +1,3 @@
-
 # Login/Logout System Specifications 2.0
 
 ## Version 1.0 (Current Implementation)
@@ -136,17 +135,7 @@ The authentication system in Takes a Village implements a complete login/logout 
    - `/registration/community`
 4. Profile completeness is determined by presence of required fields
    - For all roles: `full_name` is the minimum requirement
-   - For professional role: additional requirements include:
-     - `professional_type` (Professional Role)
-     - `years_of_experience`
-     - `location`
-     - `phone_number`
-     - `preferred_contact_method`
-     - `care_services` (at least one selected)
-     - `specialized_care` (at least one selected)
-     - `availability` (at least one selected)
-     - `emergency_contact`
-     - `hourly_rate`
+   - Role-specific fields may apply
 
 #### 3.4 Post-Authentication Redirection
 
@@ -221,18 +210,11 @@ The authentication system in Takes a Village implements a complete login/logout 
 1. **Registration Path**: `/registration/professional`
 2. **Default Dashboard**: `/dashboard/professional`
 3. **Profile Requirements**:
-   - Full name
-   - Professional role
-   - Years of experience
-   - Location
-   - Phone number
-   - Preferred contact method
-   - Care services (at least one)
-   - Specializations (at least one)
-   - Availability (at least one)
-   - Emergency contact
-   - Hourly rate / salary expectations
-   - Optional: Professional qualifications, certifications, experience details
+   - Professional qualifications
+   - Services offered
+   - Pricing information
+   - Availability
+   - Certifications and experience
 
 #### 4.3 Community Users
 
@@ -385,5 +367,5 @@ The authentication system relies on the following database structure:
 
 3. **Profile Completion Logic**:
    - Determined by presence of required fields rather than explicit flag
-   - Minimum requirement is `full_name` being non-null for all roles
-   - Professional role has additional required fields as listed in section 3.3
+   - Minimum requirement is `full_name` being non-null
+   - Additional role-specific requirements may apply
