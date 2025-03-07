@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -33,13 +34,8 @@ const professionalSchema = z.object({
   certifications: z.array(z.string()).optional(),
   languages: z.array(z.string()).optional(),
   additional_professional_notes: z.string().optional(),
-  payment_methods: z.array(z.string()).optional(),
-  license_number: z.string().optional(),
-  legally_authorized: z.boolean().optional(),
-  has_liability_insurance: z.boolean().optional(),
-  background_check: z.boolean().optional(),
   administers_medication: z.boolean().optional(),
-  provides_transportation: z.boolean().optional(),
+  drives_to_work: z.boolean().optional(),
   provides_housekeeping: z.boolean().optional(),
   handles_medical_equipment: z.boolean().optional(),
   commute_mode: z.string().optional(),
@@ -70,7 +66,6 @@ const ProfessionalRegistration = () => {
       availability: [],
       certifications: [],
       languages: [],
-      payment_methods: [],
       medical_conditions_experience: []
     }
   });
@@ -136,13 +131,8 @@ const ProfessionalRegistration = () => {
           certifications: data.certifications,
           languages: data.languages,
           additional_professional_notes: data.additional_professional_notes,
-          payment_methods: data.payment_methods,
-          license_number: data.license_number,
-          legally_authorized: data.legally_authorized,
-          has_liability_insurance: data.has_liability_insurance,
-          background_check: data.background_check,
           administers_medication: data.administers_medication,
-          provides_transportation: data.provides_transportation,
+          drives_to_work: data.drives_to_work,
           provides_housekeeping: data.provides_housekeeping,
           handles_medical_equipment: data.handles_medical_equipment,
           commute_mode: data.commute_mode,
@@ -501,98 +491,6 @@ const ProfessionalRegistration = () => {
                   <p className="text-sm text-red-500">{errors.additional_professional_notes.message}</p>
                 )}
               </div>
-              
-              <div className="space-y-2">
-                <Label>Payment Methods Accepted</Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {["Cash", "Check", "Credit Card", "PayPal", "Venmo"].map((method) => (
-                    <div key={method} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`payment-${method}`}
-                        value={method}
-                        onCheckedChange={(checked) => {
-                          const current = watch('payment_methods') || [];
-                          if (checked) {
-                            setValue('payment_methods', [...current, method], { shouldValidate: true });
-                          } else {
-                            setValue(
-                              'payment_methods',
-                              current.filter((val) => val !== method),
-                              { shouldValidate: true }
-                            );
-                          }
-                        }}
-                      />
-                      <label htmlFor={`payment-${method}`}>{method}</label>
-                    </div>
-                  ))}
-                </div>
-                {errors.payment_methods && (
-                  <p className="text-sm text-red-500">{errors.payment_methods.message}</p>
-                )}
-              </div>
-            </div>
-            
-            <Separator className="my-4" />
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Legal & Safety</h3>
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">License Number</Label>
-                  <Input
-                    id="licenseNumber"
-                    {...register('license_number')}
-                    placeholder="Enter your professional license number"
-                  />
-                  {errors.license_number && (
-                    <p className="text-sm text-red-500">{errors.license_number.message}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Legally Authorized to Work in the US?</Label>
-                  <RadioGroup onValueChange={(value) => setValue('legally_authorized', value === "true")} className="flex space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="auth-yes" />
-                      <Label htmlFor="auth-yes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="auth-no" />
-                      <Label htmlFor="auth-no">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Liability Insurance?</Label>
-                  <RadioGroup onValueChange={(value) => setValue('has_liability_insurance', value === "true")} className="flex space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="insurance-yes" />
-                      <Label htmlFor="insurance-yes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="insurance-no" />
-                      <Label htmlFor="insurance-no">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Background Check?</Label>
-                  <RadioGroup onValueChange={(value) => setValue('background_check', value === "true")} className="flex space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="background-yes" />
-                      <Label htmlFor="background-yes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="background-no" />
-                      <Label htmlFor="background-no">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
             </div>
             
             <Separator className="my-4" />
@@ -616,8 +514,8 @@ const ProfessionalRegistration = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Provides Transportation?</Label>
-                  <RadioGroup onValueChange={(value) => setValue('provides_transportation', value === "true")} className="flex space-x-2">
+                  <Label>Drives to Work?</Label>
+                  <RadioGroup onValueChange={(value) => setValue('drives_to_work', value === "true")} className="flex space-x-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="true" id="transport-yes" />
                       <Label htmlFor="transport-yes">Yes</Label>
