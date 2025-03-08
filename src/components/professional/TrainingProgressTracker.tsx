@@ -103,9 +103,11 @@ export const TrainingProgressTracker = () => {
           ))}
           
           <div className="pt-2">
-            <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-              <span>Continue Training</span>
-              <ArrowRight className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="w-full flex justify-between items-center" asChild>
+              <Link to="/professional/training-resources">
+                <span>Continue Training</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
           
@@ -114,7 +116,7 @@ export const TrainingProgressTracker = () => {
               <Award className="h-5 w-5 text-yellow-500" />
               <span className="text-sm font-medium">1 Certificate Earned</span>
             </div>
-            <Link to="/professional/features-overview">
+            <Link to="/professional/training-resources">
               <Button variant="ghost" size="sm" className="text-purple-500 hover:text-purple-700">
                 View All
               </Button>

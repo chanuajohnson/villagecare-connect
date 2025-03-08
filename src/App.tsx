@@ -26,6 +26,7 @@ import FAQPage from "./pages/support/FAQPage";
 import { Fab } from "@/components/ui/fab";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import MessageBoardPage from "./pages/professional/MessageBoardPage";
+import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const AppContent = () => {
           <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
           <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
           <Route path="/professional/message-board" element={<MessageBoardPage />} />
+          <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="*" element={<NotFound />} />

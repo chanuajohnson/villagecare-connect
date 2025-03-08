@@ -175,7 +175,7 @@ const ProfessionalDashboard = () => {
                 <p className="text-sm text-gray-600">Best Practices Guides</p>
                 <p className="text-sm text-gray-600">Specialized Care Training</p>
               </div>
-              <Link to="/professional/features-overview">
+              <Link to="/professional/training-resources">
                 <Button 
                   variant="default"
                   className="w-full bg-primary hover:bg-primary-600 text-white"
