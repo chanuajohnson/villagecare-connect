@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   MessageSquare, 
   Search, 
@@ -22,17 +23,48 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+
+// Define message type for better type safety
+type MessageType = "family" | "professional" | "all";
+type UrgencyType = "Today" | "Short Notice" | "This Weekend" | "Regular" | "all";
+
+interface Message {
+  id: number;
+  type: "family" | "professional";
+  author: string;
+  authorInitial: string;
+  title: string;
+  timePosted: string;
+  urgency: UrgencyType;
+  location: string;
+  details: string;
+  careNeeds?: string[];
+  specialties?: string[];
+}
 
 const MessageBoardPage = () => {
   const { user } = useAuth();
-  const [messageType, setMessageType] = useState<"all" | "family" | "professional">("all");
-  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [messageType, setMessageType] = useState<MessageType>("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<UrgencyType | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showPostForm, setShowPostForm] = useState(false);
   const [postType, setPostType] = useState<"need" | "availability">("need");
   
-  // This would normally be fetched from the backend
-  const messages = [
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    location: "",
+    urgency: "Regular" as UrgencyType,
+    details: "",
+    careNeeds: [] as string[],
+    specialties: [] as string[]
+  });
+  
+  // Initialize messages state with sample data
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       type: "family",
@@ -103,9 +135,26 @@ const MessageBoardPage = () => {
       urgency: "Regular",
       location: "Medford, MA",
       details: "Licensed nurse available for overnight shifts Monday-Thursday next week. Specialized in post-hospital care, wound management, and medication administration. References available.",
-      specialties: ["Nursing Care", "Overnight Care", "Post-Hospital Care"]
+      specialties: ["Nursing Care", "Overnight Care", "Post-Hospital Care", "Child Care"]
     }
-  ];
+  ]);
+  
+  // Check if there's an action param in the URL
+  const handleInitialAction = () => {
+    const action = searchParams.get("action");
+    if (action === "post-need") {
+      setShowPostForm(true);
+      setPostType("need");
+    } else if (action === "post-availability") {
+      setShowPostForm(true);
+      setPostType("availability");
+    }
+  };
+  
+  // Call this function when the component mounts
+  useState(() => {
+    handleInitialAction();
+  });
   
   const breadcrumbItems = [
     { label: "Professional", href: "/dashboard/professional" },
@@ -126,23 +175,104 @@ const MessageBoardPage = () => {
     return true;
   });
   
-  const renderFilterBadge = (label: string, value: string, currentValue: string, setter: (value: string) => void) => (
+  // Fix TypeScript errors by creating strongly-typed helper functions
+  const renderMessageTypeFilter = (label: string, value: MessageType, currentValue: MessageType) => (
     <Badge 
       variant={currentValue === value ? "default" : "outline"} 
       className={`cursor-pointer ${currentValue === value ? "bg-primary" : "hover:bg-primary/10"}`}
-      onClick={() => setter(value)}
+      onClick={() => setMessageType(value)}
     >
       {label}
     </Badge>
   );
   
+  const renderUrgencyFilter = (label: string, value: UrgencyType | "all", currentValue: UrgencyType | "all") => (
+    <Badge 
+      variant={currentValue === value ? "default" : "outline"} 
+      className={`cursor-pointer ${currentValue === value ? "bg-primary" : "hover:bg-primary/10"}`}
+      onClick={() => setUrgencyFilter(value)}
+    >
+      {label}
+    </Badge>
+  );
+  
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleCheckboxChange = (id: string, checked: boolean, type: "careNeeds" | "specialties") => {
+    setFormData(prev => {
+      const currentItems = [...prev[type]];
+      if (checked) {
+        if (!currentItems.includes(id)) {
+          return { ...prev, [type]: [...currentItems, id] };
+        }
+      } else {
+        return { ...prev, [type]: currentItems.filter(item => item !== id) };
+      }
+      return prev;
+    });
+  };
+  
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would send data to the backend
+    
+    // Create a new message
+    const newMessage: Message = {
+      id: messages.length + 1,
+      type: postType === "need" ? "family" : "professional",
+      author: user?.email || "Anonymous User", // Use the logged-in user's email or a default
+      authorInitial: (user?.email?.[0] || "A").toUpperCase(),
+      title: formData.title,
+      timePosted: "Just now",
+      urgency: formData.urgency,
+      location: formData.location,
+      details: formData.details,
+      ...(postType === "need" ? { careNeeds: formData.careNeeds } : { specialties: formData.specialties })
+    };
+    
+    // Add the new message to the board
+    setMessages(prev => [newMessage, ...prev]);
+    
+    // Reset form and hide it
+    setFormData({
+      title: "",
+      location: "",
+      urgency: "Regular",
+      details: "",
+      careNeeds: [],
+      specialties: []
+    });
     setShowPostForm(false);
-    // Display success message
-    alert(`Successfully posted ${postType === "need" ? "care need" : "availability"}`);
+    
+    // Show success toast
+    toast.success(`Successfully posted ${postType === "need" ? "care need" : "availability"}`);
+    
+    // Clear the action parameter from URL
+    setSearchParams({});
   };
+
+  // Arrays for care needs and specialties with Child Care added
+  const careNeedsOptions = [
+    "Medication Management", 
+    "Meal Preparation", 
+    "Personal Care", 
+    "Transportation", 
+    "Mobility Assistance", 
+    "Companion Care",
+    "Child Care" // Added Child Care
+  ];
+  
+  const specialtiesOptions = [
+    "Senior Care", 
+    "Special Needs", 
+    "Dementia Care", 
+    "Post-Surgery", 
+    "Respite Care", 
+    "Overnight Care",
+    "Child Care" // Added Child Care
+  ];
   
   return (
     <div className="min-h-screen bg-background">
@@ -202,13 +332,25 @@ const MessageBoardPage = () => {
                 <form onSubmit={handlePostSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
-                    <Input id="title" placeholder="Enter a clear, descriptive title" required />
+                    <Input 
+                      id="title" 
+                      placeholder="Enter a clear, descriptive title" 
+                      value={formData.title}
+                      onChange={handleFormChange}
+                      required 
+                    />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="location" className="block text-sm font-medium mb-1">Location</label>
-                      <Input id="location" placeholder="City, neighborhood, etc." required />
+                      <Input 
+                        id="location" 
+                        placeholder="City, neighborhood, etc." 
+                        value={formData.location}
+                        onChange={handleFormChange}
+                        required 
+                      />
                     </div>
                     
                     <div>
@@ -216,7 +358,8 @@ const MessageBoardPage = () => {
                       <select 
                         id="urgency" 
                         className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        defaultValue="Regular"
+                        value={formData.urgency}
+                        onChange={handleFormChange}
                         required
                       >
                         <option value="Today">Today (Urgent)</option>
@@ -236,6 +379,8 @@ const MessageBoardPage = () => {
                         : "Describe your experience, availability, services offered, etc."
                       } 
                       className="min-h-[120px]"
+                      value={formData.details}
+                      onChange={handleFormChange}
                       required
                     />
                   </div>
@@ -244,10 +389,21 @@ const MessageBoardPage = () => {
                     <div>
                       <label className="block text-sm font-medium mb-1">Care Needs (select all that apply)</label>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {["Medication Management", "Meal Preparation", "Personal Care", "Transportation", "Mobility Assistance", "Companion Care"].map((need) => (
-                          <div key={need} className="flex items-center">
-                            <input type="checkbox" id={need} className="mr-2" />
-                            <label htmlFor={need} className="text-sm">{need}</label>
+                        {careNeedsOptions.map((need) => (
+                          <div key={need} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`need-${need}`} 
+                              onCheckedChange={(checked) => 
+                                handleCheckboxChange(need, checked === true, "careNeeds")
+                              }
+                              checked={formData.careNeeds.includes(need)}
+                            />
+                            <label 
+                              htmlFor={`need-${need}`} 
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {need}
+                            </label>
                           </div>
                         ))}
                       </div>
@@ -256,10 +412,21 @@ const MessageBoardPage = () => {
                     <div>
                       <label className="block text-sm font-medium mb-1">Specialties (select all that apply)</label>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {["Senior Care", "Special Needs", "Dementia Care", "Post-Surgery", "Respite Care", "Overnight Care"].map((specialty) => (
-                          <div key={specialty} className="flex items-center">
-                            <input type="checkbox" id={specialty} className="mr-2" />
-                            <label htmlFor={specialty} className="text-sm">{specialty}</label>
+                        {specialtiesOptions.map((specialty) => (
+                          <div key={specialty} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`specialty-${specialty}`} 
+                              onCheckedChange={(checked) => 
+                                handleCheckboxChange(specialty, checked === true, "specialties")
+                              }
+                              checked={formData.specialties.includes(specialty)}
+                            />
+                            <label 
+                              htmlFor={`specialty-${specialty}`} 
+                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {specialty}
+                            </label>
                           </div>
                         ))}
                       </div>
@@ -295,9 +462,9 @@ const MessageBoardPage = () => {
                       <Filter className="h-4 w-4 text-gray-500" />
                       <span className="text-sm font-medium mr-1">Filter:</span>
                       <div className="flex flex-wrap gap-2">
-                        {renderFilterBadge("All Types", "all", messageType, setMessageType)}
-                        {renderFilterBadge("Family", "family", messageType, setMessageType)}
-                        {renderFilterBadge("Professional", "professional", messageType, setMessageType)}
+                        {renderMessageTypeFilter("All Types", "all", messageType)}
+                        {renderMessageTypeFilter("Family", "family", messageType)}
+                        {renderMessageTypeFilter("Professional", "professional", messageType)}
                       </div>
                     </div>
                   </div>
@@ -305,11 +472,11 @@ const MessageBoardPage = () => {
                   <div className="mt-4">
                     <span className="text-sm font-medium mr-2">Urgency:</span>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {renderFilterBadge("All", "all", urgencyFilter, setUrgencyFilter)}
-                      {renderFilterBadge("Today", "Today", urgencyFilter, setUrgencyFilter)}
-                      {renderFilterBadge("Short Notice", "Short Notice", urgencyFilter, setUrgencyFilter)}
-                      {renderFilterBadge("This Weekend", "This Weekend", urgencyFilter, setUrgencyFilter)}
-                      {renderFilterBadge("Regular", "Regular", urgencyFilter, setUrgencyFilter)}
+                      {renderUrgencyFilter("All", "all", urgencyFilter)}
+                      {renderUrgencyFilter("Today", "Today", urgencyFilter)}
+                      {renderUrgencyFilter("Short Notice", "Short Notice", urgencyFilter)}
+                      {renderUrgencyFilter("This Weekend", "This Weekend", urgencyFilter)}
+                      {renderUrgencyFilter("Regular", "Regular", urgencyFilter)}
                     </div>
                   </div>
                 </CardContent>
@@ -359,19 +526,19 @@ const MessageBoardPage = () => {
                             </div>
                             
                             <div className="flex flex-wrap gap-2 mt-4">
-                              {message.type === "family" ? (
+                              {message.type === "family" && message.careNeeds ? (
                                 message.careNeeds.map((need, index) => (
                                   <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700">
                                     {need}
                                   </Badge>
                                 ))
-                              ) : (
+                              ) : message.specialties ? (
                                 message.specialties.map((specialty, index) => (
                                   <Badge key={index} variant="outline" className="bg-green-50 text-green-700">
                                     {specialty}
                                   </Badge>
                                 ))
-                              )}
+                              ) : null}
                             </div>
                           </div>
                           
