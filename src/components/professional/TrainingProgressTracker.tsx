@@ -52,19 +52,19 @@ export const TrainingProgressTracker = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card className="h-full border-l-4 border-l-primary">
-        <CardHeader className="pb-2">
+      <Card className="h-full border-l-4 border-l-primary-500 shadow-sm">
+        <CardHeader className="pb-2 bg-gradient-to-r from-primary-100 to-transparent">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <GraduationCap className="h-5 w-5 text-primary" />
+            <GraduationCap className="h-5 w-5 text-primary-600" />
             Training Progress
           </CardTitle>
           <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-500">Your learning journey</p>
+            <p className="text-sm text-gray-600">Your learning journey</p>
             <div className="flex items-center space-x-1">
               <p className="text-sm font-medium">{totalProgress}%</p>
-              <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                 <div 
-                  className="h-full bg-primary rounded-full" 
+                  className="h-full bg-primary-500 rounded-full" 
                   style={{ width: `${totalProgress}%` }}
                 />
               </div>
@@ -79,7 +79,7 @@ export const TrainingProgressTracker = () => {
                   {module.progress === 100 ? (
                     <Award className="h-4 w-4 text-green-500" />
                   ) : (
-                    <BookOpen className="h-4 w-4 text-gray-500" />
+                    <BookOpen className="h-4 w-4 text-primary-500" />
                   )}
                   <span className="font-medium">{module.title}</span>
                 </div>
@@ -87,13 +87,13 @@ export const TrainingProgressTracker = () => {
                   {module.completedLessons}/{module.totalLessons} lessons • {module.estimatedTime}
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                 <div 
                   className={`h-full rounded-full ${
                     module.progress === 100 
                       ? 'bg-green-500' 
                       : module.progress > 0 
-                        ? 'bg-primary' 
+                        ? 'bg-primary-500' 
                         : 'bg-gray-200'
                   }`}
                   style={{ width: `${module.progress}%` }}
@@ -103,7 +103,12 @@ export const TrainingProgressTracker = () => {
           ))}
           
           <div className="pt-2">
-            <Button variant="outline" size="sm" className="w-full flex justify-between items-center" asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50" 
+              asChild
+            >
               <Link to="/professional/training-resources">
                 <span>Continue Training</span>
                 <ArrowRight className="h-4 w-4" />
@@ -117,7 +122,7 @@ export const TrainingProgressTracker = () => {
               <span className="text-sm font-medium">1 Certificate Earned</span>
             </div>
             <Link to="/professional/training-resources">
-              <Button variant="ghost" size="sm" className="text-primary hover:text-primary-600">
+              <Button variant="ghost" size="sm" className="text-primary-600 hover:text-primary-700 hover:bg-primary-50">
                 View All
               </Button>
             </Link>
