@@ -79,10 +79,10 @@ export const NextStepsPanel = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="h-full border-l-4 border-l-blue-500">
+      <Card className="h-full border-l-4 border-l-primary">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <List className="h-5 w-5 text-blue-500" />
+            <List className="h-5 w-5 text-primary" />
             Next Steps
           </CardTitle>
           <div className="flex justify-between items-center">
@@ -91,7 +91,7 @@ export const NextStepsPanel = () => {
               <p className="text-sm font-medium">{progress}%</p>
               <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-blue-500 rounded-full" 
+                  className="h-full bg-primary rounded-full" 
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -125,7 +125,7 @@ export const NextStepsPanel = () => {
                 </div>
                 {!step.completed && (
                   <Link to={step.link}>
-                    <Button variant="ghost" size="sm" className="p-0 h-6 text-blue-500 hover:text-blue-700">
+                    <Button variant="ghost" size="sm" className="p-0 h-6 text-primary hover:text-primary-600">
                       Complete
                       <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>

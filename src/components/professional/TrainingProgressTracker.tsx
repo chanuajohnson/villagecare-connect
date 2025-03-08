@@ -52,10 +52,10 @@ export const TrainingProgressTracker = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card className="h-full border-l-4 border-l-purple-500">
+      <Card className="h-full border-l-4 border-l-primary">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <GraduationCap className="h-5 w-5 text-purple-500" />
+            <GraduationCap className="h-5 w-5 text-primary" />
             Training Progress
           </CardTitle>
           <div className="flex justify-between items-center">
@@ -64,7 +64,7 @@ export const TrainingProgressTracker = () => {
               <p className="text-sm font-medium">{totalProgress}%</p>
               <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-purple-500 rounded-full" 
+                  className="h-full bg-primary rounded-full" 
                   style={{ width: `${totalProgress}%` }}
                 />
               </div>
@@ -77,7 +77,7 @@ export const TrainingProgressTracker = () => {
               <div className="flex justify-between text-sm">
                 <div className="flex items-center gap-2">
                   {module.progress === 100 ? (
-                    <Award className="h-4 w-4 text-yellow-500" />
+                    <Award className="h-4 w-4 text-green-500" />
                   ) : (
                     <BookOpen className="h-4 w-4 text-gray-500" />
                   )}
@@ -93,7 +93,7 @@ export const TrainingProgressTracker = () => {
                     module.progress === 100 
                       ? 'bg-green-500' 
                       : module.progress > 0 
-                        ? 'bg-purple-500' 
+                        ? 'bg-primary' 
                         : 'bg-gray-200'
                   }`}
                   style={{ width: `${module.progress}%` }}
@@ -117,7 +117,7 @@ export const TrainingProgressTracker = () => {
               <span className="text-sm font-medium">1 Certificate Earned</span>
             </div>
             <Link to="/professional/training-resources">
-              <Button variant="ghost" size="sm" className="text-purple-500 hover:text-purple-700">
+              <Button variant="ghost" size="sm" className="text-primary hover:text-primary-600">
                 View All
               </Button>
             </Link>

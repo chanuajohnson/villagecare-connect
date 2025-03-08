@@ -66,17 +66,17 @@ export const MessageBoard = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
     >
-      <Card className="h-full border-l-4 border-l-amber-500">
+      <Card className="h-full border-l-4 border-l-primary">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <MessageSquare className="h-5 w-5 text-amber-500" />
+            <MessageSquare className="h-5 w-5 text-primary" />
             Message Board
           </CardTitle>
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-500">Care needs & availability</p>
             <div className="flex gap-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Family</Badge>
-              <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Professional</Badge>
+              <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-100">Family</Badge>
+              <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-100">Professional</Badge>
             </div>
           </div>
         </CardHeader>
@@ -85,14 +85,14 @@ export const MessageBoard = () => {
             {messages.map((message) => (
               <div 
                 key={message.id} 
-                className={`p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-4 ${
-                  message.type === "family" ? "bg-blue-50 border-l-blue-400" : "bg-green-50 border-l-green-400"
+                className={`p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 ${
+                  message.type === "family" ? "bg-gray-50 border-l-primary" : "bg-gray-50 border-l-primary-400"
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <Avatar className={`h-8 w-8 ${message.type === "family" ? "bg-blue-100" : "bg-green-100"}`}>
-                      <AvatarFallback className={message.type === "family" ? "text-blue-700" : "text-green-700"}>
+                    <Avatar className={`h-8 w-8 ${message.type === "family" ? "bg-primary-100" : "bg-primary-200"}`}>
+                      <AvatarFallback className={message.type === "family" ? "text-primary-700" : "text-primary-800"}>
                         {message.authorInitial}
                       </AvatarFallback>
                     </Avatar>
@@ -104,10 +104,10 @@ export const MessageBoard = () => {
                   <Badge 
                     variant="outline" 
                     className={message.urgency === "Today" 
-                      ? "bg-red-50 text-red-700" 
+                      ? "bg-gray-50 text-gray-700" 
                       : message.urgency === "Short Notice" 
-                        ? "bg-orange-50 text-orange-700" 
-                        : "bg-amber-50 text-amber-700"
+                        ? "bg-gray-50 text-gray-700" 
+                        : "bg-gray-50 text-gray-700"
                     }
                   >
                     {message.urgency}
