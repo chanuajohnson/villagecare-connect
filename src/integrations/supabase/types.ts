@@ -114,6 +114,51 @@ export type Database = {
         }
         Relationships: []
       }
+      job_opportunities: {
+        Row: {
+          details: string | null
+          id: string
+          location: string
+          match_percentage: number | null
+          posted_at: string | null
+          salary: string | null
+          source_name: string | null
+          source_url: string | null
+          tags: string[] | null
+          title: string
+          type: string
+          urgency: string | null
+        }
+        Insert: {
+          details?: string | null
+          id?: string
+          location: string
+          match_percentage?: number | null
+          posted_at?: string | null
+          salary?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title: string
+          type: string
+          urgency?: string | null
+        }
+        Update: {
+          details?: string | null
+          id?: string
+          location?: string
+          match_percentage?: number | null
+          posted_at?: string | null
+          salary?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string
+          type?: string
+          urgency?: string | null
+        }
+        Relationships: []
+      }
       meal_plan_items: {
         Row: {
           created_at: string
@@ -180,6 +225,48 @@ export type Database = {
           start_date?: string
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      message_board_posts: {
+        Row: {
+          author: string
+          author_initial: string
+          care_needs: string[] | null
+          details: string | null
+          id: string
+          location: string
+          specialties: string[] | null
+          time_posted: string | null
+          title: string
+          type: string
+          urgency: string | null
+        }
+        Insert: {
+          author: string
+          author_initial: string
+          care_needs?: string[] | null
+          details?: string | null
+          id?: string
+          location: string
+          specialties?: string[] | null
+          time_posted?: string | null
+          title: string
+          type: string
+          urgency?: string | null
+        }
+        Update: {
+          author?: string
+          author_initial?: string
+          care_needs?: string[] | null
+          details?: string | null
+          id?: string
+          location?: string
+          specialties?: string[] | null
+          time_posted?: string | null
+          title?: string
+          type?: string
+          urgency?: string | null
         }
         Relationships: []
       }

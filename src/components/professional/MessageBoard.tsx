@@ -33,6 +33,7 @@ export const MessageBoard = () => {
       }
       
       if (data) {
+        console.log("Fetched messages:", data);
         setMessages(data);
       }
     } catch (error) {
@@ -72,11 +73,14 @@ export const MessageBoard = () => {
 
   // Helper function to format time posted
   const formatTimePosted = (timestamp) => {
+    if (!timestamp) return "Unknown";
+    
     const posted = new Date(timestamp);
     const now = new Date();
     
     // Convert to milliseconds first, then to hours
-    const diffInHours = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60));
+    const diffInMs = now.getTime() - posted.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     
     if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours} hours ago`;
