@@ -174,16 +174,17 @@ export const JobListings = () => {
             </div>
           )}
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50"
-            as={Link}
-            to="/professional/jobs"
-          >
-            <span>View All Jobs</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          {/* Fix: Changed from using 'as' prop to wrapping Button in Link */}
+          <Link to="/professional/jobs" className="w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50"
+            >
+              <span>View All Jobs</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </motion.div>

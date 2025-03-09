@@ -74,7 +74,9 @@ export const MessageBoard = () => {
   const formatTimePosted = (timestamp) => {
     const posted = new Date(timestamp);
     const now = new Date();
-    const diffInHours = Math.floor((now - posted) / (1000 * 60 * 60));
+    
+    // Convert to milliseconds first, then to hours
+    const diffInHours = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60));
     
     if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours} hours ago`;
