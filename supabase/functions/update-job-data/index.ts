@@ -196,8 +196,8 @@ async function refreshData() {
     const posts = generateMessageBoardPosts(15)  // Generate 15 message board posts
     
     // Clear existing data
-    await supabase.from('job_opportunities').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('message_board_posts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('job_opportunities').delete().not('id', 'eq', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('message_board_posts').delete().not('id', 'eq', '00000000-0000-0000-0000-000000000000')
     
     console.log("Deleted existing data")
     

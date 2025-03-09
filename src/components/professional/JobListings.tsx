@@ -32,6 +32,7 @@ export const JobListings = () => {
       }
       
       if (data) {
+        console.log("Fetched jobs:", data); // Add logging to check fetched data
         setJobs(data);
       }
     } catch (error) {
