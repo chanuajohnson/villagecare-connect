@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,6 @@ import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
-import { FamilyMapSection } from '@/components/dashboard/FamilyMapSection';
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -78,9 +78,6 @@ const FamilyDashboard = () => {
               />
             </CardContent>
           </Card>
-
-          {/* Add this after Profile Management Card */}
-          <FamilyMapSection />
 
           {/* Care Management Section */}
           <div className="space-y-6 mb-8">
