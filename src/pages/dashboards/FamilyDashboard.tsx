@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight, UserCog } from "lucide-react";
+import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight, UserCog, MapPin } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
+import MapDisplay from "@/components/map/MapDisplay";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -50,6 +51,22 @@ const FamilyDashboard = () => {
 
           <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
+
+          {/* Caregiver Map Section */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                Find Professional Caregivers in Trinidad and Tobago
+              </CardTitle>
+              <CardDescription>
+                Explore the map to find professional caregivers near you
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MapDisplay />
+            </CardContent>
+          </Card>
 
           {/* Profile Management Card */}
           <Card className="mb-8">
