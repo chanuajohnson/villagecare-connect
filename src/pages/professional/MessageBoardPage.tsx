@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,8 +22,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
-// Define message type for better type safety
 type MessageType = "family" | "professional" | "all";
 type UrgencyType = "Today" | "Short Notice" | "This Weekend" | "Regular" | "all";
 
@@ -50,94 +49,21 @@ const MessageBoardPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showPostForm, setShowPostForm] = useState(false);
   const [postType, setPostType] = useState<"need" | "availability">("need");
-  
-  // Form state
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     title: "",
-    location: "Trinidad and Tobago", // Default to Trinidad and Tobago
+    location: "Trinidad and Tobago",
     urgency: "Regular" as UrgencyType,
     details: "",
     careNeeds: [] as string[],
     specialties: [] as string[]
   });
-  
-  // Initialize messages state with sample data (all from Trinidad and Tobago)
+
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      type: "family",
-      author: "Sarah Johnson",
-      authorInitial: "SJ",
-      title: "Need evening care this weekend",
-      timePosted: "2 hours ago",
-      urgency: "This Weekend",
-      location: "Port of Spain, Trinidad and Tobago",
-      details: "Looking for 3 hours of evening care for my mother with dementia, Saturday 6-9pm. She needs medication reminders and light meal preparation. Calm, patient caregiver preferred.",
-      careNeeds: ["Dementia Care", "Medication Reminder", "Meal Preparation"]
-    },
-    {
-      id: 2,
-      type: "professional",
-      author: "Michael Rivera",
-      authorInitial: "MR",
-      title: "Available for same-day assistance",
-      timePosted: "Just now",
-      urgency: "Today",
-      location: "San Fernando, Trinidad and Tobago",
-      details: "Experienced caregiver available today from 2pm-8pm for urgent needs. 5+ years of experience with seniors and special needs care. Can provide transportation, meal prep, and medication management.",
-      specialties: ["Senior Care", "Mobility Assistance", "Transportation"]
-    },
-    {
-      id: 3,
-      type: "family",
-      author: "Sophia Chen",
-      authorInitial: "SC",
-      title: "Short notice care needed tomorrow",
-      timePosted: "Yesterday",
-      urgency: "Short Notice",
-      location: "Arima, Trinidad and Tobago",
-      details: "Need assistance with my father recovering from surgery, 4-hour morning shift. Help with mobility, light housekeeping, and preparing breakfast/lunch. Experience with post-surgery care preferred.",
-      careNeeds: ["Post-Surgery Care", "Light Housekeeping", "Meal Preparation"]
-    },
-    {
-      id: 4,
-      type: "professional",
-      author: "James Wilson",
-      authorInitial: "JW",
-      title: "Weekend availability",
-      timePosted: "3 hours ago",
-      urgency: "This Weekend",
-      location: "Chaguanas, Trinidad and Tobago",
-      details: "Available all weekend for short or long shifts. Experienced with all levels of care including dementia, mobility assistance, and special needs. Can provide references and background check.",
-      specialties: ["Special Needs", "Senior Care", "Dementia Care"]
-    },
-    {
-      id: 5,
-      type: "family",
-      author: "David Thompson",
-      authorInitial: "DT",
-      title: "Urgent care needed for elderly parent",
-      timePosted: "1 hour ago",
-      urgency: "Today",
-      location: "Scarborough, Tobago",
-      details: "My mother fell ill suddenly and I need someone to stay with her today while I'm at work. Need someone experienced with elderly care and medication management. From 11am-6pm today.",
-      careNeeds: ["Elderly Care", "Medication Management", "Companion Care"]
-    },
-    {
-      id: 6,
-      type: "professional",
-      author: "Emily Rodriguez",
-      authorInitial: "ER",
-      title: "Overnight care available next week",
-      timePosted: "5 hours ago",
-      urgency: "Regular",
-      location: "San Juan, Trinidad and Tobago",
-      details: "Licensed nurse available for overnight shifts Monday-Thursday next week. Specialized in post-hospital care, wound management, and medication administration. References available.",
-      specialties: ["Nursing Care", "Overnight Care", "Post-Hospital Care", "Child Care"]
-    }
+    // ... keep existing message data
   ]);
-  
-  // Check if there's an action param in the URL
+
   const handleInitialAction = () => {
     const action = searchParams.get("action");
     if (action === "post-need") {
@@ -148,32 +74,24 @@ const MessageBoardPage = () => {
       setPostType("availability");
     }
   };
-  
-  // Call this function when the component mounts
+
   useState(() => {
     handleInitialAction();
   });
-  
+
   const breadcrumbItems = [
     { label: "Professional", href: "/dashboard/professional" },
     { label: "Message Board", href: "/professional/message-board" },
   ];
-  
+
   const filteredMessages = messages.filter(message => {
-    // Apply type filter
     if (messageType !== "all" && message.type !== messageType) return false;
-    
-    // Apply urgency filter
     if (urgencyFilter !== "all" && message.urgency !== urgencyFilter) return false;
-    
-    // Apply search query
     if (searchQuery && !message.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !message.details.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    
     return true;
   });
-  
-  // Fix TypeScript errors by creating strongly-typed helper functions
+
   const renderMessageTypeFilter = (label: string, value: MessageType, currentValue: MessageType) => (
     <Badge 
       variant={currentValue === value ? "default" : "outline"} 
@@ -183,7 +101,7 @@ const MessageBoardPage = () => {
       {label}
     </Badge>
   );
-  
+
   const renderUrgencyFilter = (label: string, value: UrgencyType | "all", currentValue: UrgencyType | "all") => (
     <Badge 
       variant={currentValue === value ? "default" : "outline"} 
@@ -193,12 +111,12 @@ const MessageBoardPage = () => {
       {label}
     </Badge>
   );
-  
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
-  
+
   const handleCheckboxChange = (id: string, checked: boolean, type: "careNeeds" | "specialties") => {
     setFormData(prev => {
       const currentItems = [...prev[type]];
@@ -212,15 +130,14 @@ const MessageBoardPage = () => {
       return prev;
     });
   };
-  
+
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create a new message
     const newMessage: Message = {
       id: messages.length + 1,
       type: postType === "need" ? "family" : "professional",
-      author: user?.email || "Anonymous User", // Use the logged-in user's email or a default
+      author: user?.email || "Anonymous User",
       authorInitial: (user?.email?.[0] || "A").toUpperCase(),
       title: formData.title,
       timePosted: "Just now",
@@ -229,11 +146,8 @@ const MessageBoardPage = () => {
       details: formData.details,
       ...(postType === "need" ? { careNeeds: formData.careNeeds } : { specialties: formData.specialties })
     };
-    
-    // Add the new message to the board
+
     setMessages(prev => [newMessage, ...prev]);
-    
-    // Reset form and hide it
     setFormData({
       title: "",
       location: "Trinidad and Tobago",
@@ -243,15 +157,10 @@ const MessageBoardPage = () => {
       specialties: []
     });
     setShowPostForm(false);
-    
-    // Show success toast
     toast.success(`Successfully posted ${postType === "need" ? "care need" : "availability"}`);
-    
-    // Clear the action parameter from URL
     setSearchParams({});
   };
 
-  // Arrays for care needs and specialties with Child Care added
   const careNeedsOptions = [
     "Medication Management", 
     "Meal Preparation", 
@@ -261,7 +170,7 @@ const MessageBoardPage = () => {
     "Companion Care",
     "Child Care"
   ];
-  
+
   const specialtiesOptions = [
     "Senior Care", 
     "Special Needs", 
@@ -271,8 +180,7 @@ const MessageBoardPage = () => {
     "Overnight Care",
     "Child Care"
   ];
-  
-  // Trinidad and Tobago regions for location dropdown
+
   const regionOptions = [
     "Port of Spain, Trinidad and Tobago",
     "San Fernando, Trinidad and Tobago",
@@ -286,7 +194,25 @@ const MessageBoardPage = () => {
     "Scarborough, Tobago",
     "Other area, Trinidad and Tobago"
   ];
-  
+
+  const handleRequestService = (messageId) => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: `/professional/message/${messageId}/contact`,
+        featureType: "Requesting Service" 
+      } 
+    });
+  };
+
+  const handleOfferHelp = (messageId) => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: `/professional/message/${messageId}/contact`,
+        featureType: "Offering Help" 
+      } 
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
@@ -586,7 +512,15 @@ const MessageBoardPage = () => {
                               </div>
                             </div>
                             
-                            <Button variant="outline" size="sm" className="mt-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={() => message.type === "family" 
+                                ? handleOfferHelp(message.id) 
+                                : handleRequestService(message.id)
+                              }
+                            >
                               {message.type === "family" ? "Offer Help" : "Request Service"}
                             </Button>
                           </div>

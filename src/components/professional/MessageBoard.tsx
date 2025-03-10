@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, ArrowRight, Clock, Users, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -14,6 +13,7 @@ export const MessageBoard = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMessages();
@@ -50,7 +50,6 @@ export const MessageBoard = () => {
       setRefreshing(true);
       toast.info("Refreshing Trinidad and Tobago message board data...");
       
-      // Call the edge function to refresh the data
       const { data, error } = await supabase.functions.invoke('update-job-data', {
         body: { region: 'Trinidad and Tobago' }
       });
@@ -61,7 +60,6 @@ export const MessageBoard = () => {
       
       if (data.success) {
         toast.success(`Successfully refreshed data with ${data.postsCount} posts`);
-        // Refetch the messages to display the new data
         await fetchMessages();
       } else {
         throw new Error(data.error || "Failed to refresh data");
@@ -74,14 +72,12 @@ export const MessageBoard = () => {
     }
   };
 
-  // Helper function to format time posted
   const formatTimePosted = (timestamp) => {
     if (!timestamp) return "Unknown";
     
     const posted = new Date(timestamp);
     const now = new Date();
     
-    // Convert to milliseconds first, then to hours
     const diffInMs = now.getTime() - posted.getTime();
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     
@@ -89,6 +85,33 @@ export const MessageBoard = () => {
     if (diffInHours < 24) return `${diffInHours} hours ago`;
     if (diffInHours < 48) return "Yesterday";
     return `${Math.floor(diffInHours / 24)} days ago`;
+  };
+
+  const handlePostCareNeed = () => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board?action=post-need',
+        featureType: "Posting Care Needs" 
+      } 
+    });
+  };
+
+  const handlePostAvailability = () => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board?action=post-availability',
+        featureType: "Posting Availability" 
+      } 
+    });
+  };
+
+  const handleViewFullBoard = () => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board',
+        featureType: "Full Message Board" 
+      } 
+    });
   };
 
   return (
@@ -208,26 +231,35 @@ export const MessageBoard = () => {
           )}
           
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Link to="/professional/message-board?action=post-need" className="flex-1">
-              <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-                <span>Post Care Need</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/professional/message-board?action=post-availability" className="flex-1">
-              <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-                <span>Post Availability</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-          
-          <Link to="/professional/message-board">
-            <Button variant="default" size="sm" className="w-full flex justify-between items-center">
-              <span>View Full Message Board</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 flex justify-between items-center"
+              onClick={handlePostCareNeed}
+            >
+              <span>Post Care Need</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
-          </Link>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 flex justify-between items-center"
+              onClick={handlePostAvailability}
+            >
+              <span>Post Availability</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="w-full flex justify-between items-center"
+            onClick={handleViewFullBoard}
+          >
+            <span>View Full Message Board</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </CardContent>
       </Card>
     </motion.div>

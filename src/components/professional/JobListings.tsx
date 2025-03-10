@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Briefcase, MapPin, Clock, ArrowRight, Filter, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -13,6 +12,7 @@ export const JobListings = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchJobs();
@@ -49,7 +49,6 @@ export const JobListings = () => {
       setRefreshing(true);
       toast.info("Refreshing Trinidad and Tobago job data...");
       
-      // Call the edge function to refresh the data
       const { data, error } = await supabase.functions.invoke('update-job-data', {
         body: { region: 'Trinidad and Tobago' }
       });
@@ -60,7 +59,6 @@ export const JobListings = () => {
       
       if (data.success) {
         toast.success(`Successfully refreshed data with ${data.jobsCount} jobs`);
-        // Refetch the jobs to display the new data
         await fetchJobs();
       } else {
         throw new Error(data.error || "Failed to refresh data");
@@ -71,6 +69,24 @@ export const JobListings = () => {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleViewDetails = (jobId) => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: `/professional/job/${jobId}`,
+        featureType: "Job Details" 
+      } 
+    });
+  };
+
+  const handleViewAllJobs = () => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/jobs',
+        featureType: "All Job Listings" 
+      } 
+    });
   };
 
   return (
@@ -154,12 +170,15 @@ export const JobListings = () => {
                   <p className="text-xs text-gray-500">
                     Posted {new Date(job.posted_at).toLocaleDateString()}
                   </p>
-                  <Link to={`/professional/job/${job.id}`}>
-                    <Button variant="ghost" size="sm" className="h-6 p-0 text-primary-600 hover:text-primary-700 hover:bg-primary-50">
-                      View Details
-                      <ArrowRight className="ml-1 h-3 w-3" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 p-0 text-primary-600 hover:text-primary-700 hover:bg-primary-50"
+                    onClick={() => handleViewDetails(job.id)}
+                  >
+                    View Details
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))
@@ -178,16 +197,15 @@ export const JobListings = () => {
             </div>
           )}
           
-          <Link to="/professional/jobs" className="w-full">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50"
-            >
-              <span>View All Jobs</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50"
+            onClick={handleViewAllJobs}
+          >
+            <span>View All Jobs</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </CardContent>
       </Card>
     </motion.div>

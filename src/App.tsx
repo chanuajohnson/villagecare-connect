@@ -27,6 +27,7 @@ import { Fab } from "@/components/ui/fab";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import MessageBoardPage from "./pages/professional/MessageBoardPage";
 import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
+import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const AppContent = () => {
           <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
