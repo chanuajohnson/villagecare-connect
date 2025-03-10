@@ -308,42 +308,6 @@ export type Database = {
           },
         ]
       }
-      professional_locations: {
-        Row: {
-          address: string | null
-          city: string | null
-          country: string | null
-          created_at: string | null
-          id: string
-          latitude: number
-          longitude: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: string
-          latitude: number
-          longitude: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: string
-          latitude?: number
-          longitude?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           additional_notes: string | null
@@ -592,74 +556,6 @@ export type Database = {
           title?: string
         }
         Relationships: []
-      }
-      subscription_plans: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          duration_days: number
-          features: Json | null
-          id: string
-          name: string
-          price: number
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          duration_days: number
-          features?: Json | null
-          id?: string
-          name: string
-          price: number
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          duration_days?: number
-          features?: Json | null
-          id?: string
-          name?: string
-          price?: number
-        }
-        Relationships: []
-      }
-      user_subscriptions: {
-        Row: {
-          created_at: string | null
-          end_date: string
-          id: string
-          plan_id: string
-          start_date: string | null
-          status: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          end_date: string
-          id?: string
-          plan_id: string
-          start_date?: string | null
-          status?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          end_date?: string
-          id?: string
-          plan_id?: string
-          start_date?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_subscriptions_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_plans"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
