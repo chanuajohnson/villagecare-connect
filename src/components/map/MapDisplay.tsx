@@ -97,7 +97,7 @@ export const MapDisplay = () => {
       // For demo purposes, we'll generate random coordinates near Trinidad
       // In a real app, you would geocode the address
       const randomOffset = () => (Math.random() - 0.5) * 0.2;
-      const lngLat: [number, number] = [-61.2546 + randomOffset(), 10.6918 + randomOffset()];
+      const lngLat = [-61.2546 + randomOffset(), 10.6918 + randomOffset()];
 
       // Create a marker element
       const el = document.createElement('div');
