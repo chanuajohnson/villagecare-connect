@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowRight, Clock, Users, Calendar, UserCheck, RefreshCw } from "lucide-react";
+import { MessageSquare, ArrowRight, Clock, Users, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ export const MessageBoard = () => {
       const { data, error } = await supabase
         .from('message_board_posts')
         .select('*')
+        .ilike('location', '%Trinidad and Tobago%')
         .order('time_posted', { ascending: false })
         .limit(4);
       
@@ -33,7 +34,7 @@ export const MessageBoard = () => {
       }
       
       if (data) {
-        console.log("Fetched messages:", data);
+        console.log("Fetched Trinidad and Tobago messages:", data);
         setMessages(data);
       }
     } catch (error) {
@@ -47,10 +48,12 @@ export const MessageBoard = () => {
   const refreshData = async () => {
     try {
       setRefreshing(true);
-      toast.info("Refreshing message board data...");
+      toast.info("Refreshing Trinidad and Tobago message board data...");
       
       // Call the edge function to refresh the data
-      const { data, error } = await supabase.functions.invoke('update-job-data');
+      const { data, error } = await supabase.functions.invoke('update-job-data', {
+        body: { region: 'Trinidad and Tobago' }
+      });
       
       if (error) {
         throw error;
@@ -133,7 +136,7 @@ export const MessageBoard = () => {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <Avatar className={`h-8 w-8 ${message.type === "family" ? "bg-primary-100" : "bg-primary-200"}`}>
+                      <Avatar className={message.type === "family" ? "bg-primary-100" : "bg-primary-200"}>
                         <AvatarFallback className={message.type === "family" ? "text-primary-700" : "text-primary-800"}>
                           {message.author_initial}
                         </AvatarFallback>
@@ -162,13 +165,13 @@ export const MessageBoard = () => {
                   
                   <div className="flex flex-wrap gap-1 mt-1">
                     {message.type === "family" ? (
-                      message.care_needs.map((need, index) => (
+                      message.care_needs && message.care_needs.map((need, index) => (
                         <Badge key={index} variant="outline" className="text-xs bg-white">
                           {need}
                         </Badge>
                       ))
                     ) : (
-                      message.specialties.map((specialty, index) => (
+                      message.specialties && message.specialties.map((specialty, index) => (
                         <Badge key={index} variant="outline" className="text-xs bg-white">
                           {specialty}
                         </Badge>
@@ -191,7 +194,7 @@ export const MessageBoard = () => {
             </div>
           ) : (
             <div className="text-center py-6">
-              <p className="text-gray-500">No message board posts found</p>
+              <p className="text-gray-500">No message board posts found in Trinidad and Tobago</p>
               <Button 
                 variant="outline" 
                 size="sm" 

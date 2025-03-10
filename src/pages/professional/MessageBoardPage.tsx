@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   MessageSquare, 
@@ -15,11 +15,9 @@ import {
   Filter, 
   Users, 
   Clock, 
-  Calendar, 
   MapPin, 
   Plus, 
-  ArrowLeft,
-  CheckCircle2
+  ArrowLeft
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -56,14 +54,14 @@ const MessageBoardPage = () => {
   // Form state
   const [formData, setFormData] = useState({
     title: "",
-    location: "",
+    location: "Trinidad and Tobago", // Default to Trinidad and Tobago
     urgency: "Regular" as UrgencyType,
     details: "",
     careNeeds: [] as string[],
     specialties: [] as string[]
   });
   
-  // Initialize messages state with sample data
+  // Initialize messages state with sample data (all from Trinidad and Tobago)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -73,7 +71,7 @@ const MessageBoardPage = () => {
       title: "Need evening care this weekend",
       timePosted: "2 hours ago",
       urgency: "This Weekend",
-      location: "Brookline, MA",
+      location: "Port of Spain, Trinidad and Tobago",
       details: "Looking for 3 hours of evening care for my mother with dementia, Saturday 6-9pm. She needs medication reminders and light meal preparation. Calm, patient caregiver preferred.",
       careNeeds: ["Dementia Care", "Medication Reminder", "Meal Preparation"]
     },
@@ -85,7 +83,7 @@ const MessageBoardPage = () => {
       title: "Available for same-day assistance",
       timePosted: "Just now",
       urgency: "Today",
-      location: "Cambridge, MA",
+      location: "San Fernando, Trinidad and Tobago",
       details: "Experienced caregiver available today from 2pm-8pm for urgent needs. 5+ years of experience with seniors and special needs care. Can provide transportation, meal prep, and medication management.",
       specialties: ["Senior Care", "Mobility Assistance", "Transportation"]
     },
@@ -97,7 +95,7 @@ const MessageBoardPage = () => {
       title: "Short notice care needed tomorrow",
       timePosted: "Yesterday",
       urgency: "Short Notice",
-      location: "Somerville, MA",
+      location: "Arima, Trinidad and Tobago",
       details: "Need assistance with my father recovering from surgery, 4-hour morning shift. Help with mobility, light housekeeping, and preparing breakfast/lunch. Experience with post-surgery care preferred.",
       careNeeds: ["Post-Surgery Care", "Light Housekeeping", "Meal Preparation"]
     },
@@ -109,7 +107,7 @@ const MessageBoardPage = () => {
       title: "Weekend availability",
       timePosted: "3 hours ago",
       urgency: "This Weekend",
-      location: "Boston, MA",
+      location: "Chaguanas, Trinidad and Tobago",
       details: "Available all weekend for short or long shifts. Experienced with all levels of care including dementia, mobility assistance, and special needs. Can provide references and background check.",
       specialties: ["Special Needs", "Senior Care", "Dementia Care"]
     },
@@ -121,7 +119,7 @@ const MessageBoardPage = () => {
       title: "Urgent care needed for elderly parent",
       timePosted: "1 hour ago",
       urgency: "Today",
-      location: "Newton, MA",
+      location: "Scarborough, Tobago",
       details: "My mother fell ill suddenly and I need someone to stay with her today while I'm at work. Need someone experienced with elderly care and medication management. From 11am-6pm today.",
       careNeeds: ["Elderly Care", "Medication Management", "Companion Care"]
     },
@@ -133,7 +131,7 @@ const MessageBoardPage = () => {
       title: "Overnight care available next week",
       timePosted: "5 hours ago",
       urgency: "Regular",
-      location: "Medford, MA",
+      location: "San Juan, Trinidad and Tobago",
       details: "Licensed nurse available for overnight shifts Monday-Thursday next week. Specialized in post-hospital care, wound management, and medication administration. References available.",
       specialties: ["Nursing Care", "Overnight Care", "Post-Hospital Care", "Child Care"]
     }
@@ -238,7 +236,7 @@ const MessageBoardPage = () => {
     // Reset form and hide it
     setFormData({
       title: "",
-      location: "",
+      location: "Trinidad and Tobago",
       urgency: "Regular",
       details: "",
       careNeeds: [],
@@ -261,7 +259,7 @@ const MessageBoardPage = () => {
     "Transportation", 
     "Mobility Assistance", 
     "Companion Care",
-    "Child Care" // Added Child Care
+    "Child Care"
   ];
   
   const specialtiesOptions = [
@@ -271,7 +269,22 @@ const MessageBoardPage = () => {
     "Post-Surgery", 
     "Respite Care", 
     "Overnight Care",
-    "Child Care" // Added Child Care
+    "Child Care"
+  ];
+  
+  // Trinidad and Tobago regions for location dropdown
+  const regionOptions = [
+    "Port of Spain, Trinidad and Tobago",
+    "San Fernando, Trinidad and Tobago",
+    "Arima, Trinidad and Tobago",
+    "Chaguanas, Trinidad and Tobago",
+    "Couva, Trinidad and Tobago",
+    "Point Fortin, Trinidad and Tobago",
+    "Princes Town, Trinidad and Tobago",
+    "Sangre Grande, Trinidad and Tobago",
+    "San Juan, Trinidad and Tobago",
+    "Scarborough, Tobago",
+    "Other area, Trinidad and Tobago"
   ];
   
   return (
@@ -323,8 +336,8 @@ const MessageBoardPage = () => {
                 </div>
                 <CardDescription>
                   {postType === "need" 
-                    ? "Share your care requirements to find suitable care providers"
-                    : "Let families know when you're available to provide care"
+                    ? "Share your care requirements to find suitable care providers in Trinidad and Tobago"
+                    : "Let families know when you're available to provide care in Trinidad and Tobago"
                   }
                 </CardDescription>
               </CardHeader>
@@ -344,13 +357,17 @@ const MessageBoardPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="location" className="block text-sm font-medium mb-1">Location</label>
-                      <Input 
+                      <select 
                         id="location" 
-                        placeholder="City, neighborhood, etc." 
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
                         value={formData.location}
                         onChange={handleFormChange}
-                        required 
-                      />
+                        required
+                      >
+                        {regionOptions.map((region) => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
+                      </select>
                     </div>
                     
                     <div>
@@ -450,7 +467,7 @@ const MessageBoardPage = () => {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input 
-                          placeholder="Search by keyword, location, or care type..." 
+                          placeholder="Search by keyword or care type..." 
                           className="pl-10"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}

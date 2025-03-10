@@ -24,6 +24,7 @@ export const JobListings = () => {
       const { data, error } = await supabase
         .from('job_opportunities')
         .select('*')
+        .ilike('location', '%Trinidad and Tobago%')
         .order('posted_at', { ascending: false })
         .limit(5);
       
@@ -32,7 +33,7 @@ export const JobListings = () => {
       }
       
       if (data) {
-        console.log("Fetched jobs:", data); // Add logging to check fetched data
+        console.log("Fetched Trinidad and Tobago jobs:", data);
         setJobs(data);
       }
     } catch (error) {
@@ -46,10 +47,12 @@ export const JobListings = () => {
   const refreshData = async () => {
     try {
       setRefreshing(true);
-      toast.info("Refreshing job data...");
+      toast.info("Refreshing Trinidad and Tobago job data...");
       
       // Call the edge function to refresh the data
-      const { data, error } = await supabase.functions.invoke('update-job-data');
+      const { data, error } = await supabase.functions.invoke('update-job-data', {
+        body: { region: 'Trinidad and Tobago' }
+      });
       
       if (error) {
         throw error;
@@ -162,7 +165,7 @@ export const JobListings = () => {
             ))
           ) : (
             <div className="text-center py-6">
-              <p className="text-gray-500">No job opportunities found</p>
+              <p className="text-gray-500">No job opportunities found in Trinidad and Tobago</p>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -175,7 +178,6 @@ export const JobListings = () => {
             </div>
           )}
           
-          {/* Fix: Changed from using 'as' prop to wrapping Button in Link */}
           <Link to="/professional/jobs" className="w-full">
             <Button 
               variant="outline" 
