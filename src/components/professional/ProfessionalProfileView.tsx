@@ -10,11 +10,9 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { 
-  Badge, 
-  Button, 
-  Separator 
-} from '@/components/ui/components';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { 
   User, 
   Briefcase, 
