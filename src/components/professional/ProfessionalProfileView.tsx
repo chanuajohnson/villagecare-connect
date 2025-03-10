@@ -1,67 +1,76 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { UserIcon, Clock, Award, MapPin, Mail, Phone, Briefcase, Star, Heart, Calendar } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/components/providers/AuthProvider';
+import { MapPin, Calendar, Clock, Heart, Shield, Star, Award, Phone, Mail, ChevronLeft } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/providers/AuthProvider';
 import SubscriptionModal from './SubscriptionModal';
-import { Profile } from '@/types/database';
-import { motion } from 'framer-motion';
 
-interface ProfessionalLocation {
+interface Professional {
   id: string;
-  latitude: number;
-  longitude: number;
-  address?: string;
-  city?: string;
-  country?: string;
+  full_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  years_of_experience: string | null;
+  certifications: string[] | null;
+  care_services: string[] | null;
+  languages: string[] | null;
+  location: string | null;
+  hourly_rate: string | null;
+  availability: string[] | null;
+  background_check: boolean | null;
+  medical_conditions_experience: string[] | null;
+  professional_type: string | null;
 }
 
 const ProfessionalProfileView = () => {
   const { id } = useParams<{ id: string }>();
-  const [professional, setProfessional] = useState<Profile | null>(null);
-  const [location, setLocation] = useState<ProfessionalLocation | null>(null);
+  const [professional, setProfessional] = useState<Professional | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const { user, requireAuth } = useAuth();
-
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const fetchProfessionalProfile = async () => {
     if (!id) return;
-
+    
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          full_name,
+          avatar_url,
+          bio,
+          years_of_experience,
+          certifications,
+          care_services,
+          languages,
+          location,
+          hourly_rate,
+          availability,
+          background_check,
+          medical_conditions_experience,
+          professional_type
+        `)
         .eq('id', id)
         .eq('role', 'professional')
         .single();
-
+        
       if (error) {
         console.error('Error fetching professional profile:', error);
         toast.error('Failed to load professional profile');
         return;
       }
-
-      if (data) {
-        setProfessional(data);
-        
-        // Fetch location data
-        const { data: locationData, error: locationError } = await supabase
-          .from('professional_locations')
-          .select('*')
-          .eq('user_id', id)
-          .single();
-
-        if (!locationError && locationData) {
-          setLocation(locationData);
-        }
-      }
+      
+      setProfessional(data);
     } catch (err) {
       console.error('Error in fetchProfessionalProfile:', err);
       toast.error('Failed to load professional profile');
@@ -69,293 +78,266 @@ const ProfessionalProfileView = () => {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchProfessionalProfile();
   }, [id]);
-
-  const handleContactClick = () => {
-    if (!requireAuth('contact this professional')) return;
-    
-    // Check if user has an active subscription
-    checkSubscription();
-  };
-
-  const checkSubscription = async () => {
-    if (!user) return;
+  
+  const handleContactRequest = async () => {
+    if (!user) {
+      toast.error('You must be logged in to contact professionals');
+      return;
+    }
     
     try {
       // Check if user has an active subscription
-      const { data, error } = await supabase
+      const { data: subscriptions, error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .gt('end_date', new Date().toISOString())
-        .single();
-
-      if (error || !data) {
-        // No active subscription, show subscription modal
-        setShowSubscriptionModal(true);
-      } else {
+        .maybeSingle();
+        
+      if (subscriptionError) {
+        console.error('Error checking subscription:', subscriptionError);
+        toast.error('Failed to verify subscription status');
+        return;
+      }
+      
+      if (subscriptions) {
         // User has an active subscription, allow contact
-        toast.success('You can now contact this professional directly');
-        // Here you would typically open a contact form or reveal contact information
+        toast.success('Contact information unlocked! You can now reach out to this professional.');
+        // In a real app, you would display contact info or a messaging interface
+      } else {
+        // User needs to subscribe
+        setSubscriptionModalOpen(true);
       }
     } catch (err) {
-      console.error('Error checking subscription:', err);
-      toast.error('Failed to check subscription status');
+      console.error('Error handling contact request:', err);
+      toast.error('Failed to process contact request');
     }
   };
-
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
+  
   if (loading) {
     return (
-      <div className="container p-4 mx-auto flex justify-center items-center h-96">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full border-4 border-t-primary border-b-transparent border-l-transparent border-r-transparent animate-spin"></div>
-          <p className="mt-4 text-gray-600">Loading professional profile...</p>
+      <div className="container max-w-5xl py-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-8 w-40 bg-muted rounded"></div>
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="h-48 w-48 bg-muted rounded-full"></div>
+            <div className="space-y-4 flex-1">
+              <div className="h-10 w-60 bg-muted rounded"></div>
+              <div className="h-4 w-full bg-muted rounded"></div>
+              <div className="h-4 w-full bg-muted rounded"></div>
+              <div className="h-4 w-3/4 bg-muted rounded"></div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
-
+  
   if (!professional) {
     return (
-      <div className="container p-4 mx-auto">
+      <div className="container max-w-5xl py-8">
+        <Button variant="outline" onClick={() => navigate(-1)} className="mb-6">
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back to Map
+        </Button>
         <Card>
-          <CardHeader>
-            <CardTitle>Profile Not Found</CardTitle>
-            <CardDescription>
-              The professional profile you're looking for doesn't exist or has been removed.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => window.history.back()}>Go Back</Button>
+          <CardContent className="py-16 text-center">
+            <h2 className="text-2xl font-semibold mb-2">Professional Not Found</h2>
+            <p className="text-muted-foreground">
+              Sorry, we couldn't find the professional caregiver you're looking for.
+            </p>
+            <Button 
+              className="mt-6" 
+              onClick={() => navigate('/dashboard/family')}
+            >
+              Return to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
-
+  
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="container p-4 mx-auto"
-    >
+    <div className="container max-w-5xl py-8">
+      <Button variant="outline" onClick={() => navigate(-1)} className="mb-6">
+        <ChevronLeft className="h-4 w-4 mr-2" />
+        Back to Map
+      </Button>
+      
       <Card className="mb-8">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                {professional.avatar_url ? (
-                  <img 
-                    src={professional.avatar_url} 
-                    alt={professional.full_name || 'Professional'} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-10 h-10 text-primary" />
+        <CardHeader className="pb-0">
+          <div className="flex flex-col md:flex-row gap-6">
+            <Avatar className="h-32 w-32 border-4 border-background">
+              <AvatarImage src={professional.avatar_url || undefined} />
+              <AvatarFallback className="text-4xl">
+                {getInitials(professional.full_name)}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="space-y-2">
+              <div>
+                <CardTitle className="text-2xl mb-1">{professional.full_name}</CardTitle>
+                <CardDescription className="text-lg">
+                  {professional.professional_type || 'Professional Caregiver'}
+                </CardDescription>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {professional.background_check && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                    <Shield className="h-3.5 w-3.5" />
+                    Background Checked
+                  </Badge>
+                )}
+                {professional.years_of_experience && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
+                    <Award className="h-3.5 w-3.5" />
+                    {professional.years_of_experience} Experience
+                  </Badge>
+                )}
+                {professional.location && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {professional.location}
+                  </Badge>
                 )}
               </div>
-              <div>
-                <CardTitle className="text-2xl">{professional.full_name}</CardTitle>
-                <CardDescription className="flex items-center gap-1 mt-1">
-                  <Briefcase className="w-4 h-4 text-muted-foreground" />
-                  <span>{professional.professional_type || 'Professional Caregiver'}</span>
-                </CardDescription>
-                {location?.city && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{location.city}, {location.country || 'Trinidad and Tobago'}</span>
-                  </div>
-                )}
+              
+              <div className="pt-2">
+                <Button onClick={handleContactRequest} className="mr-3">
+                  Contact Professional
+                </Button>
               </div>
             </div>
-            <Button 
-              onClick={handleContactClick}
-              className="md:self-start"
-            >
-              Contact Professional
-            </Button>
           </div>
         </CardHeader>
         
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <CardContent className="pt-6">
+          <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-primary" />
-                Professional Information
-              </h3>
-              
-              <dl className="space-y-4">
-                {professional.years_of_experience && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Experience</dt>
-                    <dd className="flex items-center gap-1 mt-1">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span>{professional.years_of_experience} years</span>
-                    </dd>
+              <h3 className="font-semibold text-lg mb-2">About</h3>
+              <p className="text-muted-foreground">
+                {professional.bio || 'Professional biography not provided yet.'}
+              </p>
+            </div>
+            
+            <Separator />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {professional.care_services && professional.care_services.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2 flex items-center">
+                    <Heart className="h-5 w-5 mr-2 text-primary" />
+                    Care Services
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.care_services.map((service, index) => (
+                      <Badge key={index} variant="secondary">{service}</Badge>
+                    ))}
                   </div>
-                )}
-                
-                {professional.care_services && professional.care_services.length > 0 && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Services</dt>
-                    <dd className="flex flex-wrap gap-2 mt-1">
-                      {professional.care_services.map((service, idx) => (
-                        <Badge key={idx} variant="outline">{service}</Badge>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-                
-                {professional.languages && professional.languages.length > 0 && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Languages</dt>
-                    <dd className="flex flex-wrap gap-2 mt-1">
-                      {professional.languages.map((language, idx) => (
-                        <Badge key={idx} variant="secondary">{language}</Badge>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-                
-                {professional.work_type && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Work Type</dt>
-                    <dd>{professional.work_type}</dd>
-                  </div>
-                )}
-                
-                {professional.availability && professional.availability.length > 0 && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Availability</dt>
-                    <dd className="flex flex-wrap gap-2 mt-1">
-                      {professional.availability.map((time, idx) => (
-                        <Badge key={idx} variant="outline" className="bg-green-50">{time}</Badge>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-              
-              <Separator className="my-6" />
-              
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-primary" />
-                About
-              </h3>
-              
-              {professional.bio ? (
-                <p className="text-muted-foreground">{professional.bio}</p>
-              ) : (
-                <p className="text-muted-foreground italic">No bio provided</p>
+                </div>
               )}
               
-              {professional.why_choose_caregiving && (
-                <>
-                  <h4 className="font-medium mt-4 mb-2">Why I Choose Caregiving</h4>
-                  <p className="text-muted-foreground">{professional.why_choose_caregiving}</p>
-                </>
+              {professional.medical_conditions_experience && professional.medical_conditions_experience.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2 flex items-center">
+                    <Star className="h-5 w-5 mr-2 text-primary" />
+                    Medical Experience
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.medical_conditions_experience.map((condition, index) => (
+                      <Badge key={index} variant="secondary">{condition}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {professional.certifications && professional.certifications.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2 flex items-center">
+                    <Award className="h-5 w-5 mr-2 text-primary" />
+                    Certifications
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.certifications.map((cert, index) => (
+                      <Badge key={index} variant="secondary">{cert}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {professional.languages && professional.languages.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Languages</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.languages.map((language, index) => (
+                      <Badge key={index} variant="secondary">{language}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {professional.availability && professional.availability.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-primary" />
+                    Availability
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.availability.map((time, index) => (
+                      <Badge key={index} variant="secondary">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        {time}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {professional.hourly_rate && (
+                <div>
+                  <h3 className="font-semibold mb-2">Hourly Rate</h3>
+                  <Badge variant="outline" className="text-lg py-1 px-3">
+                    ${professional.hourly_rate} / hour
+                  </Badge>
+                </div>
               )}
             </div>
             
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Star className="w-5 h-5 text-primary" />
-                Qualifications
-              </h3>
-              
-              <dl className="space-y-4">
-                {professional.certifications && professional.certifications.length > 0 && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Certifications</dt>
-                    <dd className="flex flex-wrap gap-2 mt-1">
-                      {professional.certifications.map((cert, idx) => (
-                        <Badge key={idx} variant="outline" className="bg-blue-50">{cert}</Badge>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-                
-                {professional.license_number && (
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">License Number</dt>
-                    <dd>
-                      <Badge variant="outline">{professional.license_number}</Badge>
-                    </dd>
-                  </div>
-                )}
-                
-                {professional.background_check && (
-                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-md">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="16" 
-                        height="16" 
-                        viewBox="0 0 24 24"
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2"
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        className="text-green-600"
-                      >
-                        <path d="M20 6 9 17l-5-5" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium text-green-700">Background Check Verified</p>
-                      <p className="text-sm text-green-600">This professional has passed a background check</p>
-                    </div>
-                  </div>
-                )}
-              </dl>
-              
-              {(professional.expected_rate || professional.payment_methods) && (
-                <>
-                  <Separator className="my-6" />
-                  
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    Rates & Scheduling
-                  </h3>
-                  
-                  <dl className="space-y-4">
-                    {professional.expected_rate && (
-                      <div>
-                        <dt className="text-sm font-medium text-muted-foreground">Expected Rate</dt>
-                        <dd className="font-medium text-lg">{professional.expected_rate}</dd>
-                      </div>
-                    )}
-                    
-                    {professional.payment_methods && professional.payment_methods.length > 0 && (
-                      <div>
-                        <dt className="text-sm font-medium text-muted-foreground">Payment Methods</dt>
-                        <dd className="flex flex-wrap gap-2 mt-1">
-                          {professional.payment_methods.map((method, idx) => (
-                            <Badge key={idx} variant="outline">{method}</Badge>
-                          ))}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
-                </>
-              )}
+            <Separator />
+            
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Contact Professional</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Subscribe to unlock the ability to contact this professional directly.
+              </p>
+              <Button onClick={handleContactRequest}>
+                Contact Now
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
       
       <SubscriptionModal 
-        open={showSubscriptionModal} 
-        onClose={() => setShowSubscriptionModal(false)} 
+        open={subscriptionModalOpen} 
+        onClose={() => setSubscriptionModalOpen(false)} 
       />
-    </motion.div>
+    </div>
   );
 };
 

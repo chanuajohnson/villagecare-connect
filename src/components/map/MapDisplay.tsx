@@ -2,78 +2,79 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { supabase } from '@/lib/supabase';
-import { Badge } from '@/components/ui/badge';
+import { Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-// Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZS1haS10YWF2IiwiYSI6ImNscXh2dDl5NzVja24yaW1wczIwNncyc24ifQ.p9TbO5mMEJZCtKLYmROkBg';
+// Set your Mapbox token - in a real app this would be in .env
+mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2xiejRia3R5MDI5eDN1bnduZWRzcXhpbiJ9.d3yOsXs3Z18lL8pCcLhvvQ';
 
 interface Professional {
   id: string;
   full_name: string;
-  professional_type?: string;
+  role: string;
   avatar_url?: string;
-  latitude: number;
-  longitude: number;
-  location_id: string;
-  years_of_experience?: string;
-  care_services?: string[];
+  location?: {
+    id: string;
+    latitude: number;
+    longitude: number;
+    address?: string;
+    city?: string;
+  };
 }
 
-const MapDisplay = () => {
+interface MapDisplayProps {
+  className?: string;
+}
+
+const MapDisplay = ({ className }: MapDisplayProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mapInitialized, setMapInitialized] = useState(false);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const navigate = useNavigate();
 
+  // Fetch professional profiles with their locations
   const fetchProfessionals = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('professional_locations')
-        .select(`
-          id as location_id,
-          latitude,
-          longitude,
-          user_id,
-          profiles:user_id (
-            id,
-            full_name,
-            professional_type,
-            avatar_url,
-            years_of_experience,
-            care_services
-          )
-        `)
-        .eq('country', 'Trinidad and Tobago');
-
-      if (error) {
-        console.error('Error fetching professionals:', error);
+      
+      // First, get all professional profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, avatar_url')
+        .eq('role', 'professional');
+        
+      if (profilesError) {
+        console.error('Error fetching professionals:', profilesError);
         toast.error('Failed to load professional caregivers');
         return;
       }
-
-      const formattedData = data.map(item => ({
-        id: item.profiles.id,
-        full_name: item.profiles.full_name || 'Professional Caregiver',
-        professional_type: item.profiles.professional_type,
-        avatar_url: item.profiles.avatar_url,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        location_id: item.location_id,
-        years_of_experience: item.profiles.years_of_experience,
-        care_services: item.profiles.care_services
-      }));
-
-      setProfessionals(formattedData);
-      console.log('Loaded professionals:', formattedData.length);
+      
+      // Then, get all professional locations
+      const { data: locationsData, error: locationsError } = await supabase
+        .from('professional_locations')
+        .select('*');
+        
+      if (locationsError) {
+        console.error('Error fetching locations:', locationsError);
+        toast.error('Failed to load caregiver locations');
+        return;
+      }
+      
+      // Combine the data
+      const professionalsWithLocations = profilesData.map(profile => {
+        const location = locationsData.find(loc => loc.user_id === profile.id);
+        return {
+          ...profile,
+          location: location || undefined
+        };
+      }).filter(p => p.location); // Only keep professionals with location data
+      
+      setProfessionals(professionalsWithLocations);
     } catch (err) {
       console.error('Error in fetchProfessionals:', err);
       toast.error('Failed to load professional caregivers');
@@ -81,129 +82,124 @@ const MapDisplay = () => {
       setLoading(false);
     }
   };
-
-  const addMarkers = () => {
-    if (!map.current) return;
-    
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    // Add new markers
-    professionals.forEach(prof => {
-      // Skip if no valid coordinates
-      if (!prof.latitude || !prof.longitude) return;
-
-      // Create a custom marker element
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.innerHTML = `
-        <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg border-2 border-white transform hover:scale-110 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-      `;
-
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="p-2">
-          <h3 class="font-semibold">${prof.full_name}</h3>
-          <p class="text-sm text-gray-600">${prof.professional_type || 'Caregiver'}</p>
-          ${prof.years_of_experience ? `<p class="text-xs mt-1">Experience: ${prof.years_of_experience}</p>` : ''}
-          <button class="view-profile-btn mt-2 px-2 py-1 bg-primary text-white text-xs rounded hover:bg-primary-600" data-id="${prof.id}">
-            View Profile
-          </button>
-        </div>
-      `);
-
-      // Create and add the marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([prof.longitude, prof.latitude])
-        .setPopup(popup)
-        .addTo(map.current);
-
-      markersRef.current.push(marker);
-
-      // Add click event to the "View Profile" button in the popup
-      popup.on('open', () => {
-        const btn = document.querySelector(`.view-profile-btn[data-id="${prof.id}"]`);
-        if (btn) {
-          btn.addEventListener('click', () => {
-            navigate(`/professional/profile/${prof.id}`);
-          });
-        }
-      });
-    });
-  };
-
-  const initializeMap = () => {
-    if (mapInitialized) return;
-    
-    if (mapContainer.current) {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [-61.2225, 10.6918], // Trinidad and Tobago coordinates
-        zoom: 9
-      });
-
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-      map.current.on('load', () => {
-        setMapInitialized(true);
-        addMarkers();
-      });
-    }
-  };
-
+  
   useEffect(() => {
     fetchProfessionals();
   }, []);
-
+  
+  // Initialize map once data is loaded
   useEffect(() => {
-    initializeMap();
-  }, [mapContainer.current]);
-
-  useEffect(() => {
-    if (mapInitialized && !loading) {
+    if (loading || !mapContainer.current) return;
+    
+    if (map.current) return; // Initialize map only once
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-61.2225, 10.6918], // Trinidad and Tobago coordinates
+      zoom: 9
+    });
+    
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    
+    // Add markers when map loads
+    map.current.on('load', () => {
       addMarkers();
-    }
-  }, [professionals, mapInitialized, loading]);
+    });
+    
+    // Clean up on unmount
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [loading]);
+  
+  const addMarkers = () => {
+    if (!map.current) return;
+    
+    professionals.forEach(professional => {
+      if (!professional.location) return;
+      
+      // Create marker element
+      const el = document.createElement('div');
+      el.className = 'caregiver-marker';
+      el.innerHTML = `<div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                      </div>`;
+      
+      // Create popup
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div class="p-2">
+            <h3 class="font-semibold">${professional.full_name}</h3>
+            <p class="text-sm">${professional.location.city || 'Trinidad and Tobago'}</p>
+            <button 
+              class="mt-2 px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary/90 view-profile-btn" 
+              data-id="${professional.id}"
+            >
+              View Profile
+            </button>
+          </div>
+        `);
+      
+      // Add marker to map
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([professional.location.longitude, professional.location.latitude])
+        .setPopup(popup)
+        .addTo(map.current);
+        
+      // Add click event for view profile button
+      popup.on('open', () => {
+        setTimeout(() => {
+          const button = document.querySelector(`.view-profile-btn[data-id="${professional.id}"]`);
+          if (button) {
+            button.addEventListener('click', () => {
+              navigate(`/professional/profile/${professional.id}`);
+            });
+          }
+        }, 0);
+      });
+    });
+  };
+  
+  const viewAllProfessionals = () => {
+    toast.info('This feature is coming soon!');
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-semibold">Find Professional Caregivers</h2>
-        <p className="text-gray-600 text-sm mt-1">
-          Browse professional caregivers across Trinidad and Tobago
-        </p>
-      </div>
-      <div className="p-2 border-b bg-gray-50 flex gap-2 flex-wrap">
-        <Badge variant="outline" className="bg-white">
-          {loading ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <span>{professionals.length} professionals found</span>
-          )}
-        </Badge>
-        <Badge variant="outline" className="bg-white">
-          Trinidad and Tobago
-        </Badge>
-      </div>
-      <div ref={mapContainer} className="h-[500px] w-full" />
-      <div className="p-4 bg-gray-50 border-t">
-        <Button 
-          variant="outline"
-          size="sm"
-          onClick={() => window.open('https://www.mapbox.com/about/maps/', '_blank')}
-          className="text-xs"
-        >
-          © Mapbox © OpenStreetMap
-        </Button>
-      </div>
-    </div>
+    <Card className={`overflow-hidden ${className}`}>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <div 
+              ref={mapContainer} 
+              className="h-[400px] w-full"
+            />
+            <div className="p-4 bg-muted/50">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Professional Caregivers Near You</h3>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={viewAllProfessionals}
+                >
+                  View All
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {professionals.length} caregivers available in Trinidad and Tobago
+              </p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
