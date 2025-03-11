@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, ArrowRight, Award, BookOpen, Shield, Heart, HandHeart, Users, FileText } from "lucide-react";
+import { GraduationCap, ArrowRight, Award, BookOpen, Shield, Heart, HandHeart, Users, FileText, LightbulbIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const TrainingProgressTracker = () => {
@@ -107,6 +107,7 @@ export const TrainingProgressTracker = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
+      className="w-full"
     >
       <Card className="h-full border-l-4 border-l-primary-500 shadow-sm">
         <CardHeader className="pb-2 bg-gradient-to-r from-primary-100 to-transparent">

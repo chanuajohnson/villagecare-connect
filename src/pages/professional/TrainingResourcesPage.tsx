@@ -4,7 +4,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle2, GraduationCap, BookOpen, Shield, Heart, HandHeart, Users, ArrowRight } from "lucide-react";
+import { CheckCircle2, GraduationCap, BookOpen, Shield, Heart, HandHeart, Users, ArrowRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
@@ -50,7 +50,7 @@ const TrainingResourcesPage = () => {
         </motion.div>
 
         {user && (
-          <div className="my-8 max-w-md">
+          <div className="my-8">
             <TrainingProgressTracker />
           </div>
         )}
@@ -92,6 +92,7 @@ const TrainingResourcesPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <p className="text-sm mb-3">Caregivers will first complete structured online training modules that cover essential caregiving concepts.</p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
@@ -124,6 +125,7 @@ const TrainingResourcesPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <p className="text-sm mb-3">Shadowing a Professional Caregiver (Hands-On Experience)</p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
@@ -156,6 +158,7 @@ const TrainingResourcesPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <p className="text-sm mb-3">Join a caregiver network for referrals, mentorship & continued learning</p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
@@ -163,15 +166,15 @@ const TrainingResourcesPage = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                  <span className="text-sm">Access advanced specialty training (e.g., Alzheimer's care, palliative care, pediatric care)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                  <span className="text-sm">Earn a verified profile badge to increase credibility and attract more clients/agencies</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
                   <span className="text-sm">Join our caregiver network</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                  <span className="text-sm">Access advanced specialty training</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                  <span className="text-sm">Earn a verified profile badge</span>
                 </li>
               </ul>
             </CardContent>
@@ -331,6 +334,31 @@ const TrainingResourcesPage = () => {
                   <li className="flex items-start gap-2">
                     <div className="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
                     <span>Maintaining professionalism in private home care and agency settings</span>
+                  </li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="module-7">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-purple-500" />
+                  <span className="font-medium">Bonus Module 7: Legal & Ethical Considerations in Caregiving</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="space-y-2 pl-7">
+                  <li className="flex items-start gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
+                    <span>Understanding legal responsibilities in caregiving</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
+                    <span>Ethical considerations in caregiving</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
+                    <span>Handling ethical dilemmas and difficult situations</span>
                   </li>
                 </ul>
               </AccordionContent>
