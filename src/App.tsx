@@ -1,16 +1,17 @@
+
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './components/providers/AuthProvider';
 import { initializeSupabase } from './lib/supabase';
 import AuthPage from './pages/auth/AuthPage';
-import FamilyRegistrationForm from './pages/registration/FamilyRegistrationForm';
-import ProfessionalRegistrationForm from './pages/registration/ProfessionalRegistrationForm';
-import CommunityRegistrationForm from './pages/registration/CommunityRegistrationForm';
+import FamilyRegistration from './pages/registration/FamilyRegistration';
+import ProfessionalRegistration from './pages/registration/ProfessionalRegistration';
+import CommunityRegistration from './pages/registration/CommunityRegistration';
 import Dashboard from './pages/dashboards/Dashboard';
 import FamilyDashboard from './pages/dashboards/FamilyDashboard';
 import ProfessionalDashboard from './pages/dashboards/ProfessionalDashboard';
 import CommunityDashboard from './pages/dashboards/CommunityDashboard';
-import AdminDashboard from './pages/dashboards/AdminDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import CarePlanPage from './pages/family/CarePlanPage';
 import DocumentUploadPage from './pages/family/DocumentUploadPage';
 import SettingsPage from './pages/SettingsPage';
@@ -46,9 +47,9 @@ function App() {
         <Route path="/loading" element={<LoadingPage />} />
 
         {/* Registration Routes */}
-        <Route path="/registration/family" element={isLoggedIn && userRole === 'family' ? <FamilyRegistrationForm /> : <Navigate to="/auth" />} />
-        <Route path="/registration/professional" element={isLoggedIn && userRole === 'professional' ? <ProfessionalRegistrationForm /> : <Navigate to="/auth" />} />
-        <Route path="/registration/community" element={isLoggedIn && userRole === 'community' ? <CommunityRegistrationForm /> : <Navigate to="/auth" />} />
+        <Route path="/registration/family" element={isLoggedIn && userRole === 'family' ? <FamilyRegistration /> : <Navigate to="/auth" />} />
+        <Route path="/registration/professional" element={isLoggedIn && userRole === 'professional' ? <ProfessionalRegistration /> : <Navigate to="/auth" />} />
+        <Route path="/registration/community" element={isLoggedIn && userRole === 'community' ? <CommunityRegistration /> : <Navigate to="/auth" />} />
 
         {/* Dashboard Routes - Protected by Authentication */}
         <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/auth" />} >
