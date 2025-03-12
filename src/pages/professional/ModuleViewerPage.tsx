@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/providers/AuthProvider";
