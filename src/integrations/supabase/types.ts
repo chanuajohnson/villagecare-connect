@@ -270,41 +270,6 @@ export type Database = {
         }
         Relationships: []
       }
-      module_lessons: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          module_id: string | null
-          order_index: number
-          title: string
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          module_id?: string | null
-          order_index: number
-          title: string
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          module_id?: string | null
-          order_index?: number
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "module_lessons_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "training_modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       prepped_meal_orders: {
         Row: {
           created_at: string
@@ -658,77 +623,6 @@ export type Database = {
         }
         Relationships: []
       }
-      training_modules: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          estimated_time: string
-          icon: string
-          id: string
-          order_index: number
-          title: string
-          total_lessons: number
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          estimated_time: string
-          icon: string
-          id?: string
-          order_index: number
-          title: string
-          total_lessons: number
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          estimated_time?: string
-          icon?: string
-          id?: string
-          order_index?: number
-          title?: string
-          total_lessons?: number
-        }
-        Relationships: []
-      }
-      user_module_progress: {
-        Row: {
-          completed_lessons: number | null
-          created_at: string | null
-          id: string
-          last_accessed: string | null
-          module_id: string | null
-          status: Database["public"]["Enums"]["module_status"] | null
-          user_id: string | null
-        }
-        Insert: {
-          completed_lessons?: number | null
-          created_at?: string | null
-          id?: string
-          last_accessed?: string | null
-          module_id?: string | null
-          status?: Database["public"]["Enums"]["module_status"] | null
-          user_id?: string | null
-        }
-        Update: {
-          completed_lessons?: number | null
-          created_at?: string | null
-          id?: string
-          last_accessed?: string | null
-          module_id?: string | null
-          status?: Database["public"]["Enums"]["module_status"] | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_module_progress_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "training_modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_subscriptions: {
         Row: {
           created_at: string | null
@@ -830,7 +724,6 @@ export type Database = {
         | "lunch"
         | "afternoon_snack"
         | "dinner"
-      module_status: "not_started" | "in_progress" | "completed"
       user_role: "family" | "professional" | "community" | "admin"
     }
     CompositeTypes: {
