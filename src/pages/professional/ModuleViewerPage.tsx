@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { ArrowLeft, Loader2, BookOpen, Award } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { LessonContent } from "@/components/professional/LessonContent";
-import { LessonCompletionButton } from "@/components/professional/LessonCompletionButton";
+import LessonCompletionButton from "@/components/professional/LessonCompletionButton";
 import { toast } from "sonner";
 
 const ModuleViewerPage = () => {
