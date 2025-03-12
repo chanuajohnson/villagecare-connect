@@ -7,11 +7,11 @@ import AuthPage from './pages/auth/AuthPage';
 import FamilyRegistration from './pages/registration/FamilyRegistration';
 import ProfessionalRegistration from './pages/registration/ProfessionalRegistration';
 import CommunityRegistration from './pages/registration/CommunityRegistration';
-import Dashboard from './pages/Index'; // Changed from importing { Index as Dashboard }
+import { Index as Dashboard } from './pages/Index';
 import FamilyDashboard from './pages/dashboards/FamilyDashboard';
 import ProfessionalDashboard from './pages/dashboards/ProfessionalDashboard';
 import CommunityDashboard from './pages/dashboards/CommunityDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard'; // Changed from importing { AdminDashboard }
+import { AdminDashboard } from './pages/admin/AdminDashboard';
 import LoadingPage from './components/common/LoadingScreen';
 import MessageBoardPage from './pages/professional/MessageBoardPage';
 import ProfessionalFeaturesOverview from './pages/professional/ProfessionalFeaturesOverview';
