@@ -98,42 +98,44 @@ export const TrainingProgressTracker = () => {
               const IconComponent = getIconComponent(module.icon);
               
               return (
-                <div key={module.id} className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      {module.completed ? (
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
-                          <Award className="h-3.5 w-3.5" />
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-600">
-                          <IconComponent className="h-3.5 w-3.5" />
-                        </span>
-                      )}
-                      <span className="font-medium text-sm">{module.title}</span>
+                <Link key={module.id} to={`/professional/module/${module.id}`} className="block">
+                  <div className="space-y-1 hover:bg-gray-50 p-2 rounded-md transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {module.completed ? (
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
+                            <Award className="h-3.5 w-3.5" />
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-600">
+                            <IconComponent className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                        <span className="font-medium text-sm">{module.title}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {module.completedLessons}/{module.totalLessons} • {module.estimatedTime}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {module.completedLessons}/{module.totalLessons} • {module.estimatedTime}
-                    </span>
+                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          module.completed 
+                            ? 'bg-green-500' 
+                            : 'bg-primary-500'
+                        }`}
+                        style={{ width: `${module.progress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        module.completed 
-                          ? 'bg-green-500' 
-                          : 'bg-primary-500'
-                      }`}
-                      style={{ width: `${module.progress}%` }}
-                    />
-                  </div>
-                </div>
+                </Link>
               );
             })}
           </div>
           
           {/* Continue Training Button */}
           <Link 
-            to="/professional/training-resources" 
+            to={modules.length > 0 ? `/professional/module/${modules[0]?.id}` : "/professional/training-resources"} 
             className="block w-full"
           >
             <Button 

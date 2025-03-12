@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle2, GraduationCap, BookOpen, Shield, Heart, HandHeart, Users, ArrowRight, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
 import { toast } from "sonner";
+import { useTrainingProgress } from "@/hooks/useTrainingProgress";
 
 const TrainingResourcesPage = () => {
   const { user } = useAuth();
+  const { modules } = useTrainingProgress();
+  const navigate = useNavigate();
   
   const breadcrumbItems = [
     {
@@ -25,9 +28,13 @@ const TrainingResourcesPage = () => {
   ];
 
   const handleEnrollClick = () => {
-    toast.success("Enrollment request received! Check your email for next steps.", {
-      description: "You'll receive further instructions shortly.",
-    });
+    if (modules.length > 0) {
+      navigate(`/professional/module/${modules[0].id}`);
+    } else {
+      toast.success("Enrollment request received! Check your email for next steps.", {
+        description: "You'll receive further instructions shortly.",
+      });
+    }
   };
 
   return (
