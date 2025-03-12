@@ -135,12 +135,14 @@ export const TrainingProgressTracker = () => {
           <div className="space-y-3">
             {modules.map((module) => {
               const Icon = iconMap[module.icon] || BookOpen;
+              const hasStarted = module.status !== 'not_started';
+              const isCompleted = module.status === 'completed';
               
               return (
                 <div key={module.id} className="space-y-1">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      {module.status === 'completed' ? (
+                      {isCompleted ? (
                         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
                           <Award className="h-3.5 w-3.5" />
                         </span>
@@ -152,17 +154,16 @@ export const TrainingProgressTracker = () => {
                       <span className="font-medium text-sm">{module.title}</span>
                     </div>
                     <span className="text-xs text-gray-500">
-                      {module.completedLessons}/{module.total_lessons} • {module.estimated_time}
+                      {hasStarted ? `${module.completedLessons}/${module.total_lessons}` : '0/'}
+                      {module.total_lessons} • {module.estimated_time}
                     </span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
                     <div 
                       className={`h-full rounded-full transition-all duration-500 ${
-                        module.status === 'completed' 
-                          ? 'bg-green-500' 
-                          : 'bg-primary-500'
+                        isCompleted ? 'bg-green-500' : 'bg-primary-500'
                       }`}
-                      style={{ width: `${module.progress}%` }}
+                      style={{ width: `${hasStarted ? module.progress : 0}%` }}
                     />
                   </div>
                 </div>

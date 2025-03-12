@@ -151,7 +151,10 @@ export const useTrainingModules = () => {
     
     modules.forEach(module => {
       totalLessons += module.total_lessons;
-      completedLessons += progress[module.id]?.completed_lessons || 0;
+      // Only count completed lessons for modules that have been started
+      if (progress[module.id]) {
+        completedLessons += progress[module.id]?.completed_lessons || 0;
+      }
     });
     
     return totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0;
