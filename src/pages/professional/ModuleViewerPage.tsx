@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, Award } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/providers/AuthProvider";
-import LessonCompletionButton from "@/components/professional/LessonCompletionButton";
+import { LessonContent } from "@/components/professional/LessonContent";
+import { LessonCompletionButton } from "@/components/professional/LessonCompletionButton";
 import { toast } from "sonner";
 
 const ModuleViewerPage = () => {
@@ -24,7 +25,6 @@ const ModuleViewerPage = () => {
       try {
         setLoading(true);
         
-        // Fetch the module
         const { data: moduleData, error: moduleError } = await supabase
           .from('training_modules')
           .select('*')
@@ -33,7 +33,6 @@ const ModuleViewerPage = () => {
         
         if (moduleError) throw moduleError;
         
-        // Fetch all lessons for this module
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('module_lessons')
           .select('*')
@@ -45,13 +44,11 @@ const ModuleViewerPage = () => {
         setModule(moduleData);
         setLessons(lessonsData);
         
-        // If lessonId is provided, find that lesson
         if (lessonId) {
           const lesson = lessonsData.find(l => l.id === lessonId);
           if (lesson) {
             setCurrentLesson(lesson);
           } else {
-            // If lesson not found, redirect to the first lesson
             if (lessonsData.length > 0) {
               navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
             } else {
@@ -59,7 +56,6 @@ const ModuleViewerPage = () => {
             }
           }
         } else {
-          // If no lessonId, just show the first lesson
           if (lessonsData.length > 0) {
             navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
           } else {
@@ -67,7 +63,6 @@ const ModuleViewerPage = () => {
           }
         }
         
-        // Record that the user has started this module
         if (user) {
           const { data: progress, error: progressError } = await supabase
             .from('user_module_progress')
@@ -79,7 +74,6 @@ const ModuleViewerPage = () => {
           if (progressError) {
             console.error("Error checking progress:", progressError);
           } else if (!progress) {
-            // Create initial progress record if one doesn't exist
             await supabase
               .from('user_module_progress')
               .insert({
@@ -103,16 +97,13 @@ const ModuleViewerPage = () => {
   }, [moduleId, lessonId, navigate, user]);
 
   const handleLessonComplete = () => {
-    // Find the next lesson
     if (lessons.length > 0 && currentLesson) {
       const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
       if (currentIndex < lessons.length - 1) {
-        // Navigate to the next lesson
         const nextLesson = lessons[currentIndex + 1];
         navigate(`/professional/training-resources/module/${moduleId}/lesson/${nextLesson.id}`);
         toast.success("Moving to the next lesson");
       } else {
-        // This was the last lesson
         toast.success("Congratulations! You've completed this module.");
         navigate("/professional/training-resources");
       }
@@ -152,24 +143,21 @@ const ModuleViewerPage = () => {
         </Link>
       </div>
       
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">{module.title}</h1>
-        <div className="flex items-center text-gray-600 mt-2">
-          <BookOpen className="h-5 w-5 mr-2" />
-          <span>Lesson {currentLesson.order_index + 1} of {lessons.length}: {currentLesson.title}</span>
-        </div>
-      </div>
+      <Card className="mb-8">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-2xl font-bold">{module.title}</CardTitle>
+          <div className="flex items-center text-gray-600 mt-2">
+            <BookOpen className="h-5 w-5 mr-2" />
+            <span>Lesson {currentLesson.order_index + 1} of {lessons.length}: {currentLesson.title}</span>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <LessonContent lessonId={currentLesson.id} />
+        </CardContent>
+      </Card>
       
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-        <div className="prose max-w-none">
-          <h2 className="text-2xl font-semibold mb-4">{currentLesson.title}</h2>
-          {/* Display the lesson content */}
-          <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-center">
-        {/* Previous lesson button */}
+      <div className="flex justify-between items-center mt-6">
         {lessons.findIndex(l => l.id === currentLesson.id) > 0 && (
           <Button
             onClick={() => {
@@ -177,23 +165,19 @@ const ModuleViewerPage = () => {
               const prevLesson = lessons[currentIndex - 1];
               navigate(`/professional/training-resources/module/${moduleId}/lesson/${prevLesson.id}`);
             }}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800"
+            variant="outline"
           >
             Previous Lesson
           </Button>
         )}
         
-        {/* Spacer when there's no previous button */}
-        {lessons.findIndex(l => l.id === currentLesson.id) === 0 && (
-          <div></div>
-        )}
+        <div className="flex-1" />
         
-        {/* Mark as complete button */}
         <LessonCompletionButton 
           moduleId={moduleId || ''} 
           lessonId={currentLesson.id} 
           totalLessons={lessons.length}
-          onComplete={handleLessonComplete} 
+          onComplete={handleLessonComplete}
         />
       </div>
     </div>

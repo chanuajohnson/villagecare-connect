@@ -159,6 +159,41 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_content_blocks: {
+        Row: {
+          content: string
+          content_type: Database["public"]["Enums"]["content_type"]
+          created_at: string | null
+          id: string
+          lesson_id: string | null
+          order_index: number
+        }
+        Insert: {
+          content: string
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index: number
+        }
+        Update: {
+          content?: string
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_content_blocks_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "module_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plan_items: {
         Row: {
           created_at: string
@@ -818,6 +853,7 @@ export type Database = {
       }
     }
     Enums: {
+      content_type: "text" | "image" | "video"
       feature_status:
         | "planned"
         | "in_development"
