@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, ArrowRight, Award, BookOpen, Shield, Heart, HandHeart, Users, FileText } from "lucide-react";
+import { GraduationCap, ArrowRight, Award, BookOpen, Shield, Heart, HandHeart, Users, FileText, LightbulbIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const TrainingProgressTracker = () => {
@@ -102,10 +102,6 @@ export const TrainingProgressTracker = () => {
 
   const totalProgress = 28; // This would be calculated based on all modules
 
-  const handleContinueTraining = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -173,16 +169,20 @@ export const TrainingProgressTracker = () => {
             ))}
           </div>
           
-          {/* Continue Training Button - Updated to use onClick instead of Link */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full flex justify-between items-center border border-primary-200 text-primary-700 hover:bg-primary-50 rounded-lg py-4"
-            onClick={handleContinueTraining}
+          {/* Continue Training Button */}
+          <Link 
+            to="/professional/training-resources" 
+            className="block w-full"
           >
-            <span className="text-sm">Continue Training</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full flex justify-between items-center border border-primary-200 text-primary-700 hover:bg-primary-50 rounded-lg py-4"
+            >
+              <span className="text-sm">Continue Training</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
           
           {/* Certificates Section */}
           <div className="flex justify-between items-center pt-2">

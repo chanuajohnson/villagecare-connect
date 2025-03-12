@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,9 @@ const TrainingResourcesPage = () => {
   ];
 
   const handleEnrollClick = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    toast.success("Enrollment request received! Check your email for next steps.", {
+      description: "You'll receive further instructions shortly.",
+    });
   };
 
   return (

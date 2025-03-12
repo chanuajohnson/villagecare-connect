@@ -133,7 +133,32 @@ const MessageBoardPage = () => {
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    
+    const newMessage: Message = {
+      id: messages.length + 1,
+      type: postType === "need" ? "family" : "professional",
+      author: user?.email || "Anonymous User",
+      authorInitial: (user?.email?.[0] || "A").toUpperCase(),
+      title: formData.title,
+      timePosted: "Just now",
+      urgency: formData.urgency,
+      location: formData.location,
+      details: formData.details,
+      ...(postType === "need" ? { careNeeds: formData.careNeeds } : { specialties: formData.specialties })
+    };
+
+    setMessages(prev => [newMessage, ...prev]);
+    setFormData({
+      title: "",
+      location: "Trinidad and Tobago",
+      urgency: "Regular",
+      details: "",
+      careNeeds: [],
+      specialties: []
+    });
+    setShowPostForm(false);
+    toast.success(`Successfully posted ${postType === "need" ? "care need" : "availability"}`);
+    setSearchParams({});
   };
 
   const careNeedsOptions = [

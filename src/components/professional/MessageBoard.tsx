@@ -88,15 +88,30 @@ export const MessageBoard = () => {
   };
 
   const handlePostCareNeed = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board?action=post-need',
+        featureType: "Posting Care Needs" 
+      } 
+    });
   };
 
   const handlePostAvailability = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board?action=post-availability',
+        featureType: "Posting Availability" 
+      } 
+    });
   };
 
   const handleViewFullBoard = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/message-board',
+        featureType: "Full Message Board" 
+      } 
+    });
   };
 
   return (

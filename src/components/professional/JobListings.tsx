@@ -72,11 +72,21 @@ export const JobListings = () => {
   };
 
   const handleViewDetails = (jobId) => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    navigate('/subscription', { 
+      state: { 
+        returnPath: `/professional/job/${jobId}`,
+        featureType: "Job Details" 
+      } 
+    });
   };
 
   const handleViewAllJobs = () => {
-    window.location.href = 'https://takesavillage.scoreapp.com/';
+    navigate('/subscription', { 
+      state: { 
+        returnPath: '/professional/jobs',
+        featureType: "All Job Listings" 
+      } 
+    });
   };
 
   return (
