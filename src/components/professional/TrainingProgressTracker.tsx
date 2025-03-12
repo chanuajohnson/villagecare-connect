@@ -1,7 +1,9 @@
+
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, ArrowRight, Award, BookOpen, Shield, Heart, HandHeart, Users, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const TrainingProgressTracker = () => {
   // This would normally be fetched from the backend
