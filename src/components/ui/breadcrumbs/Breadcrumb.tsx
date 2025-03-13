@@ -28,39 +28,60 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
 
   const paths = pathname.split("/").filter(Boolean);
   let currentPath = "";
+  const breadcrumbItems: BreadcrumbItem[] = [];
   
-  // Check if this is a module/lesson path with IDs
-  const isModulePath = paths.includes("module");
-  
-  return paths.map((path, index) => {
+  // Process each path segment
+  paths.forEach((path, index) => {
     currentPath += `/${path}`;
     
-    // Special handling for module and lesson IDs to display them better
-    if ((path === "module" || path === "lesson") && index < paths.length - 1) {
-      // This is a module or lesson keyword, the next item will be the ID
-      return {
-        label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
+    // Handle module IDs - convert to friendly names
+    if (path === "module" && index < paths.length - 1) {
+      // This is a module keyword, the next item will be the ID
+      breadcrumbItems.push({
+        label: "Module",
         path: currentPath,
-      };
+      });
+      
+      // Skip adding the raw module ID as a separate breadcrumb
+      return;
     }
     
-    // Check if this is an ID following module or lesson
-    if (index > 0 && (paths[index - 1] === "module" || paths[index - 1] === "lesson")) {
-      // This is an ID, so let's format it nicely
-      const prefix = paths[index - 1] === "module" ? "Module" : "Lesson";
-      // Return a simplified version (without showing the full ID)
-      return {
-        label: `${prefix} Content`,
+    // Skip the raw module ID in the breadcrumb
+    if (index > 0 && paths[index - 1] === "module") {
+      // Instead of showing the ID, add a generic "Content" label
+      breadcrumbItems.push({
+        label: "Module Content",
         path: currentPath,
-      };
+      });
+      return;
     }
     
-    // Normal path handling
-    return {
+    // Handle lesson IDs
+    if (path === "lesson" && index < paths.length - 1) {
+      breadcrumbItems.push({
+        label: "Lesson",
+        path: currentPath, 
+      });
+      return;
+    }
+    
+    // Skip the raw lesson ID in the breadcrumb
+    if (index > 0 && paths[index - 1] === "lesson") {
+      breadcrumbItems.push({
+        label: "Lesson Content",
+        path: currentPath,
+      });
+      return;
+    }
+    
+    // Normal path handling for other routes
+    breadcrumbItems.push({
       label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
       path: currentPath,
-    };
-  }).filter(item => item.label !== "");
+    });
+  });
+  
+  return breadcrumbItems;
 };
 
 export function Breadcrumb() {

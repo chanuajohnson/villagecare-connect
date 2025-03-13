@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, BookOpen, Award } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { LessonContent } from "@/components/professional/LessonContent";
@@ -26,15 +26,24 @@ const ModuleViewerPage = () => {
     const fetchModuleAndLessons = async () => {
       try {
         setLoading(true);
+        setError(null);
         
+        // Validate moduleId
+        if (!moduleId || moduleId === ":moduleId") {
+          throw new Error("Invalid module ID");
+        }
+        
+        // Fetch module data
         const { data: moduleData, error: moduleError } = await supabase
           .from('training_modules')
           .select('*')
           .eq('id', moduleId)
-          .single();
+          .maybeSingle();
         
         if (moduleError) throw moduleError;
+        if (!moduleData) throw new Error("Module not found");
         
+        // Fetch lessons for this module
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('module_lessons')
           .select('*')
@@ -42,31 +51,28 @@ const ModuleViewerPage = () => {
           .order('order_index');
         
         if (lessonsError) throw lessonsError;
+        if (!lessonsData || lessonsData.length === 0) {
+          throw new Error("No lessons found for this module");
+        }
         
         setModule(moduleData);
         setLessons(lessonsData);
         
-        if (lessonId) {
+        // Handle lesson navigation
+        if (lessonId && lessonId !== ":lessonId") {
           const lesson = lessonsData.find(l => l.id === lessonId);
           if (lesson) {
             setCurrentLesson(lesson);
           } else {
-            if (lessonsData.length > 0) {
-              // Navigate to the first lesson with the correct path structure
-              navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
-            } else {
-              throw new Error("No lessons found for this module");
-            }
-          }
-        } else {
-          if (lessonsData.length > 0) {
-            // Navigate to the first lesson with the correct path structure
+            // If specified lesson not found, navigate to the first lesson
             navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
-          } else {
-            throw new Error("No lessons found for this module");
           }
+        } else if (lessonsData.length > 0) {
+          // No lesson specified, navigate to the first lesson
+          navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
         }
         
+        // Track user progress
         if (user) {
           const { data: progress, error: progressError } = await supabase
             .from('user_module_progress')
@@ -78,6 +84,7 @@ const ModuleViewerPage = () => {
           if (progressError) {
             console.error("Error checking progress:", progressError);
           } else if (!progress) {
+            // Create initial progress record if it doesn't exist
             await supabase
               .from('user_module_progress')
               .insert({
@@ -92,7 +99,7 @@ const ModuleViewerPage = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching module data:', error);
-        setError('Failed to load module content');
+        setError(error instanceof Error ? error.message : 'Failed to load module content');
         setLoading(false);
       }
     };
@@ -117,6 +124,7 @@ const ModuleViewerPage = () => {
   if (loading) {
     return (
       <div className="container py-8 px-4">
+        <Breadcrumb />
         <div className="flex justify-center items-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
           <span className="ml-2 text-primary-600">Loading lesson content...</span>
@@ -128,10 +136,12 @@ const ModuleViewerPage = () => {
   if (error || !module || !currentLesson) {
     return (
       <div className="container py-8 px-4">
-        <div className="bg-red-50 text-red-700 p-4 rounded-md">
-          <p>{error || "Could not load the lesson content"}</p>
+        <Breadcrumb />
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-md mt-4">
+          <h2 className="text-xl font-semibold mb-2">Failed to load module content</h2>
+          <p className="mb-4">{error || "Could not load the lesson content"}</p>
           <Link to="/professional/training-resources">
-            <Button className="mt-4">Return to Training Resources</Button>
+            <Button>Return to Training Resources</Button>
           </Link>
         </div>
       </div>
