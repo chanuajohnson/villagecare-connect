@@ -56,10 +56,14 @@ export function Navigation() {
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold">Takes a Village</Link>
+          <Link to="/" className="text-xl font-bold">Tavara.Care</Link>
         </div>
         
         <div className="flex items-center gap-4">
+          <Link to="/about" className="text-gray-700 hover:text-primary">
+            About
+          </Link>
+          
           <Link to="/features" className="text-gray-700 hover:text-primary">
             Features
           </Link>

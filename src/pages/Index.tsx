@@ -1,7 +1,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Heart, ArrowRight, Check, Vote, Phone } from "lucide-react";
+import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -104,7 +104,7 @@ const Index = () => {
             Care Coordination Platform
           </span>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            It Takes a Village to Care
+            Tavara.Care
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
             Join our community of care coordinators, families, and professionals to make
