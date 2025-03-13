@@ -75,7 +75,12 @@ const AppContent = () => {
           <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
           <Route path="/professional/message-board" element={<MessageBoardPage />} />
           <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
+          
+          {/* Updated module and lesson routes to match the URL format we need */}
           <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
+          <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
+          <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
+          
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />

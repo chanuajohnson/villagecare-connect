@@ -1,3 +1,4 @@
+
 import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
@@ -7,6 +8,7 @@ type BreadcrumbItem = {
   path: string;
 };
 
+// Enhanced route mapping with more descriptive labels
 const routeMap: Record<string, string> = {
   features: "Features",
   auth: "Authentication",
@@ -15,6 +17,10 @@ const routeMap: Record<string, string> = {
   professional: "Professional",
   community: "Community",
   dashboard: "Dashboard",
+  "training-resources": "Training Resources",
+  module: "Module",
+  lesson: "Lesson",
+  "message-board": "Message Board",
 };
 
 const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
@@ -22,15 +28,34 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
 
   const paths = pathname.split("/").filter(Boolean);
   let currentPath = "";
-
-  return paths.map((path) => {
+  
+  // Check if this is a module/lesson path with IDs
+  const isModulePath = paths.includes("module");
+  
+  return paths.map((path, index) => {
     currentPath += `/${path}`;
-    if (path === "dashboard" && paths.length === 1) {
+    
+    // Special handling for module and lesson IDs to display them better
+    if ((path === "module" || path === "lesson") && index < paths.length - 1) {
+      // This is a module or lesson keyword, the next item will be the ID
       return {
-        label: "",
-        path: "/",
+        label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
+        path: currentPath,
       };
     }
+    
+    // Check if this is an ID following module or lesson
+    if (index > 0 && (paths[index - 1] === "module" || paths[index - 1] === "lesson")) {
+      // This is an ID, so let's format it nicely
+      const prefix = paths[index - 1] === "module" ? "Module" : "Lesson";
+      // Return a simplified version (without showing the full ID)
+      return {
+        label: `${prefix} Content`,
+        path: currentPath,
+      };
+    }
+    
+    // Normal path handling
     return {
       label: routeMap[path] || path.charAt(0).toUpperCase() + path.slice(1),
       path: currentPath,

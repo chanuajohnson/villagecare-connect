@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { LessonContent } from "@/components/professional/LessonContent";
 import LessonCompletionButton from "@/components/professional/LessonCompletionButton";
 import { toast } from "sonner";
+import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 
 const ModuleViewerPage = () => {
   const { moduleId, lessonId } = useParams();
@@ -51,6 +52,7 @@ const ModuleViewerPage = () => {
             setCurrentLesson(lesson);
           } else {
             if (lessonsData.length > 0) {
+              // Navigate to the first lesson with the correct path structure
               navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
             } else {
               throw new Error("No lessons found for this module");
@@ -58,6 +60,7 @@ const ModuleViewerPage = () => {
           }
         } else {
           if (lessonsData.length > 0) {
+            // Navigate to the first lesson with the correct path structure
             navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
           } else {
             throw new Error("No lessons found for this module");
@@ -136,7 +139,9 @@ const ModuleViewerPage = () => {
   }
 
   return (
-    <div className="container py-8 px-4">
+    <div className="container py-4 px-4">
+      <Breadcrumb />
+      
       <div className="mb-6">
         <Link to="/professional/training-resources" className="flex items-center text-primary-600 hover:text-primary-800">
           <ArrowLeft className="h-4 w-4 mr-1" />

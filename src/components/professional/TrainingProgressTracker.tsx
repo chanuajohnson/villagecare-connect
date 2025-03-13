@@ -98,7 +98,7 @@ export const TrainingProgressTracker = () => {
               const IconComponent = getIconComponent(module.icon);
               
               return (
-                <Link key={module.id} to={`/professional/module/${module.id}`} className="block">
+                <Link key={module.id} to={`/professional/training-resources/module/${module.id}`} className="block">
                   <div className="space-y-1 hover:bg-gray-50 p-2 rounded-md transition-colors">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export const TrainingProgressTracker = () => {
           
           {/* Continue Training Button */}
           <Link 
-            to={modules.length > 0 ? `/professional/module/${modules[0]?.id}` : "/professional/training-resources"} 
+            to={modules.length > 0 ? `/professional/training-resources/module/${modules[0]?.id}` : "/professional/training-resources"} 
             className="block w-full"
           >
             <Button 
