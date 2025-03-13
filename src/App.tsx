@@ -29,6 +29,7 @@ import MessageBoardPage from "./pages/professional/MessageBoardPage";
 import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
 import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
 import SubscriptionPage from "./pages/subscription/SubscriptionPage";
+import AboutPage from "./pages/about/AboutPage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const AppContent = () => {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
           <Route path="/dashboard/family" element={<FamilyDashboard />} />
           <Route path="/dashboard/community" element={<CommunityDashboard />} />
