@@ -29,19 +29,31 @@ const ModuleViewerPage = () => {
         setError(null);
         
         // Validate moduleId
-        if (!moduleId || moduleId === ":moduleId") {
+        if (!moduleId) {
           throw new Error("Invalid module ID");
         }
+        
+        console.log("Fetching module data for ID:", moduleId);
         
         // Fetch module data
         const { data: moduleData, error: moduleError } = await supabase
           .from('training_modules')
           .select('*')
           .eq('id', moduleId)
-          .maybeSingle();
+          .single();
         
-        if (moduleError) throw moduleError;
-        if (!moduleData) throw new Error("Module not found");
+        if (moduleError) {
+          console.error("Module fetch error:", moduleError);
+          throw moduleError;
+        }
+        
+        if (!moduleData) {
+          console.error("No module found with ID:", moduleId);
+          throw new Error("Module not found");
+        }
+        
+        console.log("Successfully retrieved module:", moduleData);
+        setModule(moduleData);
         
         // Fetch lessons for this module
         const { data: lessonsData, error: lessonsError } = await supabase
@@ -50,30 +62,40 @@ const ModuleViewerPage = () => {
           .eq('module_id', moduleId)
           .order('order_index');
         
-        if (lessonsError) throw lessonsError;
+        if (lessonsError) {
+          console.error("Lessons fetch error:", lessonsError);
+          throw lessonsError;
+        }
+        
         if (!lessonsData || lessonsData.length === 0) {
+          console.error("No lessons found for module:", moduleId);
           throw new Error("No lessons found for this module");
         }
         
-        setModule(moduleData);
+        console.log("Successfully retrieved lessons:", lessonsData.length);
         setLessons(lessonsData);
         
         // Handle lesson navigation
-        if (lessonId && lessonId !== ":lessonId") {
+        if (lessonId) {
+          console.log("Looking for specific lesson:", lessonId);
           const lesson = lessonsData.find(l => l.id === lessonId);
           if (lesson) {
+            console.log("Found requested lesson:", lesson.title);
             setCurrentLesson(lesson);
           } else {
             // If specified lesson not found, navigate to the first lesson
+            console.log("Requested lesson not found, redirecting to first lesson");
             navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
           }
         } else if (lessonsData.length > 0) {
           // No lesson specified, navigate to the first lesson
+          console.log("No lesson specified, redirecting to first lesson");
           navigate(`/professional/training-resources/module/${moduleId}/lesson/${lessonsData[0].id}`, { replace: true });
         }
         
         // Track user progress
         if (user) {
+          console.log("Tracking user progress for user:", user.id);
           const { data: progress, error: progressError } = await supabase
             .from('user_module_progress')
             .select('*')
@@ -84,6 +106,7 @@ const ModuleViewerPage = () => {
           if (progressError) {
             console.error("Error checking progress:", progressError);
           } else if (!progress) {
+            console.log("Creating initial progress record for user");
             // Create initial progress record if it doesn't exist
             await supabase
               .from('user_module_progress')
