@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle2, GraduationCap, BookOpen, Shield, Heart, HandHeart, Users, ArrowRight, FileText } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useTrainingProgress } from "@/hooks/useTrainingProgress";
+import { supabase } from "@/lib/supabase";
 
 const TrainingResourcesPage = () => {
   const { user } = useAuth();
   const { modules } = useTrainingProgress();
-  const navigate = useNavigate();
   
   const breadcrumbItems = [
     {
@@ -27,13 +27,34 @@ const TrainingResourcesPage = () => {
     }
   ];
 
-  const handleEnrollClick = () => {
-    if (modules.length > 0) {
-      navigate(`/professional/module/${modules[0].id}`);
-    } else {
-      toast.success("Enrollment request received! Check your email for next steps.", {
-        description: "You'll receive further instructions shortly.",
-      });
+  const handleEnrollClick = async () => {
+    // Simply show a toast and store the request in the database if the user is logged in
+    toast({
+      title: "Enrollment Request Received!",
+      description: "Check your email for next steps. You'll receive further instructions shortly.",
+    });
+
+    // If user is logged in, we'll record this request in the database
+    if (user) {
+      try {
+        // Update user module progress to mark interest in training
+        const { error } = await supabase
+          .from('user_module_progress')
+          .upsert([
+            {
+              user_id: user.id,
+              module_id: modules.length > 0 ? modules[0].id : null,
+              status: 'requested',
+              last_accessed: new Date().toISOString()
+            }
+          ]);
+        
+        if (error) {
+          console.error("Error updating training request:", error);
+        }
+      } catch (err) {
+        console.error("Failed to record training request:", err);
+      }
     }
   };
 

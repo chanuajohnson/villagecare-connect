@@ -69,9 +69,8 @@ export const TrainingProgressTracker = () => {
   }
 
   const firstModuleId = getFirstModuleId();
-  const continueTrainingUrl = firstModuleId 
-    ? `/professional/training-resources/module/${firstModuleId}`
-    : "/professional/training-resources";
+  // Changed to always link to the training resources page
+  const continueTrainingUrl = "/professional/training-resources";
 
   return (
     <motion.div
@@ -150,8 +149,8 @@ export const TrainingProgressTracker = () => {
             })}
           </div>
           
-          {/* Continue Training Button */}
-          <Link to={continueTrainingUrl} className="block w-full">
+          {/* Continue Training Button - Updated link to go to training resources */}
+          <Link to="/professional/training-resources" className="block w-full">
             <Button 
               variant="outline" 
               size="sm" 
@@ -172,6 +171,7 @@ export const TrainingProgressTracker = () => {
                 {modules.filter(m => m.completed).length} {modules.filter(m => m.completed).length === 1 ? 'Certificate' : 'Certificates'} Earned
               </span>
             </div>
+            {/* Updated View All link to go to training resources */}
             <Link to="/professional/training-resources">
               <Button variant="ghost" size="sm" className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 text-sm h-8 px-3">
                 View All
