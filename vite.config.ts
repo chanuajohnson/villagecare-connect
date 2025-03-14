@@ -28,7 +28,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/tavaracare/",  // Add this line for GitHub Pages
+  //base: "/tavaracare/",  // Add this line for GitHub Pages
+  base: "./",  // ✅ Change from "/tavaracare/" to "./"
   server: {
     host: "::",
     port: 8080,
