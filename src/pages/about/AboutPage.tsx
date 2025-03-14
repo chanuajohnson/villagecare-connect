@@ -422,9 +422,7 @@ const AboutPage = () => {
             duration: 0.5
           }} viewport={{
             once: true
-          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">
-              The Tavara.Care Platform
-            </motion.h2>
+          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">The Tavara Platform</motion.h2>
             
             <NavigationMenu className="mx-auto max-w-4xl mb-10">
               <NavigationMenuList className="flex flex-col sm:flex-row justify-center gap-2">
