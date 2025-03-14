@@ -564,9 +564,7 @@ const AboutPage = () => {
             duration: 0.5
           }} viewport={{
             once: true
-          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">
-              The Team Behind Tavara.care
-            </motion.h2>
+          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">The Team Behind Tavara</motion.h2>
             <div className="grid md:grid-cols-3 gap-6">
               {teamMembers.map((member, index) => <motion.div key={member.name} initial={{
               opacity: 0,
