@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,173 +11,157 @@ import { VisionSection } from '@/components/about/VisionSection';
 import { Heart, Users, Lightbulb, Globe, Briefcase, GraduationCap, Headphones, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 const AboutPage = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
-
   const handleCardClick = (cardId: string) => {
     setActiveCard(activeCard === cardId ? null : cardId);
   };
-
-  const moduleList = [
-    {
-      id: "module1",
-      title: "Module 1: Caregiving Basics & Professionalism",
-      description: "Understanding the role of a caregiver, key responsibilities, ethics, and expectations."
-    },
-    {
-      id: "module2",
-      title: "Module 2: Elderly & Special Needs Care",
-      description: "Knowledge and practical skills to care for elderly individuals and children with special needs."
-    },
-    {
-      id: "module3",
-      title: "Module 3: Safety & Emergency Preparedness",
-      description: "Ensuring safety and well-being of both caregivers and care recipients."
-    },
-    {
-      id: "module4",
-      title: "Module 4: Emotional & Social Support",
-      description: "Essential skills for providing emotional and social support to clients and families."
-    },
-    {
-      id: "module5",
-      title: "Module 5: Hands-On Care Techniques",
-      description: "Essential hands-on skills for safely assisting with activities of daily living."
-    },
-    {
-      id: "module6",
-      title: "Module 6: Working with Families & Agencies",
-      description: "Navigating relationships with families and agencies, contracts, and professional conduct."
-    },
-    {
-      id: "module7",
-      title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
-      description: "Legal, ethical, and human rights aspects of caregiving."
-    }
-  ];
-
-  const teamMembers = [
-    {
-      name: "Jane Doe",
-      role: "Co-Founder & CEO",
-      bio: "With over 15 years of experience in healthcare and a personal journey as a caregiver, Jane brings deep insight and passion to Tavara.care.",
-      imageSrc: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
-    },
-    {
-      name: "John Smith",
-      role: "Co-Founder & CTO",
-      bio: "John combines his technical expertise with a profound understanding of caregiver needs, driving innovation that makes a real difference.",
-      imageSrc: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
-    },
-    {
-      name: "Emily Johnson",
-      role: "Head of Community",
-      bio: "Emily's background in social work and community building helps create meaningful connections between caregivers across the Tavara.care platform.",
-      imageSrc: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-white">
+  const moduleList = [{
+    id: "module1",
+    title: "Module 1: Caregiving Basics & Professionalism",
+    description: "Understanding the role of a caregiver, key responsibilities, ethics, and expectations."
+  }, {
+    id: "module2",
+    title: "Module 2: Elderly & Special Needs Care",
+    description: "Knowledge and practical skills to care for elderly individuals and children with special needs."
+  }, {
+    id: "module3",
+    title: "Module 3: Safety & Emergency Preparedness",
+    description: "Ensuring safety and well-being of both caregivers and care recipients."
+  }, {
+    id: "module4",
+    title: "Module 4: Emotional & Social Support",
+    description: "Essential skills for providing emotional and social support to clients and families."
+  }, {
+    id: "module5",
+    title: "Module 5: Hands-On Care Techniques",
+    description: "Essential hands-on skills for safely assisting with activities of daily living."
+  }, {
+    id: "module6",
+    title: "Module 6: Working with Families & Agencies",
+    description: "Navigating relationships with families and agencies, contracts, and professional conduct."
+  }, {
+    id: "module7",
+    title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
+    description: "Legal, ethical, and human rights aspects of caregiving."
+  }];
+  const teamMembers = [{
+    name: "Jane Doe",
+    role: "Co-Founder & CEO",
+    bio: "With over 15 years of experience in healthcare and a personal journey as a caregiver, Jane brings deep insight and passion to Tavara.care.",
+    imageSrc: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+  }, {
+    name: "John Smith",
+    role: "Co-Founder & CTO",
+    bio: "John combines his technical expertise with a profound understanding of caregiver needs, driving innovation that makes a real difference.",
+    imageSrc: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+  }, {
+    name: "Emily Johnson",
+    role: "Head of Community",
+    bio: "Emily's background in social work and community building helps create meaningful connections between caregivers across the Tavara.care platform.",
+    imageSrc: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+  }];
+  return <div className="min-h-screen bg-white">
       <Container>
         <Breadcrumb />
         <div className="space-y-8 py-8">
           <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-4xl font-bold text-primary-800 tracking-tight"
-            >
+            <motion.h1 initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} className="text-4xl font-bold text-primary-800 tracking-tight">
               About Tavara
             </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg text-gray-600"
-            >
+            <motion.p initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5,
+            delay: 0.2
+          }} className="text-lg text-gray-600">
               It takes a village to care
             </motion.p>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm max-w-4xl mx-auto"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5,
+          delay: 0.3
+        }} className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm max-w-4xl mx-auto">
             <p className="text-gray-600 leading-relaxed">
               Tavara is dedicated to empowering caregivers with the necessary skills, heart, and purpose to provide high-quality home care 
               in Trinidad & Tobago. Our structured Professional Caregiver Training Program equips caregivers with the skills, knowledge, and 
               cultural understanding required to provide compassionate care for the elderly, individuals with disabilities, and those with 
               specialized medical needs.
             </p>
-            <p className="text-gray-600 leading-relaxed mt-4">
-              The name "Tavara" is derived from the Sanskrit word "vara," meaning blessing, symbolizing the precious gift of care nurtured 
-              and shared within a community. Tavara reflects a modern village, a network where caregivers, families, and agencies unite 
-              to uplift care standards through a technology-enabled platform.
-            </p>
+            <p className="text-gray-600 leading-relaxed mt-4">The name "Tavara" meaning blessing, symbolizing the precious gift of care nurtured and shared within a community. Tavara reflects a modern village, a network where caregivers, families, and agencies unite to uplift care standards through a technology-enabled platform.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-12">
-            <StoryCard 
-              isActive={activeCard === 'story'} 
-              onClick={() => handleCardClick('story')} 
-            />
-            <MissionCard 
-              isActive={activeCard === 'mission'} 
-              onClick={() => handleCardClick('mission')} 
-            />
+            <StoryCard isActive={activeCard === 'story'} onClick={() => handleCardClick('story')} />
+            <MissionCard isActive={activeCard === 'mission'} onClick={() => handleCardClick('mission')} />
           </div>
 
           <VisionSection />
 
           <div className="mt-16">
             <div className="text-center mb-10">
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-                className="text-3xl font-bold text-primary-800 mb-4"
-              >
+              <motion.h2 initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5
+            }} viewport={{
+              once: true
+            }} className="text-3xl font-bold text-primary-800 mb-4">
                 Our Comprehensive Training Program
               </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-lg text-gray-600 max-w-2xl mx-auto"
-              >
+              <motion.p initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5,
+              delay: 0.2
+            }} viewport={{
+              once: true
+            }} className="text-lg text-gray-600 max-w-2xl mx-auto">
                 A three-step approach blending self-paced learning, hands-on experience, and career development
               </motion.p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
+              <motion.div initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5
+            }} viewport={{
+              once: true
+            }}>
                 <Card className="h-full">
                   <div className="bg-primary-100 p-6 flex justify-center items-center">
                     <GraduationCap className="h-16 w-16 text-primary-700" />
@@ -205,12 +188,18 @@ const AboutPage = () => {
                 </Card>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
+              <motion.div initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5,
+              delay: 0.2
+            }} viewport={{
+              once: true
+            }}>
                 <Card className="h-full">
                   <div className="bg-primary-200 p-6 flex justify-center items-center">
                     <Users className="h-16 w-16 text-primary-700" />
@@ -237,12 +226,18 @@ const AboutPage = () => {
                 </Card>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                viewport={{ once: true }}
-              >
+              <motion.div initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5,
+              delay: 0.4
+            }} viewport={{
+              once: true
+            }}>
                 <Card className="h-full">
                   <div className="bg-primary-300 p-6 flex justify-center items-center">
                     <Briefcase className="h-16 w-16 text-primary-700" />
@@ -273,22 +268,31 @@ const AboutPage = () => {
 
           <div className="mt-16">
             <div className="text-center mb-8">
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-                className="text-3xl font-bold text-primary-800 mb-4"
-              >
+              <motion.h2 initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5
+            }} viewport={{
+              once: true
+            }} className="text-3xl font-bold text-primary-800 mb-4">
                 Training Course Modules
               </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="text-lg text-gray-600 max-w-2xl mx-auto"
-              >
+              <motion.p initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5,
+              delay: 0.2
+            }} viewport={{
+              once: true
+            }} className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Our comprehensive curriculum covers everything a caregiver needs to know
               </motion.p>
             </div>
@@ -296,18 +300,11 @@ const AboutPage = () => {
             <div className="max-w-4xl mx-auto">
               <Tabs defaultValue="module1" className="w-full">
                 <TabsList className="grid grid-cols-3 md:grid-cols-7 h-auto">
-                  {moduleList.map((module, index) => (
-                    <TabsTrigger 
-                      key={module.id} 
-                      value={module.id}
-                      className="text-xs sm:text-sm py-2"
-                    >
+                  {moduleList.map((module, index) => <TabsTrigger key={module.id} value={module.id} className="text-xs sm:text-sm py-2">
                       Module {index + 1}
-                    </TabsTrigger>
-                  ))}
+                    </TabsTrigger>)}
                 </TabsList>
-                {moduleList.map((module) => (
-                  <TabsContent key={module.id} value={module.id} className="mt-6">
+                {moduleList.map(module => <TabsContent key={module.id} value={module.id} className="mt-6">
                     <Card>
                       <CardHeader>
                         <CardTitle>{module.title}</CardTitle>
@@ -324,19 +321,23 @@ const AboutPage = () => {
                         </Button>
                       </CardContent>
                     </Card>
-                  </TabsContent>
-                ))}
+                  </TabsContent>)}
               </Tabs>
             </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mt-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} viewport={{
+            once: true
+          }}>
               <Card className="overflow-hidden border-primary-100 hover:shadow-lg transition-shadow h-full">
                 <CardHeader className="bg-primary-50">
                   <CardTitle className="flex items-center gap-2 text-primary-700">
@@ -353,12 +354,18 @@ const AboutPage = () => {
               </Card>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5,
+            delay: 0.2
+          }} viewport={{
+            once: true
+          }}>
               <Card className="overflow-hidden border-primary-100 hover:shadow-lg transition-shadow h-full">
                 <CardHeader className="bg-primary-50">
                   <CardTitle className="flex items-center gap-2 text-primary-700">
@@ -375,12 +382,18 @@ const AboutPage = () => {
               </Card>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5,
+            delay: 0.4
+          }} viewport={{
+            once: true
+          }}>
               <Card className="overflow-hidden border-primary-100 hover:shadow-lg transition-shadow h-full">
                 <CardHeader className="bg-primary-50">
                   <CardTitle className="flex items-center gap-2 text-primary-700">
@@ -399,13 +412,17 @@ const AboutPage = () => {
           </div>
 
           <div className="mt-16">
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="text-2xl font-semibold text-center mb-8 text-primary-800"
-            >
+            <motion.h2 initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} viewport={{
+            once: true
+          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">
               The Tavara.Care Platform
             </motion.h2>
             
@@ -539,40 +556,43 @@ const AboutPage = () => {
           </div>
 
           <div className="mt-16">
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="text-2xl font-semibold text-center mb-8 text-primary-800"
-            >
+            <motion.h2 initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} viewport={{
+            once: true
+          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">
               The Team Behind Tavara.care
             </motion.h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {teamMembers.map((member, index) => (
-                <motion.div
-                  key={member.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <TeamMemberCard
-                    name={member.name}
-                    role={member.role}
-                    bio={member.bio}
-                    imageSrc={member.imageSrc}
-                  />
-                </motion.div>
-              ))}
+              {teamMembers.map((member, index) => <motion.div key={member.name} initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5,
+              delay: index * 0.2
+            }} viewport={{
+              once: true
+            }}>
+                  <TeamMemberCard name={member.name} role={member.role} bio={member.bio} imageSrc={member.imageSrc} />
+                </motion.div>)}
             </div>
           </div>
 
           <div className="flex justify-center mt-16 mb-8">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} whileTap={{
+            scale: 0.95
+          }}>
               <Link to="/features">
                 <Button size="lg" className="bg-primary-600 hover:bg-primary-700">
                   <Globe className="mr-2 h-5 w-5" />
@@ -583,8 +603,6 @@ const AboutPage = () => {
           </div>
         </div>
       </Container>
-    </div>
-  );
+    </div>;
 };
-
 export default AboutPage;
