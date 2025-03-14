@@ -8,11 +8,13 @@ import { PodcastCard } from '@/components/about/PodcastCard';
 import { MissionCard } from '@/components/about/MissionCard';
 import { TeamMemberCard } from '@/components/about/TeamMemberCard';
 import { VisionSection } from '@/components/about/VisionSection';
-import { Heart, Users, Lightbulb, Globe, Briefcase, GraduationCap, Headphones, Award } from 'lucide-react';
+import { Heart, Users, Lightbulb, Globe, Briefcase, GraduationCap, Headphones, Award, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 const AboutPage = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const handleCardClick = (cardId: string) => {
@@ -50,19 +52,20 @@ const AboutPage = () => {
   const teamMembers = [{
     name: "Jane Doe",
     role: "Co-Founder & CEO",
-    bio: "With over 15 years of experience in healthcare and a personal journey as a caregiver, Jane brings deep insight and passion to Tavara.care.",
-    imageSrc: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+    bio: "With over 15 years of experience in healthcare and a personal journey as a caregiver, Jane brings deep insight and passion to Tavara.",
+    imageSrc: "/lovable-uploads/12de91cf-3454-4e5d-9f29-b80cf84bb8c1.png"
   }, {
     name: "John Smith",
     role: "Co-Founder & CTO",
     bio: "John combines his technical expertise with a profound understanding of caregiver needs, driving innovation that makes a real difference.",
-    imageSrc: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+    imageSrc: "/lovable-uploads/442348ff-8c87-4db3-bcb9-fd007795375c.png"
   }, {
     name: "Emily Johnson",
     role: "Head of Community",
-    bio: "Emily's background in social work and community building helps create meaningful connections between caregivers across the Tavara.care platform.",
-    imageSrc: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
+    bio: "Emily's background in social work and community building helps create meaningful connections between caregivers across the Tavara platform.",
+    imageSrc: "/lovable-uploads/33a6dd97-6c12-4bda-83da-81ac9ee16536.png"
   }];
+
   return <div className="min-h-screen bg-white">
       <Container>
         <Breadcrumb />
@@ -565,6 +568,14 @@ const AboutPage = () => {
           }} viewport={{
             once: true
           }} className="text-2xl font-semibold text-center mb-8 text-primary-800">The Team Behind Tavara</motion.h2>
+            
+            <Alert className="mb-6 bg-amber-50 border-amber-200">
+              <Info className="h-4 w-4 text-amber-800" />
+              <AlertDescription className="text-amber-800">
+                Note: The following team member information is for demonstration purposes only and will be updated with actual information in the next website update.
+              </AlertDescription>
+            </Alert>
+            
             <div className="grid md:grid-cols-3 gap-6">
               {teamMembers.map((member, index) => <motion.div key={member.name} initial={{
               opacity: 0,
@@ -578,7 +589,13 @@ const AboutPage = () => {
             }} viewport={{
               once: true
             }}>
-                  <TeamMemberCard name={member.name} role={member.role} bio={member.bio} imageSrc={member.imageSrc} />
+                  <TeamMemberCard 
+                    name={member.name} 
+                    role={member.role} 
+                    bio={member.bio} 
+                    imageSrc={member.imageSrc} 
+                    isDemo={true} 
+                  />
                 </motion.div>)}
             </div>
           </div>
