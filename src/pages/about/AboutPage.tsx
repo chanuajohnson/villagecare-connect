@@ -95,7 +95,7 @@ const AboutPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+    <div className="min-h-screen bg-white">
       <Container>
         <Breadcrumb />
         <div className="space-y-8 py-8">
@@ -106,7 +106,7 @@ const AboutPage = () => {
               transition={{ duration: 0.5 }}
               className="text-4xl font-bold text-primary-800 tracking-tight"
             >
-              About Tavara.care
+              About Tavara
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -114,7 +114,7 @@ const AboutPage = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-lg text-gray-600"
             >
-              Transforming caregiving through community, connection, and compassion
+              It takes a village to care
             </motion.p>
           </div>
 
@@ -125,14 +125,14 @@ const AboutPage = () => {
             className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm max-w-4xl mx-auto"
           >
             <p className="text-gray-600 leading-relaxed">
-              Tavara.Care is dedicated to empowering caregivers with the necessary skills, heart, and purpose to provide high-quality home care 
+              Tavara is dedicated to empowering caregivers with the necessary skills, heart, and purpose to provide high-quality home care 
               in Trinidad & Tobago. Our structured Professional Caregiver Training Program equips caregivers with the skills, knowledge, and 
               cultural understanding required to provide compassionate care for the elderly, individuals with disabilities, and those with 
               specialized medical needs.
             </p>
             <p className="text-gray-600 leading-relaxed mt-4">
               The name "Tavara" is derived from the Sanskrit word "vara," meaning blessing, symbolizing the precious gift of care nurtured 
-              and shared within a community. Tavara.Care reflects a modern village, a network where caregivers, families, and agencies unite 
+              and shared within a community. Tavara reflects a modern village, a network where caregivers, families, and agencies unite 
               to uplift care standards through a technology-enabled platform.
             </p>
           </motion.div>
