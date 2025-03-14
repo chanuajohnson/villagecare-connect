@@ -6,7 +6,6 @@ import { Container } from '@/components/ui/container';
 import { StoryCard } from '@/components/about/StoryCard';
 import { PodcastCard } from '@/components/about/PodcastCard';
 import { MissionCard } from '@/components/about/MissionCard';
-import { TeamMemberCard } from '@/components/about/TeamMemberCard';
 import { VisionSection } from '@/components/about/VisionSection';
 import { Heart, Users, Lightbulb, Globe, Briefcase, GraduationCap, Headphones, Award, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -48,22 +47,6 @@ const AboutPage = () => {
     id: "module7",
     title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
     description: "Legal, ethical, and human rights aspects of caregiving."
-  }];
-  const teamMembers = [{
-    name: "Jane Doe",
-    role: "Co-Founder & CEO",
-    bio: "With over 15 years of experience in healthcare and a personal journey as a caregiver, Jane brings deep insight and passion to Tavara.",
-    imageSrc: "/lovable-uploads/12de91cf-3454-4e5d-9f29-b80cf84bb8c1.png"
-  }, {
-    name: "John Smith",
-    role: "Co-Founder & CTO",
-    bio: "John combines his technical expertise with a profound understanding of caregiver needs, driving innovation that makes a real difference.",
-    imageSrc: "/lovable-uploads/442348ff-8c87-4db3-bcb9-fd007795375c.png"
-  }, {
-    name: "Emily Johnson",
-    role: "Head of Community",
-    bio: "Emily's background in social work and community building helps create meaningful connections between caregivers across the Tavara platform.",
-    imageSrc: "/lovable-uploads/33a6dd97-6c12-4bda-83da-81ac9ee16536.png"
   }];
 
   return <div className="min-h-screen bg-white">
@@ -556,50 +539,6 @@ const AboutPage = () => {
             <PodcastCard />
           </div>
 
-          <div className="mt-16">
-            <motion.h2 initial={{
-            opacity: 0,
-            y: 20
-          }} whileInView={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.5
-          }} viewport={{
-            once: true
-          }} className="text-2xl font-semibold text-center mb-8 text-primary-800">The Team Behind Tavara</motion.h2>
-            
-            <Alert className="mb-6 bg-amber-50 border-amber-200">
-              <Info className="h-4 w-4 text-amber-800" />
-              <AlertDescription className="text-amber-800">
-                Note: The following team member information is for demonstration purposes only and will be updated with actual information in the next website update.
-              </AlertDescription>
-            </Alert>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              {teamMembers.map((member, index) => <motion.div key={member.name} initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5,
-              delay: index * 0.2
-            }} viewport={{
-              once: true
-            }}>
-                  <TeamMemberCard 
-                    name={member.name} 
-                    role={member.role} 
-                    bio={member.bio} 
-                    imageSrc={member.imageSrc} 
-                    isDemo={true} 
-                  />
-                </motion.div>)}
-            </div>
-          </div>
-
           <div className="flex justify-center mt-16 mb-8">
             <motion.div whileHover={{
             scale: 1.05
@@ -609,7 +548,7 @@ const AboutPage = () => {
               <Link to="/features">
                 <Button size="lg" className="bg-primary-600 hover:bg-primary-700">
                   <Globe className="mr-2 h-5 w-5" />
-                  Join the Tavara.care Community
+                  Join the Tavara Community
                 </Button>
               </Link>
             </motion.div>
