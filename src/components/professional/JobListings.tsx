@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +73,7 @@ export const JobListings = () => {
   };
 
   const handleViewDetails = (jobId) => {
-    navigate('/subscription', { 
+    navigate('/subscription-features', { 
       state: { 
         returnPath: `/professional/job/${jobId}`,
         featureType: "Job Details" 
@@ -81,7 +82,7 @@ export const JobListings = () => {
   };
 
   const handleViewAllJobs = () => {
-    navigate('/subscription', { 
+    navigate('/subscription-features', { 
       state: { 
         returnPath: '/professional/jobs',
         featureType: "All Job Listings" 

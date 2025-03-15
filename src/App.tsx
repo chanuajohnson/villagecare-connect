@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Navigation } from "@/components/layout/Navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { initializeSupabase } from "@/lib/supabase";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -30,6 +30,7 @@ import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
 import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
 import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 import AboutPage from "./pages/about/AboutPage";
+import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const AppContent = () => {
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

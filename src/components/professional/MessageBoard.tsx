@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,7 +89,7 @@ export const MessageBoard = () => {
   };
 
   const handlePostCareNeed = () => {
-    navigate('/subscription', { 
+    navigate('/subscription-features', { 
       state: { 
         returnPath: '/professional/message-board?action=post-need',
         featureType: "Posting Care Needs" 
@@ -97,7 +98,7 @@ export const MessageBoard = () => {
   };
 
   const handlePostAvailability = () => {
-    navigate('/subscription', { 
+    navigate('/subscription-features', { 
       state: { 
         returnPath: '/professional/message-board?action=post-availability',
         featureType: "Posting Availability" 
@@ -106,7 +107,7 @@ export const MessageBoard = () => {
   };
 
   const handleViewFullBoard = () => {
-    navigate('/subscription', { 
+    navigate('/subscription-features', { 
       state: { 
         returnPath: '/professional/message-board',
         featureType: "Full Message Board" 

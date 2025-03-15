@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { FamilyNextStepsPanel } from "@/components/family/FamilyNextStepsPanel";
 import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedForm";
+import { useNavigate } from "react-router-dom";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -21,6 +22,7 @@ const FamilyDashboard = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -98,6 +100,15 @@ const FamilyDashboard = () => {
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
 
+  const handleViewFullBoard = () => {
+    navigate('/subscription-features', { 
+      state: { 
+        returnPath: '/family/message-board',
+        featureType: "Full Message Board" 
+      } 
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
@@ -157,7 +168,7 @@ const FamilyDashboard = () => {
                         variant="outline" 
                         size="sm" 
                         className="h-8 gap-1"
-                        onClick={refreshData}
+                        onClick={handleViewFullBoard}
                         disabled={refreshing}
                       >
                         <Clock className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
