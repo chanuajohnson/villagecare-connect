@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { FamilyNextStepsPanel } from "@/components/family/FamilyNextStepsPanel";
 import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedForm";
+import { Lock } from "lucide-react";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -99,7 +100,7 @@ const FamilyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
@@ -133,8 +134,19 @@ const FamilyDashboard = () => {
             </div>
           ) : null}
 
-          <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
-          <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Family Dashboard</h1>
+              <p className="text-gray-600 mt-2">Welcome to Takes a Village</p>
+              <p className="text-gray-600">Comprehensive care coordination platform.</p>
+            </div>
+            <Link to="/subscription-features">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Premium Features
+              </Button>
+            </Link>
+          </div>
 
           {/* Message Board and Post Care Need Form Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

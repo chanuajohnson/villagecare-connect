@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      feature_interest_tracking: {
+        Row: {
+          action_type: string | null
+          additional_info: Json | null
+          clicked_at: string | null
+          feature_name: string
+          id: string
+          source_page: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          additional_info?: Json | null
+          clicked_at?: string | null
+          feature_name: string
+          id?: string
+          source_page?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          additional_info?: Json | null
+          clicked_at?: string | null
+          feature_name?: string
+          id?: string
+          source_page?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feature_upvotes: {
         Row: {
           feature_id: string
