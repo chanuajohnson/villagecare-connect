@@ -1,103 +1,113 @@
 
-import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import { Navigation } from '@/components/layout/Navigation';
-import { initializeSupabase } from '@/lib/supabase';
-import { useEffect } from 'react';
-import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
-import NotFoundPage from './pages/NotFound';
-import FAQPage from '@/pages/support/FAQPage';
-import AuthPage from '@/pages/auth/AuthPage';
-import FamilyDashboard from '@/pages/dashboards/FamilyDashboard';
-import ProfessionalDashboard from '@/pages/dashboards/ProfessionalDashboard';
-import CommunityDashboard from '@/pages/dashboards/CommunityDashboard';
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { Navigation } from "@/components/layout/Navigation";
+import { useEffect } from "react";
+import { initializeSupabase } from "@/lib/supabase";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import FeaturesPage from "./pages/features/FeaturesPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
+import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
+import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
+import AuthPage from "./pages/auth/AuthPage";
+import FamilyRegistration from "./pages/registration/FamilyRegistration";
+import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
+import CommunityRegistration from "./pages/registration/CommunityRegistration";
+import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
+import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeaturesOverview";
+import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
+import FAQPage from "./pages/support/FAQPage";
+import { Fab } from "@/components/ui/fab";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import MessageBoardPage from "./pages/professional/MessageBoardPage";
+import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
+import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
+import SubscriptionPage from "./pages/subscription/SubscriptionPage";
+import AboutPage from "./pages/about/AboutPage";
 
-// Lazy load the subscription features page
-const SubscriptionFeaturesPage = lazy(() => import('./pages/subscription/SubscriptionFeaturesPage'));
+const queryClient = new QueryClient();
 
-// Temporary placeholder components until we have the actual pages
-const LandingPage = () => {
-  const navigate = useNavigate();
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-3xl font-bold mb-4">Welcome to Tavara</h1>
-      <p className="mb-6 text-center">A platform for care coordination and support</p>
-      <Button onClick={() => navigate('/subscription-features')}>
-        Explore Premium Features
-      </Button>
-    </div>
-  );
-};
-
-const AboutPage = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-3xl font-bold mb-4">About Tavara</h1>
-    <p>Connecting families with care professionals since 2023.</p>
-  </div>
-);
-
-const FeaturesPage = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-3xl font-bold mb-4">Tavara Features</h1>
-    <p>Discover what Tavara can do for you and your loved ones.</p>
-  </div>
-);
-
-// Placeholder for RegistrationPage
-const RegistrationPage = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-3xl font-bold mb-4">Registration</h1>
-    <p>Register for a new account.</p>
-  </div>
-);
-
-function App() {
+const AppWithProviders = () => {
   useEffect(() => {
     initializeSupabase();
   }, []);
 
   return (
-    <AuthProvider>
-      <Toaster richColors closeButton position="top-center" />
-      <div className="flex flex-col min-h-screen">
-        <Navigation />
-        <div className="flex-1">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/support" element={<FAQPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            
-            {/* Dashboards */}
-            <Route path="/dashboard/family" element={<FamilyDashboard />} />
-            <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
-            <Route path="/dashboard/community" element={<CommunityDashboard />} />
-            <Route path="/dashboard/admin" element={<AdminDashboard />} />
-            
-            {/* Registration */}
-            <Route path="/registration/:role" element={<RegistrationPage />} />
-            
-            {/* Utility */}
-            <Route path="*" element={<NotFoundPage />} />
-            
-            {/* Subscription */}
-            <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/subscription-features" element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <SubscriptionFeaturesPage />
-              </Suspense>
-            } />
-          </Routes>
-        </div>
-      </div>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
-}
+};
 
-export default App;
+const AppContent = () => {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/dashboard/family" element={<FamilyDashboard />} />
+          <Route path="/dashboard/community" element={<CommunityDashboard />} />
+          <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+          
+          <Route path="/registration/family" element={<FamilyRegistration />} />
+          <Route path="/registration/professional" element={<ProfessionalRegistration />} />
+          <Route path="/registration/community" element={<CommunityRegistration />} />
+          
+          <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
+          <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
+          <Route path="/professional/message-board" element={<MessageBoardPage />} />
+          <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
+          
+          {/* Updated module and lesson routes to match the URL format we need */}
+          <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
+          <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
+          <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
+          
+          <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      
+      <GlobalFAB />
+    </div>
+  );
+};
+
+const GlobalFAB = () => {
+  const pathname = window.location.pathname;
+  
+  if (pathname === "/" || pathname === "/faq") {
+    return null;
+  }
+  
+  return (
+    <Fab 
+      className="bg-primary-500 hover:bg-primary-600 text-white"
+      label="Support options"
+    />
+  );
+};
+
+export default AppWithProviders;

@@ -2,7 +2,6 @@
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
-import { FeatureInterestTrackingStats } from "@/components/admin/FeatureInterestTrackingStats";
 
 const AdminDashboard = () => {
   const breadcrumbItems = [
@@ -28,8 +27,6 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage system settings and user accounts.</p>
         </motion.div>
-        
-        <FeatureInterestTrackingStats />
 
         <DashboardCardGrid />
       </div>
