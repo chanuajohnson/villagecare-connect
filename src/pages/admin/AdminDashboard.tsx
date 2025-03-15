@@ -7,8 +7,12 @@ import { FeatureInterestTracker } from "@/components/admin/FeatureInterestTracke
 const AdminDashboard = () => {
   const breadcrumbItems = [
     {
+      label: "Dashboard",
+      href: "/dashboard",
+    },
+    {
       label: "Admin",
-      href: "/admin",
+      href: "/dashboard/admin",
     },
   ];
 
