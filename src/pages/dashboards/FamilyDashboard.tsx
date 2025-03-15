@@ -1,17 +1,102 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight, UserCog } from "lucide-react";
+import { FileText, Clock, Calendar, PenSquare, ChefHat, ActivitySquare, Users, Bell, Pill, ArrowRight, UserCog, Circle, List, CheckCircle2, MessageSquare } from "lucide-react";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { FamilyNextStepsPanel } from "@/components/family/FamilyNextStepsPanel";
+import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedForm";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
   const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchMessages();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('message_board_posts')
+        .select('*')
+        .ilike('location', '%Trinidad and Tobago%')
+        .order('time_posted', { ascending: false })
+        .limit(4);
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        console.log("Fetched Trinidad and Tobago messages:", data);
+        setMessages(data);
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      toast.error("Failed to load message board posts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    try {
+      setRefreshing(true);
+      toast.info("Refreshing Trinidad and Tobago message board data...");
+      
+      const { data, error } = await supabase.functions.invoke('update-job-data', {
+        body: { region: 'Trinidad and Tobago' }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data.success) {
+        toast.success(`Successfully refreshed data with ${data.postsCount} posts`);
+        await fetchMessages();
+      } else {
+        throw new Error(data.error || "Failed to refresh data");
+      }
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast.error("Failed to refresh message board data");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const formatTimePosted = (timestamp) => {
+    if (!timestamp) return "Unknown";
+    
+    const posted = new Date(timestamp);
+    const now = new Date();
+    
+    const diffInMs = now.getTime() - posted.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    if (diffInHours < 48) return "Yesterday";
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,7 +111,7 @@ const FamilyDashboard = () => {
         >
           {!user ? (
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mb-8 border border-green-100">
-              <h2 className="text-2xl font-bold mb-2">Welcome to Takes a Village! 🚀 Your Care Coordination Hub.</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome to Tavara! 🚀 It takes a village to care.</h2>
               <p className="text-gray-600 mb-4">We're building this platform with you in mind. Explore features, connect with caregivers, and help shape the future of care by voting on features!</p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <Link to="/auth">
@@ -48,8 +133,134 @@ const FamilyDashboard = () => {
             </div>
           ) : null}
 
-          <h1 className="text-3xl font-semibold mb-4">Welcome to Takes a Village</h1>
+          <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
+
+          {/* Message Board and Post Care Need Form Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Message Board Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="h-full border-l-4 border-l-primary">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Message Board
+                  </CardTitle>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-500">Care provider availability in Trinidad and Tobago</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 gap-1"
+                        onClick={refreshData}
+                        disabled={refreshing}
+                      >
+                        <Clock className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                        <span className="sr-only">Refresh</span>
+                      </Button>
+                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-100">Professional</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? (
+                    <div className="flex justify-center items-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : messages.length > 0 ? (
+                    <div className="space-y-3">
+                      {messages.filter(message => message.type === "professional").slice(0, 3).map((message) => (
+                        <div 
+                          key={message.id} 
+                          className="p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 bg-gray-50 border-l-primary-400"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="bg-primary-200">
+                                <AvatarFallback className="text-primary-800">
+                                  {message.author_initial}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="font-medium text-sm">{message.title}</h4>
+                                <p className="text-xs text-gray-600">{message.author}</p>
+                              </div>
+                            </div>
+                            {message.urgency && (
+                              <Badge 
+                                variant="outline" 
+                                className={message.urgency === "Immediate" 
+                                  ? "bg-red-50 text-red-700" 
+                                  : message.urgency === "Short Notice" 
+                                    ? "bg-orange-50 text-orange-700" 
+                                    : message.urgency === "This Weekend"
+                                      ? "bg-amber-50 text-amber-700"
+                                      : "bg-blue-50 text-blue-700"
+                                }
+                              >
+                                {message.urgency}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <p className="text-xs text-gray-600">{message.details}</p>
+                          
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {message.specialties && message.specialties.map((specialty, index) => (
+                              <Badge key={index} variant="outline" className="text-xs bg-white">
+                                {specialty}
+                              </Badge>
+                            ))}
+                          </div>
+                          
+                          <div className="flex justify-between items-center pt-1 text-xs text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>Posted {formatTimePosted(message.time_posted)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              <span>{message.location}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-gray-500">No care providers found in Trinidad and Tobago</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={refreshData}
+                        disabled={refreshing}
+                      >
+                        Refresh Data
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="w-full flex justify-between items-center"
+                  >
+                    <span>View Full Message Board</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Post Care Need Form Card */}
+            <FamilyPostCareNeedForm />
+          </div>
 
           {/* Profile Management Card */}
           <Card className="mb-8">
@@ -78,6 +289,9 @@ const FamilyDashboard = () => {
               />
             </CardContent>
           </Card>
+
+          {/* Next Steps Progress Tracker */}
+          <FamilyNextStepsPanel />
 
           {/* Care Management Section */}
           <div className="space-y-6 mb-8">
