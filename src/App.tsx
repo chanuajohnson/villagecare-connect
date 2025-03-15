@@ -1,4 +1,5 @@
-import React, { lazy } from 'react';
+
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/components/providers/AuthProvider';
@@ -17,6 +18,9 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import { initializeSupabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 import SubscriptionPage from '@/pages/subscription/SubscriptionPage';
+
+// Lazy load the subscription features page
+const SubscriptionFeaturesPage = lazy(() => import('./pages/subscription/SubscriptionFeaturesPage'));
 
 function App() {
   useEffect(() => {
@@ -50,7 +54,11 @@ function App() {
             
             {/* Subscription */}
             <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/subscription-features" element={<lazy(() => import('./pages/subscription/SubscriptionFeaturesPage'))()} />
+            <Route path="/subscription-features" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SubscriptionFeaturesPage />
+              </Suspense>
+            } />
           </Routes>
         </div>
       </div>
