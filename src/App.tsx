@@ -11,7 +11,7 @@ import { supabase } from './lib/supabase';
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import LoadingScreen from './components/common/LoadingScreen';
-import Navigation from './components/layout/Navigation';
+import { Navigation } from './components/layout/Navigation'; // Fix: Use named import
 
 import FamilyRegistration from './pages/registration/FamilyRegistration';
 import ProfessionalRegistration from './pages/registration/ProfessionalRegistration';
@@ -20,7 +20,7 @@ import CommunityRegistration from './pages/registration/CommunityRegistration';
 import FamilyDashboard from './pages/dashboards/FamilyDashboard';
 import ProfessionalDashboard from './pages/dashboards/ProfessionalDashboard';
 import CommunityDashboard from './pages/dashboards/CommunityDashboard';
-import AdminDashboard from './pages/dashboards/AdminDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard'; // Fix: Corrected the import path
 
 import FamilyFeaturesOverview from './pages/family/FamilyFeaturesOverview';
 import ProfessionalFeaturesOverview from './pages/professional/ProfessionalFeaturesOverview';
