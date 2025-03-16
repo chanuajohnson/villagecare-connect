@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,50 +8,51 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
-
 const SubscriptionFeaturesPage = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  
+
   // Get the feature type from location state or default to "premium"
   const featureType = location.state?.featureType || "Premium Features";
   // Get the return path from location state or default to the dashboard
   const returnPath = location.state?.returnPath || "/dashboard/professional";
-
   const trackFeatureInterest = async () => {
     setLoading(true);
     try {
       const featureName = `${featureType} Access`;
       const sourcePage = returnPath;
-      
+
       // If user is logged in, save with user ID
       if (user) {
-        const { error } = await supabase.from('feature_interest_tracking').insert({
+        const {
+          error
+        } = await supabase.from('feature_interest_tracking').insert({
           feature_name: featureName,
           user_id: user.id,
           source_page: sourcePage,
-          additional_info: { 
+          additional_info: {
             returnPath,
             featureType
           }
         });
-        
         if (error) throw error;
       } else {
         // Anonymous tracking
-        const { error } = await supabase.from('feature_interest_tracking').insert({
+        const {
+          error
+        } = await supabase.from('feature_interest_tracking').insert({
           feature_name: featureName,
           source_page: sourcePage,
-          additional_info: { 
+          additional_info: {
             returnPath,
             featureType
           }
         });
-        
         if (error) throw error;
       }
-      
       toast.success('Thank you for your interest! We\'ll notify you when this feature launches.');
     } catch (error) {
       console.error('Error tracking feature interest:', error);
@@ -61,23 +61,22 @@ const SubscriptionFeaturesPage = () => {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+  return <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container px-4 py-12">
         <Breadcrumb />
         
         <div className="mb-8">
-          <Link to={returnPath} className="flex items-center text-primary hover:underline mb-4">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to {returnPath.includes('professional') ? 'Professional Dashboard' : 'Family Dashboard'}
-          </Link>
           
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5
+        }}>
             <h1 className="text-3xl font-bold">Premium Features Coming Soon</h1>
             <p className="text-gray-600 mt-2">
               You're trying to access <span className="font-medium">{featureType}</span>, which will be available in our upcoming premium plan.
@@ -225,19 +224,13 @@ const SubscriptionFeaturesPage = () => {
               <p className="text-sm text-gray-600 mb-6">
                 We're working hard to bring these premium features to you. Register your interest to be notified when they're available.
               </p>
-              <Button 
-                className="w-full bg-primary hover:bg-primary-600"
-                onClick={trackFeatureInterest}
-                disabled={loading}
-              >
+              <Button className="w-full bg-primary hover:bg-primary-600" onClick={trackFeatureInterest} disabled={loading}>
                 {loading ? 'Submitting...' : 'Notify Me When Available'}
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default SubscriptionFeaturesPage;
