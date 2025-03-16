@@ -7,9 +7,13 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, ArrowRight, UserCheck, Clock } from "lucide-react";
+import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, CheckSquare, Check, MapPinned, Calendar, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 interface Caregiver {
   id: string;
@@ -23,6 +27,8 @@ interface Caregiver {
   availability: string[] | null;
   match_score: number;
   is_premium: boolean;
+  has_training: boolean;
+  distance: number;
 }
 
 // Mock data for demo purposes - same as in CaregiverMatchingPage
@@ -38,7 +44,9 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Alzheimer's", "Mobility Assistance"],
     availability: ["Weekdays", "Evenings"],
     match_score: 95,
-    is_premium: false
+    is_premium: false,
+    has_training: true,
+    distance: 3.2
   },
   {
     id: "2",
@@ -51,7 +59,24 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Autism Care", "Medication Management"],
     availability: ["Full-time", "Weekends"],
     match_score: 89,
-    is_premium: true
+    is_premium: true,
+    has_training: true,
+    distance: 15.7
+  },
+  {
+    id: "3",
+    full_name: "Sophia Thomas",
+    avatar_url: null,
+    hourly_rate: "$20-28",
+    location: "Arima",
+    years_of_experience: "3+",
+    care_types: ["Child Care", "Housekeeping"],
+    specialized_care: ["Early Childhood Development", "Meal Preparation"],
+    availability: ["Part-time", "Mornings"],
+    match_score: 82,
+    is_premium: false,
+    has_training: false,
+    distance: 8.5
   }
 ];
 
@@ -59,7 +84,39 @@ export const DashboardCaregiverMatches = () => {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
+  const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filter states
+  const [careTypes, setCareTypes] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<string>("all");
+  const [maxDistance, setMaxDistance] = useState<number>(30);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
+
+  // List of care types and availabilities for filters
+  const careTypeOptions = [
+    "Elderly Care", 
+    "Child Care", 
+    "Special Needs", 
+    "Medical Support", 
+    "Overnight Care", 
+    "Companionship",
+    "Housekeeping"
+  ];
+  
+  const availabilityOptions = [
+    { value: "all", label: "Any Availability" },
+    { value: "immediate", label: "Immediate / ASAP" },
+    { value: "scheduled", label: "Scheduled" },
+    { value: "full-time", label: "Full-time" },
+    { value: "part-time", label: "Part-time" },
+    { value: "weekdays", label: "Weekdays" },
+    { value: "weekends", label: "Weekends" },
+    { value: "evenings", label: "Evenings" },
+    { value: "overnight", label: "Overnight" }
+  ];
 
   useEffect(() => {
     const loadCaregivers = async () => {
@@ -78,6 +135,7 @@ export const DashboardCaregiverMatches = () => {
         }
         
         setCaregivers(MOCK_CAREGIVERS);
+        setFilteredCaregivers(MOCK_CAREGIVERS);
       } catch (error) {
         console.error("Error loading caregivers:", error);
       } finally {
@@ -89,6 +147,53 @@ export const DashboardCaregiverMatches = () => {
       loadCaregivers();
     }
   }, [user]);
+
+  // Apply filters whenever filter states change
+  useEffect(() => {
+    if (caregivers.length === 0) return;
+
+    const applyFilters = () => {
+      let result = [...caregivers];
+
+      // Filter by care types if any are selected
+      if (careTypes.length > 0) {
+        result = result.filter(caregiver => 
+          caregiver.care_types?.some(type => careTypes.includes(type))
+        );
+      }
+
+      // Filter by availability
+      if (availability !== "all") {
+        result = result.filter(caregiver =>
+          caregiver.availability?.some(avail => 
+            avail.toLowerCase().includes(availability.toLowerCase())
+          )
+        );
+      }
+
+      // Filter by distance
+      result = result.filter(caregiver => caregiver.distance <= maxDistance);
+
+      // Filter by price range
+      result = result.filter(caregiver => {
+        const minPrice = parseInt(caregiver.hourly_rate?.split('-')[0].replace('$', '') || '0');
+        const maxPrice = parseInt(caregiver.hourly_rate?.split('-')[1]?.replace('$', '') || minPrice.toString());
+        return minPrice <= priceRange[1] && maxPrice >= priceRange[0];
+      });
+
+      // Filter by training completion if selected
+      if (onlyTrained) {
+        result = result.filter(caregiver => caregiver.has_training);
+      }
+
+      // Sort by match score
+      result.sort((a, b) => b.match_score - a.match_score);
+
+      setFilteredCaregivers(result);
+    };
+
+    applyFilters();
+  }, [caregivers, careTypes, availability, maxDistance, priceRange, onlyTrained]);
   
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
@@ -112,6 +217,14 @@ export const DashboardCaregiverMatches = () => {
     } catch (error) {
       console.error("Error in trackEngagement:", error);
     }
+  };
+
+  const handleCareTypeChange = (type: string) => {
+    setCareTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type) 
+        : [...prev, type]
+    );
   };
 
   // Only show this component for logged-in users
@@ -146,30 +259,118 @@ export const DashboardCaregiverMatches = () => {
     <Card className="mb-8 border-l-4 border-l-primary">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle className="text-xl">Top Caregiver Matches</CardTitle>
-          <p className="text-sm text-gray-500">Based on your care preferences</p>
+          <CardTitle className="text-xl">Caregiver Matches</CardTitle>
+          <p className="text-sm text-gray-500">
+            {filteredCaregivers.length} caregivers match your criteria
+          </p>
         </div>
-        <Button 
-          variant="default" 
-          className="flex items-center gap-1"
-          onClick={() => {
-            trackEngagement('view_all_matches_click');
-            navigate("/caregiver-matching");
-          }}
-        >
-          View All Matches
-          <ArrowRight className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+          <Button 
+            variant="default" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              trackEngagement('view_all_matches_click');
+              navigate("/caregiver-matching");
+            }}
+          >
+            View All
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
+      
+      {showFilters && (
+        <CardContent className="border-b pb-4">
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm">Care Type Needed</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {careTypeOptions.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`care-type-${type}`}
+                    checked={careTypes.includes(type)}
+                    onCheckedChange={() => handleCareTypeChange(type)}
+                  />
+                  <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="availability" className="text-sm">Caregiver Availability</Label>
+                <Select
+                  value={availability}
+                  onValueChange={setAvailability}
+                >
+                  <SelectTrigger id="availability">
+                    <SelectValue placeholder="Select availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availabilityOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Maximum Distance: {maxDistance} km</span>
+                </Label>
+                <Slider 
+                  value={[maxDistance]} 
+                  min={1} 
+                  max={50} 
+                  step={1}
+                  onValueChange={(value) => setMaxDistance(value[0])}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
+                </Label>
+                <Slider 
+                  value={priceRange} 
+                  min={0} 
+                  max={100} 
+                  step={5}
+                  onValueChange={setPriceRange}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="trained-caregivers" 
+                checked={onlyTrained}
+                onCheckedChange={(checked) => setOnlyTrained(checked as boolean)}
+              />
+              <Label htmlFor="trained-caregivers" className="text-sm">Show only platform-trained caregivers</Label>
+            </div>
+          </div>
+        </CardContent>
+      )}
       
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center py-6">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : caregivers.length > 0 ? (
+        ) : filteredCaregivers.length > 0 ? (
           <div className="space-y-4">
-            {caregivers.map((caregiver) => (
+            {filteredCaregivers.map((caregiver) => (
               <div 
                 key={caregiver.id}
                 className={`p-4 rounded-lg border ${caregiver.is_premium ? 'border-amber-300' : 'border-gray-200'} relative`}
@@ -206,12 +407,21 @@ export const DashboardCaregiverMatches = () => {
                   
                   {/* Details Section */}
                   <div className="sm:w-2/5 space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Rate:</span>
-                      <span>{caregiver.hourly_rate}/hr</span>
-                      <span className="mx-1">•</span>
-                      <span className="font-medium">Experience:</span>
-                      <span>{caregiver.years_of_experience} Years</span>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-3.5 w-3.5 text-gray-500" />
+                        <span>{caregiver.hourly_rate}/hr</span>
+                      </div>
+                      <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-gray-500" />
+                        <span>{caregiver.years_of_experience} Experience</span>
+                      </div>
+                      <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-1">
+                        <MapPinned className="h-3.5 w-3.5 text-gray-500" />
+                        <span>{caregiver.distance.toFixed(1)} km away</span>
+                      </div>
                     </div>
                     
                     <div className="text-sm">
@@ -230,7 +440,7 @@ export const DashboardCaregiverMatches = () => {
                       <div className="flex flex-wrap gap-1">
                         {caregiver.availability?.map((avail, i) => (
                           <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                            <Clock className="h-3 w-3" />
+                            <Calendar className="h-3 w-3" />
                             <span>{avail}</span>
                           </div>
                         ))}
@@ -244,6 +454,13 @@ export const DashboardCaregiverMatches = () => {
                       <UserCheck className="h-4 w-4 text-green-600" />
                       <span className="text-sm text-green-700">Background Checked</span>
                     </div>
+                    
+                    {caregiver.has_training && (
+                      <div className="flex items-center gap-1">
+                        <Check className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-blue-700">Platform Trained</span>
+                      </div>
+                    )}
                     
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -269,7 +486,7 @@ export const DashboardCaregiverMatches = () => {
                         }
                       }}
                     >
-                      {caregiver.is_premium ? "Unlock Profile" : "Contact Caregiver"}
+                      {caregiver.is_premium ? "Unlock Profile" : "Contact"}
                     </Button>
                   </div>
                 </div>
@@ -290,12 +507,18 @@ export const DashboardCaregiverMatches = () => {
           </div>
         ) : (
           <div className="text-center py-6">
-            <p className="text-gray-500 mb-4">We're still finding caregivers that match your preferences</p>
+            <p className="text-gray-500 mb-4">No caregivers match your selected filters</p>
             <Button 
-              variant="default"
-              onClick={() => navigate("/caregiver-matching")}
+              variant="outline"
+              onClick={() => {
+                setCareTypes([]);
+                setAvailability("all");
+                setMaxDistance(30);
+                setPriceRange([0, 100]);
+                setOnlyTrained(false);
+              }}
             >
-              Find Caregivers Now
+              Reset Filters
             </Button>
           </div>
         )}
