@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ interface Caregiver {
   distance: number;
 }
 
-// Mock data for demo purposes - same as in CaregiverMatchingPage
 const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "1",
@@ -88,14 +86,12 @@ export const DashboardCaregiverMatches = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter states
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
 
-  // List of care types and availabilities for filters
   const careTypeOptions = [
     "Elderly Care", 
     "Child Care", 
@@ -123,13 +119,8 @@ export const DashboardCaregiverMatches = () => {
       try {
         setIsLoading(true);
         
-        // For demo purposes, we'll use the mock data
-        // In production, this would fetch from Supabase based on preferences
-        
-        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Track view for analytics
         if (user) {
           await trackEngagement('dashboard_caregiver_matches_view');
         }
@@ -148,21 +139,18 @@ export const DashboardCaregiverMatches = () => {
     }
   }, [user]);
 
-  // Apply filters whenever filter states change
   useEffect(() => {
     if (caregivers.length === 0) return;
 
     const applyFilters = () => {
       let result = [...caregivers];
 
-      // Filter by care types if any are selected
       if (careTypes.length > 0) {
         result = result.filter(caregiver => 
           caregiver.care_types?.some(type => careTypes.includes(type))
         );
       }
 
-      // Filter by availability
       if (availability !== "all") {
         result = result.filter(caregiver =>
           caregiver.availability?.some(avail => 
@@ -171,22 +159,18 @@ export const DashboardCaregiverMatches = () => {
         );
       }
 
-      // Filter by distance
       result = result.filter(caregiver => caregiver.distance <= maxDistance);
 
-      // Filter by price range
       result = result.filter(caregiver => {
         const minPrice = parseInt(caregiver.hourly_rate?.split('-')[0].replace('$', '') || '0');
         const maxPrice = parseInt(caregiver.hourly_rate?.split('-')[1]?.replace('$', '') || minPrice.toString());
         return minPrice <= priceRange[1] && maxPrice >= priceRange[0];
       });
 
-      // Filter by training completion if selected
       if (onlyTrained) {
         result = result.filter(caregiver => caregiver.has_training);
       }
 
-      // Sort by match score
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredCaregivers(result);
@@ -199,7 +183,6 @@ export const DashboardCaregiverMatches = () => {
     try {
       const sessionId = localStorage.getItem('session_id') || uuidv4();
       
-      // Store the session ID if it's new
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
@@ -227,12 +210,10 @@ export const DashboardCaregiverMatches = () => {
     );
   };
 
-  // Only show this component for logged-in users
   if (!user) {
     return null;
   }
 
-  // If user's profile is incomplete, show a prompt to complete it
   if (!isProfileComplete) {
     return (
       <Card className="mb-8 border-l-4 border-l-primary">
@@ -346,7 +327,9 @@ export const DashboardCaregiverMatches = () => {
                   min={0} 
                   max={100} 
                   step={5}
-                  onValueChange={setPriceRange}
+                  onValueChange={(value: number[]) => {
+                    setPriceRange([value[0], value[1]]);
+                  }}
                 />
               </div>
             </div>
@@ -384,7 +367,6 @@ export const DashboardCaregiverMatches = () => {
                 )}
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Profile Section */}
                   <div className="flex flex-col items-center sm:items-start sm:w-1/5">
                     <Avatar className="h-16 w-16 border-2 border-primary/20">
                       <AvatarImage src={caregiver.avatar_url || undefined} />
@@ -405,7 +387,6 @@ export const DashboardCaregiverMatches = () => {
                     </div>
                   </div>
                   
-                  {/* Details Section */}
                   <div className="sm:w-2/5 space-y-2">
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <div className="flex items-center gap-1">
@@ -448,7 +429,6 @@ export const DashboardCaregiverMatches = () => {
                     </div>
                   </div>
                   
-                  {/* Action Section */}
                   <div className="sm:w-2/5 md:w-1/5 flex flex-col justify-center space-y-3">
                     <div className="flex items-center gap-1">
                       <UserCheck className="h-4 w-4 text-green-600" />
