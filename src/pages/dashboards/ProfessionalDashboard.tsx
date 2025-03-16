@@ -89,8 +89,9 @@ const ProfessionalDashboard = () => {
           </div>
         )}
 
+        {/* Profile Management and Admin Assistant - side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card className="bg-white shadow-sm md:col-span-2">
+          <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCog className="h-5 w-5" />
@@ -125,7 +126,7 @@ const ProfessionalDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-sm md:col-span-2">
+          <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -161,13 +162,8 @@ const ProfessionalDashboard = () => {
           </Card>
         </div>
 
-        {/* Training Program Section */}
-        <TrainingProgramSection />
-
-        {/* Training Modules Section */}
-        <TrainingModulesSection />
-
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-8">
+        {/* Training Resources - single column, full width */}
+        <div className="mt-8">
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -202,7 +198,16 @@ const ProfessionalDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Training Program Section */}
+        <TrainingProgramSection />
+
+        {/* Training Modules Section */}
+        <TrainingModulesSection />
+
+        {/* Professional Agency - single column, full width */}
+        <div className="mt-8">
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
