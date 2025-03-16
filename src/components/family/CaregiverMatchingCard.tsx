@@ -14,6 +14,11 @@ export const CaregiverMatchingCard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // If user is logged in, don't show this card
+  if (user) {
+    return null;
+  }
+
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
       const sessionId = localStorage.getItem('session_id') || uuidv4();
