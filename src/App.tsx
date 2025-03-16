@@ -1,20 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { ThemeProvider } from "@/components/providers/ThemeProvider"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from "./components/providers/ThemeProvider"
 import { Toaster } from "sonner"
 
 import { AuthProvider } from './components/providers/AuthProvider';
 import { supabase } from './lib/supabase';
 
 import Index from './pages/Index';
-import AboutPage from './pages/AboutPage';
-import FeaturesPage from './pages/FeaturesPage';
-import AuthPage from './pages/AuthPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFound from './pages/NotFound';
-import LoadingScreen from './components/LoadingScreen';
-import Navigation from './components/Navigation';
+import LoadingScreen from './components/common/LoadingScreen';
+import Navigation from './components/layout/Navigation';
 
 import FamilyRegistration from './pages/registration/FamilyRegistration';
 import ProfessionalRegistration from './pages/registration/ProfessionalRegistration';
@@ -34,11 +31,15 @@ import ModuleViewerPage from './pages/professional/ModuleViewerPage';
 import MessageBoardPage from './pages/professional/MessageBoardPage';
 
 import CaregiverMatchingPage from './pages/caregiver/CaregiverMatchingPage';
-import SubscriptionPage from './pages/SubscriptionPage';
-import SubscriptionFeaturesPage from './pages/SubscriptionFeaturesPage';
-
-import FAQPage from './pages/FAQPage';
 import FamilyMatchingPage from './pages/caregiver/FamilyMatchingPage';
+import SubscriptionPage from './pages/subscription/SubscriptionPage';
+import SubscriptionFeaturesPage from './pages/subscription/SubscriptionFeaturesPage';
+
+import FAQPage from './pages/support/FAQPage';
+import AboutPage from './pages/about/AboutPage';
+import FeaturesPage from './pages/features/FeaturesPage';
+import AuthPage from './pages/auth/AuthPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +56,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider supabase={supabase}>
+      <AuthProvider>
         <ThemeProvider defaultTheme="light" storageKey="tavara-ui-theme">
           <Router>
             <Navigation />
