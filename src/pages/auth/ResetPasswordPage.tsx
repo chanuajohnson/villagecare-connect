@@ -109,20 +109,19 @@ export default function ResetPasswordPage() {
           console.log("[ResetPasswordPage] Direct token recovery flow detected");
           
           try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            console.log("[ResetPasswordPage] Attempting to process recovery token directly");
             
-            if (userError || !user) {
-              console.error("[ResetPasswordPage] No user found with direct token");
-              setError("This password reset link cannot be processed directly. Please request a new one.");
-              setMode("request");
-            } else {
-              console.log("[ResetPasswordPage] User found with direct token:", user.email);
-              setEmail(user.email);
-              setTokenValidated(true);
-              setError(null);
-              
-              toast.info("Please set a new password you'll remember.", { duration: 6000 });
-            }
+            const currentHostname = window.location.origin;
+            const correctRedirectUrl = `${currentHostname}/auth/reset-password`;
+            
+            console.log("[ResetPasswordPage] Current origin:", currentHostname);
+            console.log("[ResetPasswordPage] Correct redirect URL should be:", correctRedirectUrl);
+            
+            setError(
+              "We detected a password reset link that needs to be processed differently. " +
+              "Please use the 'Request New Link' button below to get a new reset link that will work correctly with this application."
+            );
+            setMode("request");
           } catch (err) {
             console.error("[ResetPasswordPage] Error in direct token flow:", err);
             setError("Error processing your reset token. Please request a new one.");
@@ -202,7 +201,9 @@ export default function ResetPasswordPage() {
       setIsLoading(true);
       console.log("[ResetPasswordPage] Requesting password reset for:", email);
       
-      const resetPasswordUrl = `${window.location.origin}/auth/reset-password`;
+      const currentHostname = window.location.origin;
+      const resetPasswordUrl = `${currentHostname}/auth/reset-password`;
+      
       console.log("[ResetPasswordPage] Using reset password redirect URL:", resetPasswordUrl);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -212,9 +213,11 @@ export default function ResetPasswordPage() {
       if (error) throw error;
       
       console.log("[ResetPasswordPage] Password reset email sent successfully");
+      toast.success("Password reset email sent. Please check your inbox.");
       return true;
     } catch (error: any) {
       console.error("[ResetPasswordPage] Error requesting reset:", error);
+      toast.error(error.message || "Failed to send password reset email");
       throw error;
     } finally {
       setIsLoading(false);
