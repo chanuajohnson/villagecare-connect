@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Clock, Filter, MapPin, DollarSign, Star, Lock, BookOpen, UserCheck } from "lucide-react";
+import { Clock, Filter, MapPin, DollarSign, Star, Lock, BookOpen, UserCheck, Calendar, MapPinned, Check, CheckSquare } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 interface Caregiver {
   id: string;
@@ -26,6 +28,8 @@ interface Caregiver {
   availability: string[] | null;
   match_score: number;
   is_premium: boolean;
+  has_training: boolean;
+  distance: number;
 }
 
 // Mock data for demo purposes
@@ -41,7 +45,9 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Alzheimer's", "Mobility Assistance"],
     availability: ["Weekdays", "Evenings"],
     match_score: 95,
-    is_premium: false
+    is_premium: false,
+    has_training: true,
+    distance: 3.2
   },
   {
     id: "2",
@@ -54,7 +60,9 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Autism Care", "Medication Management"],
     availability: ["Full-time", "Weekends"],
     match_score: 89,
-    is_premium: true
+    is_premium: true,
+    has_training: true,
+    distance: 15.7
   },
   {
     id: "3",
@@ -67,7 +75,9 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Early Childhood Development", "Meal Preparation"],
     availability: ["Part-time", "Mornings"],
     match_score: 82,
-    is_premium: false
+    is_premium: false,
+    has_training: false,
+    distance: 8.5
   },
   {
     id: "4",
@@ -80,7 +90,9 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     specialized_care: ["Dementia Care", "Stroke Recovery"],
     availability: ["Overnight", "Weekends"],
     match_score: 78,
-    is_premium: true
+    is_premium: true,
+    has_training: false,
+    distance: 12.3
   }
 ];
 
@@ -89,11 +101,37 @@ export default function CaregiverMatchingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
+  const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [careType, setCareType] = useState<string>("all");
+  
+  // Replace the old filter states with the new ones that match the dashboard
+  const [careTypes, setCareTypes] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>("all");
-  const [priceRange, setPriceRange] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("match");
+  const [maxDistance, setMaxDistance] = useState<number>(30);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
+
+  const careTypeOptions = [
+    "Elderly Care", 
+    "Child Care", 
+    "Special Needs", 
+    "Medical Support", 
+    "Overnight Care", 
+    "Companionship",
+    "Housekeeping"
+  ];
+  
+  const availabilityOptions = [
+    { value: "all", label: "Any Availability" },
+    { value: "immediate", label: "Immediate / ASAP" },
+    { value: "scheduled", label: "Scheduled" },
+    { value: "full-time", label: "Full-time" },
+    { value: "part-time", label: "Part-time" },
+    { value: "weekdays", label: "Weekdays" },
+    { value: "weekends", label: "Weekends" },
+    { value: "evenings", label: "Evenings" },
+    { value: "overnight", label: "Overnight" }
+  ];
   
   useEffect(() => {
     const loadCaregivers = async () => {
@@ -109,32 +147,8 @@ export default function CaregiverMatchingPage() {
         // Track page view
         await trackEngagement('caregiver_matching_page_view');
         
-        // Sort caregivers based on selected sort
-        let sortedCaregivers = [...MOCK_CAREGIVERS];
-        
-        if (sortBy === "match") {
-          sortedCaregivers.sort((a, b) => b.match_score - a.match_score);
-        } else if (sortBy === "price_low") {
-          sortedCaregivers.sort((a, b) => {
-            const aPrice = parseInt(a.hourly_rate?.split('-')[0].replace('$', '') || '0');
-            const bPrice = parseInt(b.hourly_rate?.split('-')[0].replace('$', '') || '0');
-            return aPrice - bPrice;
-          });
-        } else if (sortBy === "price_high") {
-          sortedCaregivers.sort((a, b) => {
-            const aPrice = parseInt(a.hourly_rate?.split('-')[0].replace('$', '') || '0');
-            const bPrice = parseInt(b.hourly_rate?.split('-')[0].replace('$', '') || '0');
-            return bPrice - aPrice;
-          });
-        } else if (sortBy === "experience") {
-          sortedCaregivers.sort((a, b) => {
-            const aExp = parseInt(a.years_of_experience?.replace('+', '') || '0');
-            const bExp = parseInt(b.years_of_experience?.replace('+', '') || '0');
-            return bExp - aExp;
-          });
-        }
-        
-        setCaregivers(sortedCaregivers);
+        setCaregivers(MOCK_CAREGIVERS);
+        setFilteredCaregivers(MOCK_CAREGIVERS);
       } catch (error) {
         console.error("Error loading caregivers:", error);
         toast.error("Failed to load caregiver matches");
@@ -154,7 +168,48 @@ export default function CaregiverMatchingPage() {
         state: { returnPath: "/caregiver-matching", action: "findCaregiver" }
       });
     }
-  }, [user, isProfileComplete, navigate, sortBy]);
+  }, [user, isProfileComplete, navigate]);
+  
+  // Apply filters when any filter value changes
+  useEffect(() => {
+    if (caregivers.length === 0) return;
+
+    const applyFilters = () => {
+      let result = [...caregivers];
+
+      if (careTypes.length > 0) {
+        result = result.filter(caregiver => 
+          caregiver.care_types?.some(type => careTypes.includes(type))
+        );
+      }
+
+      if (availability !== "all") {
+        result = result.filter(caregiver =>
+          caregiver.availability?.some(avail => 
+            avail.toLowerCase().includes(availability.toLowerCase())
+          )
+        );
+      }
+
+      result = result.filter(caregiver => caregiver.distance <= maxDistance);
+
+      result = result.filter(caregiver => {
+        const minPrice = parseInt(caregiver.hourly_rate?.split('-')[0].replace('$', '') || '0');
+        const maxPrice = parseInt(caregiver.hourly_rate?.split('-')[1]?.replace('$', '') || minPrice.toString());
+        return minPrice <= priceRange[1] && maxPrice >= priceRange[0];
+      });
+
+      if (onlyTrained) {
+        result = result.filter(caregiver => caregiver.has_training);
+      }
+
+      result.sort((a, b) => b.match_score - a.match_score);
+
+      setFilteredCaregivers(result);
+    };
+
+    applyFilters();
+  }, [caregivers, careTypes, availability, maxDistance, priceRange, onlyTrained]);
   
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
@@ -195,37 +250,14 @@ export default function CaregiverMatchingPage() {
       toast.success("Request sent! The caregiver will contact you shortly.");
     }
   };
-  
-  // Filter caregivers based on selected filters
-  const filteredCaregivers = caregivers.filter(caregiver => {
-    let matchesCareType = true;
-    let matchesAvailability = true;
-    let matchesPriceRange = true;
-    
-    // Filter by care type
-    if (careType !== "all" && caregiver.care_types) {
-      matchesCareType = caregiver.care_types.some(type => 
-        type.toLowerCase().includes(careType.toLowerCase())
-      );
-    }
-    
-    // Filter by availability
-    if (availability !== "all" && caregiver.availability) {
-      matchesAvailability = caregiver.availability.some(avail => 
-        avail.toLowerCase().includes(availability.toLowerCase())
-      );
-    }
-    
-    // Filter by price range
-    if (priceRange !== "all" && caregiver.hourly_rate) {
-      const minPrice = parseInt(caregiver.hourly_rate.split('-')[0].replace('$', ''));
-      if (priceRange === "under20" && minPrice > 20) matchesPriceRange = false;
-      if (priceRange === "20to30" && (minPrice < 20 || minPrice > 30)) matchesPriceRange = false;
-      if (priceRange === "over30" && minPrice < 30) matchesPriceRange = false;
-    }
-    
-    return matchesCareType && matchesAvailability && matchesPriceRange;
-  });
+
+  const handleCareTypeChange = (type: string) => {
+    setCareTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type) 
+        : [...prev, type]
+    );
+  };
   
   return (
     <div className="container px-4 py-8">
@@ -236,7 +268,7 @@ export default function CaregiverMatchingPage() {
         </p>
       </div>
       
-      {/* Filters Section */}
+      {/* Filters Section - Updated to match dashboard */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -245,81 +277,77 @@ export default function CaregiverMatchingPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="careType">Care Type</Label>
-              <Select
-                value={careType}
-                onValueChange={setCareType}
-              >
-                <SelectTrigger id="careType">
-                  <SelectValue placeholder="All Care Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Care Types</SelectItem>
-                  <SelectItem value="elderly">Elderly Care</SelectItem>
-                  <SelectItem value="special">Special Needs</SelectItem>
-                  <SelectItem value="child">Child Care</SelectItem>
-                  <SelectItem value="medical">Medical Support</SelectItem>
-                  <SelectItem value="overnight">Overnight Care</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm">Care Type Needed</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {careTypeOptions.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`care-type-${type}`}
+                    checked={careTypes.includes(type)}
+                    onCheckedChange={() => handleCareTypeChange(type)}
+                  />
+                  <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="availability" className="text-sm">Caregiver Availability</Label>
+                <Select
+                  value={availability}
+                  onValueChange={setAvailability}
+                >
+                  <SelectTrigger id="availability">
+                    <SelectValue placeholder="Select availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availabilityOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Maximum Distance: {maxDistance} km</span>
+                </Label>
+                <Slider 
+                  value={[maxDistance]} 
+                  min={1} 
+                  max={50} 
+                  step={1}
+                  onValueChange={(value) => setMaxDistance(value[0])}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
+                </Label>
+                <Slider 
+                  value={priceRange} 
+                  min={0} 
+                  max={100} 
+                  step={5}
+                  onValueChange={(value: number[]) => {
+                    setPriceRange([value[0], value[1]] as [number, number]);
+                  }}
+                />
+              </div>
             </div>
             
-            <div>
-              <Label htmlFor="availability">Availability</Label>
-              <Select
-                value={availability}
-                onValueChange={setAvailability}
-              >
-                <SelectTrigger id="availability">
-                  <SelectValue placeholder="All Availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Availability</SelectItem>
-                  <SelectItem value="full-time">Full-time</SelectItem>
-                  <SelectItem value="part-time">Part-time</SelectItem>
-                  <SelectItem value="weekdays">Weekdays</SelectItem>
-                  <SelectItem value="weekends">Weekends</SelectItem>
-                  <SelectItem value="overnight">Overnight</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="priceRange">Price Range</Label>
-              <Select
-                value={priceRange}
-                onValueChange={setPriceRange}
-              >
-                <SelectTrigger id="priceRange">
-                  <SelectValue placeholder="All Prices" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Prices</SelectItem>
-                  <SelectItem value="under20">Under $20/hr</SelectItem>
-                  <SelectItem value="20to30">$20-$30/hr</SelectItem>
-                  <SelectItem value="over30">Over $30/hr</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="sortBy">Sort By</Label>
-              <Select
-                value={sortBy}
-                onValueChange={setSortBy}
-              >
-                <SelectTrigger id="sortBy">
-                  <SelectValue placeholder="Best Match" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="match">Best Match</SelectItem>
-                  <SelectItem value="price_low">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high">Price: High to Low</SelectItem>
-                  <SelectItem value="experience">Most Experienced</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="trained-caregivers" 
+                checked={onlyTrained}
+                onCheckedChange={(checked) => setOnlyTrained(checked as boolean)}
+              />
+              <Label htmlFor="trained-caregivers" className="text-sm">Show only platform-trained caregivers</Label>
             </div>
           </div>
         </CardContent>
@@ -337,12 +365,14 @@ export default function CaregiverMatchingPage() {
             variant="outline" 
             className="mt-4"
             onClick={() => {
-              setCareType("all");
+              setCareTypes([]);
               setAvailability("all");
-              setPriceRange("all");
+              setMaxDistance(30);
+              setPriceRange([0, 100]);
+              setOnlyTrained(false);
             }}
           >
-            Clear Filters
+            Reset Filters
           </Button>
         </div>
       ) : (
@@ -417,7 +447,7 @@ export default function CaregiverMatchingPage() {
                   
                   {/* Details Section */}
                   <div className="col-span-2 space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-primary-600" />
                         <div>
@@ -431,6 +461,14 @@ export default function CaregiverMatchingPage() {
                         <div>
                           <div className="text-sm text-gray-500">Experience</div>
                           <div className="font-medium">{caregiver.years_of_experience} Years</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <MapPinned className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Distance</div>
+                          <div className="font-medium">{caregiver.distance.toFixed(1)} km</div>
                         </div>
                       </div>
                     </div>
@@ -462,7 +500,7 @@ export default function CaregiverMatchingPage() {
                       <div className="flex flex-wrap gap-1">
                         {caregiver.availability?.map((avail, i) => (
                           <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                            <Clock className="h-3 w-3" />
+                            <Calendar className="h-3 w-3" />
                             <span>{avail}</span>
                           </div>
                         ))}
@@ -477,6 +515,14 @@ export default function CaregiverMatchingPage() {
                         <UserCheck className="h-4 w-4 text-green-600" />
                         <span className="text-sm text-green-700">Background Checked</span>
                       </div>
+
+                      {caregiver.has_training && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <Check className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm text-blue-700">Platform Trained</span>
+                        </div>
+                      )}
+                      
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-amber-500" />
                         <Star className="h-4 w-4 text-amber-500" />
