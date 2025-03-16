@@ -26,18 +26,9 @@ export const StoryCard = ({
           
           <p>This revealed a bigger issue: caregiving doesn’t just need more workers—it needs better systems, stronger communities, and real support for both families and caregivers.</p>
 
-          <p>
-            The name "Tavara" comes from the concept that valuable services and care should be
-            accessible to all who need them, with "care" emphasizing our core mission of supporting
-            caregivers and care recipients alike.
-          </p>
+          
 
-          <p>
-            Launched in 2024, Tavara.care has grown into a comprehensive platform that brings
-            together families, professional caregivers, and community resources. We're building
-            technology that solves real problems, creates meaningful connections, and ultimately
-            transforms how care is delivered and received.
-          </p>
+          
         </div>
         
         <Button variant="ghost" size="sm" className="mt-4 text-primary-600" onClick={e => {
