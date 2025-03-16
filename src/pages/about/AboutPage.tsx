@@ -13,11 +13,14 @@ import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
 const AboutPage = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  
   const handleCardClick = (cardId: string) => {
     setActiveCard(activeCard === cardId ? null : cardId);
   };
+  
   const moduleList = [{
     id: "module1",
     title: "Module 1: Caregiving Basics & Professionalism",
@@ -47,6 +50,7 @@ const AboutPage = () => {
     title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
     description: "Legal, ethical, and human rights aspects of caregiving."
   }];
+
   return <div className="min-h-screen bg-white">
       <Container>
         <Breadcrumb />
@@ -87,12 +91,23 @@ const AboutPage = () => {
           duration: 0.5,
           delay: 0.3
         }} className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm max-w-4xl mx-auto">
-            <p className="text-gray-600 leading-relaxed">Tavara is a technology-driven platform that connects caregivers with families who need them, making it easy to find and provide trusted home care. 
- For Families
-Find trained, reliable caregivers for elderly loved ones and individuals with special needs
-For Caregivers
-Get access to jobs, training, and ongoing support</p>
-            
+            <div className="text-gray-600 leading-relaxed">
+              <p>Tavara is a <span className="text-primary-700 font-semibold">technology-driven platform</span> that <span className="text-primary-700 font-semibold">connects caregivers with families</span> who need them, making it easy to find and provide trusted home care.</p>
+              
+              <div className="mt-4">
+                <p className="font-bold">For Families</p>
+                <ul className="list-disc pl-6 mt-1">
+                  <li>Find trained, reliable caregivers for elderly loved ones and individuals with special needs</li>
+                </ul>
+              </div>
+              
+              <div className="mt-2">
+                <p className="font-bold">For Caregivers</p>
+                <ul className="list-disc pl-6 mt-1">
+                  <li>Get access to jobs, training, and ongoing support</li>
+                </ul>
+              </div>
+            </div>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-12">
@@ -309,7 +324,21 @@ Get access to jobs, training, and ongoing support</p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mt-16">
+          <div className="mt-16 text-center">
+            <motion.h2 initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} viewport={{
+            once: true
+          }} className="text-2xl font-semibold mb-8 text-primary-800">Our Values</motion.h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
             <motion.div initial={{
             opacity: 0,
             y: 20
@@ -324,7 +353,7 @@ Get access to jobs, training, and ongoing support</p>
               <Card className="overflow-hidden border-primary-100 hover:shadow-lg transition-shadow h-full">
                 <CardHeader className="bg-primary-50">
                   <CardTitle className="flex items-center gap-2 text-primary-700">
-                    <Heart className="h-5 w-5" /> Compassion
+                    <Heart className="h-5 w-5" /> Empathy
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -542,4 +571,5 @@ Get access to jobs, training, and ongoing support</p>
       </Container>
     </div>;
 };
+
 export default AboutPage;
