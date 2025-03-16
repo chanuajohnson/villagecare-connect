@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,6 +102,7 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
+      // Ensure we use the full reset password path in the redirectTo
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
