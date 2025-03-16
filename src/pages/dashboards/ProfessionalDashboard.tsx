@@ -13,7 +13,6 @@ import { JobListings } from "@/components/professional/JobListings";
 import { MessageBoard } from "@/components/professional/MessageBoard";
 import { TrainingProgramSection } from "@/components/professional/TrainingProgramSection";
 import { TrainingModulesSection } from "@/components/professional/TrainingModulesSection";
-import { DashboardFamilyMatches } from "@/components/professional/DashboardFamilyMatches";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -78,9 +77,6 @@ const ProfessionalDashboard = () => {
           </motion.div>
         ) : (
           <div className="space-y-6 mt-8">
-            {/* Family Matches Card */}
-            <DashboardFamilyMatches />
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <NextStepsPanel />
               <TrainingProgressTracker />
