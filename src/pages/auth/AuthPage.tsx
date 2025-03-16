@@ -102,9 +102,12 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
-      // Ensure we use the full reset password path in the redirectTo
+      // The critical fix: ensure we include the full path to the reset password page
+      const resetPasswordUrl = `${window.location.origin}/auth/reset-password`;
+      console.log("[AuthPage] Using reset password redirect URL:", resetPasswordUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: resetPasswordUrl,
       });
 
       if (error) {

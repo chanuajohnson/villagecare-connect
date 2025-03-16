@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,9 +31,11 @@ export default function ResetPasswordPage() {
         setValidatingToken(true);
         console.log("[ResetPasswordPage] Validating reset token...");
         
-        // Get the current URL parameters and hash
+        const currentUrl = window.location.href;
+        console.log("[ResetPasswordPage] Current URL:", currentUrl);
+        
         const type = searchParams.get("type");
-        const token = searchParams.get("token"); // Look for direct token parameter
+        const token = searchParams.get("token");
         const accessToken = searchParams.get("access_token");
         const refreshToken = searchParams.get("refresh_token");
         const code = searchParams.get("code");
@@ -47,72 +48,37 @@ export default function ResetPasswordPage() {
           hasCode: !!code
         });
         
-        // First check for hash fragments (Supabase might redirect with hash instead of query params)
-        if (location.hash && location.hash.includes("access_token")) {
-          console.log("[ResetPasswordPage] Hash fragment detected:", location.hash);
-          // Let Supabase client parse the hash - it does this automatically
-          
-          // After hash is processed, we can check if we have a user
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          
-          if (userError || !user) {
-            console.error("[ResetPasswordPage] Error getting user from hash:", userError);
-            setError("Invalid or expired password reset link. Please request a new one.");
-            setMode("request");
-          } else {
-            console.log("[ResetPasswordPage] User found from hash:", user.email);
-            setEmail(user.email);
-            setTokenValidated(true);
-            setError(null);
-            
-            toast.info("Please set a new password you'll remember.", { duration: 6000 });
-          }
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        const hashAccessToken = hashParams.get("access_token");
+        
+        if (hashAccessToken) {
+          console.log("[ResetPasswordPage] Found token in hash fragment");
         }
-        // Check for recovery flow with type and direct token
-        else if (type === "recovery" && token) {
-          console.log("[ResetPasswordPage] Token recovery flow detected");
+        
+        if (accessToken || hashAccessToken) {
+          console.log("[ResetPasswordPage] Found access token in URL parameters or hash");
           
-          // For Supabase v2, we need to use the token to get a session
           try {
-            // Get redirect URL from the current location
-            // This automatically picks up the hash fragment if present
-            const redirectUrl = window.location.href;
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
             
-            // Use the token to construct a password recovery URL
-            const { error } = await supabase.auth.resetPasswordForEmail(email || "", {
-              redirectTo: redirectUrl,
-            });
-            
-            if (error) {
-              console.error("[ResetPasswordPage] Error with recovery flow:", error);
+            if (userError || !user) {
+              console.error("[ResetPasswordPage] Error getting user from token:", userError);
               setError("Invalid or expired password reset link. Please request a new one.");
               setMode("request");
             } else {
-              // For token-based flow, we don't get the email directly
-              // We'll need to check if we're authenticated now
-              const { data: { user }, error: userError } = await supabase.auth.getUser();
+              console.log("[ResetPasswordPage] User found from token:", user.email);
+              setEmail(user.email);
+              setTokenValidated(true);
+              setError(null);
               
-              if (userError || !user) {
-                console.error("[ResetPasswordPage] No user found after token handling");
-                setError("Password reset link is invalid or has expired. Please request a new one.");
-                setMode("request");
-              } else {
-                console.log("[ResetPasswordPage] User found after token handling:", user.email);
-                setEmail(user.email);
-                setTokenValidated(true);
-                setError(null);
-                
-                toast.info("Please set a new password you'll remember.", { duration: 6000 });
-              }
+              toast.info("Please set a new password you'll remember.", { duration: 6000 });
             }
           } catch (err) {
-            console.error("[ResetPasswordPage] Error in token recovery flow:", err);
+            console.error("[ResetPasswordPage] Error processing token:", err);
             setError("An error occurred while processing your reset link. Please request a new one.");
             setMode("request");
           }
-        }
-        // Check for recovery flow with code
-        else if (type === "recovery" && code) {
+        } else if (type === "recovery" && code) {
           console.log("[ResetPasswordPage] Code recovery flow detected");
           
           try {
@@ -139,23 +105,18 @@ export default function ResetPasswordPage() {
             setError("Error processing your reset link. Please request a new one.");
             setMode("request");
           }
-        }
-        // Direct token flow (less common but checking just in case)
-        else if (accessToken && refreshToken) {
-          console.log("[ResetPasswordPage] Direct token flow detected");
+        } else if (token && type === "recovery") {
+          console.log("[ResetPasswordPage] Direct token recovery flow detected");
           
           try {
-            const { data: { user }, error: setSessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
             
-            if (setSessionError || !user) {
-              console.error("[ResetPasswordPage] Set session error:", setSessionError);
-              setError("Invalid or expired password reset link. Please request a new one.");
+            if (userError || !user) {
+              console.error("[ResetPasswordPage] No user found with direct token");
+              setError("This password reset link cannot be processed directly. Please request a new one.");
               setMode("request");
             } else {
-              console.log("[ResetPasswordPage] User found from direct tokens:", user.email);
+              console.log("[ResetPasswordPage] User found with direct token:", user.email);
               setEmail(user.email);
               setTokenValidated(true);
               setError(null);
@@ -164,13 +125,11 @@ export default function ResetPasswordPage() {
             }
           } catch (err) {
             console.error("[ResetPasswordPage] Error in direct token flow:", err);
-            setError("Error processing your reset link. Please request a new one.");
+            setError("Error processing your reset token. Please request a new one.");
             setMode("request");
           }
-        }
-        // If we have a user session already, we might be authenticated from a previous step
-        else {
-          console.log("[ResetPasswordPage] Checking for existing session");
+        } else {
+          console.log("[ResetPasswordPage] No token parameters found, checking for existing session");
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           
           if (userError || !user) {
@@ -243,9 +202,11 @@ export default function ResetPasswordPage() {
       setIsLoading(true);
       console.log("[ResetPasswordPage] Requesting password reset for:", email);
       
-      // Update the redirectTo URL to include the /auth/reset-password path
+      const resetPasswordUrl = `${window.location.origin}/auth/reset-password`;
+      console.log("[ResetPasswordPage] Using reset password redirect URL:", resetPasswordUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: resetPasswordUrl,
       });
       
       if (error) throw error;
@@ -416,8 +377,6 @@ export default function ResetPasswordPage() {
               </Button>
             </form>
           ) : (
-            // This condition ensures we never show an empty state
-            // If token is not validated and there's no error, redirect to request mode
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-4 rounded-md mb-4">
               <p className="font-medium">Something went wrong with your reset link</p>
               <p className="text-sm mt-2">
