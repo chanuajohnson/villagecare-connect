@@ -210,6 +210,17 @@ export const DashboardCaregiverMatches = () => {
     );
   };
 
+  const handleUnlockProfile = (caregiverId: string) => {
+    trackEngagement('unlock_profile_click', { caregiver_id: caregiverId });
+    navigate("/subscription-features", { 
+      state: { 
+        returnPath: "/caregiver-matching",
+        featureType: "Premium Profiles",
+        caregiverId: caregiverId
+      } 
+    });
+  };
+
   if (!user) {
     return null;
   }
@@ -451,16 +462,7 @@ export const DashboardCaregiverMatches = () => {
                     <Button 
                       variant="default"
                       className="w-full"
-                      onClick={() => {
-                        trackEngagement('contact_caregiver_click', { caregiver_id: caregiver.id });
-                        navigate("/subscription", { 
-                          state: { 
-                            returnPath: "/caregiver-matching",
-                            featureType: "Premium Profiles",
-                            caregiverId: caregiver.id
-                          } 
-                        });
-                      }}
+                      onClick={() => handleUnlockProfile(caregiver.id)}
                     >
                       Unlock Profile
                     </Button>

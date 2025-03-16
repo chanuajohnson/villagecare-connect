@@ -223,10 +223,10 @@ export default function CaregiverMatchingPage() {
     }
   };
   
-  const handleContactCaregiver = async (caregiverId: string, isPremium: boolean) => {
-    await trackEngagement('contact_caregiver_click', { caregiver_id: caregiverId, is_premium: isPremium });
+  const handleUnlockProfile = async (caregiverId: string, isPremium: boolean) => {
+    await trackEngagement('unlock_profile_click', { caregiver_id: caregiverId, is_premium: isPremium });
     
-    navigate("/subscription", { 
+    navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
         featureType: "Premium Caregiver Profiles",
@@ -372,7 +372,7 @@ export default function CaregiverMatchingPage() {
                 className="bg-amber-600 hover:bg-amber-700"
                 onClick={() => {
                   trackEngagement('premium_matching_cta_click');
-                  navigate("/subscription", { 
+                  navigate("/subscription-features", { 
                     state: { 
                       returnPath: "/caregiver-matching",
                       featureType: "Premium Matching" 
@@ -512,24 +512,7 @@ export default function CaregiverMatchingPage() {
                     <div className="space-y-2">
                       <Button 
                         className="w-full"
-                        onClick={() => handleContactCaregiver(caregiver.id, caregiver.is_premium)}
-                      >
-                        Unlock Profile
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          trackEngagement('view_full_profile_click', { caregiver_id: caregiver.id });
-                          navigate("/subscription", { 
-                            state: { 
-                              returnPath: "/caregiver-matching",
-                              featureType: "Premium Profiles",
-                              caregiverId: caregiver.id
-                            } 
-                          });
-                        }}
+                        onClick={() => handleUnlockProfile(caregiver.id, caregiver.is_premium)}
                       >
                         Unlock Profile
                       </Button>
