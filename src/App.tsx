@@ -31,6 +31,7 @@ import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
 import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 import AboutPage from "./pages/about/AboutPage";
 import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
+import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,10 @@ const AppContent = () => {
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
+          
+          {/* New route for caregiver matching */}
+          <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

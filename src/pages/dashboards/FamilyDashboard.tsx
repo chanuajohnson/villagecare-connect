@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { FamilyNextStepsPanel } from "@/components/family/FamilyNextStepsPanel";
 import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedForm";
 import { useNavigate } from "react-router-dom";
+import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -146,6 +147,9 @@ const FamilyDashboard = () => {
 
           <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
+
+          {/* Caregiver Matching Card - New featured card */}
+          <CaregiverMatchingCard />
 
           {/* Message Board and Post Care Need Form Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

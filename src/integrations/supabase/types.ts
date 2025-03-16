@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cta_engagement_tracking: {
+        Row: {
+          action_type: string
+          additional_data: Json | null
+          created_at: string | null
+          feature_name: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          additional_data?: Json | null
+          created_at?: string | null
+          feature_name?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          additional_data?: Json | null
+          created_at?: string | null
+          feature_name?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feature_interest_tracking: {
         Row: {
           action_type: string | null
