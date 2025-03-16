@@ -14,7 +14,7 @@ export const CaregiverMatchingCard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  // If user is logged in, don't show this card
+  // If user is logged in, don't show this marketing card
   if (user) {
     return null;
   }

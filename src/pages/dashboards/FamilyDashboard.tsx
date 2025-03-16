@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { FamilyNextStepsPanel } from "@/components/family/FamilyNextStepsPanel";
 import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedForm";
 import { useNavigate } from "react-router-dom";
 import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
+import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
@@ -148,8 +150,11 @@ const FamilyDashboard = () => {
           <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
-          {/* Caregiver Matching Card - New featured card */}
+          {/* Caregiver Matching Card for logged-out users */}
           <CaregiverMatchingCard />
+
+          {/* Caregiver Matches for logged-in users */}
+          <DashboardCaregiverMatches />
 
           {/* Message Board and Post Care Need Form Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
