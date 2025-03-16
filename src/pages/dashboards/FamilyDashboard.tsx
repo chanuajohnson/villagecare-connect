@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,15 +149,11 @@ const FamilyDashboard = () => {
           <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
-          {/* Caregiver Matching Card for logged-out users */}
           <CaregiverMatchingCard />
 
-          {/* Caregiver Matches for logged-in users */}
           <DashboardCaregiverMatches />
 
-          {/* Message Board and Post Care Need Form Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Message Board Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -278,11 +273,9 @@ const FamilyDashboard = () => {
               </Card>
             </motion.div>
 
-            {/* Post Care Need Form Card */}
             <FamilyPostCareNeedForm />
           </div>
 
-          {/* Profile Management Card */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -293,12 +286,12 @@ const FamilyDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
-              <Link to="/family/features-overview">
+              <Link to="/registration/family">
                 <Button 
                   variant="default" 
                   className="w-full"
                 >
-                  Learn More
+                  Manage Profile
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -310,10 +303,8 @@ const FamilyDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Next Steps Progress Tracker */}
           <FamilyNextStepsPanel />
 
-          {/* Care Management Section */}
           <div className="space-y-6 mb-8">
             <Card className="mb-2">
               <CardHeader>
@@ -333,7 +324,6 @@ const FamilyDashboard = () => {
                 <UpvoteFeatureButton featureTitle="Care Management" className="w-full mb-6" buttonText="Upvote this Feature" />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Quick Action Cards */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
