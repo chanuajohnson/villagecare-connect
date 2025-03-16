@@ -453,20 +453,16 @@ export const DashboardCaregiverMatches = () => {
                       className="w-full"
                       onClick={() => {
                         trackEngagement('contact_caregiver_click', { caregiver_id: caregiver.id });
-                        if (caregiver.is_premium) {
-                          navigate("/subscription", { 
-                            state: { 
-                              returnPath: "/caregiver-matching",
-                              featureType: "Premium Profiles",
-                              caregiverId: caregiver.id
-                            } 
-                          });
-                        } else {
-                          toast.success("Request sent! The caregiver will contact you shortly.");
-                        }
+                        navigate("/subscription", { 
+                          state: { 
+                            returnPath: "/caregiver-matching",
+                            featureType: "Premium Profiles",
+                            caregiverId: caregiver.id
+                          } 
+                        });
                       }}
                     >
-                      {caregiver.is_premium ? "Unlock Profile" : "Contact"}
+                      Unlock Profile
                     </Button>
                   </div>
                 </div>

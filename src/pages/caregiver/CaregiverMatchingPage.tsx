@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,6 @@ interface Caregiver {
   distance: number;
 }
 
-// Mock data for demo purposes
 const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "1",
@@ -104,7 +102,6 @@ export default function CaregiverMatchingPage() {
   const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Replace the old filter states with the new ones that match the dashboard
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
@@ -138,14 +135,7 @@ export default function CaregiverMatchingPage() {
       try {
         setIsLoading(true);
         
-        // For demo purposes, we'll use the mock data
-        // In production, this would fetch from Supabase based on preferences
-        
-        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Track page view
-        await trackEngagement('caregiver_matching_page_view');
         
         setCaregivers(MOCK_CAREGIVERS);
         setFilteredCaregivers(MOCK_CAREGIVERS);
@@ -170,7 +160,6 @@ export default function CaregiverMatchingPage() {
     }
   }, [user, isProfileComplete, navigate]);
   
-  // Apply filters when any filter value changes
   useEffect(() => {
     if (caregivers.length === 0) return;
 
@@ -215,7 +204,6 @@ export default function CaregiverMatchingPage() {
     try {
       const sessionId = localStorage.getItem('session_id') || uuidv4();
       
-      // Store the session ID if it's new
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
@@ -238,17 +226,13 @@ export default function CaregiverMatchingPage() {
   const handleContactCaregiver = async (caregiverId: string, isPremium: boolean) => {
     await trackEngagement('contact_caregiver_click', { caregiver_id: caregiverId, is_premium: isPremium });
     
-    if (isPremium) {
-      navigate("/subscription", { 
-        state: { 
-          returnPath: "/caregiver-matching",
-          featureType: "Premium Caregiver Profiles",
-          caregiverId: caregiverId
-        } 
-      });
-    } else {
-      toast.success("Request sent! The caregiver will contact you shortly.");
-    }
+    navigate("/subscription", { 
+      state: { 
+        returnPath: "/caregiver-matching",
+        featureType: "Premium Caregiver Profiles",
+        caregiverId: caregiverId
+      } 
+    });
   };
 
   const handleCareTypeChange = (type: string) => {
@@ -268,7 +252,6 @@ export default function CaregiverMatchingPage() {
         </p>
       </div>
       
-      {/* Filters Section - Updated to match dashboard */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -353,7 +336,6 @@ export default function CaregiverMatchingPage() {
         </CardContent>
       </Card>
       
-      {/* Results Section */}
       {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -377,7 +359,6 @@ export default function CaregiverMatchingPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Premium Upsell Banner */}
           <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
             <CardContent className="flex items-center justify-between py-4">
               <div className="flex items-center gap-2">
@@ -404,7 +385,6 @@ export default function CaregiverMatchingPage() {
             </CardContent>
           </Card>
           
-          {/* Caregiver Cards */}
           {filteredCaregivers.map((caregiver) => (
             <Card 
               key={caregiver.id} 
@@ -420,7 +400,6 @@ export default function CaregiverMatchingPage() {
               
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Profile Section */}
                   <div className="flex flex-col items-center md:items-start gap-4">
                     <div className="flex flex-col items-center">
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
@@ -445,7 +424,6 @@ export default function CaregiverMatchingPage() {
                     </div>
                   </div>
                   
-                  {/* Details Section */}
                   <div className="col-span-2 space-y-3">
                     <div className="grid grid-cols-3 gap-3">
                       <div className="flex items-center gap-2">
@@ -508,7 +486,6 @@ export default function CaregiverMatchingPage() {
                     </div>
                   </div>
                   
-                  {/* Action Section */}
                   <div className="flex flex-col justify-between space-y-4">
                     <div>
                       <div className="flex items-center gap-1 mb-2">
@@ -537,7 +514,7 @@ export default function CaregiverMatchingPage() {
                         className="w-full"
                         onClick={() => handleContactCaregiver(caregiver.id, caregiver.is_premium)}
                       >
-                        {caregiver.is_premium ? "Unlock Profile" : "Contact Caregiver"}
+                        Unlock Profile
                       </Button>
                       
                       <Button 
@@ -545,20 +522,16 @@ export default function CaregiverMatchingPage() {
                         className="w-full"
                         onClick={() => {
                           trackEngagement('view_full_profile_click', { caregiver_id: caregiver.id });
-                          if (caregiver.is_premium) {
-                            navigate("/subscription", { 
-                              state: { 
-                                returnPath: "/caregiver-matching",
-                                featureType: "Premium Profiles",
-                                caregiverId: caregiver.id
-                              } 
-                            });
-                          } else {
-                            toast.info("Full profile view is coming soon!");
-                          }
+                          navigate("/subscription", { 
+                            state: { 
+                              returnPath: "/caregiver-matching",
+                              featureType: "Premium Profiles",
+                              caregiverId: caregiver.id
+                            } 
+                          });
                         }}
                       >
-                        View Full Profile
+                        Unlock Profile
                       </Button>
                     </div>
                   </div>
