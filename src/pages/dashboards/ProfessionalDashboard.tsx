@@ -11,6 +11,8 @@ import { NextStepsPanel } from "@/components/professional/NextStepsPanel";
 import { TrainingProgressTracker } from "@/components/professional/TrainingProgressTracker";
 import { JobListings } from "@/components/professional/JobListings";
 import { MessageBoard } from "@/components/professional/MessageBoard";
+import { TrainingProgramSection } from "@/components/professional/TrainingProgramSection";
+import { TrainingModulesSection } from "@/components/professional/TrainingModulesSection";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -48,7 +50,7 @@ const ProfessionalDashboard = () => {
           >
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
               <CardContent className="p-0">
-                <h2 className="text-2xl font-bold">Welcome to Takes a Village! 🚀 Your Care Coordination Hub.</h2>
+                <h2 className="text-2xl font-bold">Welcome to Tavara! 🚀 Your Care Coordination Hub.</h2>
                 <p className="mt-2 text-gray-600">
                   We're building this platform with you in mind. Explore features, connect with clients, and help shape the future of care by voting on features!
                 </p>
@@ -88,7 +90,7 @@ const ProfessionalDashboard = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-white shadow-sm md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCog className="h-5 w-5" />
@@ -123,7 +125,7 @@ const ProfessionalDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-white shadow-sm md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -157,7 +159,15 @@ const ProfessionalDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Training Program Section */}
+        <TrainingProgramSection />
+
+        {/* Training Modules Section */}
+        <TrainingModulesSection />
+
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-8">
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
