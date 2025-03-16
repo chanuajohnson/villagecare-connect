@@ -328,11 +328,7 @@ Get access to jobs, training, and ongoing support</p>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-600">
-                    We believe in treating every caregiver, family, and care recipient with kindness, 
-                    understanding, and respect. Our platform is built on compassionate support that 
-                    acknowledges the challenges and celebrates the rewards of caregiving.
-                  </p>
+                  <p className="text-gray-600">We understand the challenges of caregiving and are committed to supporting caregivers, families, and care recipients with kindness and respect.</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -356,11 +352,7 @@ Get access to jobs, training, and ongoing support</p>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-600">
-                    Tavara.care was built on the principle that no caregiver should feel alone. 
-                    We provide spaces for connection, resource sharing, and mutual support that 
-                    empower caregivers through collective wisdom and shared experiences.
-                  </p>
+                  <p className="text-gray-600">No caregiver should feel alone. Tavara fosters connection, resource-sharing, and mutual support, empowering caregivers through shared experiences.</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -384,11 +376,7 @@ Get access to jobs, training, and ongoing support</p>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-600">
-                    We continuously evolve our platform with cutting-edge technology that simplifies 
-                    caregiving logistics, facilitates learning, and connects people to the right resources 
-                    at the right time, always keeping the human element at the center.
-                  </p>
+                  <p className="text-gray-600">We use technology to simplify caregiving, connect people with the right resources, and enhance learning—always keeping human care at the center.</p>
                 </CardContent>
               </Card>
             </motion.div>
