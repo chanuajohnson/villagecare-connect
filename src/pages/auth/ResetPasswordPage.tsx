@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,10 +112,11 @@ export default function ResetPasswordPage() {
           try {
             console.log("[ResetPasswordPage] Attempting to process recovery token directly");
             
-            const currentHostname = window.location.origin;
-            const correctRedirectUrl = `${currentHostname}/auth/reset-password`;
+            // Use the CNAME record instead of the dynamic hostname
+            const resetDomain = "tavara.care";
+            const correctRedirectUrl = `https://${resetDomain}/auth/reset-password`;
             
-            console.log("[ResetPasswordPage] Current origin:", currentHostname);
+            console.log("[ResetPasswordPage] Domain should be:", resetDomain);
             console.log("[ResetPasswordPage] Correct redirect URL should be:", correctRedirectUrl);
             
             setError(
@@ -201,8 +203,9 @@ export default function ResetPasswordPage() {
       setIsLoading(true);
       console.log("[ResetPasswordPage] Requesting password reset for:", email);
       
-      const currentHostname = window.location.origin;
-      const resetPasswordUrl = `${currentHostname}/auth/reset-password`;
+      // Use the CNAME record instead of the dynamic hostname 
+      const resetDomain = "tavara.care";
+      const resetPasswordUrl = `https://${resetDomain}/auth/reset-password`;
       
       console.log("[ResetPasswordPage] Using reset password redirect URL:", resetPasswordUrl);
       

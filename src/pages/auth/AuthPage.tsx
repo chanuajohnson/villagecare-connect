@@ -102,11 +102,11 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
-      // Get the current hostname - this ensures we're using the correct domain
-      const currentHostname = window.location.origin;
+      // Use the CNAME record instead of the dynamic hostname to ensure consistency
+      const resetDomain = "tavara.care";
       
-      // Build the reset password URL correctly with the /auth/reset-password path
-      const resetPasswordUrl = `${currentHostname}/auth/reset-password`;
+      // Build the reset password URL correctly with the domain and path
+      const resetPasswordUrl = `https://${resetDomain}/auth/reset-password`;
       
       console.log("[AuthPage] Using reset password redirect URL:", resetPasswordUrl);
 
