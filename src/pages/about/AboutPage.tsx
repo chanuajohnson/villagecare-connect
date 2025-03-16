@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +8,10 @@ import { StoryCard } from '@/components/about/StoryCard';
 import { PodcastCard } from '@/components/about/PodcastCard';
 import { MissionCard } from '@/components/about/MissionCard';
 import { VisionSection } from '@/components/about/VisionSection';
-import { Heart, Users, Lightbulb, Globe, Briefcase, GraduationCap, Headphones, Award, Info } from 'lucide-react';
+import { Heart, Users, Lightbulb, Globe, Award, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AboutPage = () => {
@@ -20,36 +20,6 @@ const AboutPage = () => {
   const handleCardClick = (cardId: string) => {
     setActiveCard(activeCard === cardId ? null : cardId);
   };
-  
-  const moduleList = [{
-    id: "module1",
-    title: "Module 1: Caregiving Basics & Professionalism",
-    description: "Understanding the role of a caregiver, key responsibilities, ethics, and expectations."
-  }, {
-    id: "module2",
-    title: "Module 2: Elderly & Special Needs Care",
-    description: "Knowledge and practical skills to care for elderly individuals and children with special needs."
-  }, {
-    id: "module3",
-    title: "Module 3: Safety & Emergency Preparedness",
-    description: "Ensuring safety and well-being of both caregivers and care recipients."
-  }, {
-    id: "module4",
-    title: "Module 4: Emotional & Social Support",
-    description: "Essential skills for providing emotional and social support to clients and families."
-  }, {
-    id: "module5",
-    title: "Module 5: Hands-On Care Techniques",
-    description: "Essential hands-on skills for safely assisting with activities of daily living."
-  }, {
-    id: "module6",
-    title: "Module 6: Working with Families & Agencies",
-    description: "Navigating relationships with families and agencies, contracts, and professional conduct."
-  }, {
-    id: "module7",
-    title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
-    description: "Legal, ethical, and human rights aspects of caregiving."
-  }];
 
   return <div className="min-h-screen bg-white">
       <Container>
@@ -116,213 +86,6 @@ const AboutPage = () => {
           </div>
 
           <VisionSection />
-
-          <div className="mt-16">
-            <div className="text-center mb-10">
-              <motion.h2 initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5
-            }} viewport={{
-              once: true
-            }} className="text-3xl font-bold text-primary-800 mb-4">
-                Our Comprehensive Training Program
-              </motion.h2>
-              <motion.p initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5,
-              delay: 0.2
-            }} viewport={{
-              once: true
-            }} className="text-lg text-gray-600 max-w-2xl mx-auto">
-                A three-step approach blending self-paced learning, hands-on experience, and career development
-              </motion.p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5
-            }} viewport={{
-              once: true
-            }}>
-                <Card className="h-full">
-                  <div className="bg-primary-100 p-6 flex justify-center items-center">
-                    <GraduationCap className="h-16 w-16 text-primary-700" />
-                  </div>
-                  <CardHeader>
-                    <CardTitle>Step 1: Self-Paced Online Training</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2 text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Professionally produced pre-recorded video lessons</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Progress tracking and completion certificates</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Knowledge quizzes and guided reflection prompts</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5,
-              delay: 0.2
-            }} viewport={{
-              once: true
-            }}>
-                <Card className="h-full">
-                  <div className="bg-primary-200 p-6 flex justify-center items-center">
-                    <Users className="h-16 w-16 text-primary-700" />
-                  </div>
-                  <CardHeader>
-                    <CardTitle>Step 2: Shadowing a Professional</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2 text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Mentor matching with experienced professionals</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Hands-on observation during real caregiving shifts</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Guided reflection and final readiness assessment</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5,
-              delay: 0.4
-            }} viewport={{
-              once: true
-            }}>
-                <Card className="h-full">
-                  <div className="bg-primary-300 p-6 flex justify-center items-center">
-                    <Briefcase className="h-16 w-16 text-primary-700" />
-                  </div>
-                  <CardHeader>
-                    <CardTitle>Step 3: Career Development</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2 text-gray-600">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Professional job-matching platform access</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Caregiver network for referrals and mentorship</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary-500 font-bold">•</span>
-                        <span>Advanced specialty training opportunities</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="mt-16">
-            <div className="text-center mb-8">
-              <motion.h2 initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5
-            }} viewport={{
-              once: true
-            }} className="text-3xl font-bold text-primary-800 mb-4">
-                Training Course Modules
-              </motion.h2>
-              <motion.p initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5,
-              delay: 0.2
-            }} viewport={{
-              once: true
-            }} className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Our comprehensive curriculum covers everything a caregiver needs to know
-              </motion.p>
-            </div>
-
-            <div className="max-w-4xl mx-auto">
-              <Tabs defaultValue="module1" className="w-full">
-                <TabsList className="grid grid-cols-3 md:grid-cols-7 h-auto">
-                  {moduleList.map((module, index) => <TabsTrigger key={module.id} value={module.id} className="text-xs sm:text-sm py-2">
-                      Module {index + 1}
-                    </TabsTrigger>)}
-                </TabsList>
-                {moduleList.map(module => <TabsContent key={module.id} value={module.id} className="mt-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>{module.title}</CardTitle>
-                        <CardDescription>{module.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-600">
-                          This module is designed to provide caregivers with the essential knowledge and skills 
-                          needed to deliver professional and compassionate care in alignment with Trinidad & Tobago's 
-                          cultural context and healthcare standards.
-                        </p>
-                        <Button variant="outline" className="mt-4">
-                          Learn more about this module
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>)}
-              </Tabs>
-            </div>
-          </div>
 
           <div className="mt-16 text-center">
             <motion.h2 initial={{
