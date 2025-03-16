@@ -22,14 +22,9 @@ export const StoryCard = ({
       </CardHeader>
       <CardContent className="pt-6">
         <div className={`space-y-4 ${readMore ? 'h-auto' : 'h-[150px] overflow-hidden'}`}>
-          <p>Tavara was born from a personal experience—when our founders’ mother needed care, the family saw firsthand how difficult and fragmented the caregiving system was. Even with resources, finding reliable caregivers, managing schedules, and ensuring quality care was overwhelming. 
-This revealed a bigger issue: caregiving doesn’t just need more workers—it needs better systems, stronger communities, and real support for both families and caregivers.</p>
+          <p>Tavara was born from a personal experience—when our founders’ mother needed care, the family saw firsthand how difficult and fragmented the caregiving system was. Even with resources, finding reliable caregivers, managing schedules, and ensuring quality care was overwhelming.</p>
           
-          <p>
-            This experience revealed a critical gap - caregiving doesn't just need more workers,
-            it needs better systems, stronger communities, and enhanced support for both families
-            and professional caregivers.
-          </p>
+          <p>This revealed a bigger issue: caregiving doesn’t just need more workers—it needs better systems, stronger communities, and real support for both families and caregivers.</p>
 
           <p>
             The name "Tavara" comes from the concept that valuable services and care should be
