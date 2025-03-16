@@ -13,7 +13,6 @@ import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
 const AboutPage = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const handleCardClick = (cardId: string) => {
@@ -48,7 +47,6 @@ const AboutPage = () => {
     title: "Module 7: Legal & Ethical Considerations (Bonus Module)",
     description: "Legal, ethical, and human rights aspects of caregiving."
   }];
-
   return <div className="min-h-screen bg-white">
       <Container>
         <Breadcrumb />
@@ -89,13 +87,12 @@ const AboutPage = () => {
           duration: 0.5,
           delay: 0.3
         }} className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm max-w-4xl mx-auto">
-            <p className="text-gray-600 leading-relaxed">
-              Tavara is dedicated to empowering caregivers with the necessary skills, heart, and purpose to provide high-quality home care 
-              in Trinidad & Tobago. Our structured Professional Caregiver Training Program equips caregivers with the skills, knowledge, and 
-              cultural understanding required to provide compassionate care for the elderly, individuals with disabilities, and those with 
-              specialized medical needs.
-            </p>
-            <p className="text-gray-600 leading-relaxed mt-4">The name "Tavara" meaning blessing, symbolizing the precious gift of care nurtured and shared within a community. Tavara reflects a modern village, a network where caregivers, families, and agencies unite to uplift care standards through a technology-enabled platform.</p>
+            <p className="text-gray-600 leading-relaxed">Tavara is a technology-driven platform that connects caregivers with families who need them, making it easy to find and provide trusted home care. 
+ For Families
+Find trained, reliable caregivers for elderly loved ones and individuals with special needs
+For Caregivers
+Get access to jobs, training, and ongoing support</p>
+            
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-12">
