@@ -172,7 +172,7 @@ export default function AuthPage() {
           )}
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-muted-foreground">
-          Takes a Village &copy; {new Date().getFullYear()}
+          Tavara &copy; {new Date().getFullYear()}
         </CardFooter>
       </Card>
     </div>
