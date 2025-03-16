@@ -119,14 +119,47 @@ export const DashboardCaregiverMatches = () => {
       try {
         setIsLoading(true);
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const { data: professionalUsers, error: professionalError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'professional');
+        
+        if (professionalError) {
+          console.error("Error fetching professional users:", professionalError);
+        }
+        
+        const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
+          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+          
+          return {
+            id: prof.id,
+            full_name: prof.full_name || 'Professional Caregiver',
+            avatar_url: prof.avatar_url,
+            hourly_rate: prof.hourly_rate || '$15-25',
+            location: prof.location || 'Port of Spain',
+            years_of_experience: prof.years_of_experience || '1+',
+            care_types: prof.care_types || ['Elderly Care'],
+            specialized_care: prof.specialized_care || [],
+            availability: prof.availability || ['Weekdays'],
+            match_score: matchScore,
+            is_premium: false,
+            has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
+            distance: distance
+          };
+        }) : [];
+        
+        console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
+        
+        const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
+        const allCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
         
         if (user) {
           await trackEngagement('dashboard_caregiver_matches_view');
         }
         
-        setCaregivers(MOCK_CAREGIVERS);
-        setFilteredCaregivers(MOCK_CAREGIVERS);
+        setCaregivers(allCaregivers);
+        setFilteredCaregivers(allCaregivers);
       } catch (error) {
         console.error("Error loading caregivers:", error);
       } finally {
