@@ -8,6 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
 
 const SubscriptionFeaturesPage = () => {
   const { user } = useAuth();
@@ -17,7 +18,7 @@ const SubscriptionFeaturesPage = () => {
   // Get the feature type from location state or default to "premium"
   const featureType = location.state?.featureType || "Premium Features";
   // Get the return path from location state or default to the dashboard
-  const returnPath = location.state?.returnPath || "/dashboard/family";
+  const returnPath = location.state?.returnPath || "/dashboard/professional";
 
   const trackFeatureInterest = async () => {
     setLoading(true);
@@ -64,6 +65,8 @@ const SubscriptionFeaturesPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container px-4 py-12">
+        <Breadcrumb />
+        
         <div className="mb-8">
           <Link to={returnPath} className="flex items-center text-primary hover:underline mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
