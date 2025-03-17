@@ -17,6 +17,8 @@ import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedFo
 import { useNavigate } from "react-router-dom";
 import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
 import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
+import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
+
 const FamilyDashboard = () => {
   const {
     user,
@@ -30,6 +32,7 @@ const FamilyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
+
   useEffect(() => {
     if (user) {
       fetchMessages();
@@ -37,6 +40,7 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   }, [user]);
+
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -60,6 +64,7 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   };
+
   const refreshData = async () => {
     try {
       setRefreshing(true);
@@ -88,6 +93,7 @@ const FamilyDashboard = () => {
       setRefreshing(false);
     }
   };
+
   const formatTimePosted = timestamp => {
     if (!timestamp) return "Unknown";
     const posted = new Date(timestamp);
@@ -99,6 +105,7 @@ const FamilyDashboard = () => {
     if (diffInHours < 48) return "Yesterday";
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
+
   const handleViewFullBoard = () => {
     navigate('/subscription-features', {
       state: {
@@ -107,6 +114,18 @@ const FamilyDashboard = () => {
       }
     });
   };
+
+  const handleViewAllTasks = () => {
+    navigate('/subscription-features', {
+      state: {
+        returnPath: '/dashboard/family',
+        featureType: "All Tasks View",
+        referringPagePath: '/dashboard/family',
+        referringPageLabel: 'Family Dashboard'
+      }
+    });
+  };
+
   return <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
@@ -224,10 +243,14 @@ const FamilyDashboard = () => {
                       </Button>
                     </div>}
                   
-                  <Button variant="default" size="sm" className="w-full flex justify-between items-center">
-                    <span>View Full Message Board</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <SubscriptionFeatureLink
+                    featureType="Full Message Board"
+                    returnPath="/family/message-board"
+                    referringPagePath="/dashboard/family"
+                    referringPageLabel="Family Dashboard"
+                  >
+                    View Full Message Board
+                  </SubscriptionFeatureLink>
                 </CardContent>
               </Card>
             </motion.div>

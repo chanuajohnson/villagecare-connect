@@ -6,9 +6,12 @@ import { CheckCircle2, Circle, List, ArrowRight, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 
 export const FamilyNextStepsPanel = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [steps, setSteps] = useState([
     { 
       id: 1, 
@@ -137,10 +140,18 @@ export const FamilyNextStepsPanel = () => {
           </ul>
           
           <div className="mt-4">
-            <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-              <span>View all tasks</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <SubscriptionFeatureLink
+              featureType="All Tasks View" 
+              returnPath="/dashboard/family"
+              referringPagePath="/dashboard/family"
+              referringPageLabel="Family Dashboard"
+              className="w-full"
+            >
+              <span className="flex justify-between items-center w-full">
+                <span>View all tasks</span>
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </SubscriptionFeatureLink>
           </div>
         </CardContent>
       </Card>
