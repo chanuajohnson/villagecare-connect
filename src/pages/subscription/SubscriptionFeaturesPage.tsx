@@ -36,23 +36,6 @@ export default function SubscriptionFeaturesPage() {
   const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
-  // Create breadcrumb items
-  const breadcrumbItems = [];
-  
-  // Add referring page if available
-  if (dashboardPath && dashboardLabel) {
-    breadcrumbItems.push({
-      label: dashboardLabel,
-      path: dashboardPath,
-    });
-  }
-  
-  // Add current page
-  breadcrumbItems.push({
-    label: "Subscription",
-    path: "/subscription-features",
-  });
-
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
@@ -67,18 +50,17 @@ export default function SubscriptionFeaturesPage() {
               </BreadcrumbLink>
             </BreadcrumbItem>
             
-            {breadcrumbItems.map((item, index) => (
-              <BreadcrumbItem key={index}>
-                <BreadcrumbSeparator />
-                {index === breadcrumbItems.length - 1 ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={item.path}>{item.label}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            ))}
+            <BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbLink asChild>
+                <Link to={dashboardPath}>{dashboardLabel}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            
+            <BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbPage>Subscription</BreadcrumbPage>
+            </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
