@@ -93,10 +93,18 @@ export default function FamilyMatchingPage() {
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
 
-  const referringPath = location.state?.returnPath || 
+  const referringPath = location.state?.referringPagePath || 
     (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
+  
   const referringLabel = location.state?.referringPageLabel || 
     (user?.role === 'professional' ? 'Professional Dashboard' : 'Family Dashboard');
+  
+  console.log("FamilyMatchingPage - Navigation context:", {
+    referringPath,
+    referringLabel,
+    locationState: location.state,
+    userRole: user?.role
+  });
 
   const careTypeOptions = [
     "Elderly Care", 
@@ -257,8 +265,8 @@ export default function FamilyMatchingPage() {
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/family-matching",
-        referringPagePath: "/dashboard/family",  // Explicitly setting dashboard path
-        referringPageLabel: "Family Dashboard",  // Explicitly setting dashboard label
+        referringPagePath: referringPath,
+        referringPageLabel: referringLabel,
         featureType: "Premium Family Profiles",
         familyId: familyId
       } 

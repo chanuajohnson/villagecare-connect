@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Breadcrumb,
@@ -32,17 +32,21 @@ export default function SubscriptionFeaturesPage() {
       ? 'Professional Dashboard'
       : 'Home';
 
-  // Use provided paths or fallback to defaults
+  // Use provided paths or fallback to defaults - giving priority to explicit referringPagePath
   const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
-  console.log("Subscription page navigation state:", { 
-    returnPath, 
-    referringPagePath, 
-    referringPageLabel, 
-    dashboardPath, 
-    dashboardLabel
-  });
+  useEffect(() => {
+    console.log("Subscription page navigation state:", { 
+      returnPath, 
+      referringPagePath, 
+      referringPageLabel, 
+      dashboardPath, 
+      dashboardLabel,
+      userRole: user?.role,
+      locationState: location.state
+    });
+  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state]);
 
   return (
     <div className="container px-4 py-8">

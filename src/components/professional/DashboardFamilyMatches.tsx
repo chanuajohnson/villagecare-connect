@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+
 interface Family {
   id: string;
   full_name: string;
@@ -25,6 +26,7 @@ interface Family {
   is_premium: boolean;
   distance: number;
 }
+
 const MOCK_FAMILIES: Family[] = [{
   id: "1",
   full_name: "Garcia Family",
@@ -59,6 +61,7 @@ const MOCK_FAMILIES: Family[] = [{
   is_premium: false,
   distance: 8.5
 }];
+
 export const DashboardFamilyMatches = () => {
   const {
     user,
@@ -73,6 +76,7 @@ export const DashboardFamilyMatches = () => {
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
+
   const careTypeOptions = ["Elderly Care", "Child Care", "Special Needs", "Medical Support", "Overnight Care", "Companionship", "Housekeeping"];
   const specialNeedsOptions = ["Alzheimer's", "Mobility Assistance", "Medication Management", "Autism Care", "Dementia Care", "Meal Preparation"];
   const scheduleOptions = [{
@@ -100,12 +104,12 @@ export const DashboardFamilyMatches = () => {
     value: "overnight",
     label: "Overnight"
   }];
+
   useEffect(() => {
     const loadFamilies = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch family users from the database
         const {
           data: familyUsers,
           error: familyError
@@ -114,12 +118,8 @@ export const DashboardFamilyMatches = () => {
           console.error("Error fetching family users:", familyError);
         }
 
-        // Transform family users data to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-
-          // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           return {
             id: family.id,
@@ -136,11 +136,9 @@ export const DashboardFamilyMatches = () => {
         }) : [];
         console.log("Loaded real family users:", realFamilies.length);
 
-        // Combine real families with mock data if needed
         const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
         const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
 
-        // Track engagement if user is logged in
         if (user) {
           await trackEngagement('dashboard_family_matches_view');
         }
@@ -156,6 +154,7 @@ export const DashboardFamilyMatches = () => {
       loadFamilies();
     }
   }, [user]);
+
   useEffect(() => {
     if (families.length === 0) return;
     const applyFilters = () => {
@@ -171,12 +170,12 @@ export const DashboardFamilyMatches = () => {
       }
       result = result.filter(family => family.distance <= maxDistance);
 
-      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
       setFilteredFamilies(result);
     };
     applyFilters();
   }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
+
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
       const sessionId = localStorage.getItem('session_id') || uuidv4();
@@ -198,12 +197,15 @@ export const DashboardFamilyMatches = () => {
       console.error("Error in trackEngagement:", error);
     }
   };
+
   const handleCareTypeChange = (type: string) => {
     setCareTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   };
+
   const handleSpecialNeedsChange = (need: string) => {
     setSpecialNeeds(prev => prev.includes(need) ? prev.filter(n => n !== need) : [...prev, need]);
   };
+
   const handleUnlockProfile = (familyId: string) => {
     trackEngagement('unlock_family_profile_click', {
       family_id: familyId
@@ -211,14 +213,18 @@ export const DashboardFamilyMatches = () => {
     navigate("/subscription-features", {
       state: {
         returnPath: "/family-matching",
+        referringPagePath: "/dashboard/professional",
+        referringPageLabel: "Professional Dashboard",
         featureType: "Premium Family Profiles",
         familyId: familyId
       }
     });
   };
+
   if (!user) {
     return null;
   }
+
   if (!isProfileComplete) {
     return <Card className="mb-8 border-l-4 border-l-primary">
         <CardHeader>
@@ -239,6 +245,7 @@ export const DashboardFamilyMatches = () => {
         </CardContent>
       </Card>;
   }
+
   return <Card className="mb-8 border-l-4 border-l-primary">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
@@ -254,7 +261,12 @@ export const DashboardFamilyMatches = () => {
           </Button>
           <Button variant="default" className="flex items-center gap-1" onClick={() => {
           trackEngagement('view_all_family_matches_click');
-          navigate("/family-matching");
+          navigate("/family-matching", {
+            state: {
+              referringPagePath: "/dashboard/professional",
+              referringPageLabel: "Professional Dashboard"
+            }
+          });
         }}>
             View All
             <ArrowRight className="h-4 w-4" />
@@ -383,7 +395,12 @@ export const DashboardFamilyMatches = () => {
             
             <Button variant="outline" className="w-full mt-2" onClick={() => {
           trackEngagement('view_all_family_matches_click');
-          navigate("/family-matching");
+          navigate("/family-matching", {
+            state: {
+              referringPagePath: "/dashboard/professional",
+              referringPageLabel: "Professional Dashboard"
+            }
+          });
         }}>
               View All Family Matches
               <ArrowRight className="ml-2 h-4 w-4" />
