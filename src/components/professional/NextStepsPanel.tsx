@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, List, ArrowRight, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useState, useEffect } from "react";
+import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 
 export const NextStepsPanel = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [steps, setSteps] = useState([
     { 
       id: 1, 
@@ -73,6 +75,12 @@ export const NextStepsPanel = () => {
   const completedSteps = steps.filter(step => step.completed).length;
   const progress = Math.round((completedSteps / steps.length) * 100);
 
+  // Determine the current dashboard path to use as referring page
+  const currentPath = location.pathname;
+  const isInProfessionalDashboard = currentPath.includes("/dashboard/professional");
+  const referringPagePath = isInProfessionalDashboard ? "/dashboard/professional" : currentPath;
+  const referringPageLabel = isInProfessionalDashboard ? "Professional Dashboard" : "Dashboard";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -136,10 +144,18 @@ export const NextStepsPanel = () => {
           </ul>
           
           <div className="mt-4">
-            <Button variant="outline" size="sm" className="w-full flex justify-between items-center">
-              <span>View all tasks</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <SubscriptionFeatureLink
+              featureType="Task Management" 
+              returnPath={referringPagePath}
+              referringPagePath={referringPagePath}
+              referringPageLabel={referringPageLabel}
+              className="w-full"
+            >
+              <span className="flex justify-between items-center w-full">
+                <span>View all tasks</span>
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </SubscriptionFeatureLink>
           </div>
         </CardContent>
       </Card>

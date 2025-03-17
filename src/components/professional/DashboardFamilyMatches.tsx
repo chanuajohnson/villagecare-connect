@@ -383,7 +383,12 @@ export const DashboardFamilyMatches = () => {
                   
                   <div className="sm:w-1/4 flex flex-col justify-center space-y-3">
                     <div className="flex">
-                      {[1, 2, 3, 4, 5].map(star => {})}
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star 
+                          key={star}
+                          className="h-4 w-4 text-amber-400"
+                        />
+                      ))}
                     </div>
                     
                     <Button variant="default" className="w-full" onClick={() => handleUnlockProfile(family.id)}>
