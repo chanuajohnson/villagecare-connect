@@ -1,41 +1,56 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { ToastContainer } from 'sonner';
-import RegistrationPage from './pages/RegistrationPage';
-import AuthenticationPage from './pages/AuthenticationPage';
-import PricingPage from './pages/PricingPage';
-import SubscriptionFeaturesPage from './pages/subscription/SubscriptionFeaturesPage';
-import Dashboard from './pages/Dashboard';
-import TrainingResourcesPage from './pages/training/TrainingResourcesPage';
-import TrainingModulePage from './pages/training/TrainingModulePage';
-import TrainingLessonPage from './pages/training/TrainingLessonPage';
-import MessageBoardPage from './pages/community/MessageBoardPage';
-import { Footer } from './components/Footer';
-import { ScrollToTop } from './components/ScrollToTop';
 import { StripeScriptLoader } from '@stripe/react-stripe-js';
 import { stripePromise } from './lib/stripe';
+import { supabase } from './lib/supabase';
+import { useAuth } from './components/providers/AuthProvider';
+
+// Import components
+import { Footer } from './components/Footer';
+import { ScrollToTop } from './components/ScrollToTop';
+
+// Import pages
+import { LandingPage } from './pages/LandingPage';
+import SubscriptionFeaturesPage from './pages/subscription/SubscriptionFeaturesPage';
 import FamilySettingsPage from './pages/settings/FamilySettingsPage';
 import ProfessionalSettingsPage from './pages/settings/ProfessionalSettingsPage';
-import { useAuth } from './components/providers/AuthProvider';
-import { supabase } from './lib/supabase';
 import { ProfessionalDashboard } from './pages/professional/ProfessionalDashboard';
 import { FamilyDashboard } from './pages/family/FamilyDashboard';
-import { LandingPage } from './pages/LandingPage';
 import { CaregiverProfilePage } from './pages/CaregiverProfilePage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { BlogPostPage } from './pages/community/BlogPostPage';
-import { BlogListPage } from './pages/community/BlogListPage';
 import { ContactUsPage } from './pages/ContactUsPage';
 import { AboutUsPage } from './pages/AboutUsPage';
 import { PricingV2 } from './pages/new-pricing/PricingV2';
+
+// Import professional pages
+import Dashboard from './pages/Dashboard';
 import { ProfessionalJobListingPage } from './pages/professional/ProfessionalJobListingPage';
 import { ProfessionalAllJobListingsPage } from './pages/professional/ProfessionalAllJobListingsPage';
+import TrainingResourcesPage from './pages/training/TrainingResourcesPage';
+import TrainingModulePage from './pages/training/TrainingModulePage';
+import TrainingLessonPage from './pages/training/TrainingLessonPage';
 
-// Import the matching pages
+// Import community pages
+import MessageBoardPage from './pages/community/MessageBoardPage';
+import { BlogPostPage } from './pages/community/BlogPostPage';
+import { BlogListPage } from './pages/community/BlogListPage';
+
+// Import auth pages
+import AuthenticationPage from './pages/auth/AuthenticationPage';
+
+// Import pricing pages
+import PricingPage from './pages/pricing/PricingPage';
+
+// Import matching pages
 import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
 import ProfessionalMatchingPage from "./pages/professional/ProfessionalMatchingPage";
+
+// Registration page (from auth directory)
+import RegistrationPage from './pages/auth/RegistrationPage';
 
 function App() {
   useEffect(() => {
