@@ -93,8 +93,10 @@ export default function FamilyMatchingPage() {
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
 
-  const referringPath = location.state?.returnPath || "/";
-  const referringLabel = location.state?.referringPageLabel || "Dashboard";
+  const referringPath = location.state?.returnPath || 
+    (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
+  const referringLabel = location.state?.referringPageLabel || 
+    (user?.role === 'professional' ? 'Professional Dashboard' : 'Family Dashboard');
 
   const careTypeOptions = [
     "Elderly Care", 

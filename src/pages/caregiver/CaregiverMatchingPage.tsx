@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +19,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 interface Caregiver {
   id: string;
   full_name: string;
-  first_name: string; // Added first_name field
+  first_name: string;
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -115,8 +114,10 @@ export default function CaregiverMatchingPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
 
-  const referringPath = location.state?.returnPath || "/";
-  const referringLabel = location.state?.referringPageLabel || "Dashboard";
+  const referringPath = location.state?.returnPath || 
+    (user?.role === 'family' ? '/dashboard/family' : '/dashboard/professional');
+  const referringLabel = location.state?.referringPageLabel || 
+    (user?.role === 'family' ? 'Family Dashboard' : 'Professional Dashboard');
 
   const careTypeOptions = [
     "Elderly Care", 
