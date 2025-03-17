@@ -1,13 +1,12 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
+import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, Lock } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
 
 const SubscriptionFeaturesPage = () => {
@@ -70,11 +69,6 @@ const SubscriptionFeaturesPage = () => {
         <Breadcrumb />
         
         <div className="mb-8">
-          <Link to={returnPath} className="flex items-center text-primary hover:text-primary-600 mb-4 transition-colors">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
-          </Link>
-          
           <motion.div initial={{
           opacity: 0,
           y: 20

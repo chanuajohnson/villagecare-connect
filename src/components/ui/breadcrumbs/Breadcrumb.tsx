@@ -1,8 +1,8 @@
-
-import { Fragment, useEffect, useState } from "react";
+import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 type BreadcrumbItem = {
   label: string;
@@ -182,50 +182,47 @@ export function Breadcrumb() {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="w-full py-4">
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-        <li>
-          <Link
-            to="/"
-            className="flex items-center gap-2 hover:text-primary-600 transition-colors"
-            aria-label="Home"
-          >
-            <Home className="h-4 w-4" />
-            <span className="sr-only">Home</span>
-          </Link>
-        </li>
-        {items.map((item, index) => (
-          <li key={item.path} className="flex items-center">
-            <ChevronRight className="h-4 w-4 text-gray-400 mr-1" />
-            {index === items.length - 1 ? (
-              <span className="font-medium text-gray-900" aria-current="page">
-                {item.isLoading ? (
-                  <span className="flex items-center">
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Loading...
-                  </span>
-                ) : (
-                  item.label
-                )}
-              </span>
-            ) : (
-              <Link
-                to={item.path}
-                className="hover:text-primary-600 transition-colors"
-              >
-                {item.isLoading ? (
-                  <span className="flex items-center">
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Loading...
-                  </span>
-                ) : (
-                  item.label
-                )}
-              </Link>
-            )}
-          </li>
-        ))}
-      </ol>
+    <nav aria-label="Breadcrumb" className="flex items-center py-4 text-gray-600">
+      <Link
+        to="/"
+        className="flex items-center text-gray-600 hover:text-primary transition-colors"
+        aria-label="Home"
+      >
+        <Home className="h-5 w-5" />
+        <span className="ml-2 text-base">Home</span>
+      </Link>
+
+      {items.map((item, index) => (
+        <Fragment key={item.path}>
+          <ChevronRight className="h-5 w-5 mx-2 text-gray-400" />
+          {index === items.length - 1 ? (
+            <span className="text-base font-semibold text-gray-900" aria-current="page">
+              {item.isLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                item.label
+              )}
+            </span>
+          ) : (
+            <Link
+              to={item.path}
+              className="text-base text-gray-600 hover:text-primary transition-colors"
+            >
+              {item.isLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                item.label
+              )}
+            </Link>
+          )}
+        </Fragment>
+      ))}
     </nav>
   );
 }
