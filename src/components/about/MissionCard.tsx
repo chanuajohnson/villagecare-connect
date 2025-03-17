@@ -26,17 +26,9 @@ export const MissionCard = ({
           
           <p>We connect families with qualified caregivers while providing professional development, fair compensation, and supportive resources to elevate the caregiving profession and create a more connected care ecosystem in Trinidad &amp; Tobago.</p>
 
-          <p>
-            Our platform integrates innovative technology with human-centered design to address 
-            the complex challenges of caregiving, from matching families with the right caregivers 
-            to providing professional development opportunities and creating supportive communities.
-          </p>
+          
 
-          <p>
-            Through Tavara.care, we aim to elevate the caregiving profession, empower families 
-            with better care options, and create a more compassionate and connected caregiving 
-            ecosystem that truly takes a village.
-          </p>
+          
         </div>
         
         <Button variant="ghost" size="sm" className="mt-4 text-primary-600" onClick={e => {
