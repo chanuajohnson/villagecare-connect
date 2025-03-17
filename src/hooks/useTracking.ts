@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -39,6 +38,7 @@ export type TrackingActionType =
   | 'podcast_playback_toggle'
   | 'podcast_subscribe_click'
   | 'training_enrollment_click'
+  | 'training_module_start'
   
   // Feature Interactions
   | 'filter_toggle_click'
@@ -46,7 +46,6 @@ export type TrackingActionType =
   | 'profile_view'
   | 'message_send'
   | 'feature_upvote'
-  | 'training_module_start'
   | 'training_module_complete'
   | 'lesson_complete'
   
@@ -62,7 +61,15 @@ export interface TrackingOptions {
    * Whether to disable tracking. Useful for testing environments.
    */
   disabled?: boolean;
+  
+  /**
+   * Rate limit in milliseconds to prevent duplicate tracking events
+   */
+  rateLimit?: number;
 }
+
+// Create a map to track last event times for rate limiting
+const lastEventTimeMap: Record<string, number> = {};
 
 /**
  * Hook for tracking user engagement across the platform
@@ -70,6 +77,9 @@ export interface TrackingOptions {
 export function useTracking(options: TrackingOptions = {}) {
   const { user, isProfileComplete } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Default rate limit of 1000ms (1 second)
+  const rateLimit = options.rateLimit ?? 1000;
   
   /**
    * Track a user engagement event
@@ -89,6 +99,21 @@ export function useTracking(options: TrackingOptions = {}) {
       console.log('[Tracking disabled]', actionType, additionalData);
       return;
     }
+    
+    // Implement rate limiting to prevent duplicate events
+    const userId = user?.id || 'anonymous';
+    const eventKey = `${userId}-${actionType}-${JSON.stringify(additionalData)}`;
+    const now = Date.now();
+    const lastEventTime = lastEventTimeMap[eventKey] || 0;
+    
+    // Skip if this exact event was tracked too recently
+    if (now - lastEventTime < rateLimit) {
+      console.log(`[Tracking] Skipping duplicate event (rate limited): ${actionType}`);
+      return;
+    }
+    
+    // Update the last event time
+    lastEventTimeMap[eventKey] = now;
     
     try {
       setIsLoading(true);

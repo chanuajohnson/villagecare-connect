@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { Link, LinkProps } from "react-router-dom";
 import { useTracking, TrackingActionType } from "@/hooks/useTracking";
 
@@ -15,6 +15,11 @@ interface TrackedLinkProps extends LinkProps {
   trackingData?: Record<string, any>;
   
   /**
+   * Optional feature name to categorize this tracking event
+   */
+  featureName?: string;
+  
+  /**
    * Children to render inside the link
    */
   children: ReactNode;
@@ -26,30 +31,37 @@ interface TrackedLinkProps extends LinkProps {
 export const TrackedLink = ({ 
   trackingAction, 
   trackingData = {}, 
+  featureName,
   onClick,
   children,
   to,
   ...props 
 }: TrackedLinkProps) => {
   const { trackEngagement } = useTracking();
+  const processingRef = useRef(false);
   
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Call the original onClick handler if provided
-    if (onClick) {
-      onClick(e);
-    }
+    // Prevent duplicate tracking during processing
+    if (processingRef.current) return;
+    
+    processingRef.current = true;
     
     try {
-      // Track the link click (after the original handler to not delay navigation)
+      // Call the original onClick handler if provided
+      if (onClick) {
+        onClick(e);
+      }
+      
+      // Track the link click
       await trackEngagement(trackingAction, {
         ...trackingData,
         destination: to.toString()
-      }).catch(err => {
-        console.error("Error in tracked link:", err);
-      });
-    } catch (error) {
-      console.error(`Error tracking link click for action ${trackingAction}:`, error);
-      // Continue execution even if tracking fails
+      }, featureName);
+    } finally {
+      // Reset processing state after a short delay
+      setTimeout(() => {
+        processingRef.current = false;
+      }, 300);
     }
   };
   

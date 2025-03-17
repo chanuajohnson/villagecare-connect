@@ -1,5 +1,5 @@
 
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { ButtonHTMLAttributes, forwardRef, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTracking, TrackingActionType } from "@/hooks/useTracking";
 
@@ -41,14 +41,27 @@ interface TrackedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
   ({ trackingAction, trackingData = {}, featureName, onClick, ...props }, ref) => {
     const { trackEngagement } = useTracking();
+    const processingRef = useRef(false);
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Track the button click
-      await trackEngagement(trackingAction, trackingData, featureName);
+      // Prevent duplicate tracking during processing
+      if (processingRef.current) return;
       
-      // Call the original onClick handler if provided
-      if (onClick) {
-        onClick(e);
+      processingRef.current = true;
+      
+      try {
+        // Track the button click
+        await trackEngagement(trackingAction, trackingData, featureName);
+        
+        // Call the original onClick handler if provided
+        if (onClick) {
+          onClick(e);
+        }
+      } finally {
+        // Reset processing state after a short delay
+        setTimeout(() => {
+          processingRef.current = false;
+        }, 300);
       }
     };
     
