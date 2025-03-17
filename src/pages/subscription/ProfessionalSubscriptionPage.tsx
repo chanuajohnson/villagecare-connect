@@ -78,9 +78,16 @@ const ProfessionalSubscriptionPage = () => {
           const planType = plan.name.toLowerCase().includes('family') ? 'family' : 'caregiver';
           const isPopular = plan.price > 0 && !plan.name.toLowerCase().includes('enterprise');
           
+          // Fix TypeScript error by properly casting features
+          const typedFeatures = (plan.features as any[] || []).map(feature => ({
+            name: feature.name || '',
+            description: feature.description || '',
+            included: feature.included || false
+          }));
+          
           return {
             ...plan,
-            features: plan.features as PlanFeature[],
+            features: typedFeatures,
             popular: isPopular,
             buttonColor: isPopular 
               ? "bg-primary-600 hover:bg-primary-700" 
@@ -88,14 +95,17 @@ const ProfessionalSubscriptionPage = () => {
           };
         });
 
-        // Filter plans based on user role
-        let filteredPlans = processedPlans;
+        // Filter plans based on user role and exclude "Basic" and "Standard" plans
+        let filteredPlans = processedPlans.filter(plan => 
+          !(plan.name === "Basic" || plan.name === "Standard")
+        );
+        
         if (userRole === 'family') {
-          filteredPlans = processedPlans.filter(plan => 
+          filteredPlans = filteredPlans.filter(plan => 
             plan.name.toLowerCase().includes('family')
           );
         } else if (userRole === 'professional') {
-          filteredPlans = processedPlans.filter(plan => 
+          filteredPlans = filteredPlans.filter(plan => 
             plan.name.toLowerCase().includes('caregiver')
           );
         }
