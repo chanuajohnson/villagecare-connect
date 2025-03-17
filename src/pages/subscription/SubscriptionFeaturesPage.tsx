@@ -11,25 +11,41 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function SubscriptionFeaturesPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { returnPath, referringPagePath, referringPageLabel, featureType } = location.state || {};
+
+  // Default dashboard path based on user role if not provided
+  const defaultDashboardPath = user?.role === 'family' 
+    ? '/dashboard/family' 
+    : user?.role === 'professional' 
+      ? '/dashboard/professional'
+      : '/';
+  
+  const defaultDashboardLabel = user?.role === 'family' 
+    ? 'Family Dashboard' 
+    : user?.role === 'professional' 
+      ? 'Professional Dashboard'
+      : 'Home';
+
+  // Use provided paths or fallback to defaults
+  const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
+  const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
   // Create breadcrumb items
   const breadcrumbItems = [];
   
   // Add referring page if available
-  if (referringPagePath && referringPageLabel) {
+  if (dashboardPath && dashboardLabel) {
     breadcrumbItems.push({
-      label: referringPageLabel,
-      path: referringPagePath,
+      label: dashboardLabel,
+      path: dashboardPath,
     });
   }
-  
-  // Remove the conditional that was adding returnPath when different from referringPagePath
-  // This was causing the extra "Family Matching" breadcrumb to appear
   
   // Add current page
   breadcrumbItems.push({
@@ -87,14 +103,14 @@ export default function SubscriptionFeaturesPage() {
           <button 
             className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
             onClick={() => {
-              if (returnPath) {
-                navigate(returnPath, { state: { from: 'subscription' } });
+              if (dashboardPath) {
+                navigate(dashboardPath, { state: { from: 'subscription' } });
               } else {
                 navigate('/');
               }
             }}
           >
-            {returnPath ? 'Go Back' : 'Go Home'}
+            {dashboardPath ? 'Go Back' : 'Go Home'}
           </button>
         </div>
       </div>
