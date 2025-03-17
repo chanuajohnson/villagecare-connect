@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +15,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
 
 interface Family {
   id: string;
   full_name: string;
-  original_full_name: string;
   avatar_url: string | null;
   location: string | null;
   care_types: string[] | null;
@@ -34,7 +33,6 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "1",
     full_name: "Garcia Family",
-    original_full_name: "Garcia Family",
     avatar_url: null,
     location: "Port of Spain",
     care_types: ["Elderly Care", "Companionship"],
@@ -47,7 +45,6 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "2",
     full_name: "Wilson Family",
-    original_full_name: "Wilson Family",
     avatar_url: null,
     location: "San Fernando",
     care_types: ["Special Needs", "Medical Support"],
@@ -60,7 +57,6 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "3",
     full_name: "Thomas Family",
-    original_full_name: "Thomas Family",
     avatar_url: null,
     location: "Arima",
     care_types: ["Child Care", "Housekeeping"],
@@ -73,7 +69,6 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "4",
     full_name: "Ramirez Family",
-    original_full_name: "Ramirez Family",
     avatar_url: null,
     location: "Chaguanas",
     care_types: ["Elderly Care", "Overnight Care"],
@@ -89,14 +84,6 @@ export default function FamilyMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const breadcrumbItems = [
-    {
-      label: "Family Matching",
-      path: "/family-matching"
-    }
-  ];
-
   const [families, setFamilies] = useState<Family[]>([]);
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,6 +130,7 @@ export default function FamilyMatchingPage() {
       try {
         setIsLoading(true);
         
+        // Fetch real family users from the database
         const { data: familyUsers, error: familyError } = await supabase
           .from('profiles')
           .select('*')
@@ -153,23 +141,17 @@ export default function FamilyMatchingPage() {
           toast.error("Failed to load family matches");
         }
         
+        // Transform family users to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
+          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
-          let displayName = "";
-          if (family.care_recipient_name) {
-            displayName = family.care_recipient_name.split(' ')[0];
-          } else if (family.full_name) {
-            displayName = family.full_name.split(' ')[0];
-          } else {
-            displayName = "Family";
-          }
+          // Generate a random distance for demo purposes (1-20km)
+          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
           return {
             id: family.id,
-            full_name: `${displayName} Family`,
-            original_full_name: family.full_name || family.care_recipient_name || 'Family User',
+            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
             avatar_url: family.avatar_url,
             location: family.location || 'Port of Spain',
             care_types: family.care_types || ['Elderly Care'],
@@ -183,17 +165,10 @@ export default function FamilyMatchingPage() {
         
         console.log("Loaded real family users:", realFamilies.length);
         
-        const privacyProtectedMockFamilies = MOCK_FAMILIES.map(family => {
-          const firstName = family.full_name.split(' ')[0];
-          return {
-            ...family,
-            full_name: `${firstName} Family`,
-            original_full_name: family.full_name
-          };
-        });
+        // Combine real families with mock data if needed
+        const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
         
-        const allFamilies = [...realFamilies, ...privacyProtectedMockFamilies];
-        
+        // Track page view
         if (user) {
           await trackEngagement('family_matching_page_view');
         }
@@ -247,6 +222,7 @@ export default function FamilyMatchingPage() {
 
       result = result.filter(family => family.distance <= maxDistance);
 
+      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
@@ -306,18 +282,8 @@ export default function FamilyMatchingPage() {
     );
   };
   
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    return name.split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-
   return (
     <div className="container px-4 py-8">
-      <BreadcrumbSimple items={breadcrumbItems} />
-      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
         <p className="text-gray-600">
@@ -467,7 +433,7 @@ export default function FamilyMatchingPage() {
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
                         <AvatarImage src={family.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {getInitials(family.original_full_name || family.full_name)}
+                          {family.full_name.split(' ')[0][0] || 'F'}
                         </AvatarFallback>
                       </Avatar>
                       

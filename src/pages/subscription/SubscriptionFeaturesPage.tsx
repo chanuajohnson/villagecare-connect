@@ -1,119 +1,244 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { v4 as uuidv4 } from "uuid";
 
-export default function SubscriptionFeaturesPage() {
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
+import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
+
+const SubscriptionFeaturesPage = () => {
+  const {
+    user
+  } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { returnPath, featureType, caregiverId, familyId } = location.state || {};
-  
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Breadcrumb items
-  const breadcrumbItems = [
-    {
-      label: "Subscription",
-      path: "/subscription"
-    },
-    {
-      label: "Features",
-      path: "/subscription-features"
-    }
-  ];
-  
-  const trackEngagement = async (actionType: string, additionalData = {}) => {
-    try {
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        additional_data: additionalData
-      });
-      
-      if (error) {
-        console.error("Error tracking engagement:", error);
-      }
-    } catch (error) {
-      console.error("Error in trackEngagement:", error);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      trackEngagement('subscription_features_page_view', {
-        returnPath: returnPath,
-        featureType: featureType,
-        caregiverId: caregiverId,
-        familyId: familyId
-      });
-    }
-  }, [user, returnPath, featureType, caregiverId, familyId]);
+  // Get the feature type from location state or default to "premium"
+  const featureType = location.state?.featureType || "Premium Features";
+  // Get the return path from location state or default to the dashboard
+  const returnPath = location.state?.returnPath || "/dashboard/professional";
   
-  const handleGoBack = () => {
-    if (returnPath) {
-      navigate(returnPath);
-    } else {
-      navigate("/subscription");
+  const trackFeatureInterest = async () => {
+    setLoading(true);
+    try {
+      const featureName = `${featureType} Access`;
+      const sourcePage = returnPath;
+
+      // If user is logged in, save with user ID
+      if (user) {
+        const {
+          error
+        } = await supabase.from('feature_interest_tracking').insert({
+          feature_name: featureName,
+          user_id: user.id,
+          source_page: sourcePage,
+          additional_info: {
+            returnPath,
+            featureType
+          }
+        });
+        if (error) throw error;
+      } else {
+        // Anonymous tracking
+        const {
+          error
+        } = await supabase.from('feature_interest_tracking').insert({
+          feature_name: featureName,
+          source_page: sourcePage,
+          additional_info: {
+            returnPath,
+            featureType
+          }
+        });
+        if (error) throw error;
+      }
+      toast.success('Thank you for your interest! We\'ll notify you when this feature launches.');
+    } catch (error) {
+      console.error('Error tracking feature interest:', error);
+      toast.error('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
   
-  const handleSubscribe = async () => {
-    setIsLoading(true);
-    
-    if (featureType === "Premium Caregiver Profiles" && caregiverId) {
-      await trackEngagement('subscribe_premium_caregiver_profile', { caregiver_id: caregiverId });
-    }
-    
-    if (featureType === "Premium Family Profiles" && familyId) {
-      await trackEngagement('subscribe_premium_family_profile', { family_id: familyId });
-    }
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/subscription");
-    }, 1500);
-  };
-  
-  return (
-    <div className="container px-4 py-8">
-      <BreadcrumbSimple items={breadcrumbItems} />
-      
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>Unlock {featureType || "Premium Features"}</CardTitle>
-          <CardDescription>
-            Subscribe to unlock enhanced features and benefits.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="list-disc pl-5 space-y-2">
-            <li>Access to exclusive content</li>
-            <li>Priority support</li>
-            <li>Ad-free experience</li>
-            <li>Enhanced matching algorithm</li>
-          </ul>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={handleGoBack}>
-            Go Back
-          </Button>
-          <Button onClick={handleSubscribe} disabled={isLoading}>
-            {isLoading ? "Subscribing..." : "Subscribe Now"}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  );
-}
+  return <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="container px-4 py-12">
+        <Breadcrumb />
+        
+        <div className="mb-8">
+          <Link to={returnPath} className="flex items-center text-primary hover:text-primary-600 mb-4 transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Dashboard
+          </Link>
+          
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5
+        }}>
+            <h1 className="text-3xl font-bold">Premium Features Coming Soon</h1>
+            <p className="text-gray-600 mt-2">
+              You're trying to access <span className="font-medium">{featureType}</span>, which will be available in our upcoming premium plan.
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                Premium Message Board
+              </CardTitle>
+              <CardDescription>
+                Connect with caregivers and families
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Post care needs, connect with local caregivers, and build your care network.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                Job Opportunities
+              </CardTitle>
+              <CardDescription>
+                Find and apply to caregiving opportunities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Access exclusive caregiving jobs, filter by location, pay rate, and more.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Care Scheduling
+              </CardTitle>
+              <CardDescription>
+                Manage your care calendar efficiently
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Schedule appointments, set reminders, and coordinate with your care team.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Care Team Management
+              </CardTitle>
+              <CardDescription>
+                Build and coordinate your care team
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Invite family members, caregivers, and healthcare providers to collaborate.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Time Tracking
+              </CardTitle>
+              <CardDescription>
+                Track care hours and shifts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Log care hours, approve timesheets, and manage caregiver schedules.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Priority Notifications
+              </CardTitle>
+              <CardDescription>
+                Stay informed about care needs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Receive real-time alerts for care needs, job opportunities, and team updates.
+              </p>
+              <div className="flex items-center text-amber-600 text-sm mb-4">
+                <Lock className="h-4 w-4 mr-1" />
+                <span>Coming Soon</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="max-w-md mx-auto">
+          <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
+            <CardHeader>
+              <CardTitle className="text-center">Unlock Full Access</CardTitle>
+              <CardDescription className="text-center">
+                Be the first to know when premium features launch
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-sm text-gray-600 mb-6">
+                We're working hard to bring these premium features to you. Register your interest to be notified when they're available.
+              </p>
+              <Button className="w-full bg-primary hover:bg-primary-600" onClick={trackFeatureInterest} disabled={loading}>
+                {loading ? 'Submitting...' : 'Notify Me When Available'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>;
+};
+
+export default SubscriptionFeaturesPage;

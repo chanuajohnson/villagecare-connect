@@ -1,11 +1,19 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
+import { 
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
+import { Home } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
-  path: string;
+  href: string;
 }
 
 interface DashboardHeaderProps {
@@ -15,7 +23,31 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
-      <BreadcrumbSimple items={breadcrumbItems} />
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/" className="flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          
+          {breadcrumbItems.map((item, index) => (
+            <BreadcrumbItem key={index}>
+              <BreadcrumbSeparator />
+              {index === breadcrumbItems.length - 1 ? (
+                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link to={item.href}>{item.label}</Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
     </div>
   );
 };

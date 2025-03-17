@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +15,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
 
 interface Caregiver {
   id: string;
   full_name: string;
-  original_full_name?: string;
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -100,14 +99,6 @@ export default function CaregiverMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const breadcrumbItems = [
-    {
-      label: "Caregiver Matching",
-      path: "/caregiver-matching"
-    }
-  ];
-
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
   const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,6 +136,7 @@ export default function CaregiverMatchingPage() {
       try {
         setIsLoading(true);
         
+        // Fetch real professional users from the database
         const { data: professionalUsers, error: professionalError } = await supabase
           .from('profiles')
           .select('*')
@@ -155,14 +147,19 @@ export default function CaregiverMatchingPage() {
           toast.error("Failed to load professional caregivers");
         }
         
+        // Transform professional users to match Caregiver interface
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
+          // Calculate a random match score between 65-99 for demo purposes
+          // In a real app, you would use an algorithm based on preferences
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+          
+          // Generate a random distance for demo purposes (1-20km)
+          // In a real app, you would calculate actual distance
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          const firstName = prof.full_name ? prof.full_name.split(' ')[0] : 'Professional';
+          
           return {
             id: prof.id,
-            full_name: firstName,
-            original_full_name: prof.full_name || 'Professional User',
+            full_name: prof.full_name || 'Professional Caregiver',
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
             location: prof.location || 'Port of Spain',
@@ -179,18 +176,11 @@ export default function CaregiverMatchingPage() {
         
         console.log("Loaded real professional caregivers:", realCaregivers.length);
         
+        // Wait a moment to simulate loading (can be removed in production)
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const privacyProtectedMockCaregivers = MOCK_CAREGIVERS.map(caregiver => {
-          const firstName = caregiver.full_name.split(' ')[0];
-          return {
-            ...caregiver,
-            full_name: firstName,
-            original_full_name: caregiver.full_name
-          };
-        });
-        
-        const allCaregivers = [...realCaregivers, ...privacyProtectedMockCaregivers];
+        // Combine real professionals with mock data, prioritizing real ones
+        const allCaregivers = [...realCaregivers, ...MOCK_CAREGIVERS];
         
         setCaregivers(allCaregivers);
         setFilteredCaregivers(allCaregivers);
@@ -298,18 +288,8 @@ export default function CaregiverMatchingPage() {
     );
   };
   
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    return name.split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-  
   return (
     <div className="container px-4 py-8">
-      <BreadcrumbSimple items={breadcrumbItems} />
-      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
         <p className="text-gray-600">
@@ -470,7 +450,7 @@ export default function CaregiverMatchingPage() {
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
                         <AvatarImage src={caregiver.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {getInitials(caregiver.original_full_name || caregiver.full_name)}
+                          {caregiver.full_name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       
