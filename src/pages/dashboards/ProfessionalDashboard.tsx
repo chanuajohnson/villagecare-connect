@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { MessageBoard } from "@/components/professional/MessageBoard";
 import { TrainingProgramSection } from "@/components/professional/TrainingProgramSection";
 import { TrainingModulesSection } from "@/components/professional/TrainingModulesSection";
 import { DashboardFamilyMatches } from "@/components/professional/DashboardFamilyMatches";
+import { CaregiverMatchingCard } from "@/components/professional/CaregiverMatchingCard";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -76,26 +76,26 @@ const ProfessionalDashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
-        ) : (
-          <>
-            {/* Family Matches Section */}
-            <div className="mt-8">
-              <DashboardFamilyMatches />
-            </div>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NextStepsPanel />
-                <TrainingProgressTracker />
-              </div>
+        ) : null}
+
+        <CaregiverMatchingCard />
+
+        {/* Family Matches Section */}
+        <div className="mt-8">
+          <DashboardFamilyMatches />
+        </div>
+        
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <NextStepsPanel />
+            <TrainingProgressTracker />
+          </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <JobListings />
-                <MessageBoard />
-              </div>
-            </div>
-          </>
-        )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <JobListings />
+            <MessageBoard />
+          </div>
+        </div>
 
         {/* Profile Management and Admin Assistant - side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
