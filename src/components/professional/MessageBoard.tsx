@@ -2,15 +2,18 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Lock } from "lucide-react";
+import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 
 export const MessageBoard = () => {
-  // Current page path and label to pass as referrer info
-  const currentPage = {
-    path: "/professional/message-board",
-    label: "Message Board"
-  };
+  const location = useLocation();
+  
+  // Determine the current dashboard path to use as referring page
+  const currentPath = location.pathname;
+  const isInProfessionalDashboard = currentPath.includes("/dashboard/professional");
+  const referringPagePath = isInProfessionalDashboard ? "/dashboard/professional" : currentPath;
+  const referringPageLabel = isInProfessionalDashboard ? "Professional Dashboard" : "Dashboard";
 
   return (
     <Card className="w-full">
@@ -31,19 +34,15 @@ export const MessageBoard = () => {
             Our message board will allow caregivers to connect with families, discuss care techniques, and build a professional network.
           </p>
           
-          <Link 
-            to="/subscription/features" 
-            state={{ 
-              featureType: "Premium Message Board", 
-              returnPath: "/professional/message-board",
-              referringPagePath: currentPage.path,
-              referringPageLabel: currentPage.label
-            }}
+          <SubscriptionFeatureLink 
+            featureType="Premium Message Board"
+            returnPath="/professional/message-board"
+            referringPagePath={referringPagePath}
+            referringPageLabel={referringPageLabel}
+            className="w-full md:w-auto"
           >
-            <Button className="w-full md:w-auto">
-              Learn about Premium Features
-            </Button>
-          </Link>
+            Learn about Premium Features
+          </SubscriptionFeatureLink>
         </div>
       </CardContent>
     </Card>

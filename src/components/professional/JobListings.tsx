@@ -1,19 +1,25 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Briefcase, MapPin, Clock, ArrowRight, Filter, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 
 export const JobListings = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const currentPath = location.pathname;
+  const isInProfessionalDashboard = currentPath.includes("/dashboard/professional");
+  const referringPagePath = isInProfessionalDashboard ? "/dashboard/professional" : currentPath;
+  const referringPageLabel = isInProfessionalDashboard ? "Professional Dashboard" : "Dashboard";
 
   useEffect(() => {
     fetchJobs();
@@ -198,15 +204,18 @@ export const JobListings = () => {
             </div>
           )}
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full flex justify-between items-center border-primary-200 text-primary-700 hover:bg-primary-50"
-            onClick={handleViewAllJobs}
+          <SubscriptionFeatureLink 
+            featureType="All Job Listings"
+            returnPath="/professional/jobs"
+            referringPagePath={referringPagePath}
+            referringPageLabel={referringPageLabel}
+            className="w-full"
           >
-            <span>View All Jobs</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+            <span className="flex justify-between items-center w-full">
+              <span>View All Jobs</span>
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          </SubscriptionFeatureLink>
         </CardContent>
       </Card>
     </motion.div>
