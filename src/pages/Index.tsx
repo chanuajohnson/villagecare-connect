@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
@@ -25,7 +26,10 @@ const roles = [{
   path: "/dashboard/professional",
   cta: "Get Hired as a Skilled Care Professional",
   features: ["Showcase qualifications", "Find care opportunities", "Manage client relationships", "Track care delivery", "Access training resources", "Professional development"]
-}, {
+}];
+
+// Separated community role for dedicated section
+const communityRole = {
   id: "community",
   title: "Community",
   description: "Support and contribute to care networks",
@@ -34,7 +38,7 @@ const roles = [{
   path: "/dashboard/community",
   cta: "Join the Village",
   features: ["Join care circles", "Share local resources", "Participate in community events", "Offer support services", "Connect with families", "Track community impact"]
-}];
+};
 
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
@@ -42,11 +46,18 @@ const Index = () => {
   const comparisonRef = useRef<HTMLDivElement>(null);
 
   const handleRoleSelect = (roleId: string) => {
-    const role = roles.find(r => r.id === roleId);
-    if (role) {
+    if (roleId === "community") {
+      const role = communityRole;
       setSelectedRole(roleId);
       navigate(role.path);
       toast.success(`Welcome to the ${role.title} Dashboard! Sign in to access all features.`);
+    } else {
+      const role = roles.find(r => r.id === roleId);
+      if (role) {
+        setSelectedRole(roleId);
+        navigate(role.path);
+        toast.success(`Welcome to the ${role.title} Dashboard! Sign in to access all features.`);
+      }
     }
   };
 
@@ -86,7 +97,8 @@ const Index = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {/* Main roles section - showing only Family and Professional */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {roles.map((role, index) => <motion.div key={role.id} initial={{
           opacity: 0,
           y: 20
@@ -146,7 +158,8 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Who is This For section - only showing Family and Professional */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {roles.map((role, index) => <motion.div key={role.id} initial={{
             opacity: 0,
             y: 20
@@ -182,6 +195,65 @@ const Index = () => {
                   </CardContent>
                 </Card>
               </motion.div>)}
+          </div>
+        </div>
+
+        {/* New dedicated Community section */}
+        <div className="mt-32 max-w-5xl mx-auto">
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5
+        }} viewport={{
+          once: true
+        }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Community Engagement
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover how you can support and contribute to care networks in your community.
+            </p>
+          </motion.div>
+
+          <div className="max-w-3xl mx-auto">
+            <motion.div initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              duration: 0.5
+            }} viewport={{
+              once: true
+            }}>
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="mb-4">
+                    <communityRole.icon className="w-8 h-8 text-primary-600" />
+                  </div>
+                  <CardTitle>{communityRole.title}</CardTitle>
+                  <CardDescription>{communityRole.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {communityRole.features.map((feature, i) => <li key={i} className="flex items-start">
+                        <ArrowRight className="w-4 h-4 text-primary-500 mr-2 mt-1 flex-shrink-0" />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>)}
+                  </ul>
+                  <Link to={communityRole.path}>
+                    <Button className="w-full mt-6 inline-flex items-center justify-center h-10 px-4 font-medium text-white bg-primary-500 rounded-lg transition-colors duration-300 hover:bg-primary-600">
+                      {communityRole.cta}
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
 
