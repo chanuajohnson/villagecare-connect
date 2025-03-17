@@ -66,7 +66,7 @@ export const SubscriptionFeatureLink = ({
 
   return (
     <Link
-      to="/subscription"
+      to="/subscription-features"
       state={{
         featureType,
         returnPath,
