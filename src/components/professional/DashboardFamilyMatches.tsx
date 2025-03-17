@@ -133,9 +133,19 @@ export const DashboardFamilyMatches = () => {
           // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
+          // Get care recipient name or first name for privacy
+          let displayName = "";
+          if (family.care_recipient_name) {
+            displayName = family.care_recipient_name.split(' ')[0]; // Just first name of care recipient
+          } else if (family.full_name) {
+            displayName = family.full_name.split(' ')[0]; // Just first name
+          } else {
+            displayName = "Family";
+          }
+          
           return {
             id: family.id,
-            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+            full_name: `${displayName} Family`, // First name + "Family"
             avatar_url: family.avatar_url,
             location: family.location || 'Port of Spain',
             care_types: family.care_types || ['Elderly Care'],
@@ -149,8 +159,17 @@ export const DashboardFamilyMatches = () => {
         
         console.log("Loaded real family users:", realFamilies.length);
         
+        // Update mock families to use only first name
+        const privacyProtectedMockFamilies = MOCK_FAMILIES.map(family => {
+          const firstName = family.full_name.split(' ')[0];
+          return {
+            ...family,
+            full_name: `${firstName} Family`
+          };
+        });
+        
         // Combine real families with mock data if needed
-        const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
+        const limitedMockFamilies = privacyProtectedMockFamilies.slice(0, Math.max(0, 3 - realFamilies.length));
         const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
         
         // Track engagement if user is logged in

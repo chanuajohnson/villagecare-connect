@@ -35,8 +35,21 @@ export const MessageBoard = () => {
       }
       
       if (data) {
-        console.log("Fetched Trinidad and Tobago messages:", data);
-        setMessages(data);
+        // Protect privacy by ensuring author names don't show full names
+        const privacyProtectedData = data.map(post => {
+          // If author is a full name, only use first name or initial
+          if (post.author && post.author.includes(' ')) {
+            const firstName = post.author.split(' ')[0];
+            return {
+              ...post,
+              author: firstName // Just use first name
+            };
+          }
+          return post;
+        });
+        
+        console.log("Fetched Trinidad and Tobago messages:", privacyProtectedData);
+        setMessages(privacyProtectedData);
       }
     } catch (error) {
       console.error("Error fetching messages:", error);

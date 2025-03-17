@@ -157,9 +157,12 @@ export default function CaregiverMatchingPage() {
           // In a real app, you would calculate actual distance
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
+          // Get first name only for privacy
+          const firstName = prof.full_name ? prof.full_name.split(' ')[0] : 'Professional';
+          
           return {
             id: prof.id,
-            full_name: prof.full_name || 'Professional Caregiver',
+            full_name: `${firstName}`, // Only use first name
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
             location: prof.location || 'Port of Spain',
@@ -179,8 +182,17 @@ export default function CaregiverMatchingPage() {
         // Wait a moment to simulate loading (can be removed in production)
         await new Promise(resolve => setTimeout(resolve, 500));
         
+        // Update mock caregivers to use first names only
+        const privacyProtectedMockCaregivers = MOCK_CAREGIVERS.map(caregiver => {
+          const firstName = caregiver.full_name.split(' ')[0];
+          return {
+            ...caregiver,
+            full_name: firstName
+          };
+        });
+        
         // Combine real professionals with mock data, prioritizing real ones
-        const allCaregivers = [...realCaregivers, ...MOCK_CAREGIVERS];
+        const allCaregivers = [...realCaregivers, ...privacyProtectedMockCaregivers];
         
         setCaregivers(allCaregivers);
         setFilteredCaregivers(allCaregivers);
