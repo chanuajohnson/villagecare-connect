@@ -405,18 +405,20 @@ export const DashboardCaregiverMatches = () => {
   };
 
   const handleUnlockProfile = (caregiverId: string) => {
-    trackEngagement('unlock_caregiver_profile_click', { 
-      caregiver_id: caregiverId 
-    });
+    try {
+      trackEngagement('unlock_profile_click', { caregiver_id: caregiverId })
+        .catch(err => console.error("Tracking error:", err));
+    } catch (error) {
+      console.error("Error tracking unlock profile click:", error);
+    }
     
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
         referringPagePath: "/dashboard/family",
         referringPageLabel: "Family Dashboard",
-        featureType: "Premium Caregiver Profiles",
-        caregiverId: caregiverId,
-        source: "family_dashboard_caregiver"
+        featureType: "Premium Profiles",
+        caregiverId: caregiverId
       } 
     });
   };

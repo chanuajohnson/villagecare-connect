@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,8 +28,9 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import MessageBoardPage from "./pages/professional/MessageBoardPage";
 import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
 import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
-import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
+import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 import AboutPage from "./pages/about/AboutPage";
+import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
 import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
 import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
 
@@ -79,15 +81,17 @@ const AppContent = () => {
           <Route path="/professional/message-board" element={<MessageBoardPage />} />
           <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
           
+          {/* Updated module and lesson routes to match the URL format we need */}
           <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
           <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
           <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
           
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
-          <Route path="/subscription" element={<SubscriptionFeaturesPage />} />
-          <Route path="/subscription-features" element={<Navigate to="/subscription" replace />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
           
+          {/* Routes for matching functionality */}
           <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
           <Route path="/family-matching" element={<FamilyMatchingPage />} />
           

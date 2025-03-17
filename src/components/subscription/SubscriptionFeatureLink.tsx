@@ -9,7 +9,6 @@ interface SubscriptionFeatureLinkProps {
   returnPath: string;
   referringPagePath: string;
   referringPageLabel: string;
-  source?: string; // Add source parameter
   children?: React.ReactNode;
   className?: string;
 }
@@ -19,7 +18,6 @@ export const SubscriptionFeatureLink = ({
   returnPath,
   referringPagePath,
   referringPageLabel,
-  source, // Include source parameter
   children,
   className
 }: SubscriptionFeatureLinkProps) => {
@@ -47,8 +45,7 @@ export const SubscriptionFeatureLink = ({
       trackingPromiseRef.current = trackEngagement('subscription_feature_click', {
         feature_type: featureType,
         referring_page: referringPagePath,
-        return_path: returnPath,
-        source: source || 'subscription_link' // Include source in tracking
+        return_path: returnPath
       }, 'subscription');
       
       await trackingPromiseRef.current;
@@ -69,13 +66,12 @@ export const SubscriptionFeatureLink = ({
 
   return (
     <Link
-      to="/subscription-features"
+      to="/subscription"
       state={{
         featureType,
         returnPath,
         referringPagePath,
-        referringPageLabel,
-        source: source || 'subscription_link' // Include source in navigation state
+        referringPageLabel
       }}
       className={className}
       onClick={handleClick}
