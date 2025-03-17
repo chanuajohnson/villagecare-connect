@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -80,7 +79,6 @@ const AppContent = () => {
           <Route path="/professional/message-board" element={<MessageBoardPage />} />
           <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
           
-          {/* Updated module and lesson routes to match the URL format we need */}
           <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
           <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
           <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
@@ -88,9 +86,8 @@ const AppContent = () => {
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionFeaturesPage />} />
-          <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
+          <Route path="/subscription-features" element={<Navigate to="/subscription" replace />} />
           
-          {/* Routes for matching functionality */}
           <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
           <Route path="/family-matching" element={<FamilyMatchingPage />} />
           
