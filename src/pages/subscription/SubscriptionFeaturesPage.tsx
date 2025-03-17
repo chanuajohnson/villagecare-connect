@@ -208,6 +208,19 @@ export default function SubscriptionFeaturesPage() {
     }, 1500);
   };
 
+  // Important fix: Override selectedUserType to 'family' if the referring component is a family-specific component
+  // This specifically addresses the issue with family dashboard's "Unlock Profile" button
+  useEffect(() => {
+    if (location.state) {
+      // Check if 'source' property is 'family_dashboard_caregiver' or similar family-specific indicators
+      if (location.state.source === 'family_dashboard_caregiver' || 
+          (location.state.familyId && !location.state.caregiverId)) {
+        setSelectedUserType('family');
+        console.log("Overriding selectedUserType to family based on source component");
+      }
+    }
+  }, [location.state]);
+
   // Determine which plans to display based on selected user type
   const displayPlans = selectedUserType === 'family' ? familyPlans : caregiverPlans;
 

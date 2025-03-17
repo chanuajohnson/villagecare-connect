@@ -54,6 +54,18 @@ export const CaregiverMatchingCard = () => {
     }
   };
 
+  const handleSubscriptionNavigation = () => {
+    navigate("/subscription-features", { 
+      state: { 
+        returnPath: "/caregiver-matching",
+        referringPagePath: "/dashboard/family",
+        referringPageLabel: "Family Dashboard",
+        featureType: "Premium Matching",
+        source: "family_dashboard_card"
+      } 
+    });
+  };
+
   return (
     <Card className="relative overflow-hidden border-2 border-primary/20 mb-8">
       {/* Gradient background accent */}
