@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ const TrainingResourcesPage = () => {
   const handleEnrollClick = async () => {
     toast({
       title: "Enrollment Request Received!",
-      description: "Check your email for next steps. You'll receive further instructions shortly.",
+      description: "We have your request logged and you will receive an email when this feature is live and launched.",
     });
 
     if (user) {
