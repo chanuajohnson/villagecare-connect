@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 interface Caregiver {
   id: string;
   full_name: string;
+  original_full_name?: string;
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -34,6 +35,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "1",
     full_name: "Maria Johnson",
+    original_full_name: "Maria Johnson",
     avatar_url: null,
     hourly_rate: "$18-25",
     location: "Port of Spain",
@@ -49,6 +51,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "2",
     full_name: "James Wilson",
+    original_full_name: "James Wilson",
     avatar_url: null,
     hourly_rate: "$22-30",
     location: "San Fernando",
@@ -64,6 +67,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "3",
     full_name: "Sophia Thomas",
+    original_full_name: "Sophia Thomas",
     avatar_url: null,
     hourly_rate: "$20-28",
     location: "Arima",
@@ -131,10 +135,12 @@ export const DashboardCaregiverMatches = () => {
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+          const firstName = prof.full_name ? prof.full_name.split(' ')[0] : 'Professional';
           
           return {
             id: prof.id,
-            full_name: prof.full_name || 'Professional Caregiver',
+            full_name: firstName,
+            original_full_name: prof.full_name || 'Professional Caregiver',
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
             location: prof.location || 'Port of Spain',
@@ -151,7 +157,16 @@ export const DashboardCaregiverMatches = () => {
         
         console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
         
-        const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
+        const privacyProtectedMockCaregivers = MOCK_CAREGIVERS.map(caregiver => {
+          const firstName = caregiver.full_name.split(' ')[0];
+          return {
+            ...caregiver,
+            full_name: firstName,
+            original_full_name: caregiver.full_name
+          };
+        });
+        
+        const limitedMockCaregivers = privacyProtectedMockCaregivers.slice(0, Math.max(0, 3 - realCaregivers.length));
         const allCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
         
         if (user) {
@@ -252,6 +267,14 @@ export const DashboardCaregiverMatches = () => {
         caregiverId: caregiverId
       } 
     });
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   };
 
   if (!user) {
@@ -415,7 +438,7 @@ export const DashboardCaregiverMatches = () => {
                     <Avatar className="h-16 w-16 border-2 border-primary/20">
                       <AvatarImage src={caregiver.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                        {caregiver.full_name.split(' ').map(n => n[0]).join('')}
+                        {getInitials(caregiver.original_full_name || caregiver.full_name)}
                       </AvatarFallback>
                     </Avatar>
                     
