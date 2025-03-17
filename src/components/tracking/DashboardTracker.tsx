@@ -1,6 +1,6 @@
 
 import { useTracking } from "@/hooks/useTracking";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface DashboardTrackerProps {
@@ -16,18 +16,19 @@ interface DashboardTrackerProps {
 export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
+  const [isMounted, setIsMounted] = useState(true);
   
   useEffect(() => {
-    let isMounted = true;
+    setIsMounted(true);
     
     const trackDashboardView = async () => {
-      if (!isMounted) return;
+      if (!isMounted || !user) return;
       
       try {
         const actionType = `${dashboardType}_dashboard_view`;
         
         await trackEngagement(actionType as any, {
-          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+          user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
           path: window.location.pathname,
         });
       } catch (error) {
@@ -36,15 +37,18 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
       }
     };
     
-    if (isMounted && user) {
-      trackDashboardView();
-    }
+    // Delay tracking to avoid blocking UI rendering
+    const trackingTimer = setTimeout(() => {
+      if (user && isMounted) {
+        trackDashboardView();
+      }
+    }, 1000);
     
     return () => {
-      isMounted = false;
+      setIsMounted(false);
+      clearTimeout(trackingTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboardType, user?.id]); // Retrack if user ID changes
+  }, [dashboardType, user?.id, isProfileComplete, trackEngagement, user]);
   
   return null; // This component doesn't render anything
 };

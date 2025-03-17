@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTracking } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
@@ -21,19 +21,20 @@ interface MatchingTrackerProps {
 export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
+  const [isMounted, setIsMounted] = useState(true);
   
   useEffect(() => {
-    let isMounted = true;
+    setIsMounted(true);
     
     const trackMatchingPageView = async () => {
-      if (!isMounted) return;
+      if (!isMounted || !user) return;
       
       try {
         const actionType = `${matchingType}_matching_page_view`;
         
         await trackEngagement(actionType as any, {
           ...additionalData,
-          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+          user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
         });
       } catch (error) {
         console.error(`Error tracking matching page view for ${matchingType}:`, error);
@@ -41,15 +42,18 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
       }
     };
     
-    if (user && isMounted) {
-      trackMatchingPageView();
-    }
+    // Delay tracking to avoid blocking UI rendering
+    const trackingTimer = setTimeout(() => {
+      if (user && isMounted) {
+        trackMatchingPageView();
+      }
+    }, 1000);
     
     return () => {
-      isMounted = false;
+      setIsMounted(false);
+      clearTimeout(trackingTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchingType, user?.id]); // Retrack if user ID changes
+  }, [matchingType, user?.id, isProfileComplete, additionalData, trackEngagement, user]);
   
   return null; // This component doesn't render anything
 };

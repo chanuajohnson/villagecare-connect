@@ -44,6 +44,8 @@ export const TrackedLink = ({
       await trackEngagement(trackingAction, {
         ...trackingData,
         destination: to.toString()
+      }).catch(err => {
+        console.error("Error in tracked link:", err);
       });
     } catch (error) {
       console.error(`Error tracking link click for action ${trackingAction}:`, error);

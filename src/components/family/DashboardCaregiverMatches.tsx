@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,6 +94,7 @@ export const DashboardCaregiverMatches = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const { trackEngagement } = useTracking();
+  const [isMounted, setIsMounted] = useState(true);
 
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [specializedCare, setSpecializedCare] = useState<string[]>([]);
@@ -157,11 +157,21 @@ export const DashboardCaregiverMatches = () => {
   ];
 
   useEffect(() => {
-    let isMounted = true;
+    setIsMounted(true);
     
     const loadCaregivers = async () => {
+      if (!isMounted) return;
+      
       try {
         setIsLoading(true);
+        console.log("Starting to load caregivers");
+        
+        // First set mock data to avoid prolonged loading states
+        if (isMounted) {
+          setCaregivers(MOCK_CAREGIVERS);
+          setFilteredCaregivers(MOCK_CAREGIVERS);
+          console.log("Set initial mock data");
+        }
         
         const { data: professionalUsers, error: professionalError } = await supabase
           .from('profiles')
@@ -171,8 +181,7 @@ export const DashboardCaregiverMatches = () => {
         if (professionalError) {
           console.error("Error fetching professional users:", professionalError);
           if (isMounted) {
-            setCaregivers(MOCK_CAREGIVERS);
-            setFilteredCaregivers(MOCK_CAREGIVERS);
+            // We already set mock data, so just show a toast
             toast.error("Using sample caregiver data due to connection issues");
           }
           return;
@@ -180,7 +189,15 @@ export const DashboardCaregiverMatches = () => {
         
         console.log("Fetched professional users:", professionalUsers?.length);
         
-        const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
+        if (!professionalUsers || professionalUsers.length === 0) {
+          console.log("No real caregivers found, using mock data");
+          if (isMounted) {
+            toast.info("Showing sample caregivers");
+          }
+          return; // We already set MOCK_CAREGIVERS above
+        }
+        
+        const realCaregivers: Caregiver[] = professionalUsers.map(prof => {
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           const fullName = prof.full_name || 'Professional Caregiver';
@@ -203,7 +220,7 @@ export const DashboardCaregiverMatches = () => {
             certifications: prof.certifications || [],
             distance: distance
           };
-        }) : [];
+        });
         
         console.log("Processed real caregivers:", realCaregivers.length);
         
@@ -213,44 +230,40 @@ export const DashboardCaregiverMatches = () => {
           const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
           displayCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
           if (realCaregivers.length === 0) {
-            toast.info("Showing sample caregivers");
+            if (isMounted) toast.info("Showing sample caregivers");
           }
         } else {
           displayCaregivers = realCaregivers.slice(0, 3);
         }
         
         if (isMounted) {
-          // Ensure we always set some data, even if it's just mock data
-          if (displayCaregivers.length === 0) {
-            console.log("No caregivers found, using mock data");
-            displayCaregivers = MOCK_CAREGIVERS.slice(0, 3);
-            toast.info("Showing sample caregivers");
-          }
-          
           setCaregivers(displayCaregivers);
           setFilteredCaregivers(displayCaregivers);
           console.log("Set caregivers in state:", displayCaregivers.length);
         }
         
-        // Try to track engagement, but don't let it block the UI
-        try {
-          if (user && isMounted) {
-            await trackEngagement('dashboard_caregiver_matches_view');
-          }
-        } catch (trackingError) {
-          console.error("Tracking error:", trackingError);
-        }
       } catch (error) {
         console.error("Error loading caregivers:", error);
+        // We already set mock data above, so just show a toast
         if (isMounted) {
-          setCaregivers(MOCK_CAREGIVERS);
-          setFilteredCaregivers(MOCK_CAREGIVERS);
           toast.error("Using sample caregiver data due to unexpected error");
         }
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          console.log("Finished loading caregivers, isLoading set to false");
         }
+      }
+      
+      // Try to track engagement, but don't let it block the UI
+      try {
+        if (user && isMounted) {
+          trackEngagement('dashboard_caregiver_matches_view').catch(err => {
+            console.error("Tracking error:", err);
+          });
+        }
+      } catch (trackingError) {
+        console.error("Tracking setup error:", trackingError);
       }
     };
     
@@ -261,12 +274,12 @@ export const DashboardCaregiverMatches = () => {
     }
     
     return () => {
-      isMounted = false;
+      setIsMounted(false);
     };
-  }, [user, trackEngagement]);
+  }, [user]);
 
   useEffect(() => {
-    if (caregivers.length === 0) return;
+    if (!isMounted || caregivers.length === 0) return;
 
     const applyFilters = () => {
       let result = [...caregivers];
@@ -332,8 +345,8 @@ export const DashboardCaregiverMatches = () => {
     };
 
     applyFilters();
-  }, [caregivers, careTypes, specializedCare, availability, maxDistance, priceRange, onlyTrained, requiredCertifications, minimumExperience]);
-  
+  }, [caregivers, careTypes, specializedCare, availability, maxDistance, priceRange, onlyTrained, requiredCertifications, minimumExperience, isMounted]);
+
   const handleCareTypeChange = (type: string) => {
     try {
       trackEngagement('filter_change', { 
@@ -341,7 +354,7 @@ export const DashboardCaregiverMatches = () => {
         filter_value: type,
         previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
         new_state: careTypes.includes(type) ? 'unselected' : 'selected'
-      });
+      }).catch(err => console.error("Tracking error:", err));
     } catch (error) {
       console.error("Error tracking care type change:", error);
     }
@@ -360,7 +373,7 @@ export const DashboardCaregiverMatches = () => {
         filter_value: care,
         previous_state: specializedCare.includes(care) ? 'selected' : 'unselected',
         new_state: specializedCare.includes(care) ? 'unselected' : 'selected'
-      });
+      }).catch(err => console.error("Tracking error:", err));
     } catch (error) {
       console.error("Error tracking specialized care change:", error);
     }
@@ -379,7 +392,7 @@ export const DashboardCaregiverMatches = () => {
         filter_value: cert,
         previous_state: requiredCertifications.includes(cert) ? 'selected' : 'unselected',
         new_state: requiredCertifications.includes(cert) ? 'unselected' : 'selected'
-      });
+      }).catch(err => console.error("Tracking error:", err));
     } catch (error) {
       console.error("Error tracking certification change:", error);
     }
@@ -393,7 +406,8 @@ export const DashboardCaregiverMatches = () => {
 
   const handleUnlockProfile = (caregiverId: string) => {
     try {
-      trackEngagement('unlock_profile_click', { caregiver_id: caregiverId });
+      trackEngagement('unlock_profile_click', { caregiver_id: caregiverId })
+        .catch(err => console.error("Tracking error:", err));
     } catch (error) {
       console.error("Error tracking unlock profile click:", error);
     }
@@ -435,6 +449,8 @@ export const DashboardCaregiverMatches = () => {
     );
   }
 
+  console.log("Rendering DashboardCaregiverMatches, isLoading:", isLoading, "filteredCaregivers:", filteredCaregivers.length);
+
   return (
     <Card className="mb-8 border-l-4 border-l-primary">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -458,7 +474,8 @@ export const DashboardCaregiverMatches = () => {
             className="flex items-center gap-1"
             onClick={() => {
               try {
-                trackEngagement('view_all_matches_click');
+                trackEngagement('view_all_matches_click')
+                  .catch(err => console.error("Tracking error:", err));
               } catch (error) {
                 console.error("Error tracking view all click:", error);
               }
@@ -808,7 +825,8 @@ export const DashboardCaregiverMatches = () => {
               className="w-full mt-2"
               onClick={() => {
                 try {
-                  trackEngagement('view_all_matches_click');
+                  trackEngagement('view_all_matches_click')
+                    .catch(err => console.error("Tracking error:", err));
                 } catch (error) {
                   console.error("Error tracking view all click:", error);
                 }
