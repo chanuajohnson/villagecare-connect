@@ -20,9 +20,7 @@ export const VisionSection = () => {
         </CardHeader>
         <CardContent className="pt-6 text-center">
           <div className="max-w-3xl mx-auto">
-            <p className="text-lg text-primary-700 mb-6">We envision a world where caregiving is recognized as essential, professional work, supported by technology that empowers both families and caregivers to create compassionate care communities.
-
-These statements maintain your core values and goals while being more focused and memorable. They communicate your purpose (what you do and for whom) and your aspirational future (what you ultimately want to achieve) in a more streamlined format that's easier for stakeholders to understand and remember.</p>
+            <p className="text-lg text-primary-700 mb-6">We envision a world where caregiving is recognized as essential, professional work, supported by technology that empowers both families and caregivers to create compassionate care communities.</p>
             
             <AnimatePresence>
               {isExpanded && <motion.div initial={{
