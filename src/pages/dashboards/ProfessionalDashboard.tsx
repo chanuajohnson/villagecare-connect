@@ -13,6 +13,7 @@ import { JobListings } from "@/components/professional/JobListings";
 import { MessageBoard } from "@/components/professional/MessageBoard";
 import { TrainingProgramSection } from "@/components/professional/TrainingProgramSection";
 import { TrainingModulesSection } from "@/components/professional/TrainingModulesSection";
+import { DashboardFamilyMatches } from "@/components/professional/DashboardFamilyMatches";
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -76,17 +77,24 @@ const ProfessionalDashboard = () => {
             </Card>
           </motion.div>
         ) : (
-          <div className="space-y-6 mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <NextStepsPanel />
-              <TrainingProgressTracker />
+          <>
+            {/* Family Matches Section */}
+            <div className="mt-8">
+              <DashboardFamilyMatches />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <JobListings />
-              <MessageBoard />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <NextStepsPanel />
+                <TrainingProgressTracker />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <JobListings />
+                <MessageBoard />
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Profile Management and Admin Assistant - side by side */}

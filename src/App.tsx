@@ -32,6 +32,7 @@ import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 import AboutPage from "./pages/about/AboutPage";
 import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
 import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
+import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
 
 const queryClient = new QueryClient();
 
@@ -90,8 +91,9 @@ const AppContent = () => {
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
           
-          {/* New route for caregiver matching */}
+          {/* Routes for matching functionality */}
           <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
+          <Route path="/family-matching" element={<FamilyMatchingPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
