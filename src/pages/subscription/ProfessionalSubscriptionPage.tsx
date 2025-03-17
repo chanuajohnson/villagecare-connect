@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -38,7 +37,7 @@ interface SubscriptionPlan {
   popular?: boolean;
 }
 
-const SubscriptionPage = () => {
+const ProfessionalSubscriptionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
@@ -335,4 +334,4 @@ const SubscriptionPage = () => {
   );
 };
 
-export default SubscriptionPage;
+export default ProfessionalSubscriptionPage;
