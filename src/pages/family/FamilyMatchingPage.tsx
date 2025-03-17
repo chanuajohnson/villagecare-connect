@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
 
 interface Family {
   id: string;
@@ -88,6 +89,14 @@ export default function FamilyMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const breadcrumbItems = [
+    {
+      label: "Family Matching",
+      path: "/family-matching"
+    }
+  ];
+
   const [families, setFamilies] = useState<Family[]>([]);
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -307,6 +316,8 @@ export default function FamilyMatchingPage() {
 
   return (
     <div className="container px-4 py-8">
+      <BreadcrumbSimple items={breadcrumbItems} />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
         <p className="text-gray-600">

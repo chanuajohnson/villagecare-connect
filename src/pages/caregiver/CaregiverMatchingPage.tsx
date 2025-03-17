@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { BreadcrumbSimple } from "@/components/ui/breadcrumbs/BreadcrumbSimple";
 
 interface Caregiver {
   id: string;
@@ -99,6 +100,14 @@ export default function CaregiverMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const breadcrumbItems = [
+    {
+      label: "Caregiver Matching",
+      path: "/caregiver-matching"
+    }
+  ];
+
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
   const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -299,6 +308,8 @@ export default function CaregiverMatchingPage() {
   
   return (
     <div className="container px-4 py-8">
+      <BreadcrumbSimple items={breadcrumbItems} />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
         <p className="text-gray-600">
