@@ -15,6 +15,11 @@ interface TrackableButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   trackingData?: Record<string, any>;
   
   /**
+   * Optional feature name to categorize this tracking event
+   */
+  featureName?: string;
+  
+  /**
    * Variant for the underlying Button component
    */
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
@@ -34,12 +39,12 @@ interface TrackableButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * Button component that automatically tracks click events
  */
 export const TrackableButton = forwardRef<HTMLButtonElement, TrackableButtonProps>(
-  ({ trackingAction, trackingData = {}, onClick, ...props }, ref) => {
+  ({ trackingAction, trackingData = {}, featureName, onClick, ...props }, ref) => {
     const { trackEngagement } = useTracking();
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
       // Track the button click
-      await trackEngagement(trackingAction, trackingData);
+      await trackEngagement(trackingAction, trackingData, featureName);
       
       // Call the original onClick handler if provided
       if (onClick) {
