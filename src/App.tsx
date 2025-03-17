@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './components/providers/AuthProvider';
-import { Toaster } from 'sonner'; // Changed ToastContainer to Toaster
+import { Toaster } from 'sonner'; // Use Toaster from sonner
 import { supabase } from './lib/supabase';
 
 // Import the Registration Page from the auth directory
