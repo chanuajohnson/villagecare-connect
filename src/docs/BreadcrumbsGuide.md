@@ -1,6 +1,8 @@
 
 # Breadcrumbs Implementation Guide
 
+> **Note:** For a more comprehensive guide with detailed implementation strategies, see [BreadcrumbsGuide1.md](./BreadcrumbsGuide1.md)
+
 ## Overview
 
 Breadcrumbs in our application provide contextual navigation that allows users to understand where they are in the application hierarchy and navigate back to previous levels easily. This document outlines how breadcrumbs are implemented and should be used consistently across the application.
@@ -79,6 +81,34 @@ When redirecting users to pages like subscription pages, it's important to prese
 </SubscriptionFeatureLink>
 ```
 
+Or when using direct navigation:
+
+```typescript
+navigate('/subscription-features', { 
+  state: { 
+    returnPath: '/current/page',
+    referringPagePath: '/dashboard/family',  
+    referringPageLabel: 'Family Dashboard',  
+    featureType: "Feature Name"
+  } 
+});
+```
+
+## Common Breadcrumb Issues
+
+### Double "Home" in Breadcrumbs
+
+If you see "Home > Home > Page" in your breadcrumbs:
+- Ensure you're passing both `referringPagePath` and `referringPageLabel` 
+- Add conditional rendering to prevent duplicate Home items
+- Check for proper navigation state context 
+
+### Missing Dashboard in Breadcrumbs
+
+If you see "Home > Page" missing the dashboard level:
+- Verify that navigation includes the dashboard path and label
+- Check the conditional rendering in the breadcrumb component
+
 ## Best Practices
 
 1. **Consistency**: Always use breadcrumbs on feature pages, settings pages, and content pages.
@@ -95,20 +125,4 @@ When redirecting users to pages like subscription pages, it's important to prese
 
 7. **Preserving Context**: When redirecting users (especially for subscription features), always preserve the navigation context so users can easily return.
 
-## Implementation Details
-
-1. **Static Breadcrumbs**: For dashboard and static feature pages, manually define the breadcrumb items in the component.
-
-2. **Dynamic Breadcrumbs**: For content pages like training modules, use the `Breadcrumb` component which automatically builds the breadcrumb trail based on the URL.
-
-3. **Deep Linking**: For pages that require preserving navigation context (like subscription pages), use location state to store the referring page information.
-
-## Troubleshooting
-
-If breadcrumbs are not displaying correctly:
-
-1. Check that breadcrumb items are defined with the correct `path` property (not `href`).
-2. Ensure the breadcrumb items array is correctly ordered from highest to lowest in the hierarchy.
-3. Verify that the DashboardHeader or Breadcrumb component is properly imported and rendered.
-4. For dynamic breadcrumbs, check that the URL structure matches the expected pattern.
-
+See [BreadcrumbsGuide1.md](./BreadcrumbsGuide1.md) for more detailed implementation strategies and debugging techniques.
