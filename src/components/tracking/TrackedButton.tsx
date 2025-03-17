@@ -42,45 +42,35 @@ export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
   ({ trackingAction, trackingData = {}, featureName, onClick, ...props }, ref) => {
     const { trackEngagement, isElementProcessing, markElementProcessing } = useTracking();
     const buttonRef = useRef<HTMLButtonElement | null>(null);
-    const trackingPromiseRef = useRef<Promise<void> | null>(null);
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Get the actual DOM element
+      const element = e.currentTarget;
+      
+      // If this element is already being processed, prevent duplicate tracking
+      if (isElementProcessing(element)) {
+        console.log("[TrackedButton] Preventing duplicate click handling");
+        return;
+      }
+      
       try {
-        // Get the actual DOM element
-        const element = e.currentTarget;
-        
-        // Stop propagation to prevent event bubbling
+        // Prevent event bubbling to avoid triggering parent click handlers
         e.stopPropagation();
-        
-        // If this element is already being processed or has a tracking promise in progress, prevent duplicate tracking
-        if (isElementProcessing(element) || trackingPromiseRef.current) {
-          console.log("[TrackedButton] Preventing duplicate click handling");
-          return;
-        }
         
         // Mark this element as being processed
         markElementProcessing(element, true);
         
         // Track the button click
-        trackingPromiseRef.current = trackEngagement(trackingAction, trackingData, featureName);
-        
-        await trackingPromiseRef.current;
+        await trackEngagement(trackingAction, trackingData, featureName);
         
         // Call the original onClick handler if provided
         if (onClick) {
           onClick(e);
         }
-      } catch (error) {
-        console.error("[TrackedButton] Error handling click:", error);
       } finally {
-        // Clear the tracking promise reference
-        trackingPromiseRef.current = null;
-        
         // Clear the processing state after a short delay
         setTimeout(() => {
-          if (e.currentTarget) {
-            markElementProcessing(e.currentTarget, false);
-          }
+          markElementProcessing(element, false);
         }, 1000); // 1 second delay
       }
     };

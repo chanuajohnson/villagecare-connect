@@ -28,7 +28,7 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import MessageBoardPage from "./pages/professional/MessageBoardPage";
 import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
 import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
-import ProfessionalSubscriptionPage from "./pages/subscription/ProfessionalSubscriptionPage";
+import SubscriptionPage from "./pages/subscription/SubscriptionPage";
 import AboutPage from "./pages/about/AboutPage";
 import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
 import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
@@ -88,7 +88,7 @@ const AppContent = () => {
           
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/faq" element={<FAQPage />} />
-          <Route path="/subscription" element={<ProfessionalSubscriptionPage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
           
           {/* Routes for matching functionality */}
