@@ -23,7 +23,11 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
   const { user, isProfileComplete } = useAuth();
   
   useEffect(() => {
+    let isMounted = true;
+    
     const trackMatchingPageView = async () => {
+      if (!isMounted) return;
+      
       try {
         const actionType = `${matchingType}_matching_page_view`;
         
@@ -37,7 +41,6 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
       }
     };
     
-    let isMounted = true;
     if (user && isMounted) {
       trackMatchingPageView();
     }

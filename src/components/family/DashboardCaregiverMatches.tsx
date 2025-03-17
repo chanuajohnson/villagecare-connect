@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, CheckSquare, Check, MapPinned, Calendar, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,7 +18,7 @@ import { useTracking } from "@/hooks/useTracking";
 interface Caregiver {
   id: string;
   full_name: string;
-  first_name: string; // Added first_name field
+  first_name: string;
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -158,6 +157,8 @@ export const DashboardCaregiverMatches = () => {
   ];
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCaregivers = async () => {
       try {
         setIsLoading(true);
@@ -169,11 +170,15 @@ export const DashboardCaregiverMatches = () => {
         
         if (professionalError) {
           console.error("Error fetching professional users:", professionalError);
-          setCaregivers(MOCK_CAREGIVERS);
-          setFilteredCaregivers(MOCK_CAREGIVERS);
-          toast.error("Using sample data due to connection issues");
+          if (isMounted) {
+            setCaregivers(MOCK_CAREGIVERS);
+            setFilteredCaregivers(MOCK_CAREGIVERS);
+            toast.error("Using sample caregiver data due to connection issues");
+          }
           return;
         }
+        
+        console.log("Fetched professional users:", professionalUsers?.length);
         
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
@@ -200,10 +205,11 @@ export const DashboardCaregiverMatches = () => {
           };
         }) : [];
         
-        console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
+        console.log("Processed real caregivers:", realCaregivers.length);
         
         let displayCaregivers;
         if (realCaregivers.length < 3) {
+          console.log("Not enough real caregivers, adding mock data");
           const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
           displayCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
           if (realCaregivers.length === 0) {
@@ -213,30 +219,45 @@ export const DashboardCaregiverMatches = () => {
           displayCaregivers = realCaregivers.slice(0, 3);
         }
         
+        if (isMounted) {
+          // Ensure we always set some data, even if it's just mock data
+          if (displayCaregivers.length === 0) {
+            console.log("No caregivers found, using mock data");
+            displayCaregivers = MOCK_CAREGIVERS.slice(0, 3);
+            toast.info("Showing sample caregivers");
+          }
+          
+          setCaregivers(displayCaregivers);
+          setFilteredCaregivers(displayCaregivers);
+          console.log("Set caregivers in state:", displayCaregivers.length);
+        }
+        
+        // Try to track engagement, but don't let it block the UI
         try {
-          if (user) {
+          if (user && isMounted) {
             await trackEngagement('dashboard_caregiver_matches_view');
           }
         } catch (trackingError) {
           console.error("Tracking error:", trackingError);
-          // Continue with the rest of the function even if tracking fails
         }
-        
-        setCaregivers(displayCaregivers);
-        setFilteredCaregivers(displayCaregivers);
       } catch (error) {
         console.error("Error loading caregivers:", error);
-        setCaregivers(MOCK_CAREGIVERS);
-        setFilteredCaregivers(MOCK_CAREGIVERS);
-        toast.error("Using sample data due to unexpected error");
+        if (isMounted) {
+          setCaregivers(MOCK_CAREGIVERS);
+          setFilteredCaregivers(MOCK_CAREGIVERS);
+          toast.error("Using sample caregiver data due to unexpected error");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
-    let isMounted = true;
-    if (user && isMounted) {
+    if (user) {
       loadCaregivers();
+    } else {
+      setIsLoading(false);
     }
     
     return () => {

@@ -34,8 +34,13 @@ export const TrackedLink = ({
   const { trackEngagement } = useTracking();
   
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Call the original onClick handler if provided
+    if (onClick) {
+      onClick(e);
+    }
+    
     try {
-      // Track the link click
+      // Track the link click (after the original handler to not delay navigation)
       await trackEngagement(trackingAction, {
         ...trackingData,
         destination: to.toString()
@@ -43,11 +48,6 @@ export const TrackedLink = ({
     } catch (error) {
       console.error(`Error tracking link click for action ${trackingAction}:`, error);
       // Continue execution even if tracking fails
-    }
-    
-    // Call the original onClick handler if provided
-    if (onClick) {
-      onClick(e);
     }
   };
   

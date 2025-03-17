@@ -18,7 +18,11 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { user, isProfileComplete } = useAuth();
   
   useEffect(() => {
+    let isMounted = true;
+    
     const trackDashboardView = async () => {
+      if (!isMounted) return;
+      
       try {
         const actionType = `${dashboardType}_dashboard_view`;
         
@@ -32,8 +36,7 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
       }
     };
     
-    let isMounted = true;
-    if (isMounted) {
+    if (isMounted && user) {
       trackDashboardView();
     }
     
