@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -64,7 +65,7 @@ export interface TrackingOptions {
  * Hook for tracking user engagement across the platform
  */
 export function useTracking(options: TrackingOptions = {}) {
-  const { user } = useAuth();
+  const { user, isProfileComplete } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   /**
@@ -96,7 +97,7 @@ export function useTracking(options: TrackingOptions = {}) {
       const enhancedData = {
         ...additionalData,
         user_role: user?.role || 'anonymous',
-        user_profile_complete: user ? user.isProfileComplete : null,
+        user_profile_complete: isProfileComplete || false,
       };
       
       // Record the tracking event in Supabase
