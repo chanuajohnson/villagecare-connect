@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Headphones, PlayCircle, PauseCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTracking } from '@/hooks/useTracking';
 
 export const PodcastCard = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeEpisode, setActiveEpisode] = useState<number | null>(null);
   const { toast } = useToast();
-  const { trackEngagement } = useTracking();
 
   const episodes = [
     {
@@ -28,27 +26,7 @@ export const PodcastCard = () => {
     });
   };
 
-  const handleSubscribeClick = () => {
-    // Track the subscription button click
-    trackEngagement('podcast_subscribe_click', {
-      source_page: 'about_page',
-      action: 'subscribe_request',
-      timestamp: new Date().toISOString()
-    });
-    
-    showPodcastMessage();
-  };
-
   const togglePlay = (episodeId: number) => {
-    // Track the play/pause button click
-    trackEngagement('podcast_playback_toggle', {
-      source_page: 'about_page',
-      episode_id: episodeId,
-      episode_title: episodes.find(e => e.id === episodeId)?.title,
-      action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
-      timestamp: new Date().toISOString()
-    });
-    
     showPodcastMessage();
     
     if (activeEpisode === episodeId && isPlaying) {
@@ -119,7 +97,7 @@ export const PodcastCard = () => {
         
         <div className="mt-8 text-center">
           <button 
-            onClick={handleSubscribeClick}
+            onClick={showPodcastMessage}
             className="text-primary-600 hover:text-primary-700 transition-colors font-medium"
           >
             Subscribe to Tavara Talks on your favorite platform
