@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,6 @@ export default function ResetPasswordPage() {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const validateResetToken = async () => {
@@ -35,31 +34,48 @@ export default function ResetPasswordPage() {
         const currentUrl = window.location.href;
         console.log("[ResetPasswordPage] Current URL:", currentUrl);
         
-        const type = searchParams.get("type");
-        const token = searchParams.get("token");
-        const accessToken = searchParams.get("access_token");
-        const refreshToken = searchParams.get("refresh_token");
-        const code = searchParams.get("code");
+        // Get hash parameters if present (Supabase sometimes sends them in the hash)
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        
+        // Parse URL parameters for type and token
+        const urlParams = new URLSearchParams(location.search);
+        const type = urlParams.get("type");
+        const accessToken = urlParams.get("access_token");
+        const refreshToken = urlParams.get("refresh_token");
+        const hashAccessToken = hashParams.get("access_token");
+        const code = urlParams.get("code");
         
         console.log("[ResetPasswordPage] URL params:", { 
-          type, 
-          hasToken: !!token,
+          type,
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
+          hasHashAccessToken: !!hashAccessToken,
           hasCode: !!code
         });
         
-        const hashParams = new URLSearchParams(location.hash.substring(1));
-        const hashAccessToken = hashParams.get("access_token");
-        
-        if (hashAccessToken) {
-          console.log("[ResetPasswordPage] Found token in hash fragment");
-        }
-        
-        if (accessToken || hashAccessToken) {
-          console.log("[ResetPasswordPage] Found access token in URL parameters or hash");
+        // Try to get the session from the token in the URL
+        if (accessToken || hashAccessToken || code) {
+          console.log("[ResetPasswordPage] Found token in URL parameters");
           
-          try {
+          // If we have a code, we need to exchange it for a session
+          if (code) {
+            console.log("[ResetPasswordPage] Exchanging code for session");
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error("[ResetPasswordPage] Code exchange error:", error);
+              setError("Invalid or expired password reset link. Please request a new one.");
+              setMode("request");
+            } else if (data?.user) {
+              console.log("[ResetPasswordPage] Valid reset code for user:", data.user.email);
+              setEmail(data.user.email);
+              setTokenValidated(true);
+              setError(null);
+              
+              toast.info("Please set a new password you'll remember.", { duration: 6000 });
+            }
+          } else {
+            // Try to get user data directly from the session
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             
             if (userError || !user) {
@@ -74,67 +90,14 @@ export default function ResetPasswordPage() {
               
               toast.info("Please set a new password you'll remember.", { duration: 6000 });
             }
-          } catch (err) {
-            console.error("[ResetPasswordPage] Error processing token:", err);
-            setError("An error occurred while processing your reset link. Please request a new one.");
-            setMode("request");
-          }
-        } else if (type === "recovery" && code) {
-          console.log("[ResetPasswordPage] Code recovery flow detected");
-          
-          try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            
-            if (error) {
-              console.error("[ResetPasswordPage] Code exchange error:", error);
-              setError("Invalid or expired password reset link. Please request a new one.");
-              setMode("request");
-            } else if (data?.user) {
-              console.log("[ResetPasswordPage] Valid reset code for user:", data.user.email);
-              setEmail(data.user.email);
-              setTokenValidated(true);
-              setError(null);
-              
-              toast.info("Please set a new password you'll remember.", { duration: 6000 });
-            } else {
-              console.error("[ResetPasswordPage] No user data returned from code exchange");
-              setError("Invalid password reset link. Please request a new one.");
-              setMode("request");
-            }
-          } catch (err) {
-            console.error("[ResetPasswordPage] Error exchanging code:", err);
-            setError("Error processing your reset link. Please request a new one.");
-            setMode("request");
-          }
-        } else if (token && type === "recovery") {
-          console.log("[ResetPasswordPage] Direct token recovery flow detected");
-          
-          try {
-            console.log("[ResetPasswordPage] Attempting to process recovery token directly");
-            
-            // Use the CNAME record instead of the dynamic hostname
-            const resetDomain = "tavara.care";
-            const correctRedirectUrl = `https://${resetDomain}/auth/reset-password`;
-            
-            console.log("[ResetPasswordPage] Domain should be:", resetDomain);
-            console.log("[ResetPasswordPage] Correct redirect URL should be:", correctRedirectUrl);
-            
-            setError(
-              "We detected a password reset link that needs to be processed differently. " +
-              "Please use the 'Request New Link' button below to get a new reset link that will work correctly with this application."
-            );
-            setMode("request");
-          } catch (err) {
-            console.error("[ResetPasswordPage] Error in direct token flow:", err);
-            setError("Error processing your reset token. Please request a new one.");
-            setMode("request");
           }
         } else {
+          // No token in URL, check for existing session
           console.log("[ResetPasswordPage] No token parameters found, checking for existing session");
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           
           if (userError || !user) {
-            console.error("[ResetPasswordPage] No existing session found");
+            console.log("[ResetPasswordPage] No existing session found");
             setError("No valid reset token found. Please request a password reset link.");
             setMode("request");
           } else {
@@ -156,7 +119,7 @@ export default function ResetPasswordPage() {
     };
 
     validateResetToken();
-  }, [location, searchParams]);
+  }, [location]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,9 +166,10 @@ export default function ResetPasswordPage() {
       setIsLoading(true);
       console.log("[ResetPasswordPage] Requesting password reset for:", email);
       
-      // Use the CNAME record instead of the dynamic hostname 
-      const resetDomain = "tavara.care";
-      const resetPasswordUrl = `https://${resetDomain}/auth/reset-password`;
+      // Use the current origin (domain) for the reset URL
+      const siteUrl = window.location.origin;
+      const resetPath = "/auth/reset-password";
+      const resetPasswordUrl = `${siteUrl}${resetPath}`;
       
       console.log("[ResetPasswordPage] Using reset password redirect URL:", resetPasswordUrl);
       
@@ -272,7 +236,7 @@ export default function ResetPasswordPage() {
             </div>
           </CardContent>
           <CardFooter className="flex justify-center text-sm text-muted-foreground">
-            Takes a Village &copy; {new Date().getFullYear()}
+            Tavara &copy; {new Date().getFullYear()}
           </CardFooter>
         </Card>
       </div>
@@ -400,7 +364,7 @@ export default function ResetPasswordPage() {
           )}
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-muted-foreground">
-          Takes a Village &copy; {new Date().getFullYear()}
+          Tavara &copy; {new Date().getFullYear()}
         </CardFooter>
       </Card>
     </div>

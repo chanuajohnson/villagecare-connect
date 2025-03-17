@@ -102,11 +102,11 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
-      // Use the CNAME record instead of the dynamic hostname to ensure consistency
-      const resetDomain = "tavara.care";
-      
-      // Build the reset password URL correctly with the domain and path
-      const resetPasswordUrl = `https://${resetDomain}/auth/reset-password`;
+      // Use the exact domain as configured in Supabase site URL
+      // This is critical for password reset to work correctly
+      const siteUrl = window.location.origin;
+      const resetPath = "/auth/reset-password";
+      const resetPasswordUrl = `${siteUrl}${resetPath}`;
       
       console.log("[AuthPage] Using reset password redirect URL:", resetPasswordUrl);
 
