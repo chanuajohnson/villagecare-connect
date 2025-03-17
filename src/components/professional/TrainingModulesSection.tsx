@@ -1,8 +1,8 @@
 
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrackedButton } from "@/components/tracking/TrackedButton";
 
 export const TrainingModulesSection = () => {
   const moduleList = [
@@ -89,19 +89,9 @@ export const TrainingModulesSection = () => {
                     needed to deliver professional and compassionate care in alignment with Trinidad & Tobago's 
                     cultural context and healthcare standards.
                   </p>
-                  <TrackedButton 
-                    variant="outline" 
-                    className="mt-4"
-                    trackingAction="training_module_start"
-                    trackingData={{
-                      module_id: module.id,
-                      module_title: module.title,
-                      source_page: "training_modules_section"
-                    }}
-                    featureName="professional_training"
-                  >
+                  <Button variant="outline" className="mt-4">
                     Learn more about this module
-                  </TrackedButton>
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>

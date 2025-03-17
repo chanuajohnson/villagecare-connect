@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Headphones, PlayCircle, PauseCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTracking } from '@/hooks/useTracking';
-import { TrackedButton } from '@/components/tracking/TrackedButton';
 
 export const PodcastCard = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,45 +28,26 @@ export const PodcastCard = () => {
     });
   };
 
-  const handleSubscribeClick = async () => {
-    console.log("[PodcastCard] Subscribe button clicked");
-    
+  const handleSubscribeClick = () => {
     // Track the subscription button click
-    try {
-      await trackEngagement('podcast_subscribe_click', {
-        source_page: 'about_page',
-        action: 'subscribe_request',
-        timestamp: new Date().toISOString()
-      }, 'podcast'); // Explicitly set feature name to 'podcast'
-      
-      console.log("[PodcastCard] Successfully tracked subscription click");
-    } catch (error) {
-      console.error("[PodcastCard] Error tracking subscription click:", error);
-    }
+    trackEngagement('podcast_subscribe_click', {
+      source_page: 'about_page',
+      action: 'subscribe_request',
+      timestamp: new Date().toISOString()
+    });
     
     showPodcastMessage();
   };
 
-  const togglePlay = async (episodeId: number, e: React.MouseEvent) => {
-    // Prevent event bubbling
-    e.stopPropagation();
-    
-    console.log("[PodcastCard] Play/pause button clicked for episode:", episodeId);
-    
+  const togglePlay = (episodeId: number) => {
     // Track the play/pause button click
-    try {
-      await trackEngagement('podcast_playback_toggle', {
-        source_page: 'about_page',
-        episode_id: episodeId,
-        episode_title: episodes.find(e => e.id === episodeId)?.title,
-        action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
-        timestamp: new Date().toISOString()
-      }, 'podcast'); // Explicitly set feature name to 'podcast'
-      
-      console.log("[PodcastCard] Successfully tracked playback toggle");
-    } catch (error) {
-      console.error("[PodcastCard] Error tracking playback toggle:", error);
-    }
+    trackEngagement('podcast_playback_toggle', {
+      source_page: 'about_page',
+      episode_id: episodeId,
+      episode_title: episodes.find(e => e.id === episodeId)?.title,
+      action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
+      timestamp: new Date().toISOString()
+    });
     
     showPodcastMessage();
     
@@ -106,11 +86,9 @@ export const PodcastCard = () => {
             >
               <div className="flex items-start gap-4">
                 <button 
-                  onClick={(e) => togglePlay(episode.id, e)}
+                  onClick={() => togglePlay(episode.id)}
                   className="mt-1 text-primary-600 hover:text-primary-700 transition-colors"
                   aria-label={isPlaying && activeEpisode === episode.id ? "Pause episode" : "Play episode"}
-                  data-tracking-action="podcast_playback_toggle"
-                  data-feature="podcast"
                 >
                   {isPlaying && activeEpisode === episode.id ? (
                     <PauseCircle className="h-10 w-10" />
@@ -143,8 +121,6 @@ export const PodcastCard = () => {
           <button 
             onClick={handleSubscribeClick}
             className="text-primary-600 hover:text-primary-700 transition-colors font-medium"
-            data-tracking-action="podcast_subscribe_click"
-            data-feature="podcast"
           >
             Subscribe to Tavara Talks on your favorite platform
           </button>
