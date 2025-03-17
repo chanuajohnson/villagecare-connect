@@ -47,8 +47,15 @@ export default function SubscriptionFeaturesPage() {
   const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { returnPath, referringPagePath, referringPageLabel, featureType } = location.state || {};
-  const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
+  
+  // Extract location state data with proper defaults
+  const { 
+    returnPath, 
+    referringPagePath, 
+    referringPageLabel, 
+    featureType,
+    source 
+  } = location.state || {};
 
   // Default dashboard path based on user role if not provided
   const defaultDashboardPath = user?.role === 'family' 
@@ -67,40 +74,60 @@ export default function SubscriptionFeaturesPage() {
   const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
-  useEffect(() => {
-    // Set the selected user type based on multiple factors with more accurate detection
-    if (user?.role) {
-      // If user has a role, use that as the primary source of truth
-      setSelectedUserType(user.role);
-    } else if (
-      // Check if coming from family dashboard or family-specific pages
-      dashboardPath.includes('/dashboard/family') || 
-      dashboardPath.includes('/family/') ||
-      referringPagePath?.includes('/dashboard/family') || 
-      referringPagePath?.includes('/family/')
-    ) {
-      setSelectedUserType('family');
-    } else if (
-      // Check if coming from professional dashboard or professional-specific pages
-      dashboardPath.includes('/dashboard/professional') || 
-      dashboardPath.includes('/professional/') ||
-      referringPagePath?.includes('/dashboard/professional') || 
-      referringPagePath?.includes('/professional/')
-    ) {
-      setSelectedUserType('professional');
-    } else {
-      // If no context is available, check the current URL path for additional context
-      const currentPath = window.location.pathname;
-      if (currentPath.includes('/family/') || location.search.includes('type=family')) {
-        setSelectedUserType('family');
-      } else if (currentPath.includes('/professional/') || location.search.includes('type=professional')) {
-        setSelectedUserType('professional');
-      } else {
-        // Default to family if no context is available
-        setSelectedUserType('family');
+  // Pre-determine user type based on source first, which is highest priority
+  const getInitialUserType = () => {
+    // First check for explicit source indicators
+    if (source === 'family_dashboard_caregiver' || 
+        source === 'family_dashboard_card' || 
+        source === 'family_matching_page') {
+      console.log("Setting user type to family based on source:", source);
+      return 'family';
+    }
+    
+    // Then check for family/caregiver specific IDs in state
+    if (location.state) {
+      if (location.state.familyId && !location.state.caregiverId) {
+        console.log("Setting user type to family based on familyId presence");
+        return 'family';
+      }
+      if (location.state.caregiverId && !location.state.familyId) {
+        console.log("Setting user type to professional based on caregiverId presence");
+        return 'professional';
       }
     }
+    
+    // Then check user role
+    if (user?.role) {
+      console.log("Setting user type based on user role:", user.role);
+      return user.role;
+    }
+    
+    // Then check URL/path patterns
+    if (dashboardPath.includes('/dashboard/family') || 
+        dashboardPath.includes('/family/') ||
+        referringPagePath?.includes('/dashboard/family') || 
+        referringPagePath?.includes('/family/')) {
+      console.log("Setting user type to family based on URL/path");
+      return 'family';
+    }
+    
+    if (dashboardPath.includes('/dashboard/professional') || 
+        dashboardPath.includes('/professional/') ||
+        referringPagePath?.includes('/dashboard/professional') || 
+        referringPagePath?.includes('/professional/')) {
+      console.log("Setting user type to professional based on URL/path");
+      return 'professional';
+    }
+    
+    // Default fallback
+    console.log("Defaulting user type to family");
+    return 'family';
+  };
 
+  const [selectedUserType, setSelectedUserType] = useState(getInitialUserType());
+
+  // Log the determination factors for debugging
+  useEffect(() => {
     console.log("Subscription features page context:", { 
       returnPath, 
       referringPagePath, 
@@ -109,9 +136,10 @@ export default function SubscriptionFeaturesPage() {
       dashboardLabel,
       userRole: user?.role,
       locationState: location.state,
-      selectedUserType
+      selectedUserType,
+      source
     });
-  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state, location.search]);
+  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state, selectedUserType, source]);
 
   // Define the family subscription plans
   const familyPlans: SubscriptionPlan[] = [
