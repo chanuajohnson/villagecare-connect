@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 interface Caregiver {
   id: string;
   full_name: string;
+  first_name: string; // Added first_name field
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -36,6 +38,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "1",
     full_name: "Maria Johnson",
+    first_name: "Maria",
     avatar_url: null,
     hourly_rate: "$18-25",
     location: "Port of Spain",
@@ -51,6 +54,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "2",
     full_name: "James Wilson",
+    first_name: "James",
     avatar_url: null,
     hourly_rate: "$22-30",
     location: "San Fernando",
@@ -66,6 +70,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "3",
     full_name: "Sophia Thomas",
+    first_name: "Sophia",
     avatar_url: null,
     hourly_rate: "$20-28",
     location: "Arima",
@@ -81,6 +86,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
   {
     id: "4",
     full_name: "Robert Garcia",
+    first_name: "Robert",
     avatar_url: null,
     hourly_rate: "$25-35",
     location: "Chaguanas",
@@ -152,10 +158,13 @@ export default function CaregiverMatchingPage() {
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+          const fullName = prof.full_name || 'Professional Caregiver';
+          const firstName = fullName.split(' ')[0];
           
           return {
             id: prof.id,
-            full_name: prof.full_name || 'Professional Caregiver',
+            full_name: fullName,
+            first_name: firstName,
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
             location: prof.location || 'Port of Spain',
@@ -466,7 +475,7 @@ export default function CaregiverMatchingPage() {
                       </Avatar>
                       
                       <div className="mt-3 text-center">
-                        <h3 className="text-lg font-semibold">{caregiver.full_name}</h3>
+                        <h3 className="text-lg font-semibold">{caregiver.first_name}</h3>
                         <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
                           <MapPin className="h-3.5 w-3.5" />
                           <span>{caregiver.location}</span>
