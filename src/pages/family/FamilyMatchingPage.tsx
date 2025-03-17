@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Clock, Filter, MapPin, Star, Lock, Calendar, MapPinned, UserCheck } from "lucide-react";
+import { Clock, Filter, MapPin, Star, Lock, Calendar, MapPinned, UserCheck, Home } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { 
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
+import { Link } from "react-router-dom";
 
 interface Family {
   id: string;
@@ -130,7 +138,6 @@ export default function FamilyMatchingPage() {
       try {
         setIsLoading(true);
         
-        // Fetch real family users from the database
         const { data: familyUsers, error: familyError } = await supabase
           .from('profiles')
           .select('*')
@@ -141,12 +148,8 @@ export default function FamilyMatchingPage() {
           toast.error("Failed to load family matches");
         }
         
-        // Transform family users to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
           return {
@@ -165,10 +168,8 @@ export default function FamilyMatchingPage() {
         
         console.log("Loaded real family users:", realFamilies.length);
         
-        // Combine real families with mock data if needed
         const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
         
-        // Track page view
         if (user) {
           await trackEngagement('family_matching_page_view');
         }
@@ -222,7 +223,6 @@ export default function FamilyMatchingPage() {
 
       result = result.filter(family => family.distance <= maxDistance);
 
-      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
@@ -284,6 +284,35 @@ export default function FamilyMatchingPage() {
   
   return (
     <div className="container px-4 py-8">
+      <div className="mb-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/" className="flex items-center gap-1">
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            
+            <BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbLink asChild>
+                <Link to="/dashboard/professional">
+                  Professional Dashboard
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            
+            <BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbPage>Family Matching</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
         <p className="text-gray-600">

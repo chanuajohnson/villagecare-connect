@@ -1,122 +1,113 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider } from './components/providers/AuthProvider';
+import { ToastContainer } from 'sonner';
+import RegistrationPage from './pages/RegistrationPage';
+import AuthenticationPage from './pages/AuthenticationPage';
+import PricingPage from './pages/PricingPage';
+import SubscriptionFeaturesPage from './pages/subscription/SubscriptionFeaturesPage';
+import Dashboard from './pages/Dashboard';
+import TrainingResourcesPage from './pages/training/TrainingResourcesPage';
+import TrainingModulePage from './pages/training/TrainingModulePage';
+import TrainingLessonPage from './pages/training/TrainingLessonPage';
+import MessageBoardPage from './pages/community/MessageBoardPage';
+import { Footer } from './components/Footer';
+import { ScrollToTop } from './components/ScrollToTop';
+import { StripeScriptLoader } from '@stripe/react-stripe-js';
+import { stripePromise } from './lib/stripe';
+import FamilySettingsPage from './pages/settings/FamilySettingsPage';
+import ProfessionalSettingsPage from './pages/settings/ProfessionalSettingsPage';
+import { useAuth } from './components/providers/AuthProvider';
+import { supabase } from './lib/supabase';
+import { ProfessionalDashboard } from './pages/professional/ProfessionalDashboard';
+import { FamilyDashboard } from './pages/family/FamilyDashboard';
+import { LandingPage } from './pages/LandingPage';
+import { CaregiverProfilePage } from './pages/CaregiverProfilePage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { BlogPostPage } from './pages/community/BlogPostPage';
+import { BlogListPage } from './pages/community/BlogListPage';
+import { ContactUsPage } from './pages/ContactUsPage';
+import { AboutUsPage } from './pages/AboutUsPage';
+import { PricingV2 } from './pages/new-pricing/PricingV2';
+import { ProfessionalJobListingPage } from './pages/professional/ProfessionalJobListingPage';
+import { ProfessionalAllJobListingsPage } from './pages/professional/ProfessionalAllJobListingsPage';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/components/providers/AuthProvider";
-import { Navigation } from "@/components/layout/Navigation";
-import { useEffect, Suspense, lazy } from "react";
-import { initializeSupabase } from "@/lib/supabase";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import FeaturesPage from "./pages/features/FeaturesPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
-import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
-import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
-import AuthPage from "./pages/auth/AuthPage";
-import FamilyRegistration from "./pages/registration/FamilyRegistration";
-import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
-import CommunityRegistration from "./pages/registration/CommunityRegistration";
-import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
-import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeaturesOverview";
-import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
-import FAQPage from "./pages/support/FAQPage";
-import { Fab } from "@/components/ui/fab";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import MessageBoardPage from "./pages/professional/MessageBoardPage";
-import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
-import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
-import SubscriptionPage from "./pages/subscription/SubscriptionPage";
-import AboutPage from "./pages/about/AboutPage";
-import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
-import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
+// Import the matching pages
 import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
+import ProfessionalMatchingPage from "./pages/professional/ProfessionalMatchingPage";
 
-const queryClient = new QueryClient();
-
-const AppWithProviders = () => {
+function App() {
   useEffect(() => {
-    initializeSupabase();
+    const handleAuthStateChange = async (event: any, session: any) => {
+      if (event === 'SIGNED_IN') {
+        // User signed in
+        console.log('User signed in:', session);
+        // You can perform actions here when a user signs in, like updating local storage
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out
+        console.log('User signed out');
+        // Perform actions here when a user signs out, like clearing local storage
+      }
+    };
+
+    supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // Clean up subscription
+    return () => {
+      supabase.auth.offAuthStateChange(handleAuthStateChange);
+    };
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+    <Router>
+      <ScrollToTop />
+      <AuthProvider>
+        <ToastContainer />
+        <StripeScriptLoader stripePromise={stripePromise}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthenticationPage />} />
+            <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/pricing-v2" element={<PricingV2 />} />
+            <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/training-resources" element={<TrainingResourcesPage />} />
+            <Route path="/module/:moduleId" element={<TrainingModulePage />} />
+            <Route path="/lesson/:lessonId" element={<TrainingLessonPage />} />
+            <Route path="/message-board" element={<MessageBoardPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/contact-us" element={<ContactUsPage />} />
+            <Route path="/about-us" element={<AboutUsPage />} />
+            <Route path="/blog/:blogPostId" element={<BlogPostPage />} />
+            <Route path="/blog" element={<BlogListPage />} />
 
-const AppContent = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
-          <Route path="/dashboard/family" element={<FamilyDashboard />} />
-          <Route path="/dashboard/community" element={<CommunityDashboard />} />
-          <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
-          
-          <Route path="/registration/family" element={<FamilyRegistration />} />
-          <Route path="/registration/professional" element={<ProfessionalRegistration />} />
-          <Route path="/registration/community" element={<CommunityRegistration />} />
-          
-          <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
-          <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
-          <Route path="/professional/message-board" element={<MessageBoardPage />} />
-          <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
-          
-          {/* Updated module and lesson routes to match the URL format we need */}
-          <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
-          <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
-          <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
-          
-          <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/subscription" element={<SubscriptionPage />} />
-          <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
-          
-          {/* Routes for matching functionality */}
-          <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
-          <Route path="/family-matching" element={<FamilyMatchingPage />} />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      
-      <GlobalFAB />
-    </div>
-  );
-};
+            {/* Settings Pages */}
+            <Route path="/settings/family" element={<FamilySettingsPage />} />
+            <Route path="/settings/professional" element={<ProfessionalSettingsPage />} />
 
-const GlobalFAB = () => {
-  const pathname = window.location.pathname;
-  
-  if (pathname === "/" || pathname === "/faq") {
-    return null;
-  }
-  
-  return (
-    <Fab 
-      className="bg-primary-500 hover:bg-primary-600 text-white"
-      label="Support options"
-    />
-  );
-};
+            {/* Professional Routes */}
+            <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+            <Route path="/professional/job/:jobId" element={<ProfessionalJobListingPage />} />
+            <Route path="/professional/jobs" element={<ProfessionalAllJobListingsPage />} />
+            <Route path="/caregiver/:caregiverId" element={<CaregiverProfilePage />} />
 
-export default AppWithProviders;
+            {/* Family Routes */}
+            <Route path="/dashboard/family" element={<FamilyDashboard />} />
+
+            {/* Family Matching Page */}
+            <Route path="/family-matching" element={<FamilyMatchingPage />} />
+        
+            {/* Professional Matching Page */}
+            <Route path="/professional-matching" element={<ProfessionalMatchingPage />} />
+          </Routes>
+        </StripeScriptLoader>
+      </AuthProvider>
+      <Footer />
+    </Router>
+  );
+}
+
+export default App;
