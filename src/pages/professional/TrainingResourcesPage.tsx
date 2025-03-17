@@ -11,10 +11,12 @@ import { TrainingProgressTracker } from "@/components/professional/TrainingProgr
 import { toast } from "@/components/ui/use-toast";
 import { useTrainingProgress } from "@/hooks/useTrainingProgress";
 import { supabase } from "@/lib/supabase";
+import { useTracking } from "@/hooks/useTracking";
 
 const TrainingResourcesPage = () => {
   const { user } = useAuth();
   const { modules } = useTrainingProgress();
+  const { trackEngagement } = useTracking();
   
   const breadcrumbItems = [
     {
@@ -28,6 +30,13 @@ const TrainingResourcesPage = () => {
   ];
 
   const handleEnrollClick = async () => {
+    // Track the enrollment button click
+    trackEngagement('training_enrollment_click', {
+      source_page: 'training_resources_page',
+      action: 'enrollment_request',
+      timestamp: new Date().toISOString()
+    });
+    
     toast({
       title: "Enrollment Request Received!",
       description: "We have your request logged and you will receive an email when this feature is live and launched.",

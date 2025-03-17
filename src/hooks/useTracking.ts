@@ -36,6 +36,9 @@ export type TrackingActionType =
   | 'complete_profile_cta_click'
   | 'unlock_profile_click'
   | 'view_all_matches_click'
+  | 'podcast_playback_toggle'
+  | 'podcast_subscribe_click'
+  | 'training_enrollment_click'
   
   // Feature Interactions
   | 'filter_toggle_click'
