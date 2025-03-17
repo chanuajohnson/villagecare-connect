@@ -8,11 +8,11 @@ const FamilyFeaturesOverview = () => {
   const breadcrumbItems = [
     {
       label: "Family",
-      path: "/dashboard/family",
+      href: "/dashboard/family",
     },
     {
       label: "Features Overview",
-      path: "/family/features-overview",
+      href: "/family/features-overview",
     },
   ];
 

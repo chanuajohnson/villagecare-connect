@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -26,8 +27,8 @@ const SubscriptionPage = () => {
   const featureType = location.state?.featureType || "premium feature";
   
   const breadcrumbItems = [
-    { label: "Dashboard", path: returnPath.split('/').slice(0, 3).join('/') },
-    { label: "Subscription", path: "/subscription" },
+    { label: "Dashboard", href: returnPath.split('/').slice(0, 3).join('/') },
+    { label: "Subscription", href: "/subscription" },
   ];
   
   const plans = [
