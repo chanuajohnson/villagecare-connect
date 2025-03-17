@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
+
 const SubscriptionFeaturesPage = () => {
   const {
     user
@@ -19,6 +21,7 @@ const SubscriptionFeaturesPage = () => {
   const featureType = location.state?.featureType || "Premium Features";
   // Get the return path from location state or default to the dashboard
   const returnPath = location.state?.returnPath || "/dashboard/professional";
+  
   const trackFeatureInterest = async () => {
     setLoading(true);
     try {
@@ -61,12 +64,16 @@ const SubscriptionFeaturesPage = () => {
       setLoading(false);
     }
   };
+  
   return <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container px-4 py-12">
         <Breadcrumb />
         
         <div className="mb-8">
-          
+          <Link to={returnPath} className="flex items-center text-primary hover:text-primary-600 mb-4 transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Dashboard
+          </Link>
           
           <motion.div initial={{
           opacity: 0,
@@ -233,4 +240,5 @@ const SubscriptionFeaturesPage = () => {
       </div>
     </div>;
 };
+
 export default SubscriptionFeaturesPage;

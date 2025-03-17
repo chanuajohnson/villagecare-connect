@@ -23,6 +23,7 @@ const routeMap: Record<string, string> = {
   module: "Module",
   lesson: "Lesson",
   "message-board": "Message Board",
+  subscription: "Subscription",
 };
 
 const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
