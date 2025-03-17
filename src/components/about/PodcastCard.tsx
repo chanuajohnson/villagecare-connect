@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Headphones, PlayCircle, PauseCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export const PodcastCard = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeEpisode, setActiveEpisode] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const episodes = [
     {
@@ -17,7 +19,16 @@ export const PodcastCard = () => {
     }
   ];
 
+  const showPodcastMessage = () => {
+    toast({
+      title: "Podcast Request Received!",
+      description: "We have your request logged and you will receive an email when this feature is live and launched."
+    });
+  };
+
   const togglePlay = (episodeId: number) => {
+    showPodcastMessage();
+    
     if (activeEpisode === episodeId && isPlaying) {
       setIsPlaying(false);
     } else {
@@ -85,12 +96,12 @@ export const PodcastCard = () => {
         </div>
         
         <div className="mt-8 text-center">
-          <a 
-            href="#" 
+          <button 
+            onClick={showPodcastMessage}
             className="text-primary-600 hover:text-primary-700 transition-colors font-medium"
           >
             Subscribe to Tavara Talks on your favorite platform
-          </a>
+          </button>
         </div>
       </CardContent>
     </Card>
