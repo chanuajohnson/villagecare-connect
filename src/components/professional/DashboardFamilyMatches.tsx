@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-
 interface Family {
   id: string;
   full_name: string;
@@ -27,112 +25,102 @@ interface Family {
   is_premium: boolean;
   distance: number;
 }
-
-const MOCK_FAMILIES: Family[] = [
-  {
-    id: "1",
-    full_name: "Garcia Family",
-    avatar_url: null,
-    location: "Port of Spain",
-    care_types: ["Elderly Care", "Companionship"],
-    special_needs: ["Alzheimer's", "Mobility Assistance"],
-    care_schedule: "Weekdays, Evenings",
-    match_score: 95,
-    is_premium: false,
-    distance: 3.2
-  },
-  {
-    id: "2",
-    full_name: "Wilson Family",
-    avatar_url: null,
-    location: "San Fernando",
-    care_types: ["Special Needs", "Medical Support"],
-    special_needs: ["Autism Care", "Medication Management"],
-    care_schedule: "Full-time, Weekends",
-    match_score: 89,
-    is_premium: true,
-    distance: 15.7
-  },
-  {
-    id: "3",
-    full_name: "Thomas Family",
-    avatar_url: null,
-    location: "Arima",
-    care_types: ["Child Care", "Housekeeping"],
-    special_needs: ["Early Childhood Development", "Meal Preparation"],
-    care_schedule: "Part-time, Mornings",
-    match_score: 82,
-    is_premium: false,
-    distance: 8.5
-  }
-];
-
+const MOCK_FAMILIES: Family[] = [{
+  id: "1",
+  full_name: "Garcia Family",
+  avatar_url: null,
+  location: "Port of Spain",
+  care_types: ["Elderly Care", "Companionship"],
+  special_needs: ["Alzheimer's", "Mobility Assistance"],
+  care_schedule: "Weekdays, Evenings",
+  match_score: 95,
+  is_premium: false,
+  distance: 3.2
+}, {
+  id: "2",
+  full_name: "Wilson Family",
+  avatar_url: null,
+  location: "San Fernando",
+  care_types: ["Special Needs", "Medical Support"],
+  special_needs: ["Autism Care", "Medication Management"],
+  care_schedule: "Full-time, Weekends",
+  match_score: 89,
+  is_premium: true,
+  distance: 15.7
+}, {
+  id: "3",
+  full_name: "Thomas Family",
+  avatar_url: null,
+  location: "Arima",
+  care_types: ["Child Care", "Housekeeping"],
+  special_needs: ["Early Childhood Development", "Meal Preparation"],
+  care_schedule: "Part-time, Mornings",
+  match_score: 82,
+  is_premium: false,
+  distance: 8.5
+}];
 export const DashboardFamilyMatches = () => {
-  const { user, isProfileComplete } = useAuth();
+  const {
+    user,
+    isProfileComplete
+  } = useAuth();
   const navigate = useNavigate();
   const [families, setFamilies] = useState<Family[]>([]);
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
-
-  const careTypeOptions = [
-    "Elderly Care", 
-    "Child Care", 
-    "Special Needs", 
-    "Medical Support", 
-    "Overnight Care", 
-    "Companionship",
-    "Housekeeping"
-  ];
-  
-  const specialNeedsOptions = [
-    "Alzheimer's",
-    "Mobility Assistance",
-    "Medication Management",
-    "Autism Care", 
-    "Dementia Care",
-    "Meal Preparation"
-  ];
-  
-  const scheduleOptions = [
-    { value: "all", label: "Any Schedule" },
-    { value: "full-time", label: "Full-time" },
-    { value: "part-time", label: "Part-time" },
-    { value: "weekdays", label: "Weekdays" },
-    { value: "weekends", label: "Weekends" },
-    { value: "evenings", label: "Evenings" },
-    { value: "mornings", label: "Mornings" },
-    { value: "overnight", label: "Overnight" }
-  ];
-
+  const careTypeOptions = ["Elderly Care", "Child Care", "Special Needs", "Medical Support", "Overnight Care", "Companionship", "Housekeeping"];
+  const specialNeedsOptions = ["Alzheimer's", "Mobility Assistance", "Medication Management", "Autism Care", "Dementia Care", "Meal Preparation"];
+  const scheduleOptions = [{
+    value: "all",
+    label: "Any Schedule"
+  }, {
+    value: "full-time",
+    label: "Full-time"
+  }, {
+    value: "part-time",
+    label: "Part-time"
+  }, {
+    value: "weekdays",
+    label: "Weekdays"
+  }, {
+    value: "weekends",
+    label: "Weekends"
+  }, {
+    value: "evenings",
+    label: "Evenings"
+  }, {
+    value: "mornings",
+    label: "Mornings"
+  }, {
+    value: "overnight",
+    label: "Overnight"
+  }];
   useEffect(() => {
     const loadFamilies = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch family users from the database
-        const { data: familyUsers, error: familyError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'family');
-        
+        const {
+          data: familyUsers,
+          error: familyError
+        } = await supabase.from('profiles').select('*').eq('role', 'family');
         if (familyError) {
           console.error("Error fetching family users:", familyError);
         }
-        
+
         // Transform family users data to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
           // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
+
           // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          
           return {
             id: family.id,
             full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
@@ -146,18 +134,16 @@ export const DashboardFamilyMatches = () => {
             distance: distance
           };
         }) : [];
-        
         console.log("Loaded real family users:", realFamilies.length);
-        
+
         // Combine real families with mock data if needed
         const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
         const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
-        
+
         // Track engagement if user is logged in
         if (user) {
           await trackEngagement('dashboard_family_matches_view');
         }
-        
         setFamilies(allFamilies);
         setFilteredFamilies(allFamilies);
       } catch (error) {
@@ -166,62 +152,45 @@ export const DashboardFamilyMatches = () => {
         setIsLoading(false);
       }
     };
-    
     if (user) {
       loadFamilies();
     }
   }, [user]);
-
   useEffect(() => {
     if (families.length === 0) return;
-
     const applyFilters = () => {
       let result = [...families];
-
       if (careTypes.length > 0) {
-        result = result.filter(family => 
-          family.care_types?.some(type => careTypes.includes(type))
-        );
+        result = result.filter(family => family.care_types?.some(type => careTypes.includes(type)));
       }
-
       if (specialNeeds.length > 0) {
-        result = result.filter(family => 
-          family.special_needs?.some(need => specialNeeds.includes(need))
-        );
+        result = result.filter(family => family.special_needs?.some(need => specialNeeds.includes(need)));
       }
-
       if (scheduleType !== "all") {
-        result = result.filter(family =>
-          family.care_schedule?.toLowerCase().includes(scheduleType.toLowerCase())
-        );
+        result = result.filter(family => family.care_schedule?.toLowerCase().includes(scheduleType.toLowerCase()));
       }
-
       result = result.filter(family => family.distance <= maxDistance);
 
       // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
-
       setFilteredFamilies(result);
     };
-
     applyFilters();
   }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
-  
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
       const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
-      
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
+      const {
+        error
+      } = await supabase.from('cta_engagement_tracking').insert({
         user_id: user?.id || null,
         action_type: actionType,
         session_id: sessionId,
         additional_data: additionalData
       });
-      
       if (error) {
         console.error("Error tracking engagement:", error);
       }
@@ -229,41 +198,29 @@ export const DashboardFamilyMatches = () => {
       console.error("Error in trackEngagement:", error);
     }
   };
-
   const handleCareTypeChange = (type: string) => {
-    setCareTypes(prev => 
-      prev.includes(type) 
-        ? prev.filter(t => t !== type) 
-        : [...prev, type]
-    );
+    setCareTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   };
-  
   const handleSpecialNeedsChange = (need: string) => {
-    setSpecialNeeds(prev => 
-      prev.includes(need) 
-        ? prev.filter(n => n !== need) 
-        : [...prev, need]
-    );
+    setSpecialNeeds(prev => prev.includes(need) ? prev.filter(n => n !== need) : [...prev, need]);
   };
-
   const handleUnlockProfile = (familyId: string) => {
-    trackEngagement('unlock_family_profile_click', { family_id: familyId });
-    navigate("/subscription-features", { 
-      state: { 
+    trackEngagement('unlock_family_profile_click', {
+      family_id: familyId
+    });
+    navigate("/subscription-features", {
+      state: {
         returnPath: "/family-matching",
         featureType: "Premium Family Profiles",
         familyId: familyId
-      } 
+      }
     });
   };
-
   if (!user) {
     return null;
   }
-
   if (!isProfileComplete) {
-    return (
-      <Card className="mb-8 border-l-4 border-l-primary">
+    return <Card className="mb-8 border-l-4 border-l-primary">
         <CardHeader>
           <CardTitle className="text-xl">Complete Your Profile for Family Matches</CardTitle>
         </CardHeader>
@@ -271,20 +228,18 @@ export const DashboardFamilyMatches = () => {
           <p className="mb-4 text-gray-600">
             Complete your professional profile to see personalized family matches that need your care services.
           </p>
-          <Button 
-            onClick={() => navigate("/registration/professional", { 
-              state: { returnPath: "/family-matching", action: "findFamilies" }
-            })}
-          >
+          <Button onClick={() => navigate("/registration/professional", {
+          state: {
+            returnPath: "/family-matching",
+            action: "findFamilies"
+          }
+        })}>
             Complete Profile
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card className="mb-8 border-l-4 border-l-primary">
+  return <Card className="mb-8 border-l-4 border-l-primary">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <CardTitle className="text-xl">Family Matches</CardTitle>
@@ -293,75 +248,49 @@ export const DashboardFamilyMatches = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-1"
-            onClick={() => setShowFilters(!showFilters)}
-          >
+          <Button variant="outline" className="flex items-center gap-1" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-4 w-4" />
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
-          <Button 
-            variant="default" 
-            className="flex items-center gap-1"
-            onClick={() => {
-              trackEngagement('view_all_family_matches_click');
-              navigate("/family-matching");
-            }}
-          >
+          <Button variant="default" className="flex items-center gap-1" onClick={() => {
+          trackEngagement('view_all_family_matches_click');
+          navigate("/family-matching");
+        }}>
             View All
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
       
-      {showFilters && (
-        <CardContent className="border-b pb-4">
+      {showFilters && <CardContent className="border-b pb-4">
           <div className="space-y-4">
             <h3 className="font-medium text-sm">Care Types</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {careTypeOptions.map((type) => (
-                <div key={type} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`care-type-${type}`}
-                    checked={careTypes.includes(type)}
-                    onCheckedChange={() => handleCareTypeChange(type)}
-                  />
+              {careTypeOptions.map(type => <div key={type} className="flex items-center space-x-2">
+                  <Checkbox id={`care-type-${type}`} checked={careTypes.includes(type)} onCheckedChange={() => handleCareTypeChange(type)} />
                   <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
-                </div>
-              ))}
+                </div>)}
             </div>
             
             <h3 className="font-medium text-sm">Special Needs</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {specialNeedsOptions.map((need) => (
-                <div key={need} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`special-need-${need}`}
-                    checked={specialNeeds.includes(need)}
-                    onCheckedChange={() => handleSpecialNeedsChange(need)}
-                  />
+              {specialNeedsOptions.map(need => <div key={need} className="flex items-center space-x-2">
+                  <Checkbox id={`special-need-${need}`} checked={specialNeeds.includes(need)} onCheckedChange={() => handleSpecialNeedsChange(need)} />
                   <Label htmlFor={`special-need-${need}`} className="text-sm">{need}</Label>
-                </div>
-              ))}
+                </div>)}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="schedule" className="text-sm">Care Schedule</Label>
-                <Select
-                  value={scheduleType}
-                  onValueChange={setScheduleType}
-                >
+                <Select value={scheduleType} onValueChange={setScheduleType}>
                   <SelectTrigger id="schedule">
                     <SelectValue placeholder="Select schedule" />
                   </SelectTrigger>
                   <SelectContent>
-                    {scheduleOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                    {scheduleOptions.map(option => <SelectItem key={option.value} value={option.value}>
                         {option.label}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -370,38 +299,22 @@ export const DashboardFamilyMatches = () => {
                 <Label className="text-sm flex justify-between">
                   <span>Maximum Distance: {maxDistance} km</span>
                 </Label>
-                <Slider 
-                  value={[maxDistance]} 
-                  min={1} 
-                  max={50} 
-                  step={1}
-                  onValueChange={(value) => setMaxDistance(value[0])}
-                />
+                <Slider value={[maxDistance]} min={1} max={50} step={1} onValueChange={value => setMaxDistance(value[0])} />
               </div>
             </div>
           </div>
-        </CardContent>
-      )}
+        </CardContent>}
       
       <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center items-center py-6">
+        {isLoading ? <div className="flex justify-center items-center py-6">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredFamilies.length > 0 ? (
-          <div className="space-y-4">
-            {filteredFamilies.map((family) => (
-              <div 
-                key={family.id}
-                className={`p-4 rounded-lg border ${family.is_premium ? 'border-amber-300' : 'border-gray-200'} relative`}
-              >
-                {family.is_premium && (
-                  <div className="absolute top-0 right-0">
+          </div> : filteredFamilies.length > 0 ? <div className="space-y-4">
+            {filteredFamilies.map(family => <div key={family.id} className={`p-4 rounded-lg border ${family.is_premium ? 'border-amber-300' : 'border-gray-200'} relative`}>
+                {family.is_premium && <div className="absolute top-0 right-0">
                     <Badge className="bg-amber-500 text-white uppercase font-bold rounded-tl-none rounded-tr-sm rounded-br-none rounded-bl-sm px-2">
                       Premium
                     </Badge>
-                  </div>
-                )}
+                  </div>}
                 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex flex-col items-center sm:items-start sm:w-1/4">
@@ -440,76 +353,52 @@ export const DashboardFamilyMatches = () => {
                     <div className="text-sm">
                       <span className="font-medium block mb-1">Care Needs:</span>
                       <div className="flex flex-wrap gap-1">
-                        {family.care_types?.map((type, i) => (
-                          <Badge key={i} variant="outline" className="bg-gray-50">
+                        {family.care_types?.map((type, i) => <Badge key={i} variant="outline" className="bg-gray-50">
                             {type}
-                          </Badge>
-                        ))}
+                          </Badge>)}
                       </div>
                     </div>
                     
-                    {family.special_needs && family.special_needs.length > 0 && (
-                      <div className="text-sm">
+                    {family.special_needs && family.special_needs.length > 0 && <div className="text-sm">
                         <span className="font-medium block mb-1">Special Needs:</span>
                         <div className="flex flex-wrap gap-1">
-                          {family.special_needs?.map((need, i) => (
-                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {family.special_needs?.map((need, i) => <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                               {need}
-                            </Badge>
-                          ))}
+                            </Badge>)}
                         </div>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                   
                   <div className="sm:w-1/4 flex flex-col justify-center space-y-3">
                     <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className="h-4 w-4 text-amber-500" />
-                      ))}
+                      {[1, 2, 3, 4, 5].map(star => {})}
                     </div>
                     
-                    <Button 
-                      variant="default"
-                      className="w-full"
-                      onClick={() => handleUnlockProfile(family.id)}
-                    >
+                    <Button variant="default" className="w-full" onClick={() => handleUnlockProfile(family.id)}>
                       Unlock Profile
                     </Button>
                   </div>
                 </div>
-              </div>
-            ))}
+              </div>)}
             
-            <Button 
-              variant="outline" 
-              className="w-full mt-2"
-              onClick={() => {
-                trackEngagement('view_all_family_matches_click');
-                navigate("/family-matching");
-              }}
-            >
+            <Button variant="outline" className="w-full mt-2" onClick={() => {
+          trackEngagement('view_all_family_matches_click');
+          navigate("/family-matching");
+        }}>
               View All Family Matches
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
-        ) : (
-          <div className="text-center py-6">
+          </div> : <div className="text-center py-6">
             <p className="text-gray-500 mb-4">No families match your selected filters</p>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                setCareTypes([]);
-                setSpecialNeeds([]);
-                setScheduleType("all");
-                setMaxDistance(30);
-              }}
-            >
+            <Button variant="outline" onClick={() => {
+          setCareTypes([]);
+          setSpecialNeeds([]);
+          setScheduleType("all");
+          setMaxDistance(30);
+        }}>
               Reset Filters
             </Button>
-          </div>
-        )}
+          </div>}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
