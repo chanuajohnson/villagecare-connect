@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { useTracking } from "@/hooks/useTracking";
 
 interface Caregiver {
   id: string;
@@ -28,6 +30,7 @@ interface Caregiver {
   match_score: number;
   is_premium: boolean;
   has_training: boolean;
+  certifications: string[] | null;
   distance: number;
 }
 
@@ -46,6 +49,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     match_score: 95,
     is_premium: false,
     has_training: true,
+    certifications: ["CPR Certified", "First Aid"],
     distance: 3.2
   },
   {
@@ -62,6 +66,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     match_score: 89,
     is_premium: true,
     has_training: true,
+    certifications: ["Registered Nurse", "Dementia Care"],
     distance: 15.7
   },
   {
@@ -78,6 +83,7 @@ const MOCK_CAREGIVERS: Caregiver[] = [
     match_score: 82,
     is_premium: false,
     has_training: false,
+    certifications: ["Child Development"],
     distance: 8.5
   }
 ];
@@ -89,12 +95,16 @@ export const DashboardCaregiverMatches = () => {
   const [filteredCaregivers, setFilteredCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const { trackEngagement } = useTracking();
 
   const [careTypes, setCareTypes] = useState<string[]>([]);
+  const [specializedCare, setSpecializedCare] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
+  const [requiredCertifications, setRequiredCertifications] = useState<string[]>([]);
+  const [minimumExperience, setMinimumExperience] = useState<string>("any");
 
   const careTypeOptions = [
     "Elderly Care", 
@@ -104,6 +114,35 @@ export const DashboardCaregiverMatches = () => {
     "Overnight Care", 
     "Companionship",
     "Housekeeping"
+  ];
+  
+  const specializedCareOptions = [
+    "Alzheimer's",
+    "Dementia Care",
+    "Mobility Assistance",
+    "Medication Management",
+    "Autism Care", 
+    "Stroke Recovery",
+    "Meal Preparation",
+    "Early Childhood Development"
+  ];
+  
+  const certificationOptions = [
+    "CPR Certified",
+    "First Aid",
+    "Registered Nurse",
+    "Home Health Aide",
+    "Certified Nursing Assistant",
+    "Dementia Care",
+    "Child Development"
+  ];
+  
+  const experienceOptions = [
+    { value: "any", label: "Any Experience" },
+    { value: "1+", label: "1+ Years" },
+    { value: "3+", label: "3+ Years" },
+    { value: "5+", label: "5+ Years" },
+    { value: "10+", label: "10+ Years" }
   ];
   
   const availabilityOptions = [
@@ -130,6 +169,10 @@ export const DashboardCaregiverMatches = () => {
         
         if (professionalError) {
           console.error("Error fetching professional users:", professionalError);
+          setCaregivers(MOCK_CAREGIVERS);
+          setFilteredCaregivers(MOCK_CAREGIVERS);
+          toast.error("Using sample data due to connection issues");
+          return;
         }
         
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
@@ -152,32 +195,54 @@ export const DashboardCaregiverMatches = () => {
             match_score: matchScore,
             is_premium: false,
             has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
+            certifications: prof.certifications || [],
             distance: distance
           };
         }) : [];
         
         console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
         
-        const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
-        const allCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
-        
-        if (user) {
-          await trackEngagement('dashboard_caregiver_matches_view');
+        let displayCaregivers;
+        if (realCaregivers.length < 3) {
+          const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
+          displayCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
+          if (realCaregivers.length === 0) {
+            toast.info("Showing sample caregivers");
+          }
+        } else {
+          displayCaregivers = realCaregivers.slice(0, 3);
         }
         
-        setCaregivers(allCaregivers);
-        setFilteredCaregivers(allCaregivers);
+        try {
+          if (user) {
+            await trackEngagement('dashboard_caregiver_matches_view');
+          }
+        } catch (trackingError) {
+          console.error("Tracking error:", trackingError);
+          // Continue with the rest of the function even if tracking fails
+        }
+        
+        setCaregivers(displayCaregivers);
+        setFilteredCaregivers(displayCaregivers);
       } catch (error) {
         console.error("Error loading caregivers:", error);
+        setCaregivers(MOCK_CAREGIVERS);
+        setFilteredCaregivers(MOCK_CAREGIVERS);
+        toast.error("Using sample data due to unexpected error");
       } finally {
         setIsLoading(false);
       }
     };
     
-    if (user) {
+    let isMounted = true;
+    if (user && isMounted) {
       loadCaregivers();
     }
-  }, [user]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, trackEngagement]);
 
   useEffect(() => {
     if (caregivers.length === 0) return;
@@ -185,12 +250,21 @@ export const DashboardCaregiverMatches = () => {
     const applyFilters = () => {
       let result = [...caregivers];
 
+      // Care Types Filter
       if (careTypes.length > 0) {
         result = result.filter(caregiver => 
           caregiver.care_types?.some(type => careTypes.includes(type))
         );
       }
 
+      // Specialized Care Filter
+      if (specializedCare.length > 0) {
+        result = result.filter(caregiver =>
+          caregiver.specialized_care?.some(care => specializedCare.includes(care))
+        );
+      }
+
+      // Availability Filter
       if (availability !== "all") {
         result = result.filter(caregiver =>
           caregiver.availability?.some(avail => 
@@ -199,59 +273,110 @@ export const DashboardCaregiverMatches = () => {
         );
       }
 
+      // Distance Filter
       result = result.filter(caregiver => caregiver.distance <= maxDistance);
 
+      // Price Range Filter
       result = result.filter(caregiver => {
         const minPrice = parseInt(caregiver.hourly_rate?.split('-')[0].replace('$', '') || '0');
         const maxPrice = parseInt(caregiver.hourly_rate?.split('-')[1]?.replace('$', '') || minPrice.toString());
         return minPrice <= priceRange[1] && maxPrice >= priceRange[0];
       });
 
+      // Training Filter
       if (onlyTrained) {
         result = result.filter(caregiver => caregiver.has_training);
       }
 
+      // Certifications Filter
+      if (requiredCertifications.length > 0) {
+        result = result.filter(caregiver =>
+          caregiver.certifications?.some(cert => requiredCertifications.includes(cert))
+        );
+      }
+
+      // Experience Filter
+      if (minimumExperience !== "any") {
+        result = result.filter(caregiver => {
+          const caregiverYears = parseInt(caregiver.years_of_experience?.replace('+', '') || '0');
+          const requiredYears = parseInt(minimumExperience.replace('+', '') || '0');
+          return caregiverYears >= requiredYears;
+        });
+      }
+
+      // Sort by match score
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredCaregivers(result);
     };
 
     applyFilters();
-  }, [caregivers, careTypes, availability, maxDistance, priceRange, onlyTrained]);
+  }, [caregivers, careTypes, specializedCare, availability, maxDistance, priceRange, onlyTrained, requiredCertifications, minimumExperience]);
   
-  const trackEngagement = async (actionType: string, additionalData = {}) => {
-    try {
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        additional_data: additionalData
-      });
-      
-      if (error) {
-        console.error("Error tracking engagement:", error);
-      }
-    } catch (error) {
-      console.error("Error in trackEngagement:", error);
-    }
-  };
-
   const handleCareTypeChange = (type: string) => {
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'care_type', 
+        filter_value: type,
+        previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
+        new_state: careTypes.includes(type) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking care type change:", error);
+    }
+    
     setCareTypes(prev => 
       prev.includes(type) 
         ? prev.filter(t => t !== type) 
         : [...prev, type]
     );
   };
+  
+  const handleSpecializedCareChange = (care: string) => {
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'specialized_care', 
+        filter_value: care,
+        previous_state: specializedCare.includes(care) ? 'selected' : 'unselected',
+        new_state: specializedCare.includes(care) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking specialized care change:", error);
+    }
+    
+    setSpecializedCare(prev => 
+      prev.includes(care) 
+        ? prev.filter(c => c !== care) 
+        : [...prev, care]
+    );
+  };
+  
+  const handleCertificationChange = (cert: string) => {
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'certification', 
+        filter_value: cert,
+        previous_state: requiredCertifications.includes(cert) ? 'selected' : 'unselected',
+        new_state: requiredCertifications.includes(cert) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking certification change:", error);
+    }
+    
+    setRequiredCertifications(prev => 
+      prev.includes(cert) 
+        ? prev.filter(c => c !== cert) 
+        : [...prev, cert]
+    );
+  };
 
   const handleUnlockProfile = (caregiverId: string) => {
-    trackEngagement('unlock_profile_click', { caregiver_id: caregiverId });
+    try {
+      trackEngagement('unlock_profile_click', { caregiver_id: caregiverId });
+    } catch (error) {
+      console.error("Error tracking unlock profile click:", error);
+    }
+    
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
@@ -311,7 +436,12 @@ export const DashboardCaregiverMatches = () => {
             variant="default" 
             className="flex items-center gap-1"
             onClick={() => {
-              trackEngagement('view_all_matches_click');
+              try {
+                trackEngagement('view_all_matches_click');
+              } catch (error) {
+                console.error("Error tracking view all click:", error);
+              }
+              
               navigate("/caregiver-matching", {
                 state: {
                   referringPagePath: "/dashboard/family",
@@ -329,18 +459,54 @@ export const DashboardCaregiverMatches = () => {
       {showFilters && (
         <CardContent className="border-b pb-4">
           <div className="space-y-4">
-            <h3 className="font-medium text-sm">Care Type Needed</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {careTypeOptions.map((type) => (
-                <div key={type} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`care-type-${type}`}
-                    checked={careTypes.includes(type)}
-                    onCheckedChange={() => handleCareTypeChange(type)}
-                  />
-                  <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h3 className="font-medium text-sm">Care Types Needed</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {careTypeOptions.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`care-type-${type}`}
+                        checked={careTypes.includes(type)}
+                        onCheckedChange={() => handleCareTypeChange(type)}
+                      />
+                      <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-medium text-sm">Specialized Care Needs</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {specializedCareOptions.map((care) => (
+                    <div key={care} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`specialized-care-${care}`}
+                        checked={specializedCare.includes(care)}
+                        onCheckedChange={() => handleSpecializedCareChange(care)}
+                      />
+                      <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-medium text-sm">Required Certifications</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {certificationOptions.map((cert) => (
+                  <div key={cert} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`cert-${cert}`}
+                      checked={requiredCertifications.includes(cert)}
+                      onCheckedChange={() => handleCertificationChange(cert)}
+                    />
+                    <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -348,13 +514,54 @@ export const DashboardCaregiverMatches = () => {
                 <Label htmlFor="availability" className="text-sm">Caregiver Availability</Label>
                 <Select
                   value={availability}
-                  onValueChange={setAvailability}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'availability', 
+                        previous_value: availability,
+                        new_value: value
+                      });
+                    } catch (error) {
+                      console.error("Error tracking availability change:", error);
+                    }
+                    setAvailability(value);
+                  }}
                 >
                   <SelectTrigger id="availability">
                     <SelectValue placeholder="Select availability" />
                   </SelectTrigger>
                   <SelectContent>
                     {availabilityOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
+                <Select
+                  value={minimumExperience}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'experience', 
+                        previous_value: minimumExperience,
+                        new_value: value
+                      });
+                    } catch (error) {
+                      console.error("Error tracking experience change:", error);
+                    }
+                    setMinimumExperience(value);
+                  }}
+                >
+                  <SelectTrigger id="experience">
+                    <SelectValue placeholder="Select minimum experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {experienceOptions.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -372,31 +579,62 @@ export const DashboardCaregiverMatches = () => {
                   min={1} 
                   max={50} 
                   step={1}
-                  onValueChange={(value) => setMaxDistance(value[0])}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm flex justify-between">
-                  <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
-                </Label>
-                <Slider 
-                  value={priceRange} 
-                  min={0} 
-                  max={100} 
-                  step={5}
-                  onValueChange={(value: number[]) => {
-                    setPriceRange([value[0], value[1]]);
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'distance', 
+                        previous_value: maxDistance,
+                        new_value: value[0]
+                      });
+                    } catch (error) {
+                      console.error("Error tracking distance change:", error);
+                    }
+                    setMaxDistance(value[0]);
                   }}
                 />
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm flex justify-between">
+                <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
+              </Label>
+              <Slider 
+                value={priceRange} 
+                min={0} 
+                max={100} 
+                step={5}
+                onValueChange={(value: number[]) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'price_range', 
+                      previous_value: `${priceRange[0]}-${priceRange[1]}`,
+                      new_value: `${value[0]}-${value[1]}`
+                    });
+                  } catch (error) {
+                    console.error("Error tracking price range change:", error);
+                  }
+                  setPriceRange([value[0], value[1]]);
+                }}
+              />
             </div>
             
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox 
                 id="trained-caregivers" 
                 checked={onlyTrained}
-                onCheckedChange={(checked) => setOnlyTrained(checked as boolean)}
+                onCheckedChange={(checked) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'trained_only', 
+                      previous_value: onlyTrained,
+                      new_value: checked
+                    });
+                  } catch (error) {
+                    console.error("Error tracking trained only change:", error);
+                  }
+                  setOnlyTrained(checked as boolean);
+                }}
               />
               <Label htmlFor="trained-caregivers" className="text-sm">Show only platform-trained caregivers</Label>
             </div>
@@ -474,6 +712,32 @@ export const DashboardCaregiverMatches = () => {
                       </div>
                     </div>
                     
+                    {caregiver.specialized_care && caregiver.specialized_care.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium block mb-1">Specialized Care:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {caregiver.specialized_care.map((care, i) => (
+                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {care}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {caregiver.certifications && caregiver.certifications.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium block mb-1">Certifications:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {caregiver.certifications.map((cert, i) => (
+                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {cert}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="text-sm">
                       <span className="font-medium block mb-1">Availability:</span>
                       <div className="flex flex-wrap gap-1">
@@ -522,7 +786,12 @@ export const DashboardCaregiverMatches = () => {
               variant="outline" 
               className="w-full mt-2"
               onClick={() => {
-                trackEngagement('view_all_matches_click');
+                try {
+                  trackEngagement('view_all_matches_click');
+                } catch (error) {
+                  console.error("Error tracking view all click:", error);
+                }
+                
                 navigate("/caregiver-matching", {
                   state: {
                     referringPagePath: "/dashboard/family",
@@ -542,7 +811,10 @@ export const DashboardCaregiverMatches = () => {
               variant="outline"
               onClick={() => {
                 setCareTypes([]);
+                setSpecializedCare([]);
+                setRequiredCertifications([]);
                 setAvailability("all");
+                setMinimumExperience("any");
                 setMaxDistance(30);
                 setPriceRange([0, 100]);
                 setOnlyTrained(false);

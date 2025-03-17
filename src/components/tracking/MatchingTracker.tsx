@@ -24,17 +24,27 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
   
   useEffect(() => {
     const trackMatchingPageView = async () => {
-      const actionType = `${matchingType}_matching_page_view`;
-      
-      await trackEngagement(actionType as any, {
-        ...additionalData,
-        user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
-      });
+      try {
+        const actionType = `${matchingType}_matching_page_view`;
+        
+        await trackEngagement(actionType as any, {
+          ...additionalData,
+          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+        });
+      } catch (error) {
+        console.error(`Error tracking matching page view for ${matchingType}:`, error);
+        // Continue execution even if tracking fails
+      }
     };
     
-    if (user) {
+    let isMounted = true;
+    if (user && isMounted) {
       trackMatchingPageView();
     }
+    
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchingType, user?.id]); // Retrack if user ID changes
   

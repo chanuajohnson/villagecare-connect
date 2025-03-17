@@ -19,15 +19,27 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   
   useEffect(() => {
     const trackDashboardView = async () => {
-      const actionType = `${dashboardType}_dashboard_view`;
-      
-      await trackEngagement(actionType as any, {
-        user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
-        path: window.location.pathname,
-      });
+      try {
+        const actionType = `${dashboardType}_dashboard_view`;
+        
+        await trackEngagement(actionType as any, {
+          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+          path: window.location.pathname,
+        });
+      } catch (error) {
+        console.error(`Error tracking dashboard view for ${dashboardType}:`, error);
+        // Continue execution even if tracking fails
+      }
     };
     
-    trackDashboardView();
+    let isMounted = true;
+    if (isMounted) {
+      trackDashboardView();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardType, user?.id]); // Retrack if user ID changes
   
