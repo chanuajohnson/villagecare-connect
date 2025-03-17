@@ -28,19 +28,8 @@ export default function SubscriptionFeaturesPage() {
     });
   }
   
-  // Add return path if available and different from referring page
-  if (returnPath && returnPath !== referringPagePath) {
-    const returnPathLabel = returnPath.includes("caregiver") 
-      ? "Caregiver Matching" 
-      : returnPath.includes("family") 
-        ? "Family Matching" 
-        : "Previous Page";
-    
-    breadcrumbItems.push({
-      label: returnPathLabel,
-      path: returnPath,
-    });
-  }
+  // Remove the conditional that was adding returnPath when different from referringPagePath
+  // This was causing the extra "Family Matching" breadcrumb to appear
   
   // Add current page
   breadcrumbItems.push({
