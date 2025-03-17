@@ -35,13 +35,17 @@ export const TrackedLink = ({
   
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     try {
-      // Track the link click
-      await trackEngagement(trackingAction, {
-        ...trackingData,
-        destination: to.toString(),
-        source: window.location.pathname,
-        action_label: typeof children === 'string' ? children : 'Link click'
-      });
+      // Track the link click, but don't block navigation
+      setTimeout(() => {
+        trackEngagement(trackingAction, {
+          ...trackingData,
+          destination: to.toString(),
+          source: window.location.pathname,
+          action_label: typeof children === 'string' ? children : 'Link click'
+        }).catch(err => {
+          console.error('Tracking failed but continuing navigation:', err);
+        });
+      }, 0);
     } catch (error) {
       console.error("Error tracking link click:", error);
       // Silent fail - don't block navigation for tracking errors

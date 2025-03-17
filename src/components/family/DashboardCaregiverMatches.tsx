@@ -95,6 +95,7 @@ export const DashboardCaregiverMatches = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const { trackEngagement } = useTracking();
+  const [dataSource, setDataSource] = useState<'real' | 'mock'>('real');
 
   // Updated filters to match family registration fields
   const [careTypes, setCareTypes] = useState<string[]>([]);
@@ -158,13 +159,18 @@ export const DashboardCaregiverMatches = () => {
   ];
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCaregivers = async () => {
       try {
+        if (!isMounted) return;
         setIsLoading(true);
         
         let realCaregivers: Caregiver[] = [];
+        let useMockData = false;
         
         try {
+          console.log("Fetching professional users for caregiver matches...");
           const { data: professionalUsers, error: professionalError } = await supabase
             .from('profiles')
             .select('*')
@@ -175,67 +181,103 @@ export const DashboardCaregiverMatches = () => {
             throw professionalError;
           }
           
-          realCaregivers = professionalUsers ? professionalUsers.map(prof => {
-            const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-            const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-            const fullName = prof.full_name || 'Professional Caregiver';
-            const firstName = fullName.split(' ')[0];
+          if (!professionalUsers || professionalUsers.length === 0) {
+            console.log("No professional users found, falling back to mock data");
+            useMockData = true;
+          } else {
+            console.log(`Found ${professionalUsers.length} professional users`);
             
-            return {
-              id: prof.id,
-              full_name: fullName,
-              first_name: firstName,
-              avatar_url: prof.avatar_url,
-              hourly_rate: prof.hourly_rate || '$15-25',
-              location: prof.location || 'Port of Spain',
-              years_of_experience: prof.years_of_experience || '1+',
-              care_types: prof.care_types || ['Elderly Care'],
-              specialized_care: prof.specialized_care || [],
-              availability: prof.availability || ['Weekdays'],
-              match_score: matchScore,
-              is_premium: false,
-              has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
-              distance: distance,
-              certifications: prof.certifications || []
-            };
-          }) : [];
-          
-          console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
-        } catch (error) {
-          console.error("Error fetching real caregivers:", error);
-          // Continue with mock data instead of throwing
-        }
-        
-        // Always use mock data if real data fetch fails or returns empty
-        const allCaregivers = realCaregivers.length > 0 
-          ? [...realCaregivers, ...MOCK_CAREGIVERS].slice(0, 3) 
-          : MOCK_CAREGIVERS.slice(0, 3);
-        
-        try {
-          if (user) {
-            await trackEngagement('dashboard_caregiver_matches_view');
+            realCaregivers = professionalUsers.map(prof => {
+              const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+              const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+              const fullName = prof.full_name || 'Professional Caregiver';
+              const firstName = fullName.split(' ')[0];
+              
+              return {
+                id: prof.id,
+                full_name: fullName,
+                first_name: firstName,
+                avatar_url: prof.avatar_url,
+                hourly_rate: prof.hourly_rate || '$15-25',
+                location: prof.location || 'Port of Spain',
+                years_of_experience: prof.years_of_experience || '1+',
+                care_types: prof.care_types || ['Elderly Care'],
+                specialized_care: prof.specialized_care || [],
+                availability: prof.availability || ['Weekdays'],
+                match_score: matchScore,
+                is_premium: false,
+                has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
+                distance: distance,
+                certifications: prof.certifications || []
+              };
+            });
           }
         } catch (error) {
-          console.error("Error tracking engagement:", error);
-          // Don't throw here, just log
+          console.error("Error fetching real caregivers:", error);
+          useMockData = true;
         }
+        
+        let allCaregivers: Caregiver[];
+        
+        if (useMockData || realCaregivers.length === 0) {
+          console.log("Using mock caregiver data");
+          setDataSource('mock');
+          allCaregivers = [...MOCK_CAREGIVERS];
+          
+          if (isMounted) {
+            // Show toast only if we had to fallback to mock data
+            toast.info("Using sample caregiver profiles for demonstration", {
+              id: "mock-data-caregivers",
+              duration: 4000
+            });
+          }
+        } else {
+          console.log("Using real caregiver data with some mock data for demonstration");
+          setDataSource('real');
+          // Mix real data with some mock to ensure the display is interesting
+          allCaregivers = [...realCaregivers, ...MOCK_CAREGIVERS].slice(0, 3);
+        }
+        
+        // Handle tracking separately and don't let it block the UI
+        if (user) {
+          setTimeout(() => {
+            trackEngagement('dashboard_caregiver_matches_view')
+              .catch(err => console.error("Tracking failed but continuing:", err));
+          }, 0);
+        }
+        
+        if (!isMounted) return;
         
         setCaregivers(allCaregivers);
         setFilteredCaregivers(allCaregivers);
       } catch (error) {
         console.error("Error loading caregivers:", error);
-        // Fallback to mock data on any error
-        setCaregivers(MOCK_CAREGIVERS);
-        setFilteredCaregivers(MOCK_CAREGIVERS);
-        toast.error("Could not load real caregiver data. Showing sample profiles instead.");
+        // Always ensure we have data to display
+        if (isMounted) {
+          setCaregivers(MOCK_CAREGIVERS);
+          setFilteredCaregivers(MOCK_CAREGIVERS);
+          setDataSource('mock');
+          toast.error("Could not load real caregiver data. Showing sample profiles.", {
+            id: "caregiver-data-error",
+            duration: 4000
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     if (user) {
       loadCaregivers();
+    } else {
+      setIsLoading(false);
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, trackEngagement]);
 
   useEffect(() => {
@@ -305,7 +347,8 @@ export const DashboardCaregiverMatches = () => {
       filter_value: type,
       previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
       new_state: careTypes.includes(type) ? 'unselected' : 'selected'
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     setCareTypes(prev => 
       prev.includes(type) 
         ? prev.filter(t => t !== type) 
@@ -319,7 +362,8 @@ export const DashboardCaregiverMatches = () => {
       filter_value: care,
       previous_state: specializedCare.includes(care) ? 'selected' : 'unselected',
       new_state: specializedCare.includes(care) ? 'unselected' : 'selected'
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     setSpecializedCare(prev => 
       prev.includes(care) 
         ? prev.filter(c => c !== care) 
@@ -333,7 +377,8 @@ export const DashboardCaregiverMatches = () => {
       filter_value: cert,
       previous_state: requiredCertifications.includes(cert) ? 'selected' : 'unselected',
       new_state: requiredCertifications.includes(cert) ? 'unselected' : 'selected'
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     setRequiredCertifications(prev => 
       prev.includes(cert) 
         ? prev.filter(c => c !== cert) 
@@ -342,7 +387,9 @@ export const DashboardCaregiverMatches = () => {
   };
 
   const handleUnlockProfile = (caregiverId: string) => {
-    trackEngagement('unlock_profile_click', { caregiver_id: caregiverId });
+    trackEngagement('unlock_profile_click', { caregiver_id: caregiverId })
+      .catch(err => console.error("Tracking failed but continuing:", err));
+      
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
@@ -387,6 +434,7 @@ export const DashboardCaregiverMatches = () => {
           <CardTitle className="text-xl">Caregiver Matches</CardTitle>
           <p className="text-sm text-gray-500">
             {filteredCaregivers.length} caregivers match your criteria
+            {dataSource === 'mock' && " (sample data)"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -402,7 +450,9 @@ export const DashboardCaregiverMatches = () => {
             variant="default" 
             className="flex items-center gap-1"
             onClick={() => {
-              trackEngagement('view_all_matches_click');
+              trackEngagement('view_all_matches_click')
+                .catch(err => console.error("Tracking failed but continuing:", err));
+                
               navigate("/caregiver-matching", {
                 state: {
                   referringPagePath: "/dashboard/family",
@@ -458,7 +508,8 @@ export const DashboardCaregiverMatches = () => {
                       filter_type: 'availability', 
                       previous_value: availability,
                       new_value: value
-                    });
+                    }).catch(err => console.error("Tracking failed but continuing:", err));
+                    
                     setAvailability(value);
                   }}
                 >
@@ -484,7 +535,8 @@ export const DashboardCaregiverMatches = () => {
                       filter_type: 'experience', 
                       previous_value: minExperience,
                       new_value: value
-                    });
+                    }).catch(err => console.error("Tracking failed but continuing:", err));
+                    
                     setMinExperience(parseInt(value));
                   }}
                 >
@@ -515,7 +567,8 @@ export const DashboardCaregiverMatches = () => {
                       filter_type: 'distance', 
                       previous_value: maxDistance,
                       new_value: value[0]
-                    });
+                    }).catch(err => console.error("Tracking failed but continuing:", err));
+                    
                     setMaxDistance(value[0]);
                   }}
                 />
@@ -536,7 +589,8 @@ export const DashboardCaregiverMatches = () => {
                     filter_type: 'price_range', 
                     previous_value: `${priceRange[0]}-${priceRange[1]}`,
                     new_value: `${value[0]}-${value[1]}`
-                  });
+                  }).catch(err => console.error("Tracking failed but continuing:", err));
+                  
                   setPriceRange([value[0], value[1]]);
                 }}
               />
@@ -565,7 +619,8 @@ export const DashboardCaregiverMatches = () => {
                     filter_type: 'trained_only', 
                     previous_value: onlyTrained,
                     new_value: checked
-                  });
+                  }).catch(err => console.error("Tracking failed but continuing:", err));
+                  
                   setOnlyTrained(checked as boolean);
                 }}
               />
@@ -719,7 +774,9 @@ export const DashboardCaregiverMatches = () => {
               variant="outline" 
               className="w-full mt-2"
               onClick={() => {
-                trackEngagement('view_all_matches_click');
+                trackEngagement('view_all_matches_click')
+                  .catch(err => console.error("Tracking failed but continuing:", err));
+                  
                 navigate("/caregiver-matching", {
                   state: {
                     referringPagePath: "/dashboard/family",

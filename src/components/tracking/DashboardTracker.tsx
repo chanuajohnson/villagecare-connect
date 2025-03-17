@@ -35,13 +35,18 @@ export const DashboardTracker = ({ dashboardType, additionalData = {} }: Dashboa
           time_of_day: new Date().getHours()
         });
       } catch (error) {
-        console.error("Error tracking dashboard view:", error);
+        console.error(`Error tracking ${dashboardType} dashboard view:`, error);
         // Silent fail - don't block UI for tracking errors
       }
     };
     
+    // Only try to track if user exists, and make it not block rendering
     if (user) {
-      trackDashboardView();
+      setTimeout(() => {
+        trackDashboardView().catch(err => {
+          console.error('Tracking failed but continuing:', err);
+        });
+      }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardType, user?.id]); // Retrack if user ID changes

@@ -78,6 +78,7 @@ export const DashboardFamilyMatches = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const { trackEngagement } = useTracking();
+  const [dataSource, setDataSource] = useState<'real' | 'mock'>('real');
   
   // Updated filters to match professional registration fields
   const [careTypes, setCareTypes] = useState<string[]>([]);
@@ -115,13 +116,18 @@ export const DashboardFamilyMatches = () => {
   }];
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadFamilies = async () => {
       try {
+        if (!isMounted) return;
         setIsLoading(true);
 
         let realFamilies: Family[] = [];
+        let useMockData = false;
         
         try {
+          console.log("Fetching family users for matches...");
           const { data: familyUsers, error: familyError } = await supabase
             .from('profiles')
             .select('*')
@@ -132,59 +138,101 @@ export const DashboardFamilyMatches = () => {
             throw familyError;
           }
 
-          realFamilies = familyUsers ? familyUsers.map(family => {
-            const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-            const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-            return {
-              id: family.id,
-              full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-              avatar_url: family.avatar_url,
-              location: family.location || 'Port of Spain',
-              care_types: family.care_types || ['Elderly Care'],
-              special_needs: family.special_needs || [],
-              care_schedule: family.care_schedule || 'Weekdays',
-              match_score: matchScore,
-              is_premium: false,
-              distance: distance,
-              budget_preferences: family.budget_preferences || '$15-25/hr'
-            };
-          }) : [];
-          console.log("Loaded real family users:", realFamilies.length);
+          if (!familyUsers || familyUsers.length === 0) {
+            console.log("No family users found, falling back to mock data");
+            useMockData = true;
+          } else {
+            console.log(`Found ${familyUsers.length} family users`);
+            
+            realFamilies = familyUsers.map(family => {
+              const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+              const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+              return {
+                id: family.id,
+                full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+                avatar_url: family.avatar_url,
+                location: family.location || 'Port of Spain',
+                care_types: family.care_types || ['Elderly Care'],
+                special_needs: family.special_needs || [],
+                care_schedule: family.care_schedule || 'Weekdays',
+                match_score: matchScore,
+                is_premium: false,
+                distance: distance,
+                budget_preferences: family.budget_preferences || '$15-25/hr'
+              };
+            });
+          }
         } catch (error) {
           console.error("Error fetching real families:", error);
-          // Continue with mock data instead of throwing
+          useMockData = true;
         }
 
-        // Always use mock data if real data fetch fails or returns empty
-        const allFamilies = realFamilies.length > 0
-          ? [...realFamilies, ...MOCK_FAMILIES].slice(0, 3)
-          : MOCK_FAMILIES.slice(0, 3);
+        let allFamilies: Family[];
+        
+        if (useMockData || realFamilies.length === 0) {
+          console.log("Using mock family data");
+          setDataSource('mock');
+          allFamilies = [...MOCK_FAMILIES];
+          
+          if (isMounted) {
+            // Show toast only if we had to fallback to mock data
+            toast.info("Using sample family profiles for demonstration", {
+              id: "mock-data-families",
+              duration: 4000
+            });
+          }
+        } else {
+          console.log("Using real family data with some mock data for demonstration");
+          setDataSource('real');
+          // Mix real data with some mock to ensure the display is interesting
+          allFamilies = [...realFamilies, ...MOCK_FAMILIES].slice(0, 3);
+        }
 
+        // Handle tracking separately and don't let it block the UI
         try {
-          if (user) {
-            await trackEngagement('dashboard_family_matches_view');
+          if (user && isMounted) {
+            setTimeout(() => {
+              trackEngagement('dashboard_family_matches_view')
+                .catch(err => console.error("Tracking failed but continuing:", err));
+            }, 0);
           }
         } catch (error) {
           console.error("Error tracking engagement:", error);
           // Don't throw here, just log
         }
         
+        if (!isMounted) return;
+        
         setFamilies(allFamilies);
         setFilteredFamilies(allFamilies);
       } catch (error) {
         console.error("Error loading families:", error);
         // Fallback to mock data on any error
-        setFamilies(MOCK_FAMILIES);
-        setFilteredFamilies(MOCK_FAMILIES);
-        toast.error("Could not load real family data. Showing sample profiles instead.");
+        if (isMounted) {
+          setFamilies(MOCK_FAMILIES);
+          setFilteredFamilies(MOCK_FAMILIES);
+          setDataSource('mock');
+          toast.error("Could not load real family data. Showing sample profiles instead.", {
+            id: "family-data-error",
+            duration: 4000
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     if (user) {
       loadFamilies();
+    } else {
+      setIsLoading(false);
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user, trackEngagement]);
 
   useEffect(() => {
@@ -224,7 +272,8 @@ export const DashboardFamilyMatches = () => {
       filter_value: type,
       previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
       new_state: careTypes.includes(type) ? 'unselected' : 'selected'
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     setCareTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   };
 
@@ -234,14 +283,16 @@ export const DashboardFamilyMatches = () => {
       filter_value: need,
       previous_state: specialNeeds.includes(need) ? 'selected' : 'unselected',
       new_state: specialNeeds.includes(need) ? 'unselected' : 'selected'
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     setSpecialNeeds(prev => prev.includes(need) ? prev.filter(n => n !== need) : [...prev, need]);
   };
 
   const handleUnlockProfile = (familyId: string) => {
     trackEngagement('unlock_family_profile_click', {
       family_id: familyId
-    });
+    }).catch(err => console.error("Tracking failed but continuing:", err));
+    
     navigate("/subscription-features", {
       state: {
         returnPath: "/family-matching",
@@ -284,6 +335,7 @@ export const DashboardFamilyMatches = () => {
           <CardTitle className="text-xl">Family Matches</CardTitle>
           <p className="text-sm text-gray-500">
             {filteredFamilies.length} families match your expertise
+            {dataSource === 'mock' && " (sample data)"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -292,7 +344,9 @@ export const DashboardFamilyMatches = () => {
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
           <Button variant="default" className="flex items-center gap-1" onClick={() => {
-          trackEngagement('view_all_family_matches_click');
+          trackEngagement('view_all_family_matches_click')
+            .catch(err => console.error("Tracking failed but continuing:", err));
+            
           navigate("/family-matching", {
             state: {
               referringPagePath: "/dashboard/professional",
@@ -332,7 +386,8 @@ export const DashboardFamilyMatches = () => {
                     filter_type: 'schedule', 
                     previous_value: scheduleType,
                     new_value: value
-                  });
+                  }).catch(err => console.error("Tracking failed but continuing:", err));
+                  
                   setScheduleType(value);
                 }}>
                   <SelectTrigger id="schedule">
@@ -360,7 +415,8 @@ export const DashboardFamilyMatches = () => {
                       filter_type: 'distance', 
                       previous_value: maxDistance,
                       new_value: value[0]
-                    });
+                    }).catch(err => console.error("Tracking failed but continuing:", err));
+                    
                     setMaxDistance(value[0]);
                   }} 
                 />
@@ -380,7 +436,8 @@ export const DashboardFamilyMatches = () => {
                       filter_type: 'budget', 
                       previous_value: `${priceRange[0]}-${priceRange[1]}`,
                       new_value: `${value[0]}-${value[1]}`
-                    });
+                    }).catch(err => console.error("Tracking failed but continuing:", err));
+                    
                     setPriceRange([value[0], value[1]]);
                   }}
                 />
@@ -480,7 +537,9 @@ export const DashboardFamilyMatches = () => {
               </div>)}
             
             <Button variant="outline" className="w-full mt-2" onClick={() => {
-          trackEngagement('view_all_family_matches_click');
+          trackEngagement('view_all_family_matches_click')
+            .catch(err => console.error("Tracking failed but continuing:", err));
+            
           navigate("/family-matching", {
             state: {
               referringPagePath: "/dashboard/professional",
