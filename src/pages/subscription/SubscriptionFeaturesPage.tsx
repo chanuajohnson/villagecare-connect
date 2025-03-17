@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,16 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { MessageSquare, Briefcase, Users, Calendar, Clock, Bell, ArrowLeft, Lock } from 'lucide-react';
-import { Breadcrumb } from '@/components/ui/breadcrumbs/Breadcrumb';
+import { 
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
+import { Home } from "lucide-react";
+
 const SubscriptionFeaturesPage = () => {
   const {
     user
@@ -17,12 +27,14 @@ const SubscriptionFeaturesPage = () => {
 
   // Get the feature type from location state or default to "premium"
   const featureType = location.state?.featureType || "Premium Features";
+  
   // Get the return path from location state or default to the dashboard
   const returnPath = location.state?.returnPath || "/dashboard/professional";
 
-  // Add state for breadcrumb data from the referring page
+  // Get referrer information for breadcrumbs
   const referringPagePath = location.state?.referringPagePath || returnPath;
   const referringPageLabel = location.state?.referringPageLabel || "Dashboard";
+
   const trackFeatureInterest = async () => {
     setLoading(true);
     try {
@@ -65,13 +77,42 @@ const SubscriptionFeaturesPage = () => {
       setLoading(false);
     }
   };
+  
   return <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container px-4 py-12">
-        <Breadcrumb />
+        {/* Enhanced breadcrumb navigation that includes the referring page */}
+        <div className="mb-6">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/" className="flex items-center gap-1">
+                    <Home className="h-4 w-4" />
+                    <span>Home</span>
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              
+              {/* Referring page breadcrumb item */}
+              <BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbLink asChild>
+                  <Link to={referringPagePath}>
+                    {referringPageLabel}
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              
+              {/* Current page (Subscription Features) */}
+              <BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbPage>Premium Features</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
         
         <div className="mb-8">
-          
-          
           <motion.div initial={{
           opacity: 0,
           y: 20
