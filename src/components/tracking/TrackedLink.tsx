@@ -37,7 +37,9 @@ export const TrackedLink = ({
     // Track the link click
     await trackEngagement(trackingAction, {
       ...trackingData,
-      destination: to.toString()
+      destination: to.toString(),
+      source: window.location.pathname,
+      action_label: typeof children === 'string' ? children : 'Link click'
     });
     
     // Call the original onClick handler if provided

@@ -29,6 +29,9 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
       await trackEngagement(actionType as any, {
         ...additionalData,
         user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+        user_role: user?.role || 'anonymous',
+        page_path: window.location.pathname,
+        page_query: window.location.search,
       });
     };
     
