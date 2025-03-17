@@ -4,12 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, Calendar, MapPinned, DollarSign } from "lucide-react";
+import { MapPin, Star, ArrowRight, Clock, Filter, MapPinned, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -218,28 +216,6 @@ export const DashboardFamilyMatches = () => {
     applyFilters();
   }, [families, careTypes, specialNeeds, scheduleType, maxDistance, budgetRange]);
 
-  const trackEngagement = async (actionType: string, additionalData = {}) => {
-    try {
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      const {
-        error
-      } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        additional_data: additionalData
-      });
-      if (error) {
-        console.error("Error tracking engagement:", error);
-      }
-    } catch (error) {
-      console.error("Error in trackEngagement:", error);
-    }
-  };
-
   const handleCareTypeChange = (type: string) => {
     setCareTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   };
@@ -361,7 +337,13 @@ export const DashboardFamilyMatches = () => {
               <Label className="text-sm flex justify-between">
                 <span>Budget Range: ${budgetRange[0]}-${budgetRange[1]}/hr</span>
               </Label>
-              <Slider value={budgetRange} min={15} max={50} step={5} onValueChange={setBudgetRange} />
+              <Slider 
+                value={budgetRange} 
+                min={15} 
+                max={50} 
+                step={5} 
+                onValueChange={(value) => setBudgetRange(value as [number, number])} 
+              />
             </div>
           </div>
         </CardContent>}
