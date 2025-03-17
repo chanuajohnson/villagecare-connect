@@ -17,20 +17,19 @@ import { FamilyPostCareNeedForm } from "@/components/family/FamilyPostCareNeedFo
 import { useNavigate } from "react-router-dom";
 import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
 import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
-
 const FamilyDashboard = () => {
-  const { user, isProfileComplete } = useAuth();
-  const breadcrumbItems = [
-    {
-      label: "Family Dashboard",
-      path: "/dashboard/family",
-    },
-  ];
+  const {
+    user,
+    isProfileComplete
+  } = useAuth();
+  const breadcrumbItems = [{
+    label: "Family Dashboard",
+    path: "/dashboard/family"
+  }];
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
-
   useEffect(() => {
     if (user) {
       fetchMessages();
@@ -38,21 +37,18 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   }, [user]);
-
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('message_board_posts')
-        .select('*')
-        .ilike('location', '%Trinidad and Tobago%')
-        .order('time_posted', { ascending: false })
-        .limit(4);
-      
+      const {
+        data,
+        error
+      } = await supabase.from('message_board_posts').select('*').ilike('location', '%Trinidad and Tobago%').order('time_posted', {
+        ascending: false
+      }).limit(4);
       if (error) {
         throw error;
       }
-      
       if (data) {
         console.log("Fetched Trinidad and Tobago messages:", data);
         setMessages(data);
@@ -64,20 +60,21 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   };
-
   const refreshData = async () => {
     try {
       setRefreshing(true);
       toast.info("Refreshing Trinidad and Tobago message board data...");
-      
-      const { data, error } = await supabase.functions.invoke('update-job-data', {
-        body: { region: 'Trinidad and Tobago' }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('update-job-data', {
+        body: {
+          region: 'Trinidad and Tobago'
+        }
       });
-      
       if (error) {
         throw error;
       }
-      
       if (data.success) {
         toast.success(`Successfully refreshed data with ${data.postsCount} posts`);
         await fetchMessages();
@@ -91,44 +88,39 @@ const FamilyDashboard = () => {
       setRefreshing(false);
     }
   };
-
-  const formatTimePosted = (timestamp) => {
+  const formatTimePosted = timestamp => {
     if (!timestamp) return "Unknown";
-    
     const posted = new Date(timestamp);
     const now = new Date();
-    
     const diffInMs = now.getTime() - posted.getTime();
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    
     if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours} hours ago`;
     if (diffInHours < 48) return "Yesterday";
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
-
   const handleViewFullBoard = () => {
-    navigate('/subscription-features', { 
-      state: { 
+    navigate('/subscription-features', {
+      state: {
         returnPath: '/family/message-board',
-        featureType: "Full Message Board" 
-      } 
+        featureType: "Full Message Board"
+      }
     });
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-6"
-        >
-          {!user ? (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mb-8 border border-green-100">
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5
+      }} className="space-y-6">
+          {!user ? <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mb-8 border border-green-100">
               <h2 className="text-2xl font-bold mb-2">Welcome to Tavara! 🚀 It takes a village to care.</h2>
               <p className="text-gray-600 mb-4">We're building this platform with you in mind. Explore features, connect with caregivers, and help shape the future of care by voting on features!</p>
               <div className="flex flex-wrap gap-3 mt-4">
@@ -148,10 +140,9 @@ const FamilyDashboard = () => {
                   </Button>
                 </Link>
               </div>
-            </div>
-          ) : null}
+            </div> : null}
 
-          <h1 className="text-3xl font-semibold mb-4">Welcome to Tavara</h1>
+          <h1 className="text-3xl font-semibold mb-4">Family Dashboard</h1>
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
           <CaregiverMatchingCard />
@@ -159,11 +150,15 @@ const FamilyDashboard = () => {
           <DashboardCaregiverMatches />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }}>
               <Card className="h-full border-l-4 border-l-primary">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -173,13 +168,7 @@ const FamilyDashboard = () => {
                   <div className="flex justify-between items-center">
                     <p className="text-sm text-gray-500">Care provider availability in Trinidad and Tobago</p>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 gap-1"
-                        onClick={handleViewFullBoard}
-                        disabled={refreshing}
-                      >
+                      <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleViewFullBoard} disabled={refreshing}>
                         <Clock className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
                         <span className="sr-only">Refresh</span>
                       </Button>
@@ -188,17 +177,10 @@ const FamilyDashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {loading ? (
-                    <div className="flex justify-center items-center py-12">
+                  {loading ? <div className="flex justify-center items-center py-12">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : messages.length > 0 ? (
-                    <div className="space-y-3">
-                      {messages.filter(message => message.type === "professional").slice(0, 3).map((message) => (
-                        <div 
-                          key={message.id} 
-                          className="p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 bg-gray-50 border-l-primary-400"
-                        >
+                    </div> : messages.length > 0 ? <div className="space-y-3">
+                      {messages.filter(message => message.type === "professional").slice(0, 3).map(message => <div key={message.id} className="p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 bg-gray-50 border-l-primary-400">
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-2">
                               <Avatar className="bg-primary-200">
@@ -211,31 +193,17 @@ const FamilyDashboard = () => {
                                 <p className="text-xs text-gray-600">{message.author}</p>
                               </div>
                             </div>
-                            {message.urgency && (
-                              <Badge 
-                                variant="outline" 
-                                className={message.urgency === "Immediate" 
-                                  ? "bg-red-50 text-red-700" 
-                                  : message.urgency === "Short Notice" 
-                                    ? "bg-orange-50 text-orange-700" 
-                                    : message.urgency === "This Weekend"
-                                      ? "bg-amber-50 text-amber-700"
-                                      : "bg-blue-50 text-blue-700"
-                                }
-                              >
+                            {message.urgency && <Badge variant="outline" className={message.urgency === "Immediate" ? "bg-red-50 text-red-700" : message.urgency === "Short Notice" ? "bg-orange-50 text-orange-700" : message.urgency === "This Weekend" ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}>
                                 {message.urgency}
-                              </Badge>
-                            )}
+                              </Badge>}
                           </div>
                           
                           <p className="text-xs text-gray-600">{message.details}</p>
                           
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {message.specialties && message.specialties.map((specialty, index) => (
-                              <Badge key={index} variant="outline" className="text-xs bg-white">
+                            {message.specialties && message.specialties.map((specialty, index) => <Badge key={index} variant="outline" className="text-xs bg-white">
                                 {specialty}
-                              </Badge>
-                            ))}
+                              </Badge>)}
                           </div>
                           
                           <div className="flex justify-between items-center pt-1 text-xs text-gray-500">
@@ -248,29 +216,15 @@ const FamilyDashboard = () => {
                               <span>{message.location}</span>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
+                        </div>)}
+                    </div> : <div className="text-center py-6">
                       <p className="text-gray-500">No care providers found in Trinidad and Tobago</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={refreshData}
-                        disabled={refreshing}
-                      >
+                      <Button variant="outline" size="sm" className="mt-2" onClick={refreshData} disabled={refreshing}>
                         Refresh Data
                       </Button>
-                    </div>
-                  )}
+                    </div>}
                   
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="w-full flex justify-between items-center"
-                  >
+                  <Button variant="default" size="sm" className="w-full flex justify-between items-center">
                     <span>View Full Message Board</span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -292,19 +246,12 @@ const FamilyDashboard = () => {
             <CardContent className="space-y-4">
               <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
               <Link to="/registration/family">
-                <Button 
-                  variant="default" 
-                  className="w-full"
-                >
+                <Button variant="default" className="w-full">
                   Manage Profile
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <UpvoteFeatureButton 
-                featureTitle="Profile Management" 
-                className="w-full" 
-                buttonText="Upvote this Feature" 
-              />
+              <UpvoteFeatureButton featureTitle="Profile Management" className="w-full" buttonText="Upvote this Feature" />
             </CardContent>
           </Card>
 
@@ -318,10 +265,7 @@ const FamilyDashboard = () => {
               </CardHeader>
               <CardContent>
                 <Link to="/family/features-overview">
-                  <Button 
-                    variant="default" 
-                    className="w-full mb-6"
-                  >
+                  <Button variant="default" className="w-full mb-6">
                     Learn More
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -444,10 +388,7 @@ const FamilyDashboard = () => {
             </CardHeader>
             <CardContent>
               <Link to="/family/features-overview">
-                <Button 
-                  variant="default" 
-                  className="w-full mb-6"
-                >
+                <Button variant="default" className="w-full mb-6">
                   Learn More
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -526,10 +467,7 @@ const FamilyDashboard = () => {
             </CardHeader>
             <CardContent>
               <Link to="/family/features-overview">
-                <Button 
-                  variant="default" 
-                  className="w-full mb-6"
-                >
+                <Button variant="default" className="w-full mb-6">
                   Learn More
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -627,8 +565,6 @@ const FamilyDashboard = () => {
           </Card>
         </motion.div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default FamilyDashboard;
