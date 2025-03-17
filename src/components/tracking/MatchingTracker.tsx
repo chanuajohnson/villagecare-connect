@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTracking } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
@@ -21,15 +21,17 @@ interface MatchingTrackerProps {
 export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
-  const [isMounted, setIsMounted] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+  const trackingAttempted = useRef(false);
   
   useEffect(() => {
     setIsMounted(true);
     
     const trackMatchingPageView = async () => {
-      if (!isMounted || !user) return;
+      if (!isMounted || !user || trackingAttempted.current) return;
       
       try {
+        trackingAttempted.current = true;
         const actionType = `${matchingType}_matching_page_view`;
         
         await trackEngagement(actionType as any, {

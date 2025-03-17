@@ -1,6 +1,6 @@
 
 import { useTracking } from "@/hooks/useTracking";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface DashboardTrackerProps {
@@ -16,15 +16,17 @@ interface DashboardTrackerProps {
 export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
-  const [isMounted, setIsMounted] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+  const trackingAttempted = useRef(false);
   
   useEffect(() => {
     setIsMounted(true);
     
     const trackDashboardView = async () => {
-      if (!isMounted || !user) return;
+      if (!isMounted || !user || trackingAttempted.current) return;
       
       try {
+        trackingAttempted.current = true;
         const actionType = `${dashboardType}_dashboard_view`;
         
         await trackEngagement(actionType as any, {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -76,6 +76,7 @@ export const DashboardFamilyMatches = () => {
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const { trackEngagement } = useTracking();
   
   const [careTypes, setCareTypes] = useState<string[]>([]);
@@ -129,84 +130,86 @@ export const DashboardFamilyMatches = () => {
     label: "Overnight"
   }];
 
-  useEffect(() => {
-    const loadFamilies = async () => {
-      try {
-        setIsLoading(true);
-
-        // First use mock families immediately to prevent UI waiting
-        // This ensures we always have some families to display
-        setFamilies(MOCK_FAMILIES);
-        setFilteredFamilies(MOCK_FAMILIES);
-
-        const {
-          data: familyUsers,
-          error: familyError
-        } = await supabase.from('profiles').select('*').eq('role', 'family');
-        
-        if (familyError) {
-          console.error("Error fetching family users:", familyError);
-          toast.error("Failed to load family matches");
-          return; // Early return to keep mock data displayed
-        }
-
-        if (!familyUsers || familyUsers.length === 0) {
-          console.log("No family users found, using mock data");
-          // We're already using mock data, so just track and return
-          if (user) {
-            await trackEngagement('dashboard_family_matches_view', { 
-              data_source: 'mock_data',
-              family_count: MOCK_FAMILIES.length
-            });
-          }
-          return;
-        }
-
-        const realFamilies: Family[] = familyUsers.map(family => {
-          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          return {
-            id: family.id,
-            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-            avatar_url: family.avatar_url,
-            location: family.location || 'Port of Spain',
-            care_types: family.care_types || ['Elderly Care'],
-            special_needs: family.special_needs || [],
-            care_schedule: family.care_schedule || 'Weekdays',
-            match_score: matchScore,
-            is_premium: false,
-            distance: distance,
-            budget_preferences: family.budget_preferences || '$15-30/hr'
-          };
-        });
-        
-        console.log("Loaded real family users:", realFamilies.length);
-
-        // If we have few real families, supplement with some mock ones
-        const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
-        const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
-
-        if (user) {
-          await trackEngagement('dashboard_family_matches_view', {
-            data_source: realFamilies.length > 0 ? 'mixed_data' : 'mock_data',
-            real_family_count: realFamilies.length,
-            mock_family_count: limitedMockFamilies.length
-          });
-        }
-        
-        setFamilies(allFamilies);
-        setFilteredFamilies(allFamilies);
-      } catch (error) {
-        console.error("Error loading families:", error);
-        toast.error("Error loading family matches");
-        // Keep showing mock data on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadFamilies = useCallback(async () => {
+    if (!user || dataLoaded) return;
     
+    try {
+      setIsLoading(true);
+
+      // First use mock families immediately to prevent UI waiting
+      // This ensures we always have some families to display
+      setFamilies(MOCK_FAMILIES);
+      setFilteredFamilies(MOCK_FAMILIES);
+
+      const {
+        data: familyUsers,
+        error: familyError
+      } = await supabase.from('profiles').select('*').eq('role', 'family');
+      
+      if (familyError) {
+        console.error("Error fetching family users:", familyError);
+        toast.error("Failed to load family matches");
+        setDataLoaded(true);
+        return; // Early return to keep mock data displayed
+      }
+
+      if (!familyUsers || familyUsers.length === 0) {
+        console.log("No family users found, using mock data");
+        // We're already using mock data, so just track and return
+        await trackEngagement('dashboard_family_matches_view', { 
+          data_source: 'mock_data',
+          family_count: MOCK_FAMILIES.length
+        });
+        setDataLoaded(true);
+        return;
+      }
+
+      const realFamilies: Family[] = familyUsers.map(family => {
+        const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+        const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+        return {
+          id: family.id,
+          full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+          avatar_url: family.avatar_url,
+          location: family.location || 'Port of Spain',
+          care_types: family.care_types || ['Elderly Care'],
+          special_needs: family.special_needs || [],
+          care_schedule: family.care_schedule || 'Weekdays',
+          match_score: matchScore,
+          is_premium: false,
+          distance: distance,
+          budget_preferences: family.budget_preferences || '$15-30/hr'
+        };
+      });
+      
+      console.log("Loaded real family users:", realFamilies.length);
+
+      // If we have few real families, supplement with some mock ones
+      const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
+      const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
+
+      await trackEngagement('dashboard_family_matches_view', {
+        data_source: realFamilies.length > 0 ? 'mixed_data' : 'mock_data',
+        real_family_count: realFamilies.length,
+        mock_family_count: limitedMockFamilies.length
+      });
+      
+      setFamilies(allFamilies);
+      setFilteredFamilies(allFamilies);
+      setDataLoaded(true);
+    } catch (error) {
+      console.error("Error loading families:", error);
+      toast.error("Error loading family matches");
+      setDataLoaded(true);
+      // Keep showing mock data on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, trackEngagement, dataLoaded]);
+  
+  useEffect(() => {
     // Start with empty state but quickly load
-    if (user) {
+    if (user && !dataLoaded) {
       // Set a small timeout to ensure UI doesn't flash loading state too quickly
       const timer = setTimeout(() => {
         loadFamilies();
@@ -214,7 +217,7 @@ export const DashboardFamilyMatches = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [user, trackEngagement]);
+  }, [user, loadFamilies, dataLoaded]);
 
   useEffect(() => {
     if (families.length === 0) return;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,7 @@ export default function FamilyMatchingPage() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const { trackEngagement } = useTracking();
   
   const [careTypes, setCareTypes] = useState<string[]>([]);
@@ -152,88 +153,85 @@ export default function FamilyMatchingPage() {
     { value: "overnight", label: "Overnight" }
   ];
   
-  useEffect(() => {
-    const loadFamilies = async () => {
-      try {
-        setIsLoading(true);
+  const loadFamilies = useCallback(async () => {
+    if (!user || dataLoaded) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Immediately set mock families to prevent empty UI
+      setFamilies(MOCK_FAMILIES);
+      setFilteredFamilies(MOCK_FAMILIES);
+      
+      const { data: familyUsers, error: familyError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'family');
+      
+      if (familyError) {
+        console.error("Error fetching family users:", familyError);
+        toast.error("Failed to load family matches");
+        setDataLoaded(true); // Mark as loaded even if there was an error to prevent retries
+        return; // Keep showing mock data
+      }
+      
+      if (!familyUsers || familyUsers.length === 0) {
+        console.log("No family users found, using mock data only");
         
-        // Immediately set mock families to prevent empty UI
-        setFamilies(MOCK_FAMILIES);
-        setFilteredFamilies(MOCK_FAMILIES);
-        
-        const { data: familyUsers, error: familyError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'family');
-        
-        if (familyError) {
-          console.error("Error fetching family users:", familyError);
-          toast.error("Failed to load family matches");
-          return; // Keep showing mock data
-        }
-        
-        if (!familyUsers || familyUsers.length === 0) {
-          console.log("No family users found, using mock data only");
-          
-          if (user) {
-            await trackEngagement('family_matching_page_view', { 
-              data_source: 'mock_data',
-              family_count: MOCK_FAMILIES.length
-            });
-          }
-          return; // Keep showing mock data
-        }
-        
-        const realFamilies: Family[] = familyUsers.map(family => {
-          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          
-          return {
-            id: family.id,
-            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-            avatar_url: family.avatar_url,
-            location: family.location || 'Port of Spain',
-            care_types: family.care_types || ['Elderly Care'],
-            special_needs: family.special_needs || [],
-            care_schedule: family.care_schedule || 'Weekdays',
-            match_score: matchScore,
-            is_premium: false,
-            distance: distance,
-            budget_preferences: family.budget_preferences || '$15-30/hr'
-          };
+        await trackEngagement('family_matching_page_view', { 
+          data_source: 'mock_data',
+          family_count: MOCK_FAMILIES.length
         });
         
-        console.log("Loaded real family users:", realFamilies.length);
-        
-        // Combine real families with mock ones if needed
-        const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
-        
-        if (user) {
-          await trackEngagement('family_matching_page_view', {
-            data_source: realFamilies.length > 0 ? 'mixed_data' : 'mock_data',
-            real_family_count: realFamilies.length,
-            mock_family_count: MOCK_FAMILIES.length
-          });
-        }
-        
-        setFamilies(allFamilies);
-        setFilteredFamilies(allFamilies);
-      } catch (error) {
-        console.error("Error loading families:", error);
-        toast.error("Failed to load family matches");
-        // Keep showing mock data on error
-      } finally {
-        setIsLoading(false);
+        setDataLoaded(true);
+        return; // Keep showing mock data
       }
-    };
-    
-    if (user && isProfileComplete) {
-      // Short timeout to ensure UI responsiveness
-      const timer = setTimeout(() => {
-        loadFamilies();
-      }, 100);
       
-      return () => clearTimeout(timer);
+      const realFamilies: Family[] = familyUsers.map(family => {
+        const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+        const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+        
+        return {
+          id: family.id,
+          full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+          avatar_url: family.avatar_url,
+          location: family.location || 'Port of Spain',
+          care_types: family.care_types || ['Elderly Care'],
+          special_needs: family.special_needs || [],
+          care_schedule: family.care_schedule || 'Weekdays',
+          match_score: matchScore,
+          is_premium: false,
+          distance: distance,
+          budget_preferences: family.budget_preferences || '$15-30/hr'
+        };
+      });
+      
+      console.log("Loaded real family users:", realFamilies.length);
+      
+      // Combine real families with mock ones if needed
+      const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
+      
+      await trackEngagement('family_matching_page_view', {
+        data_source: realFamilies.length > 0 ? 'mixed_data' : 'mock_data',
+        real_family_count: realFamilies.length,
+        mock_family_count: MOCK_FAMILIES.length
+      });
+      
+      setFamilies(allFamilies);
+      setFilteredFamilies(allFamilies);
+      setDataLoaded(true);
+    } catch (error) {
+      console.error("Error loading families:", error);
+      toast.error("Failed to load family matches");
+      setDataLoaded(true); // Mark as loaded even if there was an error
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, trackEngagement, dataLoaded]);
+  
+  useEffect(() => {
+    if (user && isProfileComplete && !dataLoaded) {
+      loadFamilies();
     } else if (user && !isProfileComplete) {
       navigate("/registration/professional", { 
         state: { returnPath: "/family-matching", action: "findFamilies" }
@@ -243,7 +241,7 @@ export default function FamilyMatchingPage() {
         state: { returnPath: "/family-matching", action: "findFamilies" }
       });
     }
-  }, [user, isProfileComplete, navigate, trackEngagement]);
+  }, [user, isProfileComplete, navigate, loadFamilies, dataLoaded]);
   
   useEffect(() => {
     if (families.length === 0) return;
