@@ -45,7 +45,9 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
     // Delay tracking to avoid blocking UI rendering
     const trackingTimer = setTimeout(() => {
       if (user && isMounted) {
-        trackMatchingPageView();
+        trackMatchingPageView().catch(err => {
+          console.error("Tracking error in delayed execution:", err);
+        });
       }
     }, 1000);
     

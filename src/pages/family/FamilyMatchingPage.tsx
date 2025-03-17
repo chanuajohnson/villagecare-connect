@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Clock, Filter, MapPin, Star, Lock, Calendar, MapPinned, UserCheck } from "lucide-react";
+import { Clock, Filter, MapPin, Star, Lock, Calendar, MapPinned, UserCheck, DollarSign } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ interface Family {
   match_score: number;
   is_premium: boolean;
   distance: number;
+  budget_preferences?: string | null;
 }
 
 const MOCK_FAMILIES: Family[] = [
@@ -41,7 +43,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Weekdays, Evenings",
     match_score: 95,
     is_premium: false,
-    distance: 3.2
+    distance: 3.2,
+    budget_preferences: "$15-25/hr"
   },
   {
     id: "2",
@@ -53,7 +56,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Full-time, Weekends",
     match_score: 89,
     is_premium: true,
-    distance: 15.7
+    distance: 15.7,
+    budget_preferences: "$25-35/hr"
   },
   {
     id: "3",
@@ -65,7 +69,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Part-time, Mornings",
     match_score: 82,
     is_premium: false,
-    distance: 8.5
+    distance: 8.5,
+    budget_preferences: "$20-30/hr"
   },
   {
     id: "4",
@@ -77,7 +82,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Overnight, Weekends",
     match_score: 78,
     is_premium: true,
-    distance: 12.3
+    distance: 12.3,
+    budget_preferences: "$30-40/hr"
   }
 ];
 
@@ -85,8 +91,8 @@ export default function FamilyMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [families, setFamilies] = useState([]);
-  const [filteredFamilies, setFilteredFamilies] = useState([]);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { trackEngagement } = useTracking();
   
@@ -94,6 +100,7 @@ export default function FamilyMatchingPage() {
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
+  const [budgetRange, setBudgetRange] = useState<[number, number]>([15, 50]);
 
   const referringPath = location.state?.referringPagePath || 
     (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
@@ -126,7 +133,13 @@ export default function FamilyMatchingPage() {
     "Dementia Care",
     "Stroke Recovery",
     "Meal Preparation",
-    "Early Childhood Development"
+    "Early Childhood Development",
+    "Diabetes Management",
+    "Parkinson's Care",
+    "Physical Therapy Assistance",
+    "Post-Surgery Care",
+    "Hospice Support",
+    "Respiratory Care"
   ];
   
   const scheduleOptions = [
@@ -169,7 +182,8 @@ export default function FamilyMatchingPage() {
             care_schedule: family.care_schedule || 'Weekdays',
             match_score: matchScore,
             is_premium: false,
-            distance: distance
+            distance: distance,
+            budget_preferences: family.budget_preferences || '$15-30/hr'
           };
         }) : [];
         
@@ -202,7 +216,7 @@ export default function FamilyMatchingPage() {
         state: { returnPath: "/family-matching", action: "findFamilies" }
       });
     }
-  }, [user, isProfileComplete, navigate]);
+  }, [user, isProfileComplete, navigate, trackEngagement]);
   
   useEffect(() => {
     if (families.length === 0) return;
@@ -229,6 +243,21 @@ export default function FamilyMatchingPage() {
       }
 
       result = result.filter(family => family.distance <= maxDistance);
+      
+      // Apply budget filter
+      result = result.filter(family => {
+        // Extract numeric values from budget_preferences
+        if (!family.budget_preferences) return true; // Include if no budget specified
+        
+        const match = family.budget_preferences.match(/\$(\d+)(?:-(\d+))?/);
+        if (!match) return true;
+        
+        const minBudget = parseInt(match[1]);
+        const maxBudget = match[2] ? parseInt(match[2]) : minBudget;
+        
+        // Check if there's overlap between the family's budget range and filter range
+        return (minBudget <= budgetRange[1] && maxBudget >= budgetRange[0]);
+      });
 
       result.sort((a, b) => b.match_score - a.match_score);
 
@@ -236,7 +265,7 @@ export default function FamilyMatchingPage() {
     };
 
     applyFilters();
-  }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
+  }, [families, careTypes, specialNeeds, scheduleType, maxDistance, budgetRange]);
   
   const handleUnlockProfile = async (familyId: string, isPremium: boolean) => {
     await trackEngagement('unlock_family_profile_click', { 
@@ -303,6 +332,16 @@ export default function FamilyMatchingPage() {
     });
     
     setMaxDistance(value[0]);
+  };
+  
+  const handleBudgetChange = (value: [number, number]) => {
+    trackEngagement('filter_change', { 
+      filter_type: 'budget_range', 
+      previous_value: `${budgetRange[0]}-${budgetRange[1]}`,
+      new_value: `${value[0]}-${value[1]}`
+    });
+    
+    setBudgetRange(value);
   };
 
   const breadcrumbItems = [
@@ -372,12 +411,12 @@ export default function FamilyMatchingPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="schedule" className="text-sm">Care Schedule</Label>
                 <Select
                   value={scheduleType}
-                  onValueChange={setScheduleType}
+                  onValueChange={handleScheduleChange}
                 >
                   <SelectTrigger id="schedule">
                     <SelectValue placeholder="Select schedule" />
@@ -404,6 +443,19 @@ export default function FamilyMatchingPage() {
                   onValueChange={(value) => handleDistanceChange(value)}
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Budget Range: ${budgetRange[0]}-${budgetRange[1]}/hr</span>
+                </Label>
+                <Slider 
+                  value={budgetRange} 
+                  min={15} 
+                  max={50} 
+                  step={5}
+                  onValueChange={(value) => handleBudgetChange(value as [number, number])}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -424,6 +476,7 @@ export default function FamilyMatchingPage() {
               setSpecialNeeds([]);
               setScheduleType("all");
               setMaxDistance(30);
+              setBudgetRange([15, 50]);
             }}
           >
             Reset Filters
@@ -515,6 +568,16 @@ export default function FamilyMatchingPage() {
                         <div>
                           <div className="text-sm text-gray-500">Distance</div>
                           <div className="font-medium">{family.distance.toFixed(1)} km</div>
+                        </div>
+                      </div>
+                      
+                      <span className="text-gray-300 mx-2">|</span>
+                      
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Budget</div>
+                          <div className="font-medium">{family.budget_preferences || 'Not specified'}</div>
                         </div>
                       </div>
                     </div>

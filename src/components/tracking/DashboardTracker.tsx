@@ -40,7 +40,9 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
     // Delay tracking to avoid blocking UI rendering
     const trackingTimer = setTimeout(() => {
       if (user && isMounted) {
-        trackDashboardView();
+        trackDashboardView().catch(err => {
+          console.error("Tracking error in delayed execution:", err);
+        });
       }
     }, 1000);
     

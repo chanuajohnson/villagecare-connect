@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,13 +7,14 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, Calendar, MapPinned } from "lucide-react";
+import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, Calendar, MapPinned, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { useTracking } from "@/hooks/useTracking";
 
 interface Family {
   id: string;
@@ -25,6 +27,7 @@ interface Family {
   match_score: number;
   is_premium: boolean;
   distance: number;
+  budget_preferences?: string | null;
 }
 
 const MOCK_FAMILIES: Family[] = [{
@@ -37,7 +40,8 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Weekdays, Evenings",
   match_score: 95,
   is_premium: false,
-  distance: 3.2
+  distance: 3.2,
+  budget_preferences: "$15-25/hr"
 }, {
   id: "2",
   full_name: "Wilson Family",
@@ -48,7 +52,8 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Full-time, Weekends",
   match_score: 89,
   is_premium: true,
-  distance: 15.7
+  distance: 15.7,
+  budget_preferences: "$25-35/hr"
 }, {
   id: "3",
   full_name: "Thomas Family",
@@ -59,7 +64,8 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Part-time, Mornings",
   match_score: 82,
   is_premium: false,
-  distance: 8.5
+  distance: 8.5,
+  budget_preferences: "$20-30/hr"
 }];
 
 export const DashboardFamilyMatches = () => {
@@ -72,13 +78,33 @@ export const DashboardFamilyMatches = () => {
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const { trackEngagement } = useTracking();
+  
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
+  const [budgetRange, setBudgetRange] = useState<[number, number]>([15, 50]);
 
   const careTypeOptions = ["Elderly Care", "Child Care", "Special Needs", "Medical Support", "Overnight Care", "Companionship", "Housekeeping"];
-  const specialNeedsOptions = ["Alzheimer's", "Mobility Assistance", "Medication Management", "Autism Care", "Dementia Care", "Meal Preparation"];
+  
+  const specialNeedsOptions = [
+    "Alzheimer's", 
+    "Mobility Assistance", 
+    "Medication Management", 
+    "Autism Care", 
+    "Dementia Care", 
+    "Meal Preparation",
+    "Early Childhood Development",
+    "Stroke Recovery",
+    "Diabetes Management",
+    "Parkinson's Care",
+    "Physical Therapy Assistance",
+    "Post-Surgery Care",
+    "Hospice Support",
+    "Respiratory Care"
+  ];
+  
   const scheduleOptions = [{
     value: "all",
     label: "Any Schedule"
@@ -131,7 +157,8 @@ export const DashboardFamilyMatches = () => {
             care_schedule: family.care_schedule || 'Weekdays',
             match_score: matchScore,
             is_premium: false,
-            distance: distance
+            distance: distance,
+            budget_preferences: family.budget_preferences || '$15-30/hr'
           };
         }) : [];
         console.log("Loaded real family users:", realFamilies.length);
@@ -153,7 +180,7 @@ export const DashboardFamilyMatches = () => {
     if (user) {
       loadFamilies();
     }
-  }, [user]);
+  }, [user, trackEngagement]);
 
   useEffect(() => {
     if (families.length === 0) return;
@@ -170,11 +197,26 @@ export const DashboardFamilyMatches = () => {
       }
       result = result.filter(family => family.distance <= maxDistance);
 
+      // Apply budget filter
+      result = result.filter(family => {
+        // Extract numeric values from budget_preferences
+        if (!family.budget_preferences) return true; // Include if no budget specified
+        
+        const match = family.budget_preferences.match(/\$(\d+)(?:-(\d+))?/);
+        if (!match) return true;
+        
+        const minBudget = parseInt(match[1]);
+        const maxBudget = match[2] ? parseInt(match[2]) : minBudget;
+        
+        // Check if there's overlap between the family's budget range and filter range
+        return (minBudget <= budgetRange[1] && maxBudget >= budgetRange[0]);
+      });
+
       result.sort((a, b) => b.match_score - a.match_score);
       setFilteredFamilies(result);
     };
     applyFilters();
-  }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
+  }, [families, careTypes, specialNeeds, scheduleType, maxDistance, budgetRange]);
 
   const trackEngagement = async (actionType: string, additionalData = {}) => {
     try {
@@ -314,6 +356,13 @@ export const DashboardFamilyMatches = () => {
                 <Slider value={[maxDistance]} min={1} max={50} step={1} onValueChange={value => setMaxDistance(value[0])} />
               </div>
             </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm flex justify-between">
+                <span>Budget Range: ${budgetRange[0]}-${budgetRange[1]}/hr</span>
+              </Label>
+              <Slider value={budgetRange} min={15} max={50} step={5} onValueChange={setBudgetRange} />
+            </div>
           </div>
         </CardContent>}
       
@@ -359,6 +408,11 @@ export const DashboardFamilyMatches = () => {
                       <div className="flex items-center gap-1">
                         <MapPinned className="h-3.5 w-3.5 text-gray-500" />
                         <span>{family.distance.toFixed(1)} km away</span>
+                      </div>
+                      <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-3.5 w-3.5 text-gray-500" />
+                        <span>{family.budget_preferences || 'Budget not specified'}</span>
                       </div>
                     </div>
                     
@@ -417,6 +471,7 @@ export const DashboardFamilyMatches = () => {
           setSpecialNeeds([]);
           setScheduleType("all");
           setMaxDistance(30);
+          setBudgetRange([15, 50]);
         }}>
               Reset Filters
             </Button>
