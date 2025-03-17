@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, ArrowRight, UserCheck, Clock, Filter, Calendar, MapPinned } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { useTracking } from "@/hooks/useTracking";
 
 interface Family {
   id: string;
@@ -26,7 +25,6 @@ interface Family {
   match_score: number;
   is_premium: boolean;
   distance: number;
-  budget_preferences?: string | null;
 }
 
 const MOCK_FAMILIES: Family[] = [{
@@ -39,8 +37,7 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Weekdays, Evenings",
   match_score: 95,
   is_premium: false,
-  distance: 3.2,
-  budget_preferences: "$15-25/hr"
+  distance: 3.2
 }, {
   id: "2",
   full_name: "Wilson Family",
@@ -51,8 +48,7 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Full-time, Weekends",
   match_score: 89,
   is_premium: true,
-  distance: 15.7,
-  budget_preferences: "$20-30/hr"
+  distance: 15.7
 }, {
   id: "3",
   full_name: "Thomas Family",
@@ -63,8 +59,7 @@ const MOCK_FAMILIES: Family[] = [{
   care_schedule: "Part-time, Mornings",
   match_score: 82,
   is_premium: false,
-  distance: 8.5,
-  budget_preferences: "$18-28/hr"
+  distance: 8.5
 }];
 
 export const DashboardFamilyMatches = () => {
@@ -77,18 +72,13 @@ export const DashboardFamilyMatches = () => {
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const { trackEngagement } = useTracking();
-  const [dataSource, setDataSource] = useState<'real' | 'mock'>('real');
-  
-  // Updated filters to match professional registration fields
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50]);
 
   const careTypeOptions = ["Elderly Care", "Child Care", "Special Needs", "Medical Support", "Overnight Care", "Companionship", "Housekeeping"];
-  const specialNeedsOptions = ["Alzheimer's", "Mobility Assistance", "Medication Management", "Autism Care", "Dementia Care", "Meal Preparation", "Stroke Recovery", "Physical Disability"];
+  const specialNeedsOptions = ["Alzheimer's", "Mobility Assistance", "Medication Management", "Autism Care", "Dementia Care", "Meal Preparation"];
   const scheduleOptions = [{
     value: "all",
     label: "Any Schedule"
@@ -116,124 +106,54 @@ export const DashboardFamilyMatches = () => {
   }];
 
   useEffect(() => {
-    let isMounted = true;
-    
     const loadFamilies = async () => {
       try {
-        if (!isMounted) return;
         setIsLoading(true);
 
-        let realFamilies: Family[] = [];
-        let useMockData = false;
-        
-        try {
-          console.log("Fetching family users for matches...");
-          const { data: familyUsers, error: familyError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('role', 'family');
-            
-          if (familyError) {
-            console.error("Error fetching family users:", familyError);
-            throw familyError;
-          }
-
-          if (!familyUsers || familyUsers.length === 0) {
-            console.log("No family users found, falling back to mock data");
-            useMockData = true;
-          } else {
-            console.log(`Found ${familyUsers.length} family users`);
-            
-            realFamilies = familyUsers.map(family => {
-              const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-              const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-              return {
-                id: family.id,
-                full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-                avatar_url: family.avatar_url,
-                location: family.location || 'Port of Spain',
-                care_types: family.care_types || ['Elderly Care'],
-                special_needs: family.special_needs || [],
-                care_schedule: family.care_schedule || 'Weekdays',
-                match_score: matchScore,
-                is_premium: false,
-                distance: distance,
-                budget_preferences: family.budget_preferences || '$15-25/hr'
-              };
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching real families:", error);
-          useMockData = true;
+        const {
+          data: familyUsers,
+          error: familyError
+        } = await supabase.from('profiles').select('*').eq('role', 'family');
+        if (familyError) {
+          console.error("Error fetching family users:", familyError);
         }
 
-        let allFamilies: Family[];
-        
-        if (useMockData || realFamilies.length === 0) {
-          console.log("Using mock family data");
-          setDataSource('mock');
-          allFamilies = [...MOCK_FAMILIES];
-          
-          if (isMounted) {
-            // Show toast only if we had to fallback to mock data
-            toast.info("Using sample family profiles for demonstration", {
-              id: "mock-data-families",
-              duration: 4000
-            });
-          }
-        } else {
-          console.log("Using real family data with some mock data for demonstration");
-          setDataSource('real');
-          // Mix real data with some mock to ensure the display is interesting
-          allFamilies = [...realFamilies, ...MOCK_FAMILIES].slice(0, 3);
-        }
+        const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
+          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+          return {
+            id: family.id,
+            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+            avatar_url: family.avatar_url,
+            location: family.location || 'Port of Spain',
+            care_types: family.care_types || ['Elderly Care'],
+            special_needs: family.special_needs || [],
+            care_schedule: family.care_schedule || 'Weekdays',
+            match_score: matchScore,
+            is_premium: false,
+            distance: distance
+          };
+        }) : [];
+        console.log("Loaded real family users:", realFamilies.length);
 
-        // Handle tracking separately and don't let it block the UI
-        try {
-          if (user && isMounted) {
-            setTimeout(() => {
-              trackEngagement('dashboard_family_matches_view')
-                .catch(err => console.error("Tracking failed but continuing:", err));
-            }, 0);
-          }
-        } catch (error) {
-          console.error("Error tracking engagement:", error);
-          // Don't throw here, just log
+        const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
+        const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
+
+        if (user) {
+          await trackEngagement('dashboard_family_matches_view');
         }
-        
-        if (!isMounted) return;
-        
         setFamilies(allFamilies);
         setFilteredFamilies(allFamilies);
       } catch (error) {
         console.error("Error loading families:", error);
-        // Fallback to mock data on any error
-        if (isMounted) {
-          setFamilies(MOCK_FAMILIES);
-          setFilteredFamilies(MOCK_FAMILIES);
-          setDataSource('mock');
-          toast.error("Could not load real family data. Showing sample profiles instead.", {
-            id: "family-data-error",
-            duration: 4000
-          });
-        }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
-    
     if (user) {
       loadFamilies();
-    } else {
-      setIsLoading(false);
     }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [user, trackEngagement]);
+  }, [user]);
 
   useEffect(() => {
     if (families.length === 0) return;
@@ -249,50 +169,47 @@ export const DashboardFamilyMatches = () => {
         result = result.filter(family => family.care_schedule?.toLowerCase().includes(scheduleType.toLowerCase()));
       }
       result = result.filter(family => family.distance <= maxDistance);
-      
-      // Add budget filter based on price range
-      result = result.filter(family => {
-        if (!family.budget_preferences) return true;
-        const match = family.budget_preferences.match(/\$(\d+)-(\d+)/);
-        if (!match) return true;
-        const minBudget = parseInt(match[1]);
-        const maxBudget = parseInt(match[2]);
-        return maxBudget >= priceRange[0] && minBudget <= priceRange[1];
-      });
 
       result.sort((a, b) => b.match_score - a.match_score);
       setFilteredFamilies(result);
     };
     applyFilters();
-  }, [families, careTypes, specialNeeds, scheduleType, maxDistance, priceRange]);
+  }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
+
+  const trackEngagement = async (actionType: string, additionalData = {}) => {
+    try {
+      const sessionId = localStorage.getItem('session_id') || uuidv4();
+      if (!localStorage.getItem('session_id')) {
+        localStorage.setItem('session_id', sessionId);
+      }
+      const {
+        error
+      } = await supabase.from('cta_engagement_tracking').insert({
+        user_id: user?.id || null,
+        action_type: actionType,
+        session_id: sessionId,
+        additional_data: additionalData
+      });
+      if (error) {
+        console.error("Error tracking engagement:", error);
+      }
+    } catch (error) {
+      console.error("Error in trackEngagement:", error);
+    }
+  };
 
   const handleCareTypeChange = (type: string) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'care_type', 
-      filter_value: type,
-      previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
-      new_state: careTypes.includes(type) ? 'unselected' : 'selected'
-    }).catch(err => console.error("Tracking failed but continuing:", err));
-    
     setCareTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   };
 
   const handleSpecialNeedsChange = (need: string) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'special_needs', 
-      filter_value: need,
-      previous_state: specialNeeds.includes(need) ? 'selected' : 'unselected',
-      new_state: specialNeeds.includes(need) ? 'unselected' : 'selected'
-    }).catch(err => console.error("Tracking failed but continuing:", err));
-    
     setSpecialNeeds(prev => prev.includes(need) ? prev.filter(n => n !== need) : [...prev, need]);
   };
 
   const handleUnlockProfile = (familyId: string) => {
     trackEngagement('unlock_family_profile_click', {
       family_id: familyId
-    }).catch(err => console.error("Tracking failed but continuing:", err));
-    
+    });
     navigate("/subscription-features", {
       state: {
         returnPath: "/family-matching",
@@ -335,7 +252,6 @@ export const DashboardFamilyMatches = () => {
           <CardTitle className="text-xl">Family Matches</CardTitle>
           <p className="text-sm text-gray-500">
             {filteredFamilies.length} families match your expertise
-            {dataSource === 'mock' && " (sample data)"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -344,9 +260,7 @@ export const DashboardFamilyMatches = () => {
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
           <Button variant="default" className="flex items-center gap-1" onClick={() => {
-          trackEngagement('view_all_family_matches_click')
-            .catch(err => console.error("Tracking failed but continuing:", err));
-            
+          trackEngagement('view_all_family_matches_click');
           navigate("/family-matching", {
             state: {
               referringPagePath: "/dashboard/professional",
@@ -378,18 +292,10 @@ export const DashboardFamilyMatches = () => {
                 </div>)}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="schedule" className="text-sm">Care Schedule</Label>
-                <Select value={scheduleType} onValueChange={value => {
-                  trackEngagement('filter_change', { 
-                    filter_type: 'schedule', 
-                    previous_value: scheduleType,
-                    new_value: value
-                  }).catch(err => console.error("Tracking failed but continuing:", err));
-                  
-                  setScheduleType(value);
-                }}>
+                <Select value={scheduleType} onValueChange={setScheduleType}>
                   <SelectTrigger id="schedule">
                     <SelectValue placeholder="Select schedule" />
                   </SelectTrigger>
@@ -405,42 +311,7 @@ export const DashboardFamilyMatches = () => {
                 <Label className="text-sm flex justify-between">
                   <span>Maximum Distance: {maxDistance} km</span>
                 </Label>
-                <Slider 
-                  value={[maxDistance]} 
-                  min={1} 
-                  max={50} 
-                  step={1} 
-                  onValueChange={value => {
-                    trackEngagement('filter_change', { 
-                      filter_type: 'distance', 
-                      previous_value: maxDistance,
-                      new_value: value[0]
-                    }).catch(err => console.error("Tracking failed but continuing:", err));
-                    
-                    setMaxDistance(value[0]);
-                  }} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-sm flex justify-between">
-                  <span>Budget Range: ${priceRange[0]}-${priceRange[1]}/hr</span>
-                </Label>
-                <Slider 
-                  value={priceRange} 
-                  min={0} 
-                  max={50} 
-                  step={5}
-                  onValueChange={value => {
-                    trackEngagement('filter_change', { 
-                      filter_type: 'budget', 
-                      previous_value: `${priceRange[0]}-${priceRange[1]}`,
-                      new_value: `${value[0]}-${value[1]}`
-                    }).catch(err => console.error("Tracking failed but continuing:", err));
-                    
-                    setPriceRange([value[0], value[1]]);
-                  }}
-                />
+                <Slider value={[maxDistance]} min={1} max={50} step={1} onValueChange={value => setMaxDistance(value[0])} />
               </div>
             </div>
           </div>
@@ -489,15 +360,6 @@ export const DashboardFamilyMatches = () => {
                         <MapPinned className="h-3.5 w-3.5 text-gray-500" />
                         <span>{family.distance.toFixed(1)} km away</span>
                       </div>
-                      {family.budget_preferences && (
-                        <>
-                          <span className="text-gray-300">|</span>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                            <span>Budget: {family.budget_preferences}</span>
-                          </div>
-                        </>
-                      )}
                     </div>
                     
                     <div className="text-sm">
@@ -537,9 +399,7 @@ export const DashboardFamilyMatches = () => {
               </div>)}
             
             <Button variant="outline" className="w-full mt-2" onClick={() => {
-          trackEngagement('view_all_family_matches_click')
-            .catch(err => console.error("Tracking failed but continuing:", err));
-            
+          trackEngagement('view_all_family_matches_click');
           navigate("/family-matching", {
             state: {
               referringPagePath: "/dashboard/professional",
@@ -557,7 +417,6 @@ export const DashboardFamilyMatches = () => {
           setSpecialNeeds([]);
           setScheduleType("all");
           setMaxDistance(30);
-          setPriceRange([0, 50]);
         }}>
               Reset Filters
             </Button>

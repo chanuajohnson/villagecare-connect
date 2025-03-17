@@ -8,46 +8,26 @@ interface DashboardTrackerProps {
    * The type of dashboard being tracked
    */
   dashboardType: 'family' | 'professional' | 'community' | 'admin';
-  
-  /**
-   * Additional data to include with the tracking event
-   */
-  additionalData?: Record<string, any>;
 }
 
 /**
  * Component to track dashboard visits with user context
  */
-export const DashboardTracker = ({ dashboardType, additionalData = {} }: DashboardTrackerProps) => {
+export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
   
   useEffect(() => {
     const trackDashboardView = async () => {
-      try {
-        const actionType = `${dashboardType}_dashboard_view`;
-        
-        await trackEngagement(actionType as any, {
-          ...additionalData,
-          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
-          path: window.location.pathname,
-          referrer: document.referrer,
-          time_of_day: new Date().getHours()
-        });
-      } catch (error) {
-        console.error(`Error tracking ${dashboardType} dashboard view:`, error);
-        // Silent fail - don't block UI for tracking errors
-      }
+      const actionType = `${dashboardType}_dashboard_view`;
+      
+      await trackEngagement(actionType as any, {
+        user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+        path: window.location.pathname,
+      });
     };
     
-    // Only try to track if user exists, and make it not block rendering
-    if (user) {
-      setTimeout(() => {
-        trackDashboardView().catch(err => {
-          console.error('Tracking failed but continuing:', err);
-        });
-      }, 0);
-    }
+    trackDashboardView();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardType, user?.id]); // Retrack if user ID changes
   
