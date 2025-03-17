@@ -79,9 +79,12 @@ const SubscriptionPage = () => {
           const planType = plan.name.toLowerCase().includes('family') ? 'family' : 'caregiver';
           const isPopular = plan.price > 0 && !plan.name.toLowerCase().includes('enterprise');
           
+          // Type assertion to convert the JSON features to PlanFeature[] type
+          const typedFeatures = (plan.features as unknown) as PlanFeature[];
+          
           return {
             ...plan,
-            features: plan.features as PlanFeature[],
+            features: typedFeatures,
             popular: isPopular,
             buttonColor: isPopular 
               ? "bg-primary-600 hover:bg-primary-700" 
