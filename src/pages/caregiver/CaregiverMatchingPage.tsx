@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 interface Caregiver {
   id: string;
@@ -109,6 +109,9 @@ export default function CaregiverMatchingPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
 
+  const referringPath = location.state?.returnPath || "/";
+  const referringLabel = location.state?.referringPageLabel || "Dashboard";
+
   const careTypeOptions = [
     "Elderly Care", 
     "Child Care", 
@@ -136,7 +139,6 @@ export default function CaregiverMatchingPage() {
       try {
         setIsLoading(true);
         
-        // Fetch real professional users from the database
         const { data: professionalUsers, error: professionalError } = await supabase
           .from('profiles')
           .select('*')
@@ -147,14 +149,8 @@ export default function CaregiverMatchingPage() {
           toast.error("Failed to load professional caregivers");
         }
         
-        // Transform professional users to match Caregiver interface
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
-          // Calculate a random match score between 65-99 for demo purposes
-          // In a real app, you would use an algorithm based on preferences
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
-          // In a real app, you would calculate actual distance
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
           return {
@@ -176,10 +172,8 @@ export default function CaregiverMatchingPage() {
         
         console.log("Loaded real professional caregivers:", realCaregivers.length);
         
-        // Wait a moment to simulate loading (can be removed in production)
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Combine real professionals with mock data, prioritizing real ones
         const allCaregivers = [...realCaregivers, ...MOCK_CAREGIVERS];
         
         setCaregivers(allCaregivers);
@@ -274,6 +268,8 @@ export default function CaregiverMatchingPage() {
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
+        referringPagePath: referringPath,
+        referringPageLabel: referringLabel,
         featureType: "Premium Caregiver Profiles",
         caregiverId: caregiverId
       } 
@@ -287,9 +283,22 @@ export default function CaregiverMatchingPage() {
         : [...prev, type]
     );
   };
-  
+
+  const breadcrumbItems = [
+    {
+      label: referringLabel,
+      path: referringPath,
+    },
+    {
+      label: "Caregiver Matching",
+      path: "/caregiver-matching",
+    },
+  ];
+
   return (
     <div className="container px-4 py-8">
+      <DashboardHeader breadcrumbItems={breadcrumbItems} />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
         <p className="text-gray-600">
@@ -420,6 +429,8 @@ export default function CaregiverMatchingPage() {
                   navigate("/subscription-features", { 
                     state: { 
                       returnPath: "/caregiver-matching",
+                      referringPagePath: referringPath,
+                      referringPageLabel: referringLabel,
                       featureType: "Premium Matching" 
                     } 
                   });

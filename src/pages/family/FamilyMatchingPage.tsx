@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 interface Family {
   id: string;
@@ -93,6 +93,9 @@ export default function FamilyMatchingPage() {
   const [scheduleType, setScheduleType] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
 
+  const referringPath = location.state?.returnPath || "/";
+  const referringLabel = location.state?.referringPageLabel || "Dashboard";
+
   const careTypeOptions = [
     "Elderly Care", 
     "Child Care", 
@@ -130,7 +133,6 @@ export default function FamilyMatchingPage() {
       try {
         setIsLoading(true);
         
-        // Fetch real family users from the database
         const { data: familyUsers, error: familyError } = await supabase
           .from('profiles')
           .select('*')
@@ -141,12 +143,8 @@ export default function FamilyMatchingPage() {
           toast.error("Failed to load family matches");
         }
         
-        // Transform family users to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
           return {
@@ -165,10 +163,8 @@ export default function FamilyMatchingPage() {
         
         console.log("Loaded real family users:", realFamilies.length);
         
-        // Combine real families with mock data if needed
         const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
         
-        // Track page view
         if (user) {
           await trackEngagement('family_matching_page_view');
         }
@@ -222,7 +218,6 @@ export default function FamilyMatchingPage() {
 
       result = result.filter(family => family.distance <= maxDistance);
 
-      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
@@ -260,6 +255,8 @@ export default function FamilyMatchingPage() {
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/family-matching",
+        referringPagePath: referringPath,
+        referringPageLabel: referringLabel,
         featureType: "Premium Family Profiles",
         familyId: familyId
       } 
@@ -281,9 +278,22 @@ export default function FamilyMatchingPage() {
         : [...prev, need]
     );
   };
-  
+
+  const breadcrumbItems = [
+    {
+      label: referringLabel,
+      path: referringPath,
+    },
+    {
+      label: "Family Matching",
+      path: "/family-matching",
+    },
+  ];
+
   return (
     <div className="container px-4 py-8">
+      <DashboardHeader breadcrumbItems={breadcrumbItems} />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
         <p className="text-gray-600">
@@ -403,6 +413,8 @@ export default function FamilyMatchingPage() {
                   navigate("/subscription-features", { 
                     state: { 
                       returnPath: "/family-matching",
+                      referringPagePath: referringPath,
+                      referringPageLabel: referringLabel,
                       featureType: "Premium Matching" 
                     } 
                   });
