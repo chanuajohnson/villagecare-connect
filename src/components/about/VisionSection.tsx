@@ -20,7 +20,7 @@ export const VisionSection = () => {
         </CardHeader>
         <CardContent className="pt-6 text-center">
           <div className="max-w-3xl mx-auto">
-            <p className="text-lg text-primary-700 mb-6">We envision a world where caregiving is recognized as essential, professional work, supported by technology that empowers both families and caregivers to create compassionate care communities.</p>
+            <p className="text-lg text-primary-700 mb-6">We envision a world where quality caregiving is instantly accessible whenever needed - whether for an hour, a day, or ongoing support - creating a community where families find peace of mind and caregivers are valued professionals in a seamless, compassionate care ecosystem.</p>
             
             <AnimatePresence>
               {isExpanded && <motion.div initial={{
@@ -41,13 +41,7 @@ export const VisionSection = () => {
                 </motion.div>}
             </AnimatePresence>
             
-            <motion.button whileHover={{
-            scale: 1.05
-          }} whileTap={{
-            scale: 0.95
-          }} onClick={() => setIsExpanded(!isExpanded)} className="mt-6 text-primary-500 underline hover:text-primary-600 transition-colors font-medium">
-              {isExpanded ? "See less" : "See more"}
-            </motion.button>
+            
           </div>
         </CardContent>
       </Card>
