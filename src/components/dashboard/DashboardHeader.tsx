@@ -13,7 +13,7 @@ import { Home } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
-  href: string;
+  path: string;
 }
 
 interface DashboardHeaderProps {
@@ -41,7 +41,7 @@ export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
-                  <Link to={item.href}>{item.label}</Link>
+                  <Link to={item.path}>{item.label}</Link>
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>

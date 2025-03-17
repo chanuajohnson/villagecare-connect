@@ -80,8 +80,14 @@ const MessageBoardPage = () => {
   });
 
   const breadcrumbItems = [
-    { label: "Professional", href: "/dashboard/professional" },
-    { label: "Message Board", href: "/professional/message-board" },
+    {
+      label: "Professional Dashboard",
+      path: "/dashboard/professional",
+    },
+    {
+      label: "Message Board",
+      path: "/professional/message-board",
+    },
   ];
 
   const filteredMessages = messages.filter(message => {

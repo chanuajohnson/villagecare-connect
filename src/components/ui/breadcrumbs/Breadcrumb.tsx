@@ -40,16 +40,7 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
     // Handle module IDs - mark for later replacement with actual module titles
     if (path === "module" && index < paths.length - 1) {
       breadcrumbItems.push({
-        label: "Module",
-        path: currentPath,
-      });
-      return;
-    }
-    
-    // Prepare to replace module ID with actual module title
-    if (index > 0 && paths[index - 1] === "module") {
-      breadcrumbItems.push({
-        label: `Module ${paths[index]}`,
+        label: `Module ${paths[index + 1]}`,
         path: currentPath,
         isLoading: true, // Mark for loading the actual module title
       });
@@ -59,16 +50,7 @@ const getBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
     // Handle lesson IDs
     if (path === "lesson" && index < paths.length - 1) {
       breadcrumbItems.push({
-        label: "Lesson",
-        path: currentPath,
-      });
-      return;
-    }
-    
-    // Prepare to replace lesson ID with actual lesson title
-    if (index > 0 && paths[index - 1] === "lesson") {
-      breadcrumbItems.push({
-        label: `Lesson ${paths[index]}`,
+        label: `Lesson ${paths[index + 1]}`,
         path: currentPath,
         isLoading: true, // Mark for loading the actual lesson title
       });
@@ -89,10 +71,34 @@ export function Breadcrumb() {
   const location = useLocation();
   const [items, setItems] = useState<BreadcrumbItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [referrer, setReferrer] = useState<BreadcrumbItem | null>(null);
 
   useEffect(() => {
+    // Check if we have referrer information in the location state (from subscription pages)
+    const hasReferrerInfo = location.state?.referringPagePath && location.state?.referringPageLabel;
+    
     const initialItems = getBreadcrumbItems(location.pathname);
-    setItems(initialItems);
+    
+    // Add referrer to breadcrumb items if available
+    if (hasReferrerInfo && location.pathname.includes('/subscription')) {
+      const customItems = [...initialItems];
+      
+      // Insert the referrer as the second-to-last item
+      // (after Home, before the current page)
+      customItems.splice(customItems.length - 1, 0, {
+        label: location.state.referringPageLabel,
+        path: location.state.referringPagePath
+      });
+      
+      setItems(customItems);
+      setReferrer({
+        label: location.state.referringPageLabel,
+        path: location.state.referringPagePath
+      });
+    } else {
+      setItems(initialItems);
+      setReferrer(null);
+    }
 
     // Check if we need to fetch module or lesson titles
     const needsFetching = initialItems.some(item => item.isLoading);
@@ -171,13 +177,18 @@ export function Breadcrumb() {
           }
         }
         
+        // Add referrer if we had one
+        if (referrer && location.pathname.includes('/subscription')) {
+          updatedItems.splice(updatedItems.length - 1, 0, referrer);
+        }
+        
         setItems(updatedItems);
         setIsLoading(false);
       };
       
       fetchModuleAndLessonTitles();
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.state]);
 
   if (items.length === 0) return null;
 

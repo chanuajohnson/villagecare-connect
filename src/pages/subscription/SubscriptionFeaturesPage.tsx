@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +20,10 @@ const SubscriptionFeaturesPage = () => {
   const featureType = location.state?.featureType || "Premium Features";
   // Get the return path from location state or default to the dashboard
   const returnPath = location.state?.returnPath || "/dashboard/professional";
+  
+  // Add state for breadcrumb data from the referring page
+  const referringPagePath = location.state?.referringPagePath || returnPath;
+  const referringPageLabel = location.state?.referringPageLabel || "Dashboard";
   
   const trackFeatureInterest = async () => {
     setLoading(true);
@@ -72,7 +75,7 @@ const SubscriptionFeaturesPage = () => {
         <div className="mb-8">
           <Link to={returnPath} className="flex items-center text-primary hover:text-primary-600 mb-4 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
+            Back to {referringPageLabel}
           </Link>
           
           <motion.div initial={{

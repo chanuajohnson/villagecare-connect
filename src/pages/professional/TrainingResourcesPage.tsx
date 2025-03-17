@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
@@ -18,26 +17,23 @@ const TrainingResourcesPage = () => {
   
   const breadcrumbItems = [
     {
-      label: "Professional",
-      href: "/dashboard/professional",
+      label: "Professional Dashboard",
+      path: "/dashboard/professional",
     },
     {
       label: "Training Resources",
-      href: "/professional/training-resources",
+      path: "/professional/training-resources",
     }
   ];
 
   const handleEnrollClick = async () => {
-    // Simply show a toast and store the request in the database if the user is logged in
     toast({
       title: "Enrollment Request Received!",
       description: "Check your email for next steps. You'll receive further instructions shortly.",
     });
 
-    // If user is logged in, we'll record this request in the database
     if (user) {
       try {
-        // Update user module progress to mark interest in training
         const { error } = await supabase
           .from('user_module_progress')
           .upsert([

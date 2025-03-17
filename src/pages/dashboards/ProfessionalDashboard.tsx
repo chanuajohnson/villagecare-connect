@@ -20,8 +20,8 @@ const ProfessionalDashboard = () => {
   
   const breadcrumbItems = [
     {
-      label: "Professional",
-      href: "/dashboard/professional",
+      label: "Professional Dashboard",
+      path: "/dashboard/professional",
     },
   ];
 
