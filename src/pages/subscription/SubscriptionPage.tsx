@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -75,9 +74,8 @@ const SubscriptionPage = () => {
 
         // Process the plans data to add UI-specific properties
         const processedPlans = data.map(plan => {
-          // Determine if the plan should be marked as popular (the highest non-zero price for each user type)
-          const planType = plan.name.toLowerCase().includes('family') ? 'family' : 'caregiver';
-          const isPopular = plan.price > 0 && !plan.name.toLowerCase().includes('enterprise');
+          // Determine if the plan should be marked as popular based on name
+          const isPopular = plan.name.includes('Premium');
           
           // Type assertion to convert the JSON features to PlanFeature[] type
           const typedFeatures = (plan.features as unknown) as PlanFeature[];
@@ -92,15 +90,15 @@ const SubscriptionPage = () => {
           };
         });
 
-        // Filter plans based on user role
+        // Filter plans based on user role - show only Family plans for family users and Caregiver plans for professionals
         let filteredPlans = processedPlans;
         if (userRole === 'family') {
           filteredPlans = processedPlans.filter(plan => 
-            plan.name.toLowerCase().includes('family')
+            plan.name.includes('Family')
           );
         } else if (userRole === 'professional') {
           filteredPlans = processedPlans.filter(plan => 
-            plan.name.toLowerCase().includes('caregiver')
+            plan.name.includes('Caregiver')
           );
         }
 
@@ -247,7 +245,7 @@ const SubscriptionPage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 pt-4">
               {plans.map((plan) => (
                 <Card 
                   key={plan.id} 
