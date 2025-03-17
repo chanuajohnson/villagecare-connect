@@ -114,10 +114,40 @@ export default function CaregiverMatchingPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
 
-  const referringPath = location.state?.returnPath || 
-    (user?.role === 'family' ? '/dashboard/family' : '/dashboard/professional');
-  const referringLabel = location.state?.referringPageLabel || 
-    (user?.role === 'family' ? 'Family Dashboard' : 'Professional Dashboard');
+  const getUserDashboardPath = () => {
+    if (location.state?.referringPagePath && location.state?.referringPageLabel) {
+      return {
+        path: location.state.referringPagePath,
+        label: location.state.referringPageLabel
+      };
+    }
+    
+    if (user?.role === 'family') {
+      return {
+        path: '/dashboard/family',
+        label: 'Family Dashboard'
+      };
+    } else if (user?.role === 'professional') {
+      return {
+        path: '/dashboard/professional',
+        label: 'Professional Dashboard'
+      };
+    }
+    
+    return {
+      path: '/',
+      label: 'Home'
+    };
+  };
+
+  const { path: referringPath, label: referringLabel } = getUserDashboardPath();
+  
+  console.log("CaregiverMatching breadcrumb info:", {
+    referringPath,
+    referringLabel,
+    locationState: location.state,
+    userRole: user?.role
+  });
 
   const careTypeOptions = [
     "Elderly Care", 
@@ -200,14 +230,24 @@ export default function CaregiverMatchingPage() {
       loadCaregivers();
     } else if (user && !isProfileComplete) {
       navigate("/registration/family", { 
-        state: { returnPath: "/caregiver-matching", action: "findCaregiver" }
+        state: { 
+          returnPath: "/caregiver-matching", 
+          referringPagePath: referringPath,
+          referringPageLabel: referringLabel,
+          action: "findCaregiver" 
+        }
       });
     } else if (!user) {
       navigate("/auth", { 
-        state: { returnPath: "/caregiver-matching", action: "findCaregiver" }
+        state: { 
+          returnPath: "/caregiver-matching",
+          referringPagePath: referringPath,
+          referringPageLabel: referringLabel,
+          action: "findCaregiver" 
+        }
       });
     }
-  }, [user, isProfileComplete, navigate]);
+  }, [user, isProfileComplete, navigate, referringPath, referringLabel]);
   
   useEffect(() => {
     if (caregivers.length === 0) return;

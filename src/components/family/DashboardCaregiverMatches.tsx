@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -256,6 +255,8 @@ export const DashboardCaregiverMatches = () => {
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/caregiver-matching",
+        referringPagePath: "/dashboard/family",
+        referringPageLabel: "Family Dashboard",
         featureType: "Premium Profiles",
         caregiverId: caregiverId
       } 
@@ -311,7 +312,12 @@ export const DashboardCaregiverMatches = () => {
             className="flex items-center gap-1"
             onClick={() => {
               trackEngagement('view_all_matches_click');
-              navigate("/caregiver-matching");
+              navigate("/caregiver-matching", {
+                state: {
+                  referringPagePath: "/dashboard/family",
+                  referringPageLabel: "Family Dashboard"
+                }
+              });
             }}
           >
             View All
@@ -517,7 +523,12 @@ export const DashboardCaregiverMatches = () => {
               className="w-full mt-2"
               onClick={() => {
                 trackEngagement('view_all_matches_click');
-                navigate("/caregiver-matching");
+                navigate("/caregiver-matching", {
+                  state: {
+                    referringPagePath: "/dashboard/family",
+                    referringPageLabel: "Family Dashboard"
+                  }
+                });
               }}
             >
               View All Caregiver Matches
