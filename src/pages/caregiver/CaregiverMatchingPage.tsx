@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,7 +135,6 @@ export default function CaregiverMatchingPage() {
       try {
         setIsLoading(true);
         
-        // Fetch real professional users from the database
         const { data: professionalUsers, error: professionalError } = await supabase
           .from('profiles')
           .select('*')
@@ -147,22 +145,14 @@ export default function CaregiverMatchingPage() {
           toast.error("Failed to load professional caregivers");
         }
         
-        // Transform professional users to match Caregiver interface
         const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
-          // Calculate a random match score between 65-99 for demo purposes
-          // In a real app, you would use an algorithm based on preferences
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
-          // In a real app, you would calculate actual distance
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          
-          // Get first name only for privacy
           const firstName = prof.full_name ? prof.full_name.split(' ')[0] : 'Professional';
-          
           return {
             id: prof.id,
-            full_name: `${firstName}`, // Only use first name
+            full_name: `${firstName}`,
+            original_full_name: prof.full_name || 'Professional User',
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
             location: prof.location || 'Port of Spain',
@@ -179,19 +169,17 @@ export default function CaregiverMatchingPage() {
         
         console.log("Loaded real professional caregivers:", realCaregivers.length);
         
-        // Wait a moment to simulate loading (can be removed in production)
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Update mock caregivers to use first names only
         const privacyProtectedMockCaregivers = MOCK_CAREGIVERS.map(caregiver => {
           const firstName = caregiver.full_name.split(' ')[0];
           return {
             ...caregiver,
-            full_name: firstName
+            full_name: firstName,
+            original_full_name: caregiver.full_name
           };
         });
         
-        // Combine real professionals with mock data, prioritizing real ones
         const allCaregivers = [...realCaregivers, ...privacyProtectedMockCaregivers];
         
         setCaregivers(allCaregivers);
@@ -298,6 +286,13 @@ export default function CaregiverMatchingPage() {
         ? prev.filter(t => t !== type) 
         : [...prev, type]
     );
+  };
+  
+  const getInitials = (name: string) => {
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   };
   
   return (
@@ -462,7 +457,7 @@ export default function CaregiverMatchingPage() {
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
                         <AvatarImage src={caregiver.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {caregiver.full_name.split(' ').map(n => n[0]).join('')}
+                          {getInitials(caregiver.original_full_name || caregiver.full_name)}
                         </AvatarFallback>
                       </Avatar>
                       

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,17 +34,21 @@ export const MessageBoard = () => {
       }
       
       if (data) {
-        // Protect privacy by ensuring author names don't show full names
         const privacyProtectedData = data.map(post => {
-          // If author is a full name, only use first name or initial
+          const originalAuthor = post.author;
+          
           if (post.author && post.author.includes(' ')) {
             const firstName = post.author.split(' ')[0];
             return {
               ...post,
-              author: firstName // Just use first name
+              author: firstName,
+              author_full_name: originalAuthor
             };
           }
-          return post;
+          return {
+            ...post,
+            author_full_name: post.author
+          };
         });
         
         console.log("Fetched Trinidad and Tobago messages:", privacyProtectedData);
@@ -128,6 +131,14 @@ export const MessageBoard = () => {
     });
   };
 
+  const getInitials = (name) => {
+    if (!name) return '';
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -175,7 +186,7 @@ export const MessageBoard = () => {
                     <div className="flex items-center gap-2">
                       <Avatar className={message.type === "family" ? "bg-primary-100" : "bg-primary-200"}>
                         <AvatarFallback className={message.type === "family" ? "text-primary-700" : "text-primary-800"}>
-                          {message.author_initial}
+                          {getInitials(message.author_full_name || message.author)}
                         </AvatarFallback>
                       </Avatar>
                       <div>

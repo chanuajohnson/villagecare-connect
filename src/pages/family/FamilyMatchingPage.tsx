@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +26,7 @@ interface Family {
   match_score: number;
   is_premium: boolean;
   distance: number;
+  original_full_name: string;
 }
 
 const MOCK_FAMILIES: Family[] = [
@@ -40,7 +40,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Weekdays, Evenings",
     match_score: 95,
     is_premium: false,
-    distance: 3.2
+    distance: 3.2,
+    original_full_name: "Garcia Family"
   },
   {
     id: "2",
@@ -52,7 +53,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Full-time, Weekends",
     match_score: 89,
     is_premium: true,
-    distance: 15.7
+    distance: 15.7,
+    original_full_name: "Wilson Family"
   },
   {
     id: "3",
@@ -64,7 +66,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Part-time, Mornings",
     match_score: 82,
     is_premium: false,
-    distance: 8.5
+    distance: 8.5,
+    original_full_name: "Thomas Family"
   },
   {
     id: "4",
@@ -76,7 +79,8 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Overnight, Weekends",
     match_score: 78,
     is_premium: true,
-    distance: 12.3
+    distance: 12.3,
+    original_full_name: "Ramirez Family"
   }
 ];
 
@@ -130,7 +134,6 @@ export default function FamilyMatchingPage() {
       try {
         setIsLoading(true);
         
-        // Fetch real family users from the database
         const { data: familyUsers, error: familyError } = await supabase
           .from('profiles')
           .select('*')
@@ -141,27 +144,23 @@ export default function FamilyMatchingPage() {
           toast.error("Failed to load family matches");
         }
         
-        // Transform family users to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
           
-          // Get care recipient name or first name for privacy
           let displayName = "";
           if (family.care_recipient_name) {
-            displayName = family.care_recipient_name.split(' ')[0]; // Just first name of care recipient
+            displayName = family.care_recipient_name.split(' ')[0];
           } else if (family.full_name) {
-            displayName = family.full_name.split(' ')[0]; // Just first name
+            displayName = family.full_name.split(' ')[0];
           } else {
             displayName = "Family";
           }
           
           return {
             id: family.id,
-            full_name: `${displayName} Family`, // First name + "Family"
+            full_name: `${displayName} Family`,
+            original_full_name: family.full_name || family.care_recipient_name || 'Family User',
             avatar_url: family.avatar_url,
             location: family.location || 'Port of Spain',
             care_types: family.care_types || ['Elderly Care'],
@@ -175,19 +174,17 @@ export default function FamilyMatchingPage() {
         
         console.log("Loaded real family users:", realFamilies.length);
         
-        // Update mock families to use only first name
         const privacyProtectedMockFamilies = MOCK_FAMILIES.map(family => {
           const firstName = family.full_name.split(' ')[0];
           return {
             ...family,
-            full_name: `${firstName} Family`
+            full_name: `${firstName} Family`,
+            original_full_name: family.full_name
           };
         });
         
-        // Combine real families with mock data if needed
         const allFamilies = [...realFamilies, ...privacyProtectedMockFamilies];
         
-        // Track page view
         if (user) {
           await trackEngagement('family_matching_page_view');
         }
@@ -241,7 +238,6 @@ export default function FamilyMatchingPage() {
 
       result = result.filter(family => family.distance <= maxDistance);
 
-      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
@@ -301,6 +297,13 @@ export default function FamilyMatchingPage() {
     );
   };
   
+  const getInitials = (name: string) => {
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
@@ -452,7 +455,7 @@ export default function FamilyMatchingPage() {
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
                         <AvatarImage src={family.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {family.full_name.split(' ')[0][0] || 'F'}
+                          {getInitials(family.original_full_name || family.full_name)}
                         </AvatarFallback>
                       </Avatar>
                       
