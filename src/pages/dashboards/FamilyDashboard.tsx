@@ -20,7 +20,7 @@ import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregive
 
 const FamilyDashboard = () => {
   const { user, isProfileComplete } = useAuth();
-  const breadcrumbItems = [{ label: "Family", href: "/dashboard/family" }];
+  const breadcrumbItems = [{ label: "Family", path: "/dashboard/family" }];
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

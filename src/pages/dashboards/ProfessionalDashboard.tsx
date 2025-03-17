@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ const ProfessionalDashboard = () => {
   const breadcrumbItems = [
     {
       label: "Professional",
-      href: "/dashboard/professional",
+      path: "/dashboard/professional",
     },
   ];
 

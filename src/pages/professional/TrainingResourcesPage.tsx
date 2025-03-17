@@ -19,11 +19,11 @@ const TrainingResourcesPage = () => {
   const breadcrumbItems = [
     {
       label: "Professional",
-      href: "/dashboard/professional",
+      path: "/dashboard/professional",
     },
     {
       label: "Training Resources",
-      href: "/professional/training-resources",
+      path: "/professional/training-resources",
     }
   ];
 
