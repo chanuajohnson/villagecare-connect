@@ -21,7 +21,7 @@ export const SubscriptionFeatureLink = ({
 }: SubscriptionFeatureLinkProps) => {
   return (
     <Link
-      to="/subscription/features"
+      to="/subscription-features"
       state={{
         featureType,
         returnPath,
