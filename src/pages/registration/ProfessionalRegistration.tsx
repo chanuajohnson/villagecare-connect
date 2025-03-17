@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { updateUserProfile } from '@/lib/profile-utils';
 
 // Define form schema with Zod
 const professionalFormSchema = z.object({
@@ -71,6 +71,7 @@ const ProfessionalRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageURL, setProfileImageURL] = useState<string | null>(null);
+  const [isProfileManagement, setIsProfileManagement] = useState(false);
   
   const { 
     control, 
@@ -78,6 +79,7 @@ const ProfessionalRegistration = () => {
     handleSubmit, 
     watch,
     setValue,
+    reset,
     formState: { errors }
   } = useForm<ProfessionalFormValues>({
     resolver: zodResolver(professionalFormSchema),
@@ -110,6 +112,80 @@ const ProfessionalRegistration = () => {
   });
   
   const selectedProfessionalType = watch('professional_type');
+
+  // Check if the user is here for profile management (has an existing profile)
+  useEffect(() => {
+    const checkExistingProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        if (profileData && profileData.role === 'professional') {
+          setIsProfileManagement(true);
+          
+          // Set profile image if it exists
+          if (profileData.avatar_url) {
+            const { data: { publicUrl } } = supabase
+              .storage
+              .from('profile-images')
+              .getPublicUrl(profileData.avatar_url);
+              
+            setProfileImageURL(publicUrl);
+          }
+          
+          // Populate form with existing data
+          const names = profileData.full_name ? profileData.full_name.split(' ') : ['', ''];
+          const firstName = names[0] || '';
+          const lastName = names.slice(1).join(' ') || '';
+          
+          // Set form values
+          reset({
+            first_name: firstName,
+            last_name: lastName,
+            professional_type: profileData.professional_type || '',
+            other_professional_type: profileData.other_certification || '',
+            years_of_experience: profileData.years_of_experience || '',
+            certifications: profileData.certifications ? profileData.certifications[0] : '',
+            location: profileData.location || profileData.address || '',
+            email: user.email || '',
+            phone: profileData.phone_number || '',
+            preferred_contact_method: profileData.preferred_contact_method || '',
+            care_services: profileData.care_services || [],
+            medical_conditions_experience: profileData.medical_conditions_experience || [],
+            other_medical_condition: profileData.other_medical_condition || '',
+            availability: profileData.availability || [],
+            work_type: profileData.work_type || '',
+            preferred_matches: [], // Not clear where this is stored in the profile
+            administers_medication: profileData.administers_medication || false,
+            provides_housekeeping: profileData.provides_housekeeping || false,
+            provides_transportation: profileData.provides_transportation || false,
+            handles_medical_equipment: profileData.handles_medical_equipment || false,
+            has_liability_insurance: profileData.has_liability_insurance || false,
+            background_check: profileData.background_check || false,
+            emergency_contact: profileData.emergency_contact || '',
+            hourly_rate: profileData.hourly_rate || '',
+            additional_professional_notes: profileData.additional_professional_notes || '',
+            terms_accepted: true, // Already accepted if they have a profile
+          });
+          
+          // Log that we loaded profile data
+          console.log('Loaded professional profile data:', profileData);
+        }
+      } catch (error) {
+        console.error('Error loading professional profile:', error);
+        toast.error('Failed to load profile data');
+      }
+    };
+    
+    checkExistingProfile();
+  }, [user, reset]);
   
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -147,53 +223,54 @@ const ProfessionalRegistration = () => {
       // Combine first and last name for full_name
       const full_name = `${data.first_name} ${data.last_name}`.trim();
   
-      // Update profile in the profiles table (similar to family registration)
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          // Basic information
-          full_name,
-          avatar_url,
-          phone_number: data.phone,
-          address: data.location,
-          preferred_contact_method: data.preferred_contact_method,
-          
-          // Professional specific fields
-          professional_type: data.professional_type,
-          other_certification: data.other_professional_type,
-          years_of_experience: data.years_of_experience,
-          certifications: data.certifications ? [data.certifications] : [],
-          care_services: data.care_services,
-          medical_conditions_experience: data.medical_conditions_experience,
-          other_medical_condition: data.other_medical_condition,
-          availability: data.availability,
-          work_type: data.work_type,
-          
-          // Specific capabilities
-          administers_medication: data.administers_medication,
-          provides_housekeeping: data.provides_housekeeping,
-          provides_transportation: data.provides_transportation,
-          handles_medical_equipment: data.handles_medical_equipment,
-          has_liability_insurance: data.has_liability_insurance,
-          background_check: data.background_check,
-          
-          // Additional information
-          emergency_contact: data.emergency_contact,
-          hourly_rate: data.hourly_rate,
-          additional_professional_notes: data.additional_professional_notes,
-          
-          // Important role flag (removed registration_completed as it doesn't exist)
-          role: 'professional' as const,
-          location: data.location,
-        })
-        .eq('id', user.id);
+      // Update profile using the utility function
+      const { success, error } = await updateUserProfile(user.id, {
+        // Basic information
+        full_name,
+        avatar_url: avatar_url || undefined, // Only update if we have a new image
+        phone_number: data.phone,
+        address: data.location,
+        preferred_contact_method: data.preferred_contact_method,
+        
+        // Professional specific fields
+        professional_type: data.professional_type,
+        other_certification: data.other_professional_type,
+        years_of_experience: data.years_of_experience,
+        certifications: data.certifications ? [data.certifications] : [],
+        care_services: data.care_services,
+        medical_conditions_experience: data.medical_conditions_experience,
+        other_medical_condition: data.other_medical_condition,
+        availability: data.availability,
+        work_type: data.work_type,
+        
+        // Specific capabilities
+        administers_medication: data.administers_medication,
+        provides_housekeeping: data.provides_housekeeping,
+        provides_transportation: data.provides_transportation,
+        handles_medical_equipment: data.handles_medical_equipment,
+        has_liability_insurance: data.has_liability_insurance,
+        background_check: data.background_check,
+        
+        // Additional information
+        emergency_contact: data.emergency_contact,
+        hourly_rate: data.hourly_rate,
+        additional_professional_notes: data.additional_professional_notes,
+        
+        // Important role flag
+        role: 'professional',
+        location: data.location,
+      });
   
-      if (updateError) {
-        console.error("Error updating profile:", updateError);
-        throw new Error(`Error updating professional profile: ${updateError.message}`);
+      if (!success) {
+        console.error("Error updating profile:", error);
+        throw new Error(`Error updating professional profile: ${error}`);
       }
   
-      toast.success("Professional registration completed successfully!");
+      toast.success(isProfileManagement 
+        ? "Profile updated successfully!" 
+        : "Professional registration completed successfully!"
+      );
+      
       navigate('/dashboard/professional');
     } catch (error) {
       console.error('Registration error:', error);
@@ -205,9 +282,13 @@ const ProfessionalRegistration = () => {
   
   return (
     <div className="container max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold text-center mb-2">Professional Registration</h1>
+      <h1 className="text-3xl font-bold text-center mb-2">
+        {isProfileManagement ? 'Manage Professional Profile' : 'Professional Registration'}
+      </h1>
       <p className="text-center text-muted-foreground mb-8">
-        Complete your profile to connect with families and showcase your professional services.
+        {isProfileManagement 
+          ? 'Update your profile information to better connect with families.' 
+          : 'Complete your profile to connect with families and showcase your professional services.'}
       </p>
       
       <div className="flex flex-col gap-2 mb-6">
@@ -1276,7 +1357,7 @@ const ProfessionalRegistration = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate(isProfileManagement ? '/dashboard/professional' : '/auth')}
           >
             Cancel
           </Button>
@@ -1284,7 +1365,7 @@ const ProfessionalRegistration = () => {
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Submitting...' : 'Complete Registration'}
+            {isSubmitting ? 'Submitting...' : (isProfileManagement ? 'Update Profile' : 'Complete Registration')}
           </Button>
         </div>
       </form>

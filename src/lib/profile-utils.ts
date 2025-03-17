@@ -87,24 +87,31 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
   try {
     console.log('Updating profile for user:', userId, 'with data:', profileData);
     
-    // Verify connection to Supabase is working
-    const { data: connectionCheck, error: connectionError } = await supabase
-      .from('profiles')
-      .select('count(*)', { count: 'exact', head: true });
+    // Refresh the session to ensure we have the latest auth state
+    const { data: authData, error: authError } = await supabase.auth.refreshSession();
     
-    if (connectionError) {
-      console.error('Supabase connection check failed:', connectionError);
+    if (authError) {
+      console.error('Auth refresh error:', authError);
       return { 
         success: false, 
-        error: `Connection error: ${connectionError.message}` 
+        error: `Authentication error: ${authError.message}` 
+      };
+    }
+    
+    if (!authData.session) {
+      console.error('No active session found for profile update');
+      return { 
+        success: false, 
+        error: 'No active authentication session' 
       };
     }
     
     // Update the profile
-    const { error: updateError } = await supabase
+    const { data, error: updateError } = await supabase
       .from('profiles')
       .update(profileData)
-      .eq('id', userId);
+      .eq('id', userId)
+      .select();
     
     if (updateError) {
       console.error('Error updating profile:', updateError);
@@ -114,8 +121,8 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
       };
     }
     
-    console.log('Profile updated successfully');
-    return { success: true };
+    console.log('Profile updated successfully, response:', data);
+    return { success: true, data };
   } catch (error: any) {
     console.error('Unexpected error updating profile:', error);
     return { 
