@@ -257,8 +257,8 @@ export default function FamilyMatchingPage() {
     navigate("/subscription-features", { 
       state: { 
         returnPath: "/family-matching",
-        referringPagePath: referringPath,
-        referringPageLabel: referringLabel,
+        referringPagePath: "/dashboard/family",  // Explicitly setting dashboard path
+        referringPageLabel: "Family Dashboard",  // Explicitly setting dashboard label
         featureType: "Premium Family Profiles",
         familyId: familyId
       } 

@@ -36,6 +36,14 @@ export default function SubscriptionFeaturesPage() {
   const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
+  console.log("Subscription page navigation state:", { 
+    returnPath, 
+    referringPagePath, 
+    referringPageLabel, 
+    dashboardPath, 
+    dashboardLabel
+  });
+
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
@@ -50,11 +58,12 @@ export default function SubscriptionFeaturesPage() {
               </BreadcrumbLink>
             </BreadcrumbItem>
             
+            {/* Always show the dashboard breadcrumb item, but ensure it's not "Home" again */}
             {dashboardPath && dashboardPath !== "/" && (
               <BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbLink asChild>
-                  <Link to={dashboardPath}>{dashboardLabel}</Link>
+                  <Link to={dashboardPath}>{dashboardLabel !== "Home" ? dashboardLabel : "Dashboard"}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
             )}
