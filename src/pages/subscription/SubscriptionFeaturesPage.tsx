@@ -68,28 +68,50 @@ export default function SubscriptionFeaturesPage() {
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
   useEffect(() => {
-    // Set the selected user type based on the user's role or the referring page
+    // Set the selected user type based on multiple factors with more accurate detection
     if (user?.role) {
+      // If user has a role, use that as the primary source of truth
       setSelectedUserType(user.role);
-    } else if (dashboardPath.includes('family')) {
+    } else if (
+      // Check if coming from family dashboard or family-specific pages
+      dashboardPath.includes('/dashboard/family') || 
+      dashboardPath.includes('/family/') ||
+      referringPagePath?.includes('/dashboard/family') || 
+      referringPagePath?.includes('/family/')
+    ) {
       setSelectedUserType('family');
-    } else if (dashboardPath.includes('professional')) {
+    } else if (
+      // Check if coming from professional dashboard or professional-specific pages
+      dashboardPath.includes('/dashboard/professional') || 
+      dashboardPath.includes('/professional/') ||
+      referringPagePath?.includes('/dashboard/professional') || 
+      referringPagePath?.includes('/professional/')
+    ) {
       setSelectedUserType('professional');
     } else {
-      // Default to family if no context is available
-      setSelectedUserType('family');
+      // If no context is available, check the current URL path for additional context
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('/family/') || location.search.includes('type=family')) {
+        setSelectedUserType('family');
+      } else if (currentPath.includes('/professional/') || location.search.includes('type=professional')) {
+        setSelectedUserType('professional');
+      } else {
+        // Default to family if no context is available
+        setSelectedUserType('family');
+      }
     }
 
-    console.log("Subscription features page navigation state:", { 
+    console.log("Subscription features page context:", { 
       returnPath, 
       referringPagePath, 
       referringPageLabel, 
       dashboardPath, 
       dashboardLabel,
       userRole: user?.role,
-      locationState: location.state
+      locationState: location.state,
+      selectedUserType
     });
-  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state]);
+  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state, location.search]);
 
   // Define the family subscription plans
   const familyPlans: SubscriptionPlan[] = [
