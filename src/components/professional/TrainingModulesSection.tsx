@@ -99,6 +99,7 @@ export const TrainingModulesSection = () => {
                       module_title: module.title,
                       source_page: "training_modules_section"
                     }}
+                    featureName="professional_training"
                   >
                     Learn more about this module
                   </TrackedButton>
