@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
@@ -12,11 +11,20 @@ import { toast } from "@/components/ui/use-toast";
 import { useTrainingProgress } from "@/hooks/useTrainingProgress";
 import { supabase } from "@/lib/supabase";
 import { useTracking } from "@/hooks/useTracking";
+import { useEffect } from "react";
 
 const TrainingResourcesPage = () => {
   const { user } = useAuth();
   const { modules } = useTrainingProgress();
   const { trackEngagement } = useTracking();
+  
+  useEffect(() => {
+    // Track page view when component mounts
+    trackEngagement('professional_dashboard_view', {
+      page: 'training_resources',
+      timestamp: new Date().toISOString()
+    });
+  }, [trackEngagement]);
   
   const breadcrumbItems = [
     {
@@ -30,6 +38,8 @@ const TrainingResourcesPage = () => {
   ];
 
   const handleEnrollClick = async () => {
+    console.log("[TrainingResourcesPage] Enroll button clicked!");
+    
     // Track the enrollment button click
     trackEngagement('training_enrollment_click', {
       source_page: 'training_resources_page',
@@ -44,6 +54,7 @@ const TrainingResourcesPage = () => {
 
     if (user) {
       try {
+        console.log("[TrainingResourcesPage] Updating user module progress for user:", user.id);
         const { error } = await supabase
           .from('user_module_progress')
           .upsert([
@@ -56,11 +67,15 @@ const TrainingResourcesPage = () => {
           ]);
         
         if (error) {
-          console.error("Error updating training request:", error);
+          console.error("[TrainingResourcesPage] Error updating training request:", error);
+        } else {
+          console.log("[TrainingResourcesPage] Successfully updated user module progress");
         }
       } catch (err) {
-        console.error("Failed to record training request:", err);
+        console.error("[TrainingResourcesPage] Failed to record training request:", err);
       }
+    } else {
+      console.log("[TrainingResourcesPage] No user logged in, skipping user_module_progress update");
     }
   };
 
@@ -535,3 +550,4 @@ const TrainingResourcesPage = () => {
 };
 
 export default TrainingResourcesPage;
+

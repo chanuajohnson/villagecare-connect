@@ -87,6 +87,7 @@ export function useTracking(options: TrackingOptions = {}) {
     
     try {
       setIsLoading(true);
+      console.log(`[Tracking] Starting to track ${actionType}`, additionalData);
       
       // Get or create a session ID to track anonymous users
       const sessionId = localStorage.getItem('session_id') || uuidv4();
@@ -103,8 +104,11 @@ export function useTracking(options: TrackingOptions = {}) {
         user_profile_complete: isProfileComplete || false,
       };
       
+      console.log(`[Tracking] User ID: ${user?.id || 'anonymous'}, Session ID: ${sessionId}`);
+      console.log(`[Tracking] Enhanced data:`, enhancedData);
+      
       // Record the tracking event in Supabase
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
+      const { data, error } = await supabase.from('cta_engagement_tracking').insert({
         user_id: user?.id || null,
         action_type: actionType,
         session_id: sessionId,
@@ -112,10 +116,12 @@ export function useTracking(options: TrackingOptions = {}) {
       });
       
       if (error) {
-        console.error("Error tracking engagement:", error);
+        console.error("[Tracking Error] Error tracking engagement:", error);
+      } else {
+        console.log(`[Tracking Success] Tracked ${actionType} for ${user?.id || 'anonymous user'}`);
       }
     } catch (error) {
-      console.error("Error in trackEngagement:", error);
+      console.error("[Tracking Error] Error in trackEngagement:", error);
     } finally {
       setIsLoading(false);
     }
