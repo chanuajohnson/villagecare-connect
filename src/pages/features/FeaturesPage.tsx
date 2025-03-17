@@ -4,6 +4,7 @@ import FeaturesGrid from "@/components/features/FeaturesGrid";
 import { Breadcrumb } from "@/components/ui/breadcrumbs/Breadcrumb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocation } from "react-router-dom";
+import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 
 const FeaturesPage = () => {
   // Get both clearLastAction and the state we need to check
@@ -41,6 +42,8 @@ const FeaturesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <PageViewTracker actionType="features_page_view" />
+      
       <div className="container px-4 py-12 mx-auto">
         <Breadcrumb />
         <div className="max-w-3xl mx-auto text-center mb-12">

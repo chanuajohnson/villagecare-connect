@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,42 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight, Users } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
+import { useTracking } from "@/hooks/useTracking";
 
 export const CaregiverMatchingCard = () => {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { trackEngagement } = useTracking();
 
   // If user is logged in, don't show this marketing card
   if (user) {
     return null;
   }
-
-  const trackEngagement = async (actionType: string, additionalData = {}) => {
-    try {
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
-      // Store the session ID if it's new
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        additional_data: additionalData
-      });
-      
-      if (error) {
-        console.error("Error tracking engagement:", error);
-      }
-    } catch (error) {
-      console.error("Error in trackEngagement:", error);
-    }
-  };
 
   const handleFindCaregiverClick = async () => {
     setIsLoading(true);

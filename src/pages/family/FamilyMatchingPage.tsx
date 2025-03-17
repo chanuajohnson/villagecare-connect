@@ -11,10 +11,11 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { useTracking } from "@/hooks/useTracking";
+import { MatchingTracker } from "@/components/tracking/MatchingTracker";
 
 interface Family {
   id: string;
@@ -84,9 +85,10 @@ export default function FamilyMatchingPage() {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [families, setFamilies] = useState<Family[]>([]);
-  const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
+  const [families, setFamilies] = useState([]);
+  const [filteredFamilies, setFilteredFamilies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { trackEngagement } = useTracking();
   
   const [careTypes, setCareTypes] = useState<string[]>([]);
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
@@ -236,31 +238,11 @@ export default function FamilyMatchingPage() {
     applyFilters();
   }, [families, careTypes, specialNeeds, scheduleType, maxDistance]);
   
-  const trackEngagement = async (actionType: string, additionalData = {}) => {
-    try {
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      
-      const { error } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        additional_data: additionalData
-      });
-      
-      if (error) {
-        console.error("Error tracking engagement:", error);
-      }
-    } catch (error) {
-      console.error("Error in trackEngagement:", error);
-    }
-  };
-  
   const handleUnlockProfile = async (familyId: string, isPremium: boolean) => {
-    await trackEngagement('unlock_family_profile_click', { family_id: familyId, is_premium: isPremium });
+    await trackEngagement('unlock_family_profile_click', { 
+      family_id: familyId, 
+      is_premium: isPremium 
+    });
     
     navigate("/subscription-features", { 
       state: { 
@@ -274,6 +256,13 @@ export default function FamilyMatchingPage() {
   };
 
   const handleCareTypeChange = (type: string) => {
+    trackEngagement('filter_change', { 
+      filter_type: 'care_type', 
+      filter_value: type,
+      previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
+      new_state: careTypes.includes(type) ? 'unselected' : 'selected'
+    });
+    
     setCareTypes(prev => 
       prev.includes(type) 
         ? prev.filter(t => t !== type) 
@@ -282,11 +271,38 @@ export default function FamilyMatchingPage() {
   };
   
   const handleSpecialNeedsChange = (need: string) => {
+    trackEngagement('filter_change', { 
+      filter_type: 'special_needs', 
+      filter_value: need,
+      previous_state: specialNeeds.includes(need) ? 'selected' : 'unselected',
+      new_state: specialNeeds.includes(need) ? 'unselected' : 'selected'
+    });
+    
     setSpecialNeeds(prev => 
       prev.includes(need) 
         ? prev.filter(n => n !== need) 
         : [...prev, need]
     );
+  };
+
+  const handleScheduleChange = (value: string) => {
+    trackEngagement('filter_change', { 
+      filter_type: 'schedule', 
+      previous_value: scheduleType,
+      new_value: value
+    });
+    
+    setScheduleType(value);
+  };
+  
+  const handleDistanceChange = (value: number[]) => {
+    trackEngagement('filter_change', { 
+      filter_type: 'distance', 
+      previous_value: maxDistance,
+      new_value: value[0]
+    });
+    
+    setMaxDistance(value[0]);
   };
 
   const breadcrumbItems = [
@@ -302,6 +318,14 @@ export default function FamilyMatchingPage() {
 
   return (
     <div className="container px-4 py-8">
+      <MatchingTracker 
+        matchingType="family" 
+        additionalData={{
+          referrer: referringPath,
+          filter_count: careTypes.length + specialNeeds.length + (scheduleType !== 'all' ? 1 : 0) + 1
+        }}
+      />
+      
       <DashboardHeader breadcrumbItems={breadcrumbItems} />
       
       <div className="mb-8">
@@ -377,7 +401,7 @@ export default function FamilyMatchingPage() {
                   min={1} 
                   max={50} 
                   step={1}
-                  onValueChange={(value) => setMaxDistance(value[0])}
+                  onValueChange={(value) => handleDistanceChange(value)}
                 />
               </div>
             </div>
