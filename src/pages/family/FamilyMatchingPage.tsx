@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 interface Family {
   id: string;
   full_name: string;
+  original_full_name: string;
   avatar_url: string | null;
   location: string | null;
   care_types: string[] | null;
@@ -26,13 +27,13 @@ interface Family {
   match_score: number;
   is_premium: boolean;
   distance: number;
-  original_full_name: string;
 }
 
 const MOCK_FAMILIES: Family[] = [
   {
     id: "1",
     full_name: "Garcia Family",
+    original_full_name: "Garcia Family",
     avatar_url: null,
     location: "Port of Spain",
     care_types: ["Elderly Care", "Companionship"],
@@ -40,12 +41,12 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Weekdays, Evenings",
     match_score: 95,
     is_premium: false,
-    distance: 3.2,
-    original_full_name: "Garcia Family"
+    distance: 3.2
   },
   {
     id: "2",
     full_name: "Wilson Family",
+    original_full_name: "Wilson Family",
     avatar_url: null,
     location: "San Fernando",
     care_types: ["Special Needs", "Medical Support"],
@@ -53,12 +54,12 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Full-time, Weekends",
     match_score: 89,
     is_premium: true,
-    distance: 15.7,
-    original_full_name: "Wilson Family"
+    distance: 15.7
   },
   {
     id: "3",
     full_name: "Thomas Family",
+    original_full_name: "Thomas Family",
     avatar_url: null,
     location: "Arima",
     care_types: ["Child Care", "Housekeeping"],
@@ -66,12 +67,12 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Part-time, Mornings",
     match_score: 82,
     is_premium: false,
-    distance: 8.5,
-    original_full_name: "Thomas Family"
+    distance: 8.5
   },
   {
     id: "4",
     full_name: "Ramirez Family",
+    original_full_name: "Ramirez Family",
     avatar_url: null,
     location: "Chaguanas",
     care_types: ["Elderly Care", "Overnight Care"],
@@ -79,8 +80,7 @@ const MOCK_FAMILIES: Family[] = [
     care_schedule: "Overnight, Weekends",
     match_score: 78,
     is_premium: true,
-    distance: 12.3,
-    original_full_name: "Ramirez Family"
+    distance: 12.3
   }
 ];
 
@@ -298,6 +298,7 @@ export default function FamilyMatchingPage() {
   };
   
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name.split(' ')
       .map(part => part[0])
       .join('')

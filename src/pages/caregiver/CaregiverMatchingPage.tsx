@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 interface Caregiver {
   id: string;
   full_name: string;
+  original_full_name?: string;
   avatar_url: string | null;
   hourly_rate: string | null;
   location: string | null;
@@ -151,7 +152,7 @@ export default function CaregiverMatchingPage() {
           const firstName = prof.full_name ? prof.full_name.split(' ')[0] : 'Professional';
           return {
             id: prof.id,
-            full_name: `${firstName}`,
+            full_name: firstName,
             original_full_name: prof.full_name || 'Professional User',
             avatar_url: prof.avatar_url,
             hourly_rate: prof.hourly_rate || '$15-25',
@@ -289,6 +290,7 @@ export default function CaregiverMatchingPage() {
   };
   
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name.split(' ')
       .map(part => part[0])
       .join('')

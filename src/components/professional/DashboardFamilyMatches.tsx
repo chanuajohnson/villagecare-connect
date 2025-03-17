@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 interface Family {
   id: string;
   full_name: string;
+  original_full_name: string;
   avatar_url: string | null;
   location: string | null;
   care_types: string[] | null;
@@ -32,6 +32,7 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "1",
     full_name: "Garcia Family",
+    original_full_name: "Garcia Family",
     avatar_url: null,
     location: "Port of Spain",
     care_types: ["Elderly Care", "Companionship"],
@@ -44,6 +45,7 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "2",
     full_name: "Wilson Family",
+    original_full_name: "Wilson Family",
     avatar_url: null,
     location: "San Fernando",
     care_types: ["Special Needs", "Medical Support"],
@@ -56,6 +58,7 @@ const MOCK_FAMILIES: Family[] = [
   {
     id: "3",
     full_name: "Thomas Family",
+    original_full_name: "Thomas Family",
     avatar_url: null,
     location: "Arima",
     care_types: ["Child Care", "Housekeeping"],
@@ -115,7 +118,6 @@ export const DashboardFamilyMatches = () => {
       try {
         setIsLoading(true);
         
-        // Fetch family users from the database
         const { data: familyUsers, error: familyError } = await supabase
           .from('profiles')
           .select('*')
@@ -125,27 +127,22 @@ export const DashboardFamilyMatches = () => {
           console.error("Error fetching family users:", familyError);
         }
         
-        // Transform family users data to match our interface
         const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          // Calculate a random match score between 65-99 for demo purposes
           const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          
-          // Generate a random distance for demo purposes (1-20km)
           const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          
-          // Get care recipient name or first name for privacy
           let displayName = "";
           if (family.care_recipient_name) {
-            displayName = family.care_recipient_name.split(' ')[0]; // Just first name of care recipient
+            displayName = family.care_recipient_name.split(' ')[0];
           } else if (family.full_name) {
-            displayName = family.full_name.split(' ')[0]; // Just first name
+            displayName = family.full_name.split(' ')[0];
           } else {
             displayName = "Family";
           }
           
           return {
             id: family.id,
-            full_name: `${displayName} Family`, // First name + "Family"
+            full_name: `${displayName} Family`,
+            original_full_name: family.full_name || family.care_recipient_name || 'Family User',
             avatar_url: family.avatar_url,
             location: family.location || 'Port of Spain',
             care_types: family.care_types || ['Elderly Care'],
@@ -159,20 +156,18 @@ export const DashboardFamilyMatches = () => {
         
         console.log("Loaded real family users:", realFamilies.length);
         
-        // Update mock families to use only first name
         const privacyProtectedMockFamilies = MOCK_FAMILIES.map(family => {
           const firstName = family.full_name.split(' ')[0];
           return {
             ...family,
-            full_name: `${firstName} Family`
+            full_name: `${firstName} Family`,
+            original_full_name: family.full_name
           };
         });
         
-        // Combine real families with mock data if needed
         const limitedMockFamilies = privacyProtectedMockFamilies.slice(0, Math.max(0, 3 - realFamilies.length));
         const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
         
-        // Track engagement if user is logged in
         if (user) {
           await trackEngagement('dashboard_family_matches_view');
         }
@@ -217,7 +212,6 @@ export const DashboardFamilyMatches = () => {
 
       result = result.filter(family => family.distance <= maxDistance);
 
-      // Sort by match score (highest first)
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
@@ -427,7 +421,9 @@ export const DashboardFamilyMatches = () => {
                     <Avatar className="h-16 w-16 border-2 border-primary/20">
                       <AvatarImage src={family.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                        {family.full_name.split(' ')[0][0] || 'F'}
+                        {family.original_full_name ? 
+                         family.original_full_name.split(' ').map(part => part[0]).join('').toUpperCase() 
+                         : family.full_name.split(' ')[0][0] || 'F'}
                       </AvatarFallback>
                     </Avatar>
                     
