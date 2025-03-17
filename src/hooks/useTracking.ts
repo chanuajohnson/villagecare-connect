@@ -69,7 +69,11 @@ export interface TrackingOptions {
 }
 
 // Create a map to track last event times for rate limiting
+// Use a global variable to maintain state across hook instances
 const lastEventTimeMap: Record<string, number> = {};
+
+// Create a map to store in-progress promises to prevent duplicate calls
+const trackingPromisesMap: Record<string, Promise<any>> = {};
 
 /**
  * Hook for tracking user engagement across the platform
@@ -78,8 +82,8 @@ export function useTracking(options: TrackingOptions = {}) {
   const { user, isProfileComplete } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Default rate limit of 1000ms (1 second)
-  const rateLimit = options.rateLimit ?? 1000;
+  // Default rate limit of 2000ms (2 seconds)
+  const rateLimit = options.rateLimit ?? 2000;
   
   /**
    * Track a user engagement event
@@ -112,71 +116,95 @@ export function useTracking(options: TrackingOptions = {}) {
       return;
     }
     
+    // Skip if there's already an identical tracking event in progress
+    if (trackingPromisesMap[eventKey]) {
+      console.log(`[Tracking] Skipping duplicate event (already in progress): ${actionType}`);
+      return trackingPromisesMap[eventKey]; // Return the existing promise
+    }
+    
     // Update the last event time
     lastEventTimeMap[eventKey] = now;
     
-    try {
-      setIsLoading(true);
-      console.log(`[Tracking] Starting to track ${actionType}`, additionalData);
-      
-      // Get or create a session ID to track anonymous users
-      const sessionId = localStorage.getItem('session_id') || uuidv4();
-      
-      // Store the session ID if it's new
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
-      }
-      
-      // Add user role to additional data if user is logged in
-      const enhancedData = {
-        ...additionalData,
-        user_role: user?.role || 'anonymous',
-        user_profile_complete: isProfileComplete || false,
-      };
-      
-      console.log(`[Tracking] User ID: ${user?.id || 'anonymous'}, Session ID: ${sessionId}`);
-      console.log(`[Tracking] Enhanced data:`, enhancedData);
-      
-      // Determine the feature name based on the action type
-      let resolvedFeatureName = featureName;
-      
-      if (!resolvedFeatureName) {
-        // Map action types to their corresponding features
-        if (actionType.includes('podcast')) {
-          resolvedFeatureName = 'podcast';
-        } else if (actionType.includes('training')) {
-          resolvedFeatureName = 'professional_training';
-        } else {
-          // Default fallback
-          resolvedFeatureName = 'caregiver_matching';
+    // Create the tracking promise and store it in the map
+    const trackingPromise = (async () => {
+      try {
+        setIsLoading(true);
+        console.log(`[Tracking] Starting to track ${actionType}`, additionalData);
+        
+        // Get or create a session ID to track anonymous users
+        const sessionId = localStorage.getItem('session_id') || uuidv4();
+        
+        // Store the session ID if it's new
+        if (!localStorage.getItem('session_id')) {
+          localStorage.setItem('session_id', sessionId);
         }
-      }
-      
-      console.log(`[Tracking] Feature name: ${resolvedFeatureName}`);
-      
-      // Record the tracking event in Supabase
-      const { data, error } = await supabase.from('cta_engagement_tracking').insert({
-        user_id: user?.id || null,
-        action_type: actionType,
-        session_id: sessionId,
-        feature_name: resolvedFeatureName,
-        additional_data: enhancedData
-      });
-      
-      if (error) {
-        console.error("[Tracking Error] Error tracking engagement:", error);
+        
+        // Add user role to additional data if user is logged in
+        const enhancedData = {
+          ...additionalData,
+          user_role: user?.role || 'anonymous',
+          user_profile_complete: isProfileComplete || false,
+        };
+        
+        console.log(`[Tracking] User ID: ${user?.id || 'anonymous'}, Session ID: ${sessionId}`);
+        
+        // Determine the feature name based on the action type
+        let resolvedFeatureName = featureName;
+        
+        if (!resolvedFeatureName) {
+          // Map action types to their corresponding features
+          if (actionType.includes('podcast')) {
+            resolvedFeatureName = 'podcast';
+          } else if (actionType.includes('training')) {
+            resolvedFeatureName = 'professional_training';
+          } else if (actionType.includes('dashboard_family')) {
+            resolvedFeatureName = 'family_dashboard';
+          } else if (actionType.includes('dashboard_professional')) {
+            resolvedFeatureName = 'professional_dashboard';
+          } else if (actionType.includes('dashboard')) {
+            resolvedFeatureName = 'dashboard';
+          } else {
+            // Default fallback
+            resolvedFeatureName = 'caregiver_matching';
+          }
+        }
+        
+        console.log(`[Tracking] Feature name: ${resolvedFeatureName}`);
+        
+        // Record the tracking event in Supabase
+        const { data, error } = await supabase.from('cta_engagement_tracking').insert({
+          user_id: user?.id || null,
+          action_type: actionType,
+          session_id: sessionId,
+          feature_name: resolvedFeatureName,
+          additional_data: enhancedData
+        });
+        
+        if (error) {
+          console.error("[Tracking Error] Error tracking engagement:", error);
+          throw error;
+        } else {
+          console.log(`[Tracking Success] Tracked ${actionType} for ${user?.id || 'anonymous user'}`);
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("[Tracking Error] Error in trackEngagement:", error);
         throw error;
-      } else {
-        console.log(`[Tracking Success] Tracked ${actionType} for ${user?.id || 'anonymous user'}`);
+      } finally {
+        setIsLoading(false);
+        
+        // Remove this promise from the map after a delay
+        setTimeout(() => {
+          delete trackingPromisesMap[eventKey];
+        }, 500);
       }
-      
-      return data;
-    } catch (error) {
-      console.error("[Tracking Error] Error in trackEngagement:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    })();
+    
+    // Store the promise
+    trackingPromisesMap[eventKey] = trackingPromise;
+    
+    return trackingPromise;
   };
   
   return {

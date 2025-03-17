@@ -41,27 +41,32 @@ export const TrackedLink = ({
   const processingRef = useRef(false);
   
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Prevent duplicate tracking during processing
-    if (processingRef.current) return;
+    // Stop tracking event if already processing
+    if (processingRef.current) {
+      return;
+    }
+    
+    // Prevent nested tracking events
+    e.stopPropagation();
     
     processingRef.current = true;
     
     try {
-      // Call the original onClick handler if provided
-      if (onClick) {
-        onClick(e);
-      }
-      
       // Track the link click
       await trackEngagement(trackingAction, {
         ...trackingData,
         destination: to.toString()
       }, featureName);
+      
+      // Call the original onClick handler if provided
+      if (onClick) {
+        onClick(e);
+      }
     } finally {
       // Reset processing state after a short delay
       setTimeout(() => {
         processingRef.current = false;
-      }, 300);
+      }, 500); // Increased timeout to prevent rapid re-clicks
     }
   };
   

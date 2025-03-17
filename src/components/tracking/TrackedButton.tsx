@@ -44,8 +44,13 @@ export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
     const processingRef = useRef(false);
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Prevent duplicate tracking during processing
-      if (processingRef.current) return;
+      // Stop tracking event if already processing
+      if (processingRef.current) {
+        return;
+      }
+      
+      // Prevent default behavior and stop propagation to avoid nested tracking
+      e.stopPropagation();
       
       processingRef.current = true;
       
@@ -61,7 +66,7 @@ export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
         // Reset processing state after a short delay
         setTimeout(() => {
           processingRef.current = false;
-        }, 300);
+        }, 500); // Increased timeout to prevent rapid re-clicks
       }
     };
     
