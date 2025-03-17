@@ -38,38 +38,48 @@ export const TrackedLink = ({
   ...props 
 }: TrackedLinkProps) => {
   const { trackEngagement, isElementProcessing, markElementProcessing } = useTracking();
+  const trackingPromiseRef = useRef<Promise<void> | null>(null);
   
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Get the actual DOM element
-    const element = e.currentTarget;
-    
-    // If this element is already being processed, prevent duplicate tracking
-    if (isElementProcessing(element)) {
-      console.log("[TrackedLink] Preventing duplicate click handling");
-      return;
-    }
-    
     try {
-      // Stop propagation to prevent bubbling
+      // Get the actual DOM element
+      const element = e.currentTarget;
+      
+      // Stop propagation to prevent event bubbling
       e.stopPropagation();
+      
+      // If this element is already being processed or has a tracking promise in progress, prevent duplicate tracking
+      if (isElementProcessing(element) || trackingPromiseRef.current) {
+        console.log("[TrackedLink] Preventing duplicate click handling");
+        return;
+      }
       
       // Mark this element as being processed
       markElementProcessing(element, true);
       
       // Track the link click with destination information
-      await trackEngagement(trackingAction, {
+      trackingPromiseRef.current = trackEngagement(trackingAction, {
         ...trackingData,
         destination: to.toString()
       }, featureName);
+      
+      await trackingPromiseRef.current;
       
       // Call the original onClick handler if provided
       if (onClick) {
         onClick(e);
       }
+    } catch (error) {
+      console.error("[TrackedLink] Error handling click:", error);
     } finally {
+      // Clear the tracking promise reference
+      trackingPromiseRef.current = null;
+      
       // Clear the processing state after a short delay
       setTimeout(() => {
-        markElementProcessing(element, false);
+        if (e.currentTarget) {
+          markElementProcessing(e.currentTarget, false);
+        }
       }, 1000); // 1 second delay
     }
   };

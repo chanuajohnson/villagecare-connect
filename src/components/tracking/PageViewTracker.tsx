@@ -38,6 +38,7 @@ export const PageViewTracker = ({
   const location = useLocation();
   const hasTrackedInitialView = useRef(false);
   const lastTrackedPath = useRef<string | null>(null);
+  const trackingInProgress = useRef(false);
   
   useEffect(() => {
     // Only track the page view if:
@@ -49,9 +50,19 @@ export const PageViewTracker = ({
       (!hasTrackedInitialView.current) || 
       (trackPathChanges && lastTrackedPath.current !== currentPath)
     ) {
+      // If we're already tracking, don't start another tracking operation
+      if (trackingInProgress.current) {
+        console.log('[PageViewTracker] Tracking already in progress - skipping duplicate');
+        return;
+      }
+      
       // Track the page view
       const trackPageView = async () => {
         try {
+          trackingInProgress.current = true;
+          
+          console.log(`[PageViewTracker] Tracking page view: ${actionType} for ${currentPath}`);
+          
           await trackEngagement(actionType, {
             ...additionalData,
             path: location.pathname,
@@ -64,6 +75,11 @@ export const PageViewTracker = ({
           lastTrackedPath.current = currentPath;
         } catch (error) {
           console.error("[PageViewTracker] Error tracking page view:", error);
+        } finally {
+          // Reset tracking state after a short delay
+          setTimeout(() => {
+            trackingInProgress.current = false;
+          }, 1000);
         }
       };
       
