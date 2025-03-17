@@ -76,9 +76,14 @@ export function useTracking(options: TrackingOptions = {}) {
    * 
    * @param actionType The type of action being tracked
    * @param additionalData Optional additional data to store with the tracking event
+   * @param featureName Optional feature name to override the default
    * @returns Promise that resolves when tracking is complete
    */
-  const trackEngagement = async (actionType: TrackingActionType, additionalData = {}) => {
+  const trackEngagement = async (
+    actionType: TrackingActionType, 
+    additionalData = {}, 
+    featureName?: string
+  ) => {
     // Skip tracking if disabled
     if (options.disabled) {
       console.log('[Tracking disabled]', actionType, additionalData);
@@ -107,21 +112,43 @@ export function useTracking(options: TrackingOptions = {}) {
       console.log(`[Tracking] User ID: ${user?.id || 'anonymous'}, Session ID: ${sessionId}`);
       console.log(`[Tracking] Enhanced data:`, enhancedData);
       
+      // Determine the feature name based on the action type
+      let resolvedFeatureName = featureName;
+      
+      if (!resolvedFeatureName) {
+        // Map action types to their corresponding features
+        if (actionType.includes('podcast')) {
+          resolvedFeatureName = 'podcast';
+        } else if (actionType.includes('training')) {
+          resolvedFeatureName = 'professional_training';
+        } else {
+          // Default fallback
+          resolvedFeatureName = 'caregiver_matching';
+        }
+      }
+      
+      console.log(`[Tracking] Feature name: ${resolvedFeatureName}`);
+      
       // Record the tracking event in Supabase
       const { data, error } = await supabase.from('cta_engagement_tracking').insert({
         user_id: user?.id || null,
         action_type: actionType,
         session_id: sessionId,
+        feature_name: resolvedFeatureName,
         additional_data: enhancedData
       });
       
       if (error) {
         console.error("[Tracking Error] Error tracking engagement:", error);
+        throw error;
       } else {
         console.log(`[Tracking Success] Tracked ${actionType} for ${user?.id || 'anonymous user'}`);
       }
+      
+      return data;
     } catch (error) {
       console.error("[Tracking Error] Error in trackEngagement:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }

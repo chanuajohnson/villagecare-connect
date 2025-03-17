@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ const TrainingResourcesPage = () => {
     trackEngagement('professional_dashboard_view', {
       page: 'training_resources',
       timestamp: new Date().toISOString()
-    });
+    }, 'professional_training');
   }, [trackEngagement]);
   
   const breadcrumbItems = [
@@ -41,11 +42,16 @@ const TrainingResourcesPage = () => {
     console.log("[TrainingResourcesPage] Enroll button clicked!");
     
     // Track the enrollment button click
-    trackEngagement('training_enrollment_click', {
-      source_page: 'training_resources_page',
-      action: 'enrollment_request',
-      timestamp: new Date().toISOString()
-    });
+    try {
+      await trackEngagement('training_enrollment_click', {
+        source_page: 'training_resources_page',
+        action: 'enrollment_request',
+        timestamp: new Date().toISOString()
+      }, 'professional_training');
+      console.log("[TrainingResourcesPage] Successfully tracked enrollment click");
+    } catch (error) {
+      console.error("[TrainingResourcesPage] Error tracking enrollment click:", error);
+    }
     
     toast({
       title: "Enrollment Request Received!",
@@ -550,4 +556,3 @@ const TrainingResourcesPage = () => {
 };
 
 export default TrainingResourcesPage;
-

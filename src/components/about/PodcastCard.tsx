@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Headphones, PlayCircle, PauseCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTracking } from '@/hooks/useTracking';
+import { TrackedButton } from '@/components/tracking/TrackedButton';
 
 export const PodcastCard = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -37,7 +38,7 @@ export const PodcastCard = () => {
         source_page: 'about_page',
         action: 'subscribe_request',
         timestamp: new Date().toISOString()
-      });
+      }, 'podcast');
       console.log("[PodcastCard] Successfully tracked subscription click");
     } catch (error) {
       console.error("[PodcastCard] Error tracking subscription click:", error);
@@ -57,7 +58,7 @@ export const PodcastCard = () => {
         episode_title: episodes.find(e => e.id === episodeId)?.title,
         action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
         timestamp: new Date().toISOString()
-      });
+      }, 'podcast');
       console.log("[PodcastCard] Successfully tracked playback toggle");
     } catch (error) {
       console.error("[PodcastCard] Error tracking playback toggle:", error);
