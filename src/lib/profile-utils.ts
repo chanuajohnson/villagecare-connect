@@ -100,17 +100,11 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
       };
     }
     
-    // Refresh the auth context to ensure we have valid tokens
-    await supabase.auth.refreshSession();
-    console.log('Auth session refreshed before profile update');
-    
-    // Update the profile with explicit content types
-    console.log('Sending profile update with these fields:', Object.keys(profileData));
-    const { data: updateData, error: updateError } = await supabase
+    // Update the profile
+    const { error: updateError } = await supabase
       .from('profiles')
       .update(profileData)
-      .eq('id', userId)
-      .select();
+      .eq('id', userId);
     
     if (updateError) {
       console.error('Error updating profile:', updateError);
@@ -120,8 +114,8 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
       };
     }
     
-    console.log('Profile updated successfully, response:', updateData);
-    return { success: true, data: updateData };
+    console.log('Profile updated successfully');
+    return { success: true };
   } catch (error: any) {
     console.error('Unexpected error updating profile:', error);
     return { 

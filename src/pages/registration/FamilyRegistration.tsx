@@ -293,14 +293,17 @@ const FamilyRegistration = () => {
 
       console.log('Updating profile with data:', updates);
       
-      const { success, error, data } = await updateUserProfile(user.id, updates);
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updates, { 
+          onConflict: 'id'
+        });
       
-      if (!success) {
+      if (error) {
         console.error('Error updating profile:', error);
-        throw new Error(error || 'Failed to update profile');
+        throw error;
       }
 
-      console.log('Profile update response:', data);
       toast.success('Registration Complete! Your family caregiver profile has been updated.');
       
       navigate('/dashboard/family');
@@ -461,7 +464,7 @@ const FamilyRegistration = () => {
                   { id: 'care-cognitive', label: '🧠 Cognitive & Memory Care (Alzheimer\'s, Dementia, Parkinson\'s)', value: 'Cognitive & Memory Care' },
                   { id: 'care-mobility', label: '♿ Mobility Assistance (Wheelchair, Bed-bound, Fall Prevention)', value: 'Mobility Assistance' },
                   { id: 'care-medication', label: '💊 Medication Management (Daily Medications, Insulin, Medical Equipment)', value: 'Medication Management' },
-                  { id: 'care-nutrition', label: '🍽��� Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)', value: 'Nutritional Assistance' },
+                  { id: 'care-nutrition', label: '🍽️ Nutritional Assistance (Meal Prep, Special Diets, Tube Feeding)', value: 'Nutritional Assistance' },
                   { id: 'care-household', label: '🏡 Household Assistance (Cleaning, Laundry, Errands, Yard/Garden Maintenance)', value: 'Household Assistance' }
                 ].map((item) => (
                   <div key={item.id} className="flex items-start space-x-2">
