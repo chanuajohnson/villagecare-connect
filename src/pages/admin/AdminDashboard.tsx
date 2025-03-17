@@ -8,11 +8,11 @@ const AdminDashboard = () => {
   const breadcrumbItems = [
     {
       label: "Dashboard",
-      href: "/dashboard",
+      path: "/dashboard",
     },
     {
       label: "Admin",
-      href: "/dashboard/admin",
+      path: "/dashboard/admin",
     },
   ];
 

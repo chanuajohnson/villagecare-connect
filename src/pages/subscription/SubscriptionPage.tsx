@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -22,13 +21,12 @@ const SubscriptionPage = () => {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // Get the return path from state or default to dashboard
   const returnPath = location.state?.returnPath || "/dashboard/professional";
   const featureType = location.state?.featureType || "premium feature";
   
   const breadcrumbItems = [
-    { label: "Dashboard", href: returnPath.split('/').slice(0, 3).join('/') },
-    { label: "Subscription", href: "/subscription" },
+    { label: "Dashboard", path: returnPath.split('/').slice(0, 3).join('/') },
+    { label: "Subscription", path: "/subscription" },
   ];
   
   const plans = [
@@ -99,13 +97,10 @@ const SubscriptionPage = () => {
     try {
       setProcessingPayment(true);
       
-      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast.success(`Successfully subscribed to ${plans.find(p => p.id === planId)?.name} plan!`);
       
-      // For demo purposes, we'll navigate back to the original page
-      // In a real implementation, this would process payment and then navigate
       navigate(returnPath);
       
     } catch (error) {

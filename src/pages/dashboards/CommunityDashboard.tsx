@@ -15,7 +15,7 @@ const CommunityDashboard = () => {
   const breadcrumbItems = [
     {
       label: "Community",
-      href: "/dashboard/community",
+      path: "/dashboard/community",
     },
   ];
 
