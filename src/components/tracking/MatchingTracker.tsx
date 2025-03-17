@@ -35,6 +35,7 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
         await trackEngagement(actionType as any, {
           ...additionalData,
           user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
+          timestamp: new Date().toISOString(),
         });
       } catch (error) {
         console.error(`Error tracking matching page view for ${matchingType}:`, error);

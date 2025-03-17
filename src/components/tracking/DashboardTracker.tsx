@@ -30,6 +30,7 @@ export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
         await trackEngagement(actionType as any, {
           user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
           path: window.location.pathname,
+          timestamp: new Date().toISOString(),
         });
       } catch (error) {
         console.error(`Error tracking dashboard view for ${dashboardType}:`, error);
