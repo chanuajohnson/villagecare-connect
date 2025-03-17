@@ -50,12 +50,14 @@ export default function SubscriptionFeaturesPage() {
               </BreadcrumbLink>
             </BreadcrumbItem>
             
-            <BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbLink asChild>
-                <Link to={dashboardPath}>{dashboardLabel}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+            {dashboardPath && dashboardPath !== "/" && (
+              <BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbLink asChild>
+                  <Link to={dashboardPath}>{dashboardLabel}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            )}
             
             <BreadcrumbItem>
               <BreadcrumbSeparator />
