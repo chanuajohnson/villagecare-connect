@@ -28,26 +28,40 @@ export const PodcastCard = () => {
     });
   };
 
-  const handleSubscribeClick = () => {
+  const handleSubscribeClick = async () => {
+    console.log("[PodcastCard] Subscribe button clicked");
+    
     // Track the subscription button click
-    trackEngagement('podcast_subscribe_click', {
-      source_page: 'about_page',
-      action: 'subscribe_request',
-      timestamp: new Date().toISOString()
-    });
+    try {
+      await trackEngagement('podcast_subscribe_click', {
+        source_page: 'about_page',
+        action: 'subscribe_request',
+        timestamp: new Date().toISOString()
+      });
+      console.log("[PodcastCard] Successfully tracked subscription click");
+    } catch (error) {
+      console.error("[PodcastCard] Error tracking subscription click:", error);
+    }
     
     showPodcastMessage();
   };
 
-  const togglePlay = (episodeId: number) => {
+  const togglePlay = async (episodeId: number) => {
+    console.log("[PodcastCard] Play/pause button clicked for episode:", episodeId);
+    
     // Track the play/pause button click
-    trackEngagement('podcast_playback_toggle', {
-      source_page: 'about_page',
-      episode_id: episodeId,
-      episode_title: episodes.find(e => e.id === episodeId)?.title,
-      action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
-      timestamp: new Date().toISOString()
-    });
+    try {
+      await trackEngagement('podcast_playback_toggle', {
+        source_page: 'about_page',
+        episode_id: episodeId,
+        episode_title: episodes.find(e => e.id === episodeId)?.title,
+        action: activeEpisode === episodeId && isPlaying ? 'pause' : 'play',
+        timestamp: new Date().toISOString()
+      });
+      console.log("[PodcastCard] Successfully tracked playback toggle");
+    } catch (error) {
+      console.error("[PodcastCard] Error tracking playback toggle:", error);
+    }
     
     showPodcastMessage();
     
