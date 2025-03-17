@@ -24,15 +24,20 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
   
   useEffect(() => {
     const trackMatchingPageView = async () => {
-      const actionType = `${matchingType}_matching_page_view`;
-      
-      await trackEngagement(actionType as any, {
-        ...additionalData,
-        user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
-        user_role: user?.role || 'anonymous',
-        page_path: window.location.pathname,
-        page_query: window.location.search,
-      });
+      try {
+        const actionType = `${matchingType}_matching_page_view`;
+        
+        await trackEngagement(actionType as any, {
+          ...additionalData,
+          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+          user_role: user?.role || 'anonymous',
+          page_path: window.location.pathname,
+          page_query: window.location.search,
+        });
+      } catch (error) {
+        console.error("Error tracking matching page view:", error);
+        // Silent fail - don't block UI for tracking errors
+      }
     };
     
     if (user) {

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useTracking } from "@/hooks/useTracking";
+import { toast } from "sonner";
 
 interface Caregiver {
   id: string;
@@ -161,53 +162,72 @@ export const DashboardCaregiverMatches = () => {
       try {
         setIsLoading(true);
         
-        const { data: professionalUsers, error: professionalError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'professional');
+        let realCaregivers: Caregiver[] = [];
         
-        if (professionalError) {
-          console.error("Error fetching professional users:", professionalError);
+        try {
+          const { data: professionalUsers, error: professionalError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('role', 'professional');
+          
+          if (professionalError) {
+            console.error("Error fetching professional users:", professionalError);
+            throw professionalError;
+          }
+          
+          realCaregivers = professionalUsers ? professionalUsers.map(prof => {
+            const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+            const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+            const fullName = prof.full_name || 'Professional Caregiver';
+            const firstName = fullName.split(' ')[0];
+            
+            return {
+              id: prof.id,
+              full_name: fullName,
+              first_name: firstName,
+              avatar_url: prof.avatar_url,
+              hourly_rate: prof.hourly_rate || '$15-25',
+              location: prof.location || 'Port of Spain',
+              years_of_experience: prof.years_of_experience || '1+',
+              care_types: prof.care_types || ['Elderly Care'],
+              specialized_care: prof.specialized_care || [],
+              availability: prof.availability || ['Weekdays'],
+              match_score: matchScore,
+              is_premium: false,
+              has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
+              distance: distance,
+              certifications: prof.certifications || []
+            };
+          }) : [];
+          
+          console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
+        } catch (error) {
+          console.error("Error fetching real caregivers:", error);
+          // Continue with mock data instead of throwing
         }
         
-        const realCaregivers: Caregiver[] = professionalUsers ? professionalUsers.map(prof => {
-          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          const fullName = prof.full_name || 'Professional Caregiver';
-          const firstName = fullName.split(' ')[0];
-          
-          return {
-            id: prof.id,
-            full_name: fullName,
-            first_name: firstName,
-            avatar_url: prof.avatar_url,
-            hourly_rate: prof.hourly_rate || '$15-25',
-            location: prof.location || 'Port of Spain',
-            years_of_experience: prof.years_of_experience || '1+',
-            care_types: prof.care_types || ['Elderly Care'],
-            specialized_care: prof.specialized_care || [],
-            availability: prof.availability || ['Weekdays'],
-            match_score: matchScore,
-            is_premium: false,
-            has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
-            distance: distance,
-            certifications: prof.certifications || []
-          };
-        }) : [];
+        // Always use mock data if real data fetch fails or returns empty
+        const allCaregivers = realCaregivers.length > 0 
+          ? [...realCaregivers, ...MOCK_CAREGIVERS].slice(0, 3) 
+          : MOCK_CAREGIVERS.slice(0, 3);
         
-        console.log("Loaded real professional caregivers for dashboard:", realCaregivers.length);
-        
-        const limitedMockCaregivers = MOCK_CAREGIVERS.slice(0, Math.max(0, 3 - realCaregivers.length));
-        const allCaregivers = [...realCaregivers, ...limitedMockCaregivers].slice(0, 3);
-        
-        if (user) {
-          await trackEngagement('dashboard_caregiver_matches_view');
+        try {
+          if (user) {
+            await trackEngagement('dashboard_caregiver_matches_view');
+          }
+        } catch (error) {
+          console.error("Error tracking engagement:", error);
+          // Don't throw here, just log
         }
         
         setCaregivers(allCaregivers);
         setFilteredCaregivers(allCaregivers);
       } catch (error) {
         console.error("Error loading caregivers:", error);
+        // Fallback to mock data on any error
+        setCaregivers(MOCK_CAREGIVERS);
+        setFilteredCaregivers(MOCK_CAREGIVERS);
+        toast.error("Could not load real caregiver data. Showing sample profiles instead.");
       } finally {
         setIsLoading(false);
       }

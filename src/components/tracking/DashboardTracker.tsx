@@ -24,18 +24,25 @@ export const DashboardTracker = ({ dashboardType, additionalData = {} }: Dashboa
   
   useEffect(() => {
     const trackDashboardView = async () => {
-      const actionType = `${dashboardType}_dashboard_view`;
-      
-      await trackEngagement(actionType as any, {
-        ...additionalData,
-        user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
-        path: window.location.pathname,
-        referrer: document.referrer,
-        time_of_day: new Date().getHours()
-      });
+      try {
+        const actionType = `${dashboardType}_dashboard_view`;
+        
+        await trackEngagement(actionType as any, {
+          ...additionalData,
+          user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out',
+          path: window.location.pathname,
+          referrer: document.referrer,
+          time_of_day: new Date().getHours()
+        });
+      } catch (error) {
+        console.error("Error tracking dashboard view:", error);
+        // Silent fail - don't block UI for tracking errors
+      }
     };
     
-    trackDashboardView();
+    if (user) {
+      trackDashboardView();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardType, user?.id]); // Retrack if user ID changes
   

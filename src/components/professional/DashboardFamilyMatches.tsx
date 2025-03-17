@@ -119,47 +119,69 @@ export const DashboardFamilyMatches = () => {
       try {
         setIsLoading(true);
 
-        const {
-          data: familyUsers,
-          error: familyError
-        } = await supabase.from('profiles').select('*').eq('role', 'family');
-        if (familyError) {
-          console.error("Error fetching family users:", familyError);
+        let realFamilies: Family[] = [];
+        
+        try {
+          const { data: familyUsers, error: familyError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('role', 'family');
+            
+          if (familyError) {
+            console.error("Error fetching family users:", familyError);
+            throw familyError;
+          }
+
+          realFamilies = familyUsers ? familyUsers.map(family => {
+            const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+            const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+            return {
+              id: family.id,
+              full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
+              avatar_url: family.avatar_url,
+              location: family.location || 'Port of Spain',
+              care_types: family.care_types || ['Elderly Care'],
+              special_needs: family.special_needs || [],
+              care_schedule: family.care_schedule || 'Weekdays',
+              match_score: matchScore,
+              is_premium: false,
+              distance: distance,
+              budget_preferences: family.budget_preferences || '$15-25/hr'
+            };
+          }) : [];
+          console.log("Loaded real family users:", realFamilies.length);
+        } catch (error) {
+          console.error("Error fetching real families:", error);
+          // Continue with mock data instead of throwing
         }
 
-        const realFamilies: Family[] = familyUsers ? familyUsers.map(family => {
-          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-          return {
-            id: family.id,
-            full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-            avatar_url: family.avatar_url,
-            location: family.location || 'Port of Spain',
-            care_types: family.care_types || ['Elderly Care'],
-            special_needs: family.special_needs || [],
-            care_schedule: family.care_schedule || 'Weekdays',
-            match_score: matchScore,
-            is_premium: false,
-            distance: distance,
-            budget_preferences: family.budget_preferences || '$15-25/hr'
-          };
-        }) : [];
-        console.log("Loaded real family users:", realFamilies.length);
+        // Always use mock data if real data fetch fails or returns empty
+        const allFamilies = realFamilies.length > 0
+          ? [...realFamilies, ...MOCK_FAMILIES].slice(0, 3)
+          : MOCK_FAMILIES.slice(0, 3);
 
-        const limitedMockFamilies = MOCK_FAMILIES.slice(0, Math.max(0, 3 - realFamilies.length));
-        const allFamilies = [...realFamilies, ...limitedMockFamilies].slice(0, 3);
-
-        if (user) {
-          await trackEngagement('dashboard_family_matches_view');
+        try {
+          if (user) {
+            await trackEngagement('dashboard_family_matches_view');
+          }
+        } catch (error) {
+          console.error("Error tracking engagement:", error);
+          // Don't throw here, just log
         }
+        
         setFamilies(allFamilies);
         setFilteredFamilies(allFamilies);
       } catch (error) {
         console.error("Error loading families:", error);
+        // Fallback to mock data on any error
+        setFamilies(MOCK_FAMILIES);
+        setFilteredFamilies(MOCK_FAMILIES);
+        toast.error("Could not load real family data. Showing sample profiles instead.");
       } finally {
         setIsLoading(false);
       }
     };
+    
     if (user) {
       loadFamilies();
     }
