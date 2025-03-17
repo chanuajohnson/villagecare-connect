@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -168,7 +167,7 @@ export const ensureStorageBuckets = async () => {
   }
 };
 
-// Function to ensure a valid authentication context for operations
+// Updated ensureAuthContext function with better error handling
 export const ensureAuthContext = async () => {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();

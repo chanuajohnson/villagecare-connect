@@ -580,6 +580,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isSigningOutRef.current = true;
       setLoadingWithTimeout(true, 'sign-out');
       
+      // First, clear local state regardless of Supabase API success
       setSession(null);
       setUser(null);
       setUserRole(null);
@@ -591,21 +592,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('registeringAs');
       localStorage.removeItem('lastAuthState');
       
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('[AuthProvider] Sign out error:', error);
-        throw error;
+      try {
+        // Try to sign out from Supabase, but don't block on it
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('[AuthProvider] Supabase sign out error:', error);
+          // Still consider the sign-out successful from user perspective
+          // We already cleared local state above
+        }
+      } catch (supabaseError) {
+        // Catch any Supabase API errors, including network errors
+        console.error('[AuthProvider] Exception during Supabase signOut:', supabaseError);
+        // We can still consider the sign-out successful as we cleared local state
       }
       
+      // Always navigate away and show success message regardless of Supabase API result
       safeNavigate('/', { skipCheck: true, replace: true });
       toast.success('You have been signed out successfully');
       
       setLoadingWithTimeout(false, 'sign-out-complete');
       isSigningOutRef.current = false;
     } catch (error) {
-      console.error('[AuthProvider] Error signing out:', error);
-      toast.error('Failed to sign out');
+      console.error('[AuthProvider] Error in signOut outer try/catch:', error);
       
+      // Failsafe: ensure user is signed out locally even if something went wrong
       setSession(null);
       setUser(null);
       setUserRole(null);
@@ -614,6 +624,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       localStorage.setItem('authStateError', 'true');
       safeNavigate('/', { skipCheck: true });
+      toast.success('You have been signed out successfully');
     }
   };
 

@@ -29,6 +29,7 @@ export function Navigation() {
     try {
       toast.loading("Signing out...");
       await signOut();
+      // The signOut function now handles success messaging, so we don't need to do it here
     } catch (error) {
       console.error('Error in Navigation signOut handler:', error);
       // Force a successful logout even if there's an error with Supabase
