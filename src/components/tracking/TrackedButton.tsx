@@ -40,21 +40,26 @@ interface TrackedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
   ({ trackingAction, trackingData = {}, featureName, onClick, ...props }, ref) => {
-    const { trackEngagement } = useTracking();
-    const processingRef = useRef(false);
+    const { trackEngagement, isElementProcessing, markElementProcessing } = useTracking();
+    const buttonRef = useRef<HTMLButtonElement | null>(null);
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Stop tracking event if already processing
-      if (processingRef.current) {
+      // Get the actual DOM element
+      const element = e.currentTarget;
+      
+      // If this element is already being processed, prevent duplicate tracking
+      if (isElementProcessing(element)) {
+        console.log("[TrackedButton] Preventing duplicate click handling");
         return;
       }
       
-      // Prevent default behavior and stop propagation to avoid nested tracking
-      e.stopPropagation();
-      
-      processingRef.current = true;
-      
       try {
+        // Prevent event bubbling to avoid triggering parent click handlers
+        e.stopPropagation();
+        
+        // Mark this element as being processed
+        markElementProcessing(element, true);
+        
         // Track the button click
         await trackEngagement(trackingAction, trackingData, featureName);
         
@@ -63,16 +68,30 @@ export const TrackedButton = forwardRef<HTMLButtonElement, TrackedButtonProps>(
           onClick(e);
         }
       } finally {
-        // Reset processing state after a short delay
+        // Clear the processing state after a short delay
         setTimeout(() => {
-          processingRef.current = false;
-        }, 500); // Increased timeout to prevent rapid re-clicks
+          markElementProcessing(element, false);
+        }, 1000); // 1 second delay
+      }
+    };
+    
+    // Combine the refs
+    const setRefs = (element: HTMLButtonElement) => {
+      buttonRef.current = element;
+      
+      // Handle the forwarded ref
+      if (ref) {
+        if (typeof ref === 'function') {
+          ref(element);
+        } else {
+          ref.current = element;
+        }
       }
     };
     
     return (
       <Button
-        ref={ref}
+        ref={setRefs}
         onClick={handleClick}
         {...props}
       />

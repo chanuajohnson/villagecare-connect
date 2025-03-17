@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -68,6 +69,10 @@ export interface TrackingOptions {
   rateLimit?: number;
 }
 
+// Use a WeakMap to track processing state by element
+// This helps prevent duplicate events from the same DOM element
+const processingElements = new WeakMap();
+
 // Create a map to track last event times for rate limiting
 // Use a global variable to maintain state across hook instances
 const lastEventTimeMap: Record<string, number> = {};
@@ -82,8 +87,8 @@ export function useTracking(options: TrackingOptions = {}) {
   const { user, isProfileComplete } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Default rate limit of 2000ms (2 seconds)
-  const rateLimit = options.rateLimit ?? 2000;
+  // Default rate limit of 3000ms (3 seconds)
+  const rateLimit = options.rateLimit ?? 3000;
   
   /**
    * Track a user engagement event
@@ -104,21 +109,21 @@ export function useTracking(options: TrackingOptions = {}) {
       return;
     }
     
-    // Implement rate limiting to prevent duplicate events
+    // Create a unique key for this exact event
     const userId = user?.id || 'anonymous';
     const eventKey = `${userId}-${actionType}-${JSON.stringify(additionalData)}`;
     const now = Date.now();
     const lastEventTime = lastEventTimeMap[eventKey] || 0;
     
-    // Skip if this exact event was tracked too recently
+    // Implement strict rate limiting to prevent duplicate events
     if (now - lastEventTime < rateLimit) {
       console.log(`[Tracking] Skipping duplicate event (rate limited): ${actionType}`);
-      return;
+      return Promise.resolve(); // Return a resolved promise to maintain interface
     }
     
-    // Skip if there's already an identical tracking event in progress
+    // Check if there's already an identical tracking event in progress
     if (trackingPromisesMap[eventKey]) {
-      console.log(`[Tracking] Skipping duplicate event (already in progress): ${actionType}`);
+      console.log(`[Tracking] Reusing in-progress tracking for: ${actionType}`);
       return trackingPromisesMap[eventKey]; // Return the existing promise
     }
     
@@ -129,7 +134,7 @@ export function useTracking(options: TrackingOptions = {}) {
     const trackingPromise = (async () => {
       try {
         setIsLoading(true);
-        console.log(`[Tracking] Starting to track ${actionType}`, additionalData);
+        console.log(`[Tracking] Tracking event: ${actionType}`, additionalData);
         
         // Get or create a session ID to track anonymous users
         const sessionId = localStorage.getItem('session_id') || uuidv4();
@@ -145,8 +150,6 @@ export function useTracking(options: TrackingOptions = {}) {
           user_role: user?.role || 'anonymous',
           user_profile_complete: isProfileComplete || false,
         };
-        
-        console.log(`[Tracking] User ID: ${user?.id || 'anonymous'}, Session ID: ${sessionId}`);
         
         // Determine the feature name based on the action type
         let resolvedFeatureName = featureName;
@@ -169,10 +172,8 @@ export function useTracking(options: TrackingOptions = {}) {
           }
         }
         
-        console.log(`[Tracking] Feature name: ${resolvedFeatureName}`);
-        
-        // Record the tracking event in Supabase
-        const { data, error } = await supabase.from('cta_engagement_tracking').insert({
+        // Record the tracking event in Supabase - ONE INSERT OPERATION ONLY
+        const { error } = await supabase.from('cta_engagement_tracking').insert({
           user_id: user?.id || null,
           action_type: actionType,
           session_id: sessionId,
@@ -181,23 +182,21 @@ export function useTracking(options: TrackingOptions = {}) {
         });
         
         if (error) {
-          console.error("[Tracking Error] Error tracking engagement:", error);
+          console.error("[Tracking Error]:", error);
           throw error;
         } else {
-          console.log(`[Tracking Success] Tracked ${actionType} for ${user?.id || 'anonymous user'}`);
+          console.log(`[Tracking Success] ${actionType} for ${user?.id || 'anonymous user'}`);
         }
-        
-        return data;
       } catch (error) {
-        console.error("[Tracking Error] Error in trackEngagement:", error);
+        console.error("[Tracking Error]:", error);
         throw error;
       } finally {
         setIsLoading(false);
         
-        // Remove this promise from the map after a delay
+        // Remove this promise from the map
         setTimeout(() => {
           delete trackingPromisesMap[eventKey];
-        }, 500);
+        }, 1000); // Clean up after 1 second
       }
     })();
     
@@ -207,8 +206,33 @@ export function useTracking(options: TrackingOptions = {}) {
     return trackingPromise;
   };
   
+  /**
+   * Helper to check if an element is currently being processed
+   * @param element The DOM element to check
+   * @returns Whether the element is being processed
+   */
+  const isElementProcessing = (element: HTMLElement | null): boolean => {
+    if (!element) return false;
+    return processingElements.get(element) === true;
+  };
+  
+  /**
+   * Mark an element as being processed to prevent duplicate events
+   * @param element The DOM element to mark
+   */
+  const markElementProcessing = (element: HTMLElement | null, isProcessing: boolean = true): void => {
+    if (!element) return;
+    if (isProcessing) {
+      processingElements.set(element, true);
+    } else {
+      processingElements.delete(element);
+    }
+  };
+  
   return {
     trackEngagement,
-    isLoading
+    isLoading,
+    isElementProcessing,
+    markElementProcessing
   };
 }

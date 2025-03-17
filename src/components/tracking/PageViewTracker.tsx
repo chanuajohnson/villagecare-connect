@@ -34,7 +34,7 @@ export const PageViewTracker = ({
   featureName,
   trackPathChanges = false 
 }: PageViewTrackerProps) => {
-  const { trackEngagement } = useTracking();
+  const { trackEngagement } = useTracking({ rateLimit: 10000 }); // Higher rate limit for page views
   const location = useLocation();
   const hasTrackedInitialView = useRef(false);
   const lastTrackedPath = useRef<string | null>(null);
@@ -51,16 +51,20 @@ export const PageViewTracker = ({
     ) {
       // Track the page view
       const trackPageView = async () => {
-        await trackEngagement(actionType, {
-          ...additionalData,
-          path: location.pathname,
-          search: location.search,
-          referrer: document.referrer,
-        }, featureName);
-        
-        // Update tracking state
-        hasTrackedInitialView.current = true;
-        lastTrackedPath.current = currentPath;
+        try {
+          await trackEngagement(actionType, {
+            ...additionalData,
+            path: location.pathname,
+            search: location.search,
+            referrer: document.referrer,
+          }, featureName);
+          
+          // Update tracking state
+          hasTrackedInitialView.current = true;
+          lastTrackedPath.current = currentPath;
+        } catch (error) {
+          console.error("[PageViewTracker] Error tracking page view:", error);
+        }
       };
       
       trackPageView();
