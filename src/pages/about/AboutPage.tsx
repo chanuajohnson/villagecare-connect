@@ -322,7 +322,7 @@ const AboutPage = () => {
           }} whileTap={{
             scale: 0.95
           }}>
-              <Link to="/features">
+              <Link to="/dashboard/community">
                 <Button size="lg" className="bg-primary-600 hover:bg-primary-700">
                   <Globe className="mr-2 h-5 w-5" />
                   Join the Tavara Community
