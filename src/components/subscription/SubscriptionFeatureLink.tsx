@@ -65,13 +65,26 @@ export const SubscriptionFeatureLink = ({
     userRole === 'professional' || 
     referringPagePath.includes('professional') || 
     returnPath.includes('professional');
+    
+  // For professional dashboard, ensure we have a valid return path
+  const safeReturnPath = returnPath === "/professional/jobs" 
+    ? "/dashboard/professional" 
+    : returnPath;
+  
+  // Log the link information for debugging
+  console.log('SubscriptionFeatureLink:', {
+    featureType,
+    returnPath: safeReturnPath,
+    referringPagePath,
+    isProfessionalFeature
+  });
   
   return (
     <Link
       to={destinationPath}
       state={{
         featureType,
-        returnPath,
+        returnPath: safeReturnPath,
         referringPagePath,
         referringPageLabel,
         directSubscription: directToSubscription,

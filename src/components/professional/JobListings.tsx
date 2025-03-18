@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -206,7 +207,7 @@ export const JobListings = () => {
           
           <SubscriptionFeatureLink 
             featureType="All Job Listings"
-            returnPath="/professional/jobs"
+            returnPath="/dashboard/professional"
             referringPagePath={referringPagePath}
             referringPageLabel={referringPageLabel}
             className="w-full"
