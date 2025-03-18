@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -37,6 +38,24 @@ const queryClient = new QueryClient();
 const AppWithProviders = () => {
   useEffect(() => {
     initializeSupabase();
+    
+    // Add custom style to reposition Lovable badge to top-right
+    const style = document.createElement('style');
+    style.textContent = `
+      .lovable-badge {
+        bottom: auto !important;
+        right: auto !important;
+        top: 10px !important;
+        left: 10px !important;
+        z-index: 100 !important;
+        opacity: 0.7 !important;
+        transform: scale(0.8) !important;
+      }
+      .lovable-badge:hover {
+        opacity: 1 !important;
+      }
+    `;
+    document.head.appendChild(style);
   }, []);
 
   return (
