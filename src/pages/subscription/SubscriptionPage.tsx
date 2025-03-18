@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -44,18 +43,20 @@ const SubscriptionPage = () => {
   
   // Filter plans based on user role or show all plans if not logged in
   const getUserSpecificPlans = () => {
-    // For family users or when accessed from family dashboard
-    if (!user || userRole === 'family' || referringPagePath.includes('family')) {
-      return familyPlans;
-    }
-    
-    // For professional users
-    if (userRole === 'professional' || referringPagePath.includes('professional')) {
+    // For professional users or when accessed from professional dashboard or subscription features
+    if (userRole === 'professional' || 
+        referringPagePath.includes('professional') || 
+        location.state?.fromProfessionalFeatures) {
       return professionalPlans;
     }
     
-    // Default fallback to show all plans
-    return familyPlans;
+    // For family users or when accessed from family dashboard
+    if (userRole === 'family' || referringPagePath.includes('family')) {
+      return familyPlans;
+    }
+    
+    // Default fallback to show plans based on referring path context
+    return referringPagePath.includes('professional') ? professionalPlans : familyPlans;
   };
   
   const familyPlans = [

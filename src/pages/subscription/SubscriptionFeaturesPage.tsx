@@ -86,12 +86,16 @@ export default function SubscriptionFeaturesPage() {
   const featureBenefits = getFeatureBenefits();
 
   const handleSubscribeClick = () => {
+    // Determine if we're coming from a professional context
+    const fromProfessionalFeatures = planType === 'professional';
+    
     navigate('/subscription', { 
       state: { 
         returnPath: returnPath || dashboardPath, 
         referringPagePath: referringPagePath || dashboardPath, 
         referringPageLabel: referringPageLabel || dashboardLabel, 
-        featureType 
+        featureType,
+        fromProfessionalFeatures: fromProfessionalFeatures
       } 
     });
   };
