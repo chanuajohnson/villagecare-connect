@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SearchIcon, Phone as PhoneIcon, MessageSquare, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { SearchIcon, Phone as PhoneIcon, MessageSquare, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface FAQ {
@@ -112,11 +113,16 @@ const faqs: FAQ[] = [{
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  // Extract unique categories from the FAQ data
+  const categories = Array.from(new Set(faqs.map(faq => faq.category)));
+  
   const filteredFaqs = faqs.filter(faq => {
     const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) || faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory ? faq.category === activeCategory : true;
     return matchesSearch && matchesCategory;
   });
+  
   return <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Frequently Asked Questions</h1>
