@@ -207,8 +207,10 @@ const SubscriptionPage = () => {
       // Get plan name for the toast message
       const planName = plans.find(p => p.id === planId)?.name;
       
-      // Show success message with payment clarification
-      toast.success(`Successfully subscribed to ${planName} plan! (In production, this would connect to a payment processor)`);
+      // Show success message with improved payment clarification
+      toast.success(
+        `Successfully subscribed to ${planName} plan! (Demo only: No payment has been processed. When launched, an email with payment details will be sent to complete your subscription.)`
+      );
       
       // Track successful subscription for admin analytics
       await trackEngagement('subscription_completed', {
