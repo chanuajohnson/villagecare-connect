@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Environment variables
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") || "";
 const PAYPAL_CLIENT_SECRET = Deno.env.get("PAYPAL_CLIENT_SECRET") || "";
-const PAYPAL_API_URL = Deno.env.get("PAYPAL_API_URL") || "https://api-m.paypal.com"; // Use sandbox for testing: https://api-m.sandbox.paypal.com
+const PAYPAL_API_URL = Deno.env.get("PAYPAL_API_URL") || "https://api-m.sandbox.paypal.com"; // Default to sandbox URL
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -24,58 +24,112 @@ serve(async (req) => {
   }
 
   try {
+    console.log("PayPal Complete Subscription function called");
+    
     // Get the request body
-    const { subscription_id } = await req.json();
-    console.log("Completing subscription:", subscription_id);
+    const { subscriptionId } = await req.json();
+    console.log("Completing subscription:", subscriptionId);
 
-    if (!subscription_id) {
+    if (!subscriptionId) {
+      console.error("Missing subscription_id parameter");
       return new Response(
         JSON.stringify({ error: "Missing subscription_id parameter" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Log environment variables (without secrets)
+    console.log("Environment check:", { 
+      hasPayPalClientId: !!PAYPAL_CLIENT_ID,
+      hasPayPalClientSecret: !!PAYPAL_CLIENT_SECRET,
+      paypalApiUrl: PAYPAL_API_URL,
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseAnonKey: !!supabaseAnonKey,
+      hasSupabaseServiceKey: !!supabaseServiceKey
+    });
+
     // Get access token from PayPal
+    console.log("Getting PayPal access token...");
     const accessToken = await getPayPalAccessToken();
+    console.log("PayPal access token obtained");
 
     // Get the subscription details from our database
+    console.log("Connecting to Supabase...");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    console.log("Fetching subscription details for ID:", subscriptionId);
     const { data: subscriptionData, error: subscriptionError } = await supabase
       .from("user_subscriptions")
       .select("*")
-      .eq("id", subscription_id)
+      .eq("id", subscriptionId)
       .single();
 
     if (subscriptionError || !subscriptionData) {
       console.error("Subscription not found:", subscriptionError);
-      return new Response(
-        JSON.stringify({ error: "Subscription not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      
+      // Try to find by PayPal subscription ID if not found by our ID
+      console.log("Trying to find by PayPal subscription ID...");
+      const { data: paypalSubscriptionData, error: paypalSubscriptionError } = await supabase
+        .from("user_subscriptions")
+        .select("*")
+        .eq("paypal_subscription_id", subscriptionId)
+        .single();
+        
+      if (paypalSubscriptionError || !paypalSubscriptionData) {
+        console.error("Subscription not found by PayPal ID either:", paypalSubscriptionError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Subscription not found", 
+            details: subscriptionError || paypalSubscriptionError
+          }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log("Found subscription by PayPal ID:", paypalSubscriptionData);
+      subscriptionData = paypalSubscriptionData;
     }
 
     // Verify the subscription status with PayPal
+    console.log("Verifying subscription status with PayPal for ID:", subscriptionData.paypal_subscription_id);
     const paypalSubscription = await getPayPalSubscriptionDetails(
       accessToken,
       subscriptionData.paypal_subscription_id
     );
 
+    console.log("PayPal subscription details:", paypalSubscription);
+
     // Update our database record with the latest status
-    await supabase
+    console.log("Updating subscription status in database...");
+    const newStatus = mapPayPalStatusToOurStatus(paypalSubscription.status);
+    const { error: updateError } = await supabase
       .from("user_subscriptions")
       .update({
-        status: mapPayPalStatusToOurStatus(paypalSubscription.status),
+        status: newStatus,
         updated_at: new Date().toISOString(),
         // Add additional fields from PayPal response if needed
       })
-      .eq("id", subscription_id);
+      .eq("id", subscriptionData.id);
+      
+    if (updateError) {
+      console.error("Error updating subscription status:", updateError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to update subscription status", 
+          details: updateError
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Subscription status updated successfully to:", newStatus);
 
     return new Response(
       JSON.stringify({
         success: true,
         subscription: {
           id: subscriptionData.id,
-          status: mapPayPalStatusToOurStatus(paypalSubscription.status),
+          status: newStatus,
           plan_id: subscriptionData.plan_id,
           paypal_status: paypalSubscription.status,
         },
@@ -85,53 +139,72 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error completing subscription:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || "Unknown error",
+        stack: error.stack
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
 async function getPayPalAccessToken() {
-  const response = await fetch(`${PAYPAL_API_URL}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Accept-Language": "en_US",
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
-    },
-    body: "grant_type=client_credentials",
-  });
+  console.log("Requesting access token from PayPal...");
+  try {
+    const response = await fetch(`${PAYPAL_API_URL}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Accept-Language": "en_US",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
+      },
+      body: "grant_type=client_credentials",
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    console.error("PayPal authentication error:", error);
-    throw new Error("Failed to authenticate with PayPal");
+    if (!response.ok) {
+      const errorResponse = await response.text();
+      console.error("PayPal authentication error:", errorResponse);
+      throw new Error(`Failed to authenticate with PayPal: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("PayPal authentication successful");
+    return data.access_token;
+  } catch (error) {
+    console.error("Error in getPayPalAccessToken:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 async function getPayPalSubscriptionDetails(accessToken, subscriptionId) {
-  const response = await fetch(`${PAYPAL_API_URL}/v1/billing/subscriptions/${subscriptionId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${accessToken}`,
-    },
-  });
+  console.log("Getting subscription details from PayPal for ID:", subscriptionId);
+  try {
+    const response = await fetch(`${PAYPAL_API_URL}/v1/billing/subscriptions/${subscriptionId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    console.error("PayPal subscription details error:", error);
-    throw new Error("Failed to get subscription details from PayPal");
+    if (!response.ok) {
+      const errorResponse = await response.text();
+      console.error("PayPal subscription details error:", errorResponse);
+      throw new Error(`Failed to get subscription details from PayPal: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("PayPal subscription details retrieved successfully");
+    return data;
+  } catch (error) {
+    console.error("Error in getPayPalSubscriptionDetails:", error);
+    throw error;
   }
-
-  return await response.json();
 }
 
 function mapPayPalStatusToOurStatus(paypalStatus) {
+  console.log("Mapping PayPal status to our status:", paypalStatus);
   const statusMap = {
     "APPROVAL_PENDING": "pending",
     "APPROVED": "active",
@@ -141,5 +214,7 @@ function mapPayPalStatusToOurStatus(paypalStatus) {
     "EXPIRED": "expired",
   };
   
-  return statusMap[paypalStatus] || "pending";
+  const mappedStatus = statusMap[paypalStatus] || "pending";
+  console.log("Mapped status:", mappedStatus);
+  return mappedStatus;
 }

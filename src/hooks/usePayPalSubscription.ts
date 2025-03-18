@@ -36,6 +36,7 @@ export function usePayPalSubscription() {
 
     try {
       setIsLoading(true);
+      console.log(`Creating PayPal subscription for plan ${planId}`);
 
       // Track subscription initiation
       await trackEngagement('subscription_initiated', {
@@ -44,6 +45,9 @@ export function usePayPalSubscription() {
       });
 
       // Call our edge function to create the subscription
+      console.log("Calling paypal-create-subscription edge function...");
+      console.log("Request payload:", { planId, userId: user.id, returnUrl, cancelUrl });
+      
       const { data, error } = await supabase.functions.invoke('paypal-create-subscription', {
         body: {
           planId,
@@ -55,12 +59,14 @@ export function usePayPalSubscription() {
 
       if (error) {
         console.error('Error creating PayPal subscription:', error);
-        toast({
-          title: "Subscription Error",
-          description: "Failed to create subscription. Please try again.",
-          variant: "destructive",
-        });
-        return null;
+        throw new Error(`Failed to create subscription: ${error.message || "Unknown error"}`);
+      }
+
+      console.log("Subscription creation response:", data);
+      
+      if (!data || !data.subscription_id) {
+        console.error("Invalid response from subscription creation:", data);
+        throw new Error("Invalid response from subscription service");
       }
 
       // Track successful creation (but not completion yet)
@@ -73,12 +79,7 @@ export function usePayPalSubscription() {
       return data;
     } catch (error) {
       console.error('Error in createSubscription:', error);
-      toast({
-        title: "Subscription Error",
-        description: "An unexpected error occurred. Please try again later.",
-        variant: "destructive",
-      });
-      return null;
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +100,10 @@ export function usePayPalSubscription() {
 
     try {
       setIsCompleting(true);
+      console.log(`Completing PayPal subscription ${subscriptionId}`);
 
       // Call our edge function to complete the subscription
+      console.log("Calling paypal-complete-subscription edge function...");
       const { data, error } = await supabase.functions.invoke('paypal-complete-subscription', {
         body: {
           subscription_id: subscriptionId,
@@ -109,12 +112,14 @@ export function usePayPalSubscription() {
 
       if (error) {
         console.error('Error completing PayPal subscription:', error);
-        toast({
-          title: "Subscription Error",
-          description: "Failed to complete subscription. Please try again.",
-          variant: "destructive",
-        });
-        return null;
+        throw new Error(`Failed to complete subscription: ${error.message || "Unknown error"}`);
+      }
+
+      console.log("Subscription completion response:", data);
+      
+      if (!data || !data.subscription) {
+        console.error("Invalid response from subscription completion:", data);
+        throw new Error("Invalid response from subscription service");
       }
 
       // Track successful completion
@@ -134,12 +139,7 @@ export function usePayPalSubscription() {
       return data.subscription;
     } catch (error) {
       console.error('Error in completeSubscription:', error);
-      toast({
-        title: "Subscription Error",
-        description: "An unexpected error occurred. Please try again later.",
-        variant: "destructive",
-      });
-      return null;
+      throw error;
     } finally {
       setIsCompleting(false);
     }
@@ -152,6 +152,7 @@ export function usePayPalSubscription() {
     if (!user?.id) return null;
 
     try {
+      console.log("Fetching user subscription for user", user.id);
       const { data, error } = await supabase
         .from('user_subscriptions')
         .select(`
@@ -179,6 +180,7 @@ export function usePayPalSubscription() {
         return null;
       }
 
+      console.log("User subscription data:", data);
       return data || null;
     } catch (error) {
       console.error('Error in getUserSubscription:', error);
@@ -186,10 +188,75 @@ export function usePayPalSubscription() {
     }
   };
 
+  /**
+   * Cancel a subscription
+   */
+  const cancelSubscription = async (subscriptionId: string) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to cancel a subscription",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log(`Cancelling subscription ${subscriptionId}`);
+
+      // This should be implemented with a dedicated edge function
+      // For now, just update the local status
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscriptionId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error cancelling subscription:', error);
+        toast({
+          title: "Cancellation Failed",
+          description: "Failed to cancel your subscription. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Track cancellation
+      await trackEngagement('subscription_cancelled', {
+        subscription_id: subscriptionId,
+        user_id: user.id,
+      });
+
+      toast({
+        title: "Subscription Cancelled",
+        description: "Your subscription has been cancelled successfully.",
+        variant: "default",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error in cancelSubscription:', error);
+      toast({
+        title: "Cancellation Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createSubscription,
     completeSubscription,
     getUserSubscription,
+    cancelSubscription,
     isLoading,
     isCompleting,
   };
