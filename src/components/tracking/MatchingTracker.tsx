@@ -34,6 +34,7 @@ export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingT
         trackingAttempted.current = true;
         const actionType = `${matchingType}_matching_page_view`;
         
+        // Note: caregiver tracking will be disabled in the useTracking hook
         await trackEngagement(actionType as any, {
           ...additionalData,
           user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',

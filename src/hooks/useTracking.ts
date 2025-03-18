@@ -61,6 +61,27 @@ export interface TrackingOptions {
   disabled?: boolean;
 }
 
+// List of action types related to caregiver matching that should be disabled
+const DISABLED_CAREGIVER_MATCHING_ACTIONS = [
+  'caregiver_matching_page_view',
+  'caregiver_matching_cta_click',
+  'premium_matching_cta_click',
+  'unlock_profile_click'
+];
+
+/**
+ * Check if an action is related to caregiver matching
+ */
+const isCaregiverMatchingAction = (actionType: string): boolean => {
+  // Check if action is in the disabled list
+  if (DISABLED_CAREGIVER_MATCHING_ACTIONS.includes(actionType)) {
+    return true;
+  }
+  
+  // Check if action contains caregiver_matching in the name
+  return actionType.includes('caregiver_matching');
+};
+
 /**
  * Hook for tracking user engagement across the platform
  */
@@ -76,9 +97,15 @@ export function useTracking(options: TrackingOptions = {}) {
    * @returns Promise that resolves when tracking is complete
    */
   const trackEngagement = async (actionType: TrackingActionType, additionalData = {}) => {
-    // Skip tracking if disabled
+    // Skip tracking if disabled in options
     if (options.disabled) {
-      console.log('[Tracking disabled]', actionType, additionalData);
+      console.log('[Tracking disabled by options]', actionType, additionalData);
+      return;
+    }
+    
+    // Skip tracking for caregiver matching related events
+    if (isCaregiverMatchingAction(actionType)) {
+      console.log('[Tracking disabled for caregiver matching]', actionType, additionalData);
       return;
     }
     
