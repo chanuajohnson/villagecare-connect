@@ -1,8 +1,1 @@
-
 project_id = "cpdfmyemjrefnhddyrck"
-# This file configures the Supabase CLI connection
-
-[api]
-# Endpoint for API calls - important for the connection
-endpoint = "https://cpdfmyemjrefnhddyrck.supabase.co"
-auto_refresh_token = true
