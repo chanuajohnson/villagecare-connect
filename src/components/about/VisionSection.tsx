@@ -20,7 +20,7 @@ export const VisionSection = () => {
         </CardHeader>
         <CardContent className="pt-6 text-center">
           <div className="max-w-3xl mx-auto">
-            <p className="text-lg text-primary-700 mb-6">We envision a world where quality caregiving is instantly accessible whenever needed - whether for an hour, a day, or ongoing support - creating a community where families find peace of mind and caregivers are valued professionals in a seamless, compassionate care ecosystem.</p>
+            <p className="text-lg text-primary-700 mb-6">We envision a future where every family in Trinidad &amp; Tobago can easily access compassionate, high-quality care, and where caregiving is a respected profession supported by fair compensation, ongoing education, and strong community connections—seamlessly bridging the needs of those seeking care and those providing it.</p>
             
             <AnimatePresence>
               {isExpanded && <motion.div initial={{
