@@ -84,7 +84,7 @@ const Index = () => {
           <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800 mb-4 inline-block">
             Care Coordination Platform
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold font-serif tracking-wider text-gray-900 mb-6">Tavara</h1>
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">Tavara</h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
             Join our community of care coordinators, families, and professionals to make
             caring easier and more effective.
