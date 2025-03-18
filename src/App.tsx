@@ -2,7 +2,7 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Navigation } from "@/components/layout/Navigation";
 import { useEffect, Suspense, lazy } from "react";
@@ -73,6 +73,9 @@ const AppWithProviders = () => {
 };
 
 const AppContent = () => {
+  const location = useLocation();
+  const isIndexPage = location.pathname === "/";
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -114,13 +117,14 @@ const AppContent = () => {
         </Routes>
       </main>
       
-      <GlobalFAB />
+      {!isIndexPage && <GlobalFAB />}
     </div>
   );
 };
 
 const GlobalFAB = () => {
-  const pathname = window.location.pathname;
+  const location = useLocation();
+  const pathname = location.pathname;
   
   if (pathname === "/" || pathname === "/faq") {
     return null;
