@@ -87,6 +87,7 @@ const AppContent = () => {
           <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
           
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
+          <Route path="/family/message-board" element={<MessageBoardPage />} /> {/* Added redirect for family message board */}
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />

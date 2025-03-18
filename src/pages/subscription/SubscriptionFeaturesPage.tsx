@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -78,7 +79,13 @@ export default function SubscriptionFeaturesPage() {
     } else if (userRole === 'professional' || referringPagePath?.includes('professional')) {
       return 'professional';
     }
-    return 'family'; // Default to family plans
+    // If we can't determine from user role or path, try to infer from context
+    if (dashboardPath?.includes('family')) {
+      return 'family';
+    } else if (dashboardPath?.includes('professional')) {
+      return 'professional';
+    }
+    return 'family'; // Default to family plans as fallback
   };
 
   const planType = getPlanType();

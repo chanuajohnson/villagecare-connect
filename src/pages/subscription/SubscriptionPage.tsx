@@ -222,17 +222,25 @@ const SubscriptionPage = () => {
         price: plans.find(p => p.id === planId)?.price
       });
       
-      // Determine the correct dashboard path based on user role or context
-      let dashboardPath = '/dashboard/family'; // Default to family dashboard
+      // Determine the dashboard path based on the plan type rather than just user role
+      // This ensures correct redirection based on the subscription context
+      let dashboardPath;
       
-      // Check if we're in a professional context or the user is a professional
-      if (userRole === 'professional' || 
+      // Check if we're working with a professional plan
+      const isProfessionalPlan = professionalPlans.some(p => p.id === planId);
+      
+      // Set dashboard path based on plan type or context
+      if (isProfessionalPlan || 
+          userRole === 'professional' || 
           referringPagePath.includes('professional') || 
           location.state?.fromProfessionalFeatures) {
         dashboardPath = '/dashboard/professional';
+      } else {
+        // Default to family dashboard for family plans or if no clear professional context
+        dashboardPath = '/dashboard/family';
       }
       
-      // Ensure we have a valid path to navigate to
+      // Use return path if specified, otherwise use the appropriate dashboard
       const targetPath = returnPath || dashboardPath;
       
       // Log the navigation for debugging
@@ -241,7 +249,9 @@ const SubscriptionPage = () => {
         userRole,
         referringPagePath,
         returnPath,
-        dashboardPath
+        dashboardPath,
+        planType: isProfessionalPlan ? 'professional' : 'family',
+        planId
       });
       
       // Navigate back to the original feature they were trying to access or the appropriate dashboard
