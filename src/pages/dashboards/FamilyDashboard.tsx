@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
 import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
 import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
-
 const FamilyDashboard = () => {
   const {
     user,
@@ -32,7 +31,6 @@ const FamilyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
-
   useEffect(() => {
     if (user) {
       fetchMessages();
@@ -40,7 +38,6 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   }, [user]);
-
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -64,7 +61,6 @@ const FamilyDashboard = () => {
       setLoading(false);
     }
   };
-
   const refreshData = async () => {
     try {
       setRefreshing(true);
@@ -93,7 +89,6 @@ const FamilyDashboard = () => {
       setRefreshing(false);
     }
   };
-
   const formatTimePosted = timestamp => {
     if (!timestamp) return "Unknown";
     const posted = new Date(timestamp);
@@ -105,7 +100,6 @@ const FamilyDashboard = () => {
     if (diffInHours < 48) return "Yesterday";
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
-
   const handleViewFullBoard = () => {
     navigate('/subscription-features', {
       state: {
@@ -114,7 +108,6 @@ const FamilyDashboard = () => {
       }
     });
   };
-
   const handleViewAllTasks = () => {
     navigate('/subscription-features', {
       state: {
@@ -125,7 +118,6 @@ const FamilyDashboard = () => {
       }
     });
   };
-
   return <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
@@ -141,7 +133,7 @@ const FamilyDashboard = () => {
       }} className="space-y-6">
           {!user ? <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mb-8 border border-green-100">
               <h2 className="text-2xl font-bold mb-2">Welcome to Tavara! 🚀 It takes a village to care.</h2>
-              <p className="text-gray-600 mb-4">We're building this platform with you in mind. Explore features, connect with caregivers, and help shape the future of care by voting on features!</p>
+              <p className="text-gray-600 mb-4">Connect with caregivers, explore features, and help shape the future of care</p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <Link to="/auth">
                   <Button variant="default" size="sm">
@@ -243,12 +235,7 @@ const FamilyDashboard = () => {
                       </Button>
                     </div>}
                   
-                  <SubscriptionFeatureLink
-                    featureType="Full Message Board"
-                    returnPath="/family/message-board"
-                    referringPagePath="/dashboard/family"
-                    referringPageLabel="Family Dashboard"
-                  >
+                  <SubscriptionFeatureLink featureType="Full Message Board" returnPath="/family/message-board" referringPagePath="/dashboard/family" referringPageLabel="Family Dashboard">
                     View Full Message Board
                   </SubscriptionFeatureLink>
                 </CardContent>
