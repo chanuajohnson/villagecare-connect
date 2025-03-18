@@ -37,7 +37,7 @@ serve(async (req) => {
     // Send email to support team
     const supportEmailResponse = await resend.emails.send({
       from: "Tavara Support <support@tavara.care>",
-      to: "support@tavara.care", // Replace with your actual support email
+      to: "chanuajohnson@gmail.com", // Updated to your actual support email
       subject: `Support Request from ${name}`,
       html: `
         <h1>New Support Request</h1>
