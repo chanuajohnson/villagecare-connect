@@ -1,3 +1,4 @@
+
 name: Deploy to GitHub Pages
 
 on:
@@ -29,7 +30,7 @@ jobs:
       - name: Ensure CNAME exists
         run: |
           echo "tavara.care" > dist/CNAME  # ✅ Force CNAME file in deployment
-
+          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
