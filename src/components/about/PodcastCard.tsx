@@ -22,7 +22,8 @@ export const PodcastCard = () => {
   const showPodcastMessage = () => {
     toast({
       title: "Podcast Request Received!",
-      description: "We have your request logged and you will receive an email when this feature is live and launched."
+      description: "We have your request logged and you will receive an email when this feature is live and launched.",
+      duration: 5000, // 5 seconds auto-dismiss
     });
   };
 

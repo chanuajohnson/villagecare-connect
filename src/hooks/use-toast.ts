@@ -1,14 +1,17 @@
+
 import React from "react";
 import { type ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 8
 const TOAST_REMOVE_DELAY = 1000
+const DEFAULT_TOAST_DURATION = 5000 // 5 seconds default duration for all toasts
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number
 }
 
 const actionTypes = {
@@ -140,24 +143,44 @@ interface ToastOptions extends Omit<ToasterToast, "id"> {}
 
 function toast(props: ToastOptions) {
   const id = genId()
-
+  
+  // Setup auto-dismiss timeout if duration is provided
+  const { duration = DEFAULT_TOAST_DURATION } = props
+  let autoRemoveTimeout: ReturnType<typeof setTimeout> | null = null
+  
   const update = (props: ToasterToast) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+    
+  const dismiss = () => {
+    if (autoRemoveTimeout) {
+      clearTimeout(autoRemoveTimeout)
+      autoRemoveTimeout = null
+    }
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+  }
 
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
+      duration,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
+        props.onOpenChange?.(open)
       },
     },
   })
+  
+  // Set up auto-dismiss if duration is positive
+  if (duration > 0) {
+    autoRemoveTimeout = setTimeout(() => {
+      dismiss()
+    }, duration)
+  }
 
   return {
     id: id,
