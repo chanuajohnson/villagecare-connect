@@ -16,22 +16,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
+import { resetAuthState } from '@/lib/supabase';
 
 export function Navigation() {
   const { user, signOut, isLoading, userRole } = useAuth();
   const location = useLocation();
 
-  // Log state for debugging purposes
-  console.log('Navigation render -', { user: !!user, isLoading, userRole, path: location.pathname });
+  // Enhanced logging for debugging purposes
+  console.log('Navigation render -', { 
+    user: !!user, 
+    isLoading, 
+    userRole, 
+    path: location.pathname,
+    userDetails: user ? {
+      id: user.id,
+      email: user.email,
+      hasMetadataRole: !!user.user_metadata?.role
+    } : null
+  });
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
       toast.loading("Signing out...");
-      await signOut();
-      // The signOut function now handles success messaging, so we don't need to do it here
+      
+      // Attempt sign out with timeout to prevent hanging
+      const signOutPromise = signOut();
+      
+      // Set a timeout to ensure the operation doesn't hang
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Sign out timed out')), 5000);
+      });
+      
+      // Race between normal sign out and timeout
+      await Promise.race([signOutPromise, timeoutPromise]);
+      
+      // The signOut function now handles success messaging
     } catch (error) {
       console.error('Error in Navigation signOut handler:', error);
+      
+      // If the error is a timeout or other critical error, use the reset function
+      if (error instanceof Error && (
+        error.message.includes('timed out') || 
+        error.message.includes('JWT') ||
+        error.message.includes('network')
+      )) {
+        console.log('Attempting to force reset auth state...');
+        await resetAuthState();
+      }
+      
       // Force a successful logout even if there's an error with Supabase
       toast.dismiss();
       toast.success('You have been signed out successfully');

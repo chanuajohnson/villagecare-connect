@@ -1,1 +1,4 @@
+
 project_id = "cpdfmyemjrefnhddyrck"
+# This file helps Supabase CLI know which project to connect to
+# No additional configuration needed for this basic usage

@@ -17,6 +17,7 @@ import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
 import AuthPage from "./pages/auth/AuthPage";
 import FamilyRegistration from "./pages/registration/FamilyRegistration";
 import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
+import ProfessionalRegistrationFix from "./pages/registration/ProfessionalRegistrationFix";
 import CommunityRegistration from "./pages/registration/CommunityRegistration";
 import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
 import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeaturesOverview";
@@ -33,7 +34,16 @@ import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesP
 import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
 import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AppWithProviders = () => {
   useEffect(() => {
@@ -93,6 +103,7 @@ const AppContent = () => {
           
           <Route path="/registration/family" element={<FamilyRegistration />} />
           <Route path="/registration/professional" element={<ProfessionalRegistration />} />
+          <Route path="/registration/professional-fix" element={<ProfessionalRegistrationFix />} />
           <Route path="/registration/community" element={<CommunityRegistration />} />
           
           <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
