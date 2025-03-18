@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -221,13 +222,30 @@ const SubscriptionPage = () => {
         price: plans.find(p => p.id === planId)?.price
       });
       
-      // Determine the correct dashboard path based on user role
-      const dashboardPath = userRole === 'professional' 
-        ? '/dashboard/professional'
-        : '/dashboard/family';
+      // Determine the correct dashboard path based on user role or context
+      let dashboardPath = '/dashboard/family'; // Default to family dashboard
+      
+      // Check if we're in a professional context or the user is a professional
+      if (userRole === 'professional' || 
+          referringPagePath.includes('professional') || 
+          location.state?.fromProfessionalFeatures) {
+        dashboardPath = '/dashboard/professional';
+      }
+      
+      // Ensure we have a valid path to navigate to
+      const targetPath = returnPath || dashboardPath;
+      
+      // Log the navigation for debugging
+      console.log('Navigating to:', targetPath, {
+        from: 'subscription',
+        userRole,
+        referringPagePath,
+        returnPath,
+        dashboardPath
+      });
       
       // Navigate back to the original feature they were trying to access or the appropriate dashboard
-      navigate(returnPath || dashboardPath, { 
+      navigate(targetPath, { 
         state: { 
           from: 'subscription',
           subscriptionComplete: true,

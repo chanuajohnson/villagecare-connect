@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -89,13 +88,24 @@ export default function SubscriptionFeaturesPage() {
     // Determine if we're coming from a professional context
     const fromProfessionalFeatures = planType === 'professional';
     
+    // Add console log for debugging
+    console.log('Navigating to subscription page with state:', {
+      returnPath: returnPath || dashboardPath,
+      referringPagePath: referringPagePath || dashboardPath,
+      referringPageLabel: referringPageLabel || dashboardLabel,
+      featureType,
+      fromProfessionalFeatures,
+      userRole,
+      planType
+    });
+    
     navigate('/subscription', { 
       state: { 
         returnPath: returnPath || dashboardPath, 
         referringPagePath: referringPagePath || dashboardPath, 
         referringPageLabel: referringPageLabel || dashboardLabel, 
         featureType,
-        fromProfessionalFeatures: fromProfessionalFeatures
+        fromProfessionalFeatures
       } 
     });
   };
