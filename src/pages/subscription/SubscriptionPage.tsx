@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -222,44 +221,50 @@ const SubscriptionPage = () => {
         price: plans.find(p => p.id === planId)?.price
       });
       
-      // Determine the dashboard path based on the plan type rather than just user role
-      // This ensures correct redirection based on the subscription context
-      let dashboardPath;
+      // Enhanced redirect logic that correctly handles family vs professional plans
+      // This is the critical part that needs to be fixed to avoid 404 errors
       
-      // Check if we're working with a professional plan
+      // First, check if the selected plan is a professional plan
       const isProfessionalPlan = professionalPlans.some(p => p.id === planId);
       
-      // Set dashboard path based on plan type or context
-      if (isProfessionalPlan || 
-          userRole === 'professional' || 
-          referringPagePath.includes('professional') || 
-          location.state?.fromProfessionalFeatures) {
-        dashboardPath = '/dashboard/professional';
+      // Determine dashboard path based on plan type and context
+      let dashboardPath;
+      
+      // Prioritize the specific return path if provided
+      if (returnPath && returnPath !== '/dashboard/professional' && returnPath !== '/dashboard/family') {
+        // Use the exact return path that was passed (e.g., from a specific feature)
+        dashboardPath = returnPath;
       } else {
-        // Default to family dashboard for family plans or if no clear professional context
-        dashboardPath = '/dashboard/family';
+        // Otherwise, base it on plan type and user role
+        if (isProfessionalPlan || 
+            userRole === 'professional' || 
+            referringPagePath.includes('professional') || 
+            location.state?.fromProfessionalFeatures) {
+          dashboardPath = '/dashboard/professional';
+        } else {
+          // Default to family dashboard for family plans
+          dashboardPath = '/dashboard/family';
+        }
       }
       
-      // Use return path if specified, otherwise use the appropriate dashboard
-      const targetPath = returnPath || dashboardPath;
-      
-      // Log the navigation for debugging
-      console.log('Navigating to:', targetPath, {
-        from: 'subscription',
-        userRole,
-        referringPagePath,
+      // Log detailed information for debugging
+      console.log('Subscription redirect details:', {
         returnPath,
+        referringPagePath,
         dashboardPath,
+        isProfessionalPlan,
+        planId,
         planType: isProfessionalPlan ? 'professional' : 'family',
-        planId
+        userRole
       });
       
-      // Navigate back to the original feature they were trying to access or the appropriate dashboard
-      navigate(targetPath, { 
+      // Navigate to the determined path with subscription state
+      navigate(dashboardPath, { 
         state: { 
           from: 'subscription',
           subscriptionComplete: true,
-          newPlan: planId 
+          newPlan: planId,
+          featureAccessed: featureType
         } 
       });
       

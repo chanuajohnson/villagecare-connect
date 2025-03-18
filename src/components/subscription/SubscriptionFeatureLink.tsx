@@ -55,10 +55,16 @@ export const SubscriptionFeatureLink = ({
   variant = "default",
   directToSubscription = false
 }: SubscriptionFeatureLinkProps) => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   
   // Determine proper destination - features page or direct to subscription
   const destinationPath = directToSubscription ? "/subscription" : "/subscription-features";
+  
+  // Determine if this is for a professional feature
+  const isProfessionalFeature = 
+    userRole === 'professional' || 
+    referringPagePath.includes('professional') || 
+    returnPath.includes('professional');
   
   return (
     <Link
@@ -68,7 +74,8 @@ export const SubscriptionFeatureLink = ({
         returnPath,
         referringPagePath,
         referringPageLabel,
-        directSubscription: directToSubscription
+        directSubscription: directToSubscription,
+        fromProfessionalFeatures: isProfessionalFeature
       }}
       className={className}
     >
