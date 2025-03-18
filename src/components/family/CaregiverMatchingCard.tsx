@@ -1,22 +1,34 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, Users } from "lucide-react";
+import { Check, ArrowRight, Users, Lock } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { toast } from "sonner";
 import { useTracking } from "@/hooks/useTracking";
+import { SubscriptionFeatureLink } from "../subscription/SubscriptionFeatureLink";
 
 export const CaregiverMatchingCard = () => {
   const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { trackEngagement } = useTracking();
-
-  // If user is logged in, don't show this marketing card
-  if (user) {
-    return null;
-  }
+  
+  // Mock subscription status - replace with actual check in production
+  const hasFullAccess = false;
+  
+  // Function to handle restricted feature access
+  const handleRestrictedFeatureClick = (feature: string) => {
+    navigate('/subscription-features', {
+      state: {
+        returnPath: '/caregiver-matching',
+        referringPagePath: '/dashboard/family',
+        referringPageLabel: 'Family Dashboard',
+        featureType: feature
+      }
+    });
+  };
 
   const handleFindCaregiverClick = async () => {
     setIsLoading(true);
@@ -41,8 +53,11 @@ export const CaregiverMatchingCard = () => {
         navigate("/registration/family", { 
           state: { returnPath: "/caregiver-matching", action: "findCaregiver" }
         });
+      } else if (!hasFullAccess) {
+        // User is logged in but doesn't have subscription
+        handleRestrictedFeatureClick("Caregiver Matching");
       } else {
-        // User is logged in and profile is complete
+        // User is logged in, profile is complete, and has subscription
         toast.success("Finding your perfect caregiver matches");
         navigate("/caregiver-matching");
       }
@@ -86,15 +101,31 @@ export const CaregiverMatchingCard = () => {
               ))}
             </ul>
             
-            <Button 
-              size="lg" 
-              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold mt-4 group"
-              onClick={handleFindCaregiverClick}
-              disabled={isLoading}
-            >
-              <span>Find Your Caregiver Now</span>
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            {user && isProfileComplete && !hasFullAccess ? (
+              <SubscriptionFeatureLink
+                featureType="Caregiver Matching"
+                returnPath="/caregiver-matching"
+                referringPagePath="/dashboard/family"
+                referringPageLabel="Family Dashboard"
+                className="w-full mt-4"
+              >
+                <div className="flex items-center gap-2 group">
+                  <Lock className="h-4 w-4" />
+                  <span>Unlock Full Caregiver Matching</span>
+                  <ArrowRight className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </SubscriptionFeatureLink>
+            ) : (
+              <Button 
+                size="lg" 
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold mt-4 group"
+                onClick={handleFindCaregiverClick}
+                disabled={isLoading}
+              >
+                <span>Find Your Caregiver Now</span>
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            )}
           </div>
           
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">

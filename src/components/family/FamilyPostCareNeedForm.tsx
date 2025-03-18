@@ -1,24 +1,31 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowRight } from "lucide-react";
+import { MessageSquare, ArrowRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { SubscriptionFeatureLink } from "../subscription/SubscriptionFeatureLink";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export const FamilyPostCareNeedForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const hasSubscription = false; // Replace with actual subscription check
   
   const handlePostCareNeed = () => {
-    // This is correctly setting referringPagePath and referringPageLabel
-    navigate('/subscription-features', { 
-      state: { 
-        returnPath: '/family/post-care-need',
-        referringPagePath: '/dashboard/family',
-        referringPageLabel: 'Family Dashboard',
-        featureType: "Posting Care Needs" 
-      } 
-    });
+    if (hasSubscription) {
+      navigate('/family/post-care-need');
+    } else {
+      navigate('/subscription-features', { 
+        state: { 
+          returnPath: '/family/post-care-need',
+          referringPagePath: '/dashboard/family',
+          referringPageLabel: 'Family Dashboard',
+          featureType: "Posting Care Needs" 
+        } 
+      });
+    }
   };
 
   return (
@@ -86,15 +93,33 @@ export const FamilyPostCareNeedForm = () => {
             </div>
           </div>
           
-          <Button 
-            variant="default" 
-            size="lg" 
-            className="w-full flex justify-between items-center"
-            onClick={handlePostCareNeed}
-          >
-            <span>Post Care Need</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          {hasSubscription ? (
+            <Button 
+              variant="default" 
+              size="lg" 
+              className="w-full flex justify-between items-center"
+              onClick={() => navigate('/family/post-care-need')}
+            >
+              <span>Post Care Need</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <SubscriptionFeatureLink
+              featureType="Posting Care Needs"
+              returnPath="/family/post-care-need"
+              referringPagePath="/dashboard/family"
+              referringPageLabel="Family Dashboard"
+              className="w-full"
+            >
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-1">
+                  <Lock className="h-4 w-4" />
+                  <span>Unlock Care Need Posting</span>
+                </div>
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </SubscriptionFeatureLink>
+          )}
         </CardContent>
       </Card>
     </motion.div>

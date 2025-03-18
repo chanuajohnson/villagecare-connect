@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Card, 
@@ -10,98 +11,198 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowLeft, Crown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const SubscriptionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, userRole } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  const returnPath = location.state?.returnPath || "/dashboard/professional";
+  // Get context from location state with fallbacks
+  const returnPath = location.state?.returnPath || "/dashboard/family";
   const featureType = location.state?.featureType || "premium feature";
+  const referringPagePath = location.state?.referringPagePath || returnPath;
+  const referringPageLabel = location.state?.referringPageLabel || "Dashboard";
   
+  // Mock current subscription for demo purposes (in real app, fetch from user profile)
+  const currentPlan = "basic";
+  
+  // Set up breadcrumb items based on referring page
   const breadcrumbItems = [
-    { label: "Dashboard", path: returnPath.split('/').slice(0, 3).join('/') },
+    { label: "Dashboard", path: referringPagePath.split('/').slice(0, 3).join('/') },
+    { label: referringPageLabel !== "Dashboard" ? referringPageLabel : "Family Dashboard", path: referringPagePath },
     { label: "Subscription", path: "/subscription" },
   ];
   
-  const plans = [
+  // Filter plans based on user role or show all plans if not logged in
+  const getUserSpecificPlans = () => {
+    // For family users or when accessed from family dashboard
+    if (!user || userRole === 'family' || referringPagePath.includes('family')) {
+      return familyPlans;
+    }
+    
+    // For professional users
+    if (userRole === 'professional' || referringPagePath.includes('professional')) {
+      return professionalPlans;
+    }
+    
+    // Default fallback to show all plans
+    return familyPlans;
+  };
+  
+  const familyPlans = [
     {
       id: "basic",
-      name: "Basic",
-      price: "$9.99",
-      period: "monthly",
-      description: "Essential access for casual users",
+      name: "Family Basic",
+      price: "Free",
+      period: "",
+      description: "Limited access to essential family features",
       features: [
-        { name: "View job postings", included: true },
-        { name: "Basic message board access", included: true },
-        { name: "View 5 professional profiles", included: true },
+        { name: "View 3 caregiver profiles per day", included: true },
+        { name: "Basic message board access (read-only)", included: true },
+        { name: "Limited job posting (1 active)", included: true },
         { name: "Email support", included: true },
-        { name: "Real-time notifications", included: false },
-        { name: "Priority application submission", included: false },
-        { name: "Advanced filtering", included: false },
-        { name: "Unlimited profile views", included: false },
+        { name: "Post care need requests", included: false },
+        { name: "View full caregiver profiles", included: false },
+        { name: "Unlimited caregiver matching", included: false },
+        { name: "Priority support", included: false },
       ],
       popular: false,
-      buttonColor: "bg-primary hover:bg-primary/90"
+      buttonColor: "bg-muted text-muted-foreground hover:bg-muted/90",
+      buttonText: "Current Plan"
+    },
+    {
+      id: "care",
+      name: "Family Care",
+      price: "$14.99",
+      period: "monthly",
+      description: "Enhanced features for active caregiving families",
+      features: [
+        { name: "View 3 caregiver profiles per day", included: true },
+        { name: "Basic message board access (read-only)", included: true },
+        { name: "Limited job posting (1 active)", included: true },
+        { name: "Email support", included: true },
+        { name: "Post care need requests", included: true },
+        { name: "View full caregiver profiles", included: true },
+        { name: "Unlimited caregiver matching", included: false },
+        { name: "Priority support", included: false },
+      ],
+      popular: true,
+      buttonColor: "bg-primary hover:bg-primary/90",
+      buttonText: "Upgrade to Care"
     },
     {
       id: "premium",
-      name: "Premium",
-      price: "$19.99",
+      name: "Family Premium",
+      price: "$29.99",
       period: "monthly",
-      description: "Enhanced features for active users",
+      description: "Complete access for families with ongoing care needs",
       features: [
-        { name: "View job postings", included: true },
-        { name: "Basic message board access", included: true },
-        { name: "View 5 professional profiles", included: true },
+        { name: "View 3 caregiver profiles per day", included: true },
+        { name: "Basic message board access (read-only)", included: true },
+        { name: "Limited job posting (1 active)", included: true },
         { name: "Email support", included: true },
-        { name: "Real-time notifications", included: true },
-        { name: "Priority application submission", included: true },
-        { name: "Advanced filtering", included: true },
-        { name: "Unlimited profile views", included: false },
-      ],
-      popular: true,
-      buttonColor: "bg-primary-600 hover:bg-primary-700"
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      price: "$39.99",
-      period: "monthly",
-      description: "Complete access for power users",
-      features: [
-        { name: "View job postings", included: true },
-        { name: "Basic message board access", included: true },
-        { name: "View 5 professional profiles", included: true },
-        { name: "Email support", included: true },
-        { name: "Real-time notifications", included: true },
-        { name: "Priority application submission", included: true },
-        { name: "Advanced filtering", included: true },
-        { name: "Unlimited profile views", included: true },
+        { name: "Post care need requests", included: true },
+        { name: "View full caregiver profiles", included: true },
+        { name: "Unlimited caregiver matching", included: true },
+        { name: "Priority support", included: true },
       ],
       popular: false,
-      buttonColor: "bg-primary hover:bg-primary/90"
+      buttonColor: "bg-primary hover:bg-primary/90",
+      buttonText: "Upgrade to Premium"
     }
   ];
   
-  const handleSelectPlan = (planId: string) => {
-    setSelectedPlan(planId);
-  };
+  const professionalPlans = [
+    {
+      id: "basic",
+      name: "Professional Basic",
+      price: "Free",
+      period: "",
+      description: "Limited access for casual professionals",
+      features: [
+        { name: "Apply for 3 jobs per week", included: true },
+        { name: "Basic profile listing", included: true },
+        { name: "Limited training resources", included: true },
+        { name: "Email support", included: true },
+        { name: "Featured profile placement", included: false },
+        { name: "Unlimited job applications", included: false },
+        { name: "Advanced training resources", included: false },
+        { name: "Priority job matching", included: false },
+      ],
+      popular: false,
+      buttonColor: "bg-muted text-muted-foreground hover:bg-muted/90",
+      buttonText: "Current Plan"
+    },
+    {
+      id: "pro",
+      name: "Professional Pro",
+      price: "$19.99",
+      period: "monthly",
+      description: "Enhanced features for active professionals",
+      features: [
+        { name: "Apply for 3 jobs per week", included: true },
+        { name: "Basic profile listing", included: true },
+        { name: "Limited training resources", included: true },
+        { name: "Email support", included: true },
+        { name: "Featured profile placement", included: true },
+        { name: "Unlimited job applications", included: true },
+        { name: "Advanced training resources", included: false },
+        { name: "Priority job matching", included: false },
+      ],
+      popular: true,
+      buttonColor: "bg-primary hover:bg-primary/90",
+      buttonText: "Upgrade to Pro"
+    },
+    {
+      id: "expert",
+      name: "Professional Expert",
+      price: "$34.99",
+      period: "monthly",
+      description: "Complete access for dedicated care professionals",
+      features: [
+        { name: "Apply for 3 jobs per week", included: true },
+        { name: "Basic profile listing", included: true },
+        { name: "Limited training resources", included: true },
+        { name: "Email support", included: true },
+        { name: "Featured profile placement", included: true },
+        { name: "Unlimited job applications", included: true },
+        { name: "Advanced training resources", included: true },
+        { name: "Priority job matching", included: true },
+      ],
+      popular: false,
+      buttonColor: "bg-primary hover:bg-primary/90",
+      buttonText: "Upgrade to Expert"
+    }
+  ];
+  
+  // Get the appropriate plans based on user role and context
+  const plans = getUserSpecificPlans();
   
   const handleSubscribe = async (planId: string) => {
     try {
+      setSelectedPlan(planId);
       setProcessingPayment(true);
       
+      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast.success(`Successfully subscribed to ${plans.find(p => p.id === planId)?.name} plan!`);
       
-      navigate(returnPath);
+      // Navigate back to the original feature they were trying to access
+      navigate(returnPath, { 
+        state: { 
+          from: 'subscription',
+          subscriptionComplete: true,
+          newPlan: planId 
+        } 
+      });
       
     } catch (error) {
       console.error("Subscription error:", error);
@@ -127,7 +228,14 @@ const SubscriptionPage = () => {
           className="space-y-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-3xl font-bold">Subscribe to Access Premium Features</h1>
+            <div>
+              <h1 className="text-3xl font-bold">Subscribe to Access Premium Features</h1>
+              {featureType && (
+                <p className="text-lg text-primary mt-2">
+                  <span className="font-medium">Feature: {featureType}</span>
+                </p>
+              )}
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -139,19 +247,23 @@ const SubscriptionPage = () => {
             </Button>
           </div>
           
-          <p className="text-lg text-gray-600">
-            You've tried to access: <span className="font-medium">{featureType}</span>
-          </p>
-          
-          <p className="text-gray-600">
-            Subscribe to one of our plans below to unlock this and other premium features. Choose the plan that best fits your needs.
-          </p>
+          <div className="bg-muted/30 border p-4 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Crown className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-lg">Upgrade to Unlock {featureType}</h3>
+                <p className="text-muted-foreground">
+                  Choose the plan that best fits your needs to access this premium feature and more.
+                </p>
+              </div>
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
             {plans.map((plan) => (
               <Card 
                 key={plan.id} 
-                className={`border-2 ${selectedPlan === plan.id ? 'border-primary' : 'border-border'} ${
+                className={`border-2 ${plan.id === currentPlan ? 'border-primary/30 bg-primary/5' : selectedPlan === plan.id ? 'border-primary' : 'border-border'} ${
                   plan.popular ? 'relative shadow-lg' : ''
                 }`}
               >
@@ -162,7 +274,7 @@ const SubscriptionPage = () => {
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="flex items-end gap-1">
                     <span className="text-3xl font-bold">{plan.price}</span>
-                    <span className="text-gray-500">/{plan.period}</span>
+                    {plan.period && <span className="text-gray-500">/{plan.period}</span>}
                   </div>
                   <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
@@ -186,7 +298,7 @@ const SubscriptionPage = () => {
                   <Button 
                     className={`w-full ${plan.buttonColor}`}
                     onClick={() => handleSubscribe(plan.id)}
-                    disabled={processingPayment}
+                    disabled={processingPayment || plan.id === currentPlan}
                   >
                     {processingPayment && selectedPlan === plan.id ? (
                       <div className="flex items-center gap-2">
@@ -194,7 +306,7 @@ const SubscriptionPage = () => {
                         Processing...
                       </div>
                     ) : (
-                      `Subscribe to ${plan.name}`
+                      plan.buttonText
                     )}
                   </Button>
                 </CardFooter>
@@ -205,7 +317,7 @@ const SubscriptionPage = () => {
           <div className="bg-gray-50 p-4 rounded-lg mt-6">
             <h3 className="font-medium text-lg">Payment Options</h3>
             <p className="text-gray-600 mt-2">
-              We accept all major credit cards as well as PayPal. For enterprise plans, we also offer invoice payments.
+              We accept all major credit cards as well as PayPal. For premium plans, we also offer invoice payments.
               All payments are securely processed and your information is never stored on our servers.
             </p>
             <div className="flex gap-4 mt-4">

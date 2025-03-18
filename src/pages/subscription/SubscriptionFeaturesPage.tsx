@@ -9,14 +9,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { Home } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Home, Lock, CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
 export default function SubscriptionFeaturesPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { returnPath, referringPagePath, referringPageLabel, featureType } = location.state || {};
 
   // Default dashboard path based on user role if not provided
@@ -36,17 +38,63 @@ export default function SubscriptionFeaturesPage() {
   const dashboardPath = referringPagePath || returnPath || defaultDashboardPath;
   const dashboardLabel = referringPageLabel || defaultDashboardLabel;
 
-  useEffect(() => {
-    console.log("Subscription page navigation state:", { 
-      returnPath, 
-      referringPagePath, 
-      referringPageLabel, 
-      dashboardPath, 
-      dashboardLabel,
-      userRole: user?.role,
-      locationState: location.state
+  // Get feature-specific benefits based on what the user was trying to access
+  const getFeatureBenefits = () => {
+    switch(featureType?.toLowerCase()) {
+      case 'posting care needs':
+        return [
+          "Post unlimited care need requests",
+          "Receive priority applications from caregivers",
+          "Add detailed care requirements and photos",
+          "Set custom notification preferences"
+        ];
+      case 'caregiver matching':
+        return [
+          "View unlimited caregiver profiles",
+          "Advanced filtering by skills, experience, and availability",
+          "Directly message potential caregivers",
+          "Save favorites and comparison tools"
+        ];
+      case 'view full message board':
+        return [
+          "Access all message board posts and discussions",
+          "Post questions and reply to other community members",
+          "Join private group discussions for specific care needs",
+          "Receive notifications for topics you follow"
+        ];
+      default:
+        return [
+          "Access all premium features across the platform",
+          "Unlimited interactions with caregivers",
+          "Priority support from our care team",
+          "Advanced tools for managing care needs"
+        ];
+    }
+  };
+
+  // Determine if we should show family or professional plans
+  const getPlanType = () => {
+    if (userRole === 'family' || referringPagePath?.includes('family')) {
+      return 'family';
+    } else if (userRole === 'professional' || referringPagePath?.includes('professional')) {
+      return 'professional';
+    }
+    return 'family'; // Default to family plans
+  };
+
+  const planType = getPlanType();
+  const featureBenefits = getFeatureBenefits();
+
+  const handleSubscribeClick = () => {
+    navigate('/subscription', { 
+      state: { 
+        returnPath, 
+        referringPagePath, 
+        referringPageLabel, 
+        featureType 
+      } 
     });
-  }, [returnPath, referringPagePath, referringPageLabel, dashboardPath, dashboardLabel, user?.role, location.state]);
+  };
 
   return (
     <div className="container px-4 py-8">
@@ -74,41 +122,162 @@ export default function SubscriptionFeaturesPage() {
             
             <BreadcrumbItem>
               <BreadcrumbSeparator />
-              <BreadcrumbPage>Subscription</BreadcrumbPage>
+              <BreadcrumbPage>Premium Features</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
       
-      <h1 className="text-3xl font-bold mb-6">
-        {featureType ? `Unlock ${featureType}` : 'Subscription Features'}
-      </h1>
-      
-      {/* Subscription content */}
-      <div className="bg-white rounded-lg p-6 shadow-md">
-        <p className="text-lg">This is the subscription features page content.</p>
-        
-        {featureType && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-md">
-            <p className="text-blue-800">
-              You're viewing information about <strong>{featureType}</strong>.
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              {featureType ? `Unlock ${featureType}` : 'Premium Subscription Features'}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {planType === 'family' ? 
+                'Enhance your caregiving experience with premium features designed for families.' :
+                'Boost your professional profile and access more opportunities with premium features.'}
             </p>
           </div>
-        )}
+          
+          {/* Feature details */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-primary" />
+                <CardTitle>Premium {featureType || 'Feature'}</CardTitle>
+              </div>
+              <CardDescription>
+                Upgrade your subscription to access this and other premium features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-muted/30 p-4 rounded-lg">
+                  <h3 className="font-medium mb-2">What you'll get with a premium plan:</h3>
+                  <ul className="space-y-2">
+                    {featureBenefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
+                  <h3 className="font-medium mb-2">Why upgrade?</h3>
+                  <p>
+                    {planType === 'family' ? 
+                      'Finding the right care is crucial. Our premium features help you connect with qualified caregivers faster and more effectively.' :
+                      'Stand out from other professionals and get more job opportunities with our premium professional features.'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              onClick={handleSubscribeClick}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              View Subscription Plans <ArrowRight className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(dashboardPath)}
+            >
+              Return to {dashboardLabel}
+            </Button>
+          </div>
+        </div>
         
-        <div className="mt-6">
-          <button 
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
-            onClick={() => {
-              if (dashboardPath) {
-                navigate(dashboardPath, { state: { from: 'subscription' } });
-              } else {
-                navigate('/');
-              }
-            }}
-          >
-            {dashboardPath ? 'Go Back' : 'Go Home'}
-          </button>
+        <div className="lg:col-span-1">
+          <Card className="sticky top-24">
+            <CardHeader>
+              <CardTitle className="text-xl">Available Plans</CardTitle>
+              <CardDescription>
+                Choose the plan that best fits your needs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {planType === 'family' ? (
+                <>
+                  <div className="p-3 border rounded-md">
+                    <h3 className="font-medium">Family Basic</h3>
+                    <p className="text-sm text-muted-foreground">Free</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Limited access to essential features</div>
+                  </div>
+                  
+                  <div className="p-3 border-2 border-primary rounded-md bg-primary/5">
+                    <h3 className="font-medium text-primary">Family Care</h3>
+                    <p className="text-sm text-muted-foreground">$14.99/month</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Access to most premium features</div>
+                    <Button 
+                      className="w-full mt-3" 
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                    >
+                      Upgrade to Care
+                    </Button>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <h3 className="font-medium">Family Premium</h3>
+                    <p className="text-sm text-muted-foreground">$29.99/month</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Unlimited access to all features</div>
+                    <Button 
+                      className="w-full mt-3" 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                    >
+                      View Premium
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-3 border rounded-md">
+                    <h3 className="font-medium">Professional Basic</h3>
+                    <p className="text-sm text-muted-foreground">Free</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Limited access to essential features</div>
+                  </div>
+                  
+                  <div className="p-3 border-2 border-primary rounded-md bg-primary/5">
+                    <h3 className="font-medium text-primary">Professional Pro</h3>
+                    <p className="text-sm text-muted-foreground">$19.99/month</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Enhanced access and visibility</div>
+                    <Button 
+                      className="w-full mt-3" 
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                    >
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <h3 className="font-medium">Professional Expert</h3>
+                    <p className="text-sm text-muted-foreground">$34.99/month</p>
+                    <div className="mt-2 text-sm text-muted-foreground">Complete access to all features</div>
+                    <Button 
+                      className="w-full mt-3" 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                    >
+                      View Expert
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
