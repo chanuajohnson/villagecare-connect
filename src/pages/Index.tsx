@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
@@ -28,7 +27,6 @@ const roles = [{
   features: ["Showcase qualifications", "Find care opportunities", "Manage client relationships", "Track care delivery", "Access training resources", "Professional development"]
 }];
 
-// Separated community role for dedicated section
 const communityRole = {
   id: "community",
   title: "Community",
@@ -97,7 +95,6 @@ const Index = () => {
           </p>
         </motion.div>
 
-        {/* Main roles section - showing only Family and Professional */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {roles.map((role, index) => <motion.div key={role.id} initial={{
           opacity: 0,
@@ -158,7 +155,6 @@ const Index = () => {
             </p>
           </motion.div>
 
-          {/* Who is This For section - only showing Family and Professional */}
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {roles.map((role, index) => <motion.div key={role.id} initial={{
             opacity: 0,
@@ -198,7 +194,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* New dedicated Community section */}
         <div className="mt-32 max-w-5xl mx-auto">
           <motion.div initial={{
           opacity: 0,
@@ -314,8 +309,15 @@ const Index = () => {
         </div>
       </div>
       
-      <Fab onClick={handleFabClick} label="Get Started" className="bg-primary-500 hover:bg-primary-600 text-white" showMenu={false} />
+      <Fab 
+        onClick={handleFabClick} 
+        label="Get Started" 
+        className="bg-primary-500 hover:bg-primary-600 text-white" 
+        showMenu={false} 
+        icon={<ArrowRight className="h-5 w-5" />}
+      />
     </div>;
 };
 
 export default Index;
+
