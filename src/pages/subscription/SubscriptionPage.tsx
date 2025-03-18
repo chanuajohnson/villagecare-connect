@@ -16,11 +16,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useTracking } from "@/hooks/useTracking";
 
 const SubscriptionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
+  const { trackEngagement } = useTracking();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   
@@ -190,10 +192,31 @@ const SubscriptionPage = () => {
       setSelectedPlan(planId);
       setProcessingPayment(true);
       
+      // Track the subscription event for admin analytics
+      await trackEngagement('subscription_plan_selected', {
+        plan_id: planId,
+        plan_name: plans.find(p => p.id === planId)?.name,
+        feature_accessed: featureType,
+        referring_page: referringPagePath,
+        user_role: userRole || 'anonymous'
+      });
+      
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success(`Successfully subscribed to ${plans.find(p => p.id === planId)?.name} plan!`);
+      // Get plan name for the toast message
+      const planName = plans.find(p => p.id === planId)?.name;
+      
+      // Show success message with payment clarification
+      toast.success(`Successfully subscribed to ${planName} plan! (In production, this would connect to a payment processor)`);
+      
+      // Track successful subscription for admin analytics
+      await trackEngagement('subscription_completed', {
+        plan_id: planId,
+        plan_name: planName,
+        feature_accessed: featureType,
+        price: plans.find(p => p.id === planId)?.price
+      });
       
       // Navigate back to the original feature they were trying to access
       navigate(returnPath, { 
@@ -207,6 +230,14 @@ const SubscriptionPage = () => {
     } catch (error) {
       console.error("Subscription error:", error);
       toast.error("Failed to process subscription. Please try again.");
+      
+      // Track failed subscription for admin analytics
+      await trackEngagement('subscription_failed', {
+        plan_id: planId,
+        plan_name: plans.find(p => p.id === planId)?.name,
+        feature_accessed: featureType,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     } finally {
       setProcessingPayment(false);
     }
