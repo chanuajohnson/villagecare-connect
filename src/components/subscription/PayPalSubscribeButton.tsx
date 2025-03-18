@@ -108,7 +108,13 @@ export function PayPalSubscribeButton({
           }}
           onError={(err) => {
             console.error("PayPal Error:", err);
-            if (onError) onError(err);
+            // Convert PayPal error object to Error instance before passing to onError
+            if (onError) {
+              const errorMessage = typeof err === 'object' && err !== null && 'message' in err 
+                ? String(err.message) 
+                : 'PayPal subscription error';
+              onError(new Error(errorMessage));
+            }
           }}
           onCancel={() => {
             setShowPayPal(false);
