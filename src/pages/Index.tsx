@@ -251,9 +251,7 @@ const Index = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Shape Our Future Features
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Help us build the features that matter most to you. Visit our feature roadmap to upvote the capabilities you'd like to see next and influence our development priorities.
-            </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">See our feature roadmap to up-vote the capabilities you'd like to see next and influence our product development priorities.</p>
             <Link to="/features">
               <Card className="p-6 text-left bg-white cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader>
