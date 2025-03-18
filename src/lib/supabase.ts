@@ -21,7 +21,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 console.log('Initializing Supabase client with URL:', supabaseUrl);
 console.log('API Key exists:', !!supabaseAnonKey);
 
-// Enhanced Supabase client configuration with improved token handling
+// Create and export the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
