@@ -1,4 +1,3 @@
-
 import React from "react";
 import { type ToastActionElement, ToastProps } from "@/components/ui/toast"
 
@@ -168,7 +167,6 @@ function toast(props: ToastOptions) {
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
-      id,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
