@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   ChevronDown,
   Loader2,
-  AlertTriangle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,36 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
-import { checkSupabaseConnection } from '@/lib/supabase';
 
 export function Navigation() {
   const { user, signOut, isLoading, userRole } = useAuth();
   const location = useLocation();
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   // Log state for debugging purposes
   console.log('Navigation render -', { user: !!user, isLoading, userRole, path: location.pathname });
-
-  // Check Supabase connection status
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const isConnected = await checkSupabaseConnection();
-        setConnectionStatus(isConnected ? 'connected' : 'error');
-      } catch (error) {
-        console.error('Error checking Supabase connection:', error);
-        setConnectionStatus('error');
-      }
-    };
-
-    checkConnection();
-    
-    // Check connection every 30 seconds
-    const interval = setInterval(checkConnection, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,13 +65,6 @@ export function Navigation() {
           <Link to="/" className="text-xl font-bold">Tavara</Link>
           <span className="text-xs text-gray-600 italic sm:ml-2">It takes a village to care</span>
         </div>
-        
-        {connectionStatus === 'error' && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1 rounded-md flex items-center text-sm">
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            <span>Supabase connection issues</span>
-          </div>
-        )}
         
         <div className="flex items-center gap-4">
           <Link to="/about" className="text-gray-700 hover:text-primary">
@@ -144,15 +113,10 @@ export function Navigation() {
             </DropdownMenu>
           ) : null}
 
-          {isLoading || connectionStatus === 'checking' ? (
+          {isLoading ? (
             <Button variant="outline" size="sm" disabled className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Loading...</span>
-            </Button>
-          ) : connectionStatus === 'error' ? (
-            <Button variant="outline" size="sm" disabled className="flex items-center gap-2 border-amber-300 text-amber-700">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Offline Mode</span>
             </Button>
           ) : user ? (
             <Button 
