@@ -390,7 +390,7 @@ const FamilyDashboard = () => {
             </Card>
           </div>
 
-          <h2 className="text-2xl font-semibold mb-6">Medication Management</h2>
+          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Medication Management</CardTitle>
@@ -469,7 +469,7 @@ const FamilyDashboard = () => {
             </CardContent>
           </Card>
 
-          <h2 className="text-2xl font-semibold mb-6">Meal Planning</h2>
+          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Meal Planning</CardTitle>
@@ -563,7 +563,7 @@ const FamilyDashboard = () => {
             </CardContent>
           </Card>
 
-          <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
+          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
