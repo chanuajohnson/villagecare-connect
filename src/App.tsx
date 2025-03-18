@@ -1,38 +1,11 @@
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Navigation } from "@/components/layout/Navigation";
-import { useEffect, Suspense, lazy } from "react";
-import { initializeSupabase } from "@/lib/supabase";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import FeaturesPage from "./pages/features/FeaturesPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import FamilyDashboard from "./pages/dashboards/FamilyDashboard";
-import CommunityDashboard from "./pages/dashboards/CommunityDashboard";
-import ProfessionalDashboard from "./pages/dashboards/ProfessionalDashboard";
-import AuthPage from "./pages/auth/AuthPage";
-import FamilyRegistration from "./pages/registration/FamilyRegistration";
-import ProfessionalRegistration from "./pages/registration/ProfessionalRegistration";
-import ProfessionalRegistrationFix from "./pages/registration/ProfessionalRegistrationFix";
-import CommunityRegistration from "./pages/registration/CommunityRegistration";
-import CommunityFeaturesOverview from "./pages/community/CommunityFeaturesOverview";
-import ProfessionalFeaturesOverview from "./pages/professional/ProfessionalFeaturesOverview";
-import FamilyFeaturesOverview from "./pages/family/FamilyFeaturesOverview";
-import FAQPage from "./pages/support/FAQPage";
-import { Fab } from "@/components/ui/fab";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import MessageBoardPage from "./pages/professional/MessageBoardPage";
-import TrainingResourcesPage from "./pages/professional/TrainingResourcesPage";
-import ModuleViewerPage from "./pages/professional/ModuleViewerPage";
-import SubscriptionPage from "./pages/subscription/SubscriptionPage";
-import AboutPage from "./pages/about/AboutPage";
-import SubscriptionFeaturesPage from "./pages/subscription/SubscriptionFeaturesPage";
-import CaregiverMatchingPage from "./pages/caregiver/CaregiverMatchingPage";
-import FamilyMatchingPage from "./pages/family/FamilyMatchingPage";
+import { useEffect, Suspense, lazy, useState } from "react";
+import { initializeSupabase, isSupabaseExperiencingIssues } from "@/lib/supabase";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,8 +19,16 @@ const queryClient = new QueryClient({
 });
 
 const AppWithProviders = () => {
+  const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'available' | 'issues'>('checking');
+  
   useEffect(() => {
-    initializeSupabase();
+    initializeSupabase()
+      .then(success => {
+        setSupabaseStatus(success ? 'available' : 'issues');
+      })
+      .catch(() => {
+        setSupabaseStatus('issues');
+      });
     
     // Add custom style to reposition Lovable badge to top-right
     const style = document.createElement('style');
@@ -66,12 +47,26 @@ const AppWithProviders = () => {
       }
     `;
     document.head.appendChild(style);
+    
+    // Check Supabase status periodically
+    const checkInterval = setInterval(() => {
+      setSupabaseStatus(isSupabaseExperiencingIssues() ? 'issues' : 'available');
+    }, 30000); // Check every 30 seconds
+    
+    return () => {
+      clearInterval(checkInterval);
+    };
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Sonner />
+        {supabaseStatus === 'issues' && (
+          <div className="bg-yellow-100 text-yellow-800 px-4 py-2 fixed top-0 left-0 right-0 z-50 text-center">
+            Supabase is currently experiencing issues. Some features may not work properly.
+          </div>
+        )}
         <BrowserRouter>
           <AuthProvider>
             <AppContent />

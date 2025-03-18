@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -16,6 +15,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
     hasKey: !!supabaseAnonKey
   });
 }
+
+// Service status tracking
+let isSupabaseAvailable = true;
+let lastErrorTime = 0;
+const ERROR_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+
+// Offline mode detection
+const isOfflineMode = () => {
+  // Consider Supabase unavailable if there have been recent errors
+  if (!isSupabaseAvailable && (Date.now() - lastErrorTime < ERROR_THRESHOLD)) {
+    return true;
+  }
+  
+  // Check if browser is offline
+  if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
+    return true;
+  }
+  
+  return false;
+};
 
 // More detailed logging for debugging connection issues
 console.log('Initializing Supabase client with URL:', supabaseUrl);
@@ -43,9 +62,75 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Wrap supabase methods with error handling
+const originalFrom = supabase.from.bind(supabase);
+supabase.from = function(table) {
+  const queryBuilder = originalFrom(table);
+  
+  // Override methods that make requests
+  const methods = ['select', 'insert', 'update', 'delete', 'upsert'];
+  
+  methods.forEach(method => {
+    if (method in queryBuilder) {
+      const originalMethod = queryBuilder[method].bind(queryBuilder);
+      queryBuilder[method] = function(...args) {
+        // Check if we're in offline mode
+        if (isOfflineMode()) {
+          console.warn(`Supabase operation skipped: ${method} on ${table} (offline mode)`);
+          // Return mock response to prevent errors
+          return Promise.resolve({ 
+            data: [], 
+            error: { message: 'Application is in offline mode', status: 503 },
+            count: null
+          });
+        }
+        
+        // Proceed with original request
+        const result = originalMethod(...args);
+        
+        // Add error handling
+        const originalThen = result.then.bind(result);
+        result.then = function(onFulfilled, onRejected) {
+          return originalThen(
+            (response) => {
+              if (response.error) {
+                // Track service availability
+                isSupabaseAvailable = false;
+                lastErrorTime = Date.now();
+                console.error(`Supabase ${method} operation failed:`, response.error);
+              } else {
+                // Reset service status on success
+                isSupabaseAvailable = true;
+              }
+              return onFulfilled ? onFulfilled(response) : response;
+            },
+            (error) => {
+              // Track service availability
+              isSupabaseAvailable = false;
+              lastErrorTime = Date.now();
+              console.error(`Supabase ${method} operation rejected:`, error);
+              return onRejected ? onRejected(error) : Promise.reject(error);
+            }
+          );
+        };
+        
+        return result;
+      };
+    }
+  });
+  
+  return queryBuilder;
+};
+
 // Enhanced connection check with improved error handling
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
+    // If we know we're offline, don't even try
+    if (isOfflineMode()) {
+      console.log('Skipping connection check: offline mode detected');
+      return false;
+    }
+    
     // Simple query to check if connection works
     const { error } = await supabase.from('profiles').select('count').limit(1);
     
@@ -59,13 +144,18 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
         console.error('Network error when connecting to Supabase.');
       }
       
+      isSupabaseAvailable = false;
+      lastErrorTime = Date.now();
       return false;
     }
     
     console.log('Supabase connection check: successful');
+    isSupabaseAvailable = true;
     return true;
   } catch (err) {
     console.error('Error checking Supabase connection:', err);
+    isSupabaseAvailable = false;
+    lastErrorTime = Date.now();
     return false;
   }
 };
@@ -318,7 +408,14 @@ export const initializeSupabase = async () => {
 // Call initialization when this module is loaded
 initializeSupabase().catch(err => {
   console.error('Error during Supabase initialization:', err);
+  isSupabaseAvailable = false;
+  lastErrorTime = Date.now();
 });
+
+// Add a helper to check if Supabase is experiencing issues
+export const isSupabaseExperiencingIssues = (): boolean => {
+  return !isSupabaseAvailable;
+};
 
 // Added utility function to reset auth state in case of persistent issues
 export const resetAuthState = async () => {
