@@ -22,15 +22,15 @@ export default function SubscriptionFeaturesPage() {
   const { returnPath, referringPagePath, referringPageLabel, featureType } = location.state || {};
 
   // Default dashboard path based on user role if not provided
-  const defaultDashboardPath = user?.role === 'family' 
+  const defaultDashboardPath = userRole === 'family' 
     ? '/dashboard/family' 
-    : user?.role === 'professional' 
+    : userRole === 'professional' 
       ? '/dashboard/professional'
       : '/';
   
-  const defaultDashboardLabel = user?.role === 'family' 
+  const defaultDashboardLabel = userRole === 'family' 
     ? 'Family Dashboard' 
-    : user?.role === 'professional' 
+    : userRole === 'professional' 
       ? 'Professional Dashboard'
       : 'Home';
 
@@ -88,9 +88,9 @@ export default function SubscriptionFeaturesPage() {
   const handleSubscribeClick = () => {
     navigate('/subscription', { 
       state: { 
-        returnPath, 
-        referringPagePath, 
-        referringPageLabel, 
+        returnPath: returnPath || dashboardPath, 
+        referringPagePath: referringPagePath || dashboardPath, 
+        referringPageLabel: referringPageLabel || dashboardLabel, 
         featureType 
       } 
     });

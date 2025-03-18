@@ -27,7 +27,7 @@ const SubscriptionPage = () => {
   const [processingPayment, setProcessingPayment] = useState(false);
   
   // Get context from location state with fallbacks
-  const returnPath = location.state?.returnPath || "/dashboard/family";
+  const returnPath = location.state?.returnPath || (userRole === 'professional' ? "/dashboard/professional" : "/dashboard/family");
   const featureType = location.state?.featureType || "premium feature";
   const referringPagePath = location.state?.referringPagePath || returnPath;
   const referringPageLabel = location.state?.referringPageLabel || "Dashboard";
@@ -220,8 +220,13 @@ const SubscriptionPage = () => {
         price: plans.find(p => p.id === planId)?.price
       });
       
-      // Navigate back to the original feature they were trying to access
-      navigate(returnPath, { 
+      // Determine the correct dashboard path based on user role
+      const dashboardPath = userRole === 'professional' 
+        ? '/dashboard/professional'
+        : '/dashboard/family';
+      
+      // Navigate back to the original feature they were trying to access or the appropriate dashboard
+      navigate(returnPath || dashboardPath, { 
         state: { 
           from: 'subscription',
           subscriptionComplete: true,
