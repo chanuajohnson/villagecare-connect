@@ -73,8 +73,11 @@ export const SubscriptionFeatureLink = ({
       ? "/dashboard/professional" 
       // Family matching should use referringPath when coming from a dashboard
       : (returnPath === "/family-matching" && referringPagePath.includes("dashboard"))
-        ? returnPath // Keep the referring path in state for context
-        : returnPath;
+        ? returnPath 
+        // Care Need Posting should have valid return path
+        : (returnPath === "/family/post-care-need")
+          ? returnPath
+          : returnPath;
   
   // Log the link information for debugging
   console.log('SubscriptionFeatureLink:', {

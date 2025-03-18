@@ -13,21 +13,6 @@ export const FamilyPostCareNeedForm = () => {
   
   const hasSubscription = false; // Replace with actual subscription check
   
-  const handlePostCareNeed = () => {
-    if (hasSubscription) {
-      navigate('/family/post-care-need');
-    } else {
-      navigate('/subscription-features', { 
-        state: { 
-          returnPath: '/family/post-care-need',
-          referringPagePath: '/dashboard/family',
-          referringPageLabel: 'Family Dashboard',
-          featureType: "Posting Care Needs" 
-        } 
-      });
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
