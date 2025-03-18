@@ -24,7 +24,10 @@ export const StoryCard = ({
         <div className={`space-y-4 ${readMore ? 'h-auto' : 'h-[150px] overflow-hidden'}`}>
           <p>Tavara was born from a personal experience—when our founders’ mother needed care, the family saw firsthand how difficult and fragmented the caregiving system was. Finding reliable caregivers, managing schedules, and ensuring quality care was overwhelming.</p>
           
-          <p>This revealed a bigger issue: caregiving doesn’t just need more workers—it needs better systems, stronger communities, and real support for both families and caregivers.</p>
+          <p>This revealed a bigger issue: caregiving doesn’t just need more workers—it needs better systems, stronger communities, and real support for both families and caregivers. 
+
+
+So, we built Tavara.</p>
 
           
 
