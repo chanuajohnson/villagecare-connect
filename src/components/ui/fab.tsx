@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, X, MessageSquare, FileQuestion, Phone } from "lucide-react";
@@ -47,7 +46,7 @@ export const Fab = ({
 
   const handleOpenWhatsApp = () => {
     const phoneNumber = "+18687865357";
-    const message = encodeURIComponent("Hello, I need support with [brief issue].");
+    const message = encodeURIComponent("Hello, I need support with Tavara.care platform.");
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
   };
 
@@ -57,7 +56,6 @@ export const Fab = ({
 
   const handleContactFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would send this data to your backend
     console.log("Contact form submitted:", contactFormData);
     toast.success("Your support request has been submitted. We'll get back to you soon!");
     setIsContactFormOpen(false);
