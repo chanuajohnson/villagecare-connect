@@ -62,7 +62,7 @@ export function Navigation() {
     <nav className="bg-background border-b py-3 px-4 sm:px-6">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center flex-col sm:flex-row">
-          <Link to="/" className="text-xl font-bold">Tavara</Link>
+          <Link to="/" className="text-xl font-bold font-serif tracking-wider text-primary">Tavara</Link>
           <span className="text-xs text-gray-600 italic sm:ml-2">It takes a village to care</span>
         </div>
         
