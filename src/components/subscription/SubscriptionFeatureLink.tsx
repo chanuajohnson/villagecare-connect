@@ -66,16 +66,22 @@ export const SubscriptionFeatureLink = ({
     referringPagePath.includes('professional') || 
     returnPath.includes('professional');
     
-  // For professional dashboard, ensure we have a valid return path
-  const safeReturnPath = returnPath === "/professional/jobs" 
-    ? "/dashboard/professional" 
-    : returnPath;
+  // For specific redirects, ensure we have a valid return path
+  const safeReturnPath = 
+    // Professional jobs page should redirect to professional dashboard
+    returnPath === "/professional/jobs" 
+      ? "/dashboard/professional" 
+      // Family matching should use referringPath when coming from a dashboard
+      : (returnPath === "/family-matching" && referringPagePath.includes("dashboard"))
+        ? returnPath // Keep the referring path in state for context
+        : returnPath;
   
   // Log the link information for debugging
   console.log('SubscriptionFeatureLink:', {
     featureType,
     returnPath: safeReturnPath,
     referringPagePath,
+    referringPageLabel,
     isProfessionalFeature
   });
   

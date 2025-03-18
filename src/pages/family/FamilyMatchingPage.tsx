@@ -106,7 +106,7 @@ export default function FamilyMatchingPage() {
     (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
   
   const referringLabel = location.state?.referringPageLabel || 
-    (user?.role === 'professional' ? 'Professional Dashboard' : 'Family Dashboard');
+    (referringPath.includes('professional') ? 'Professional Dashboard' : 'Family Dashboard');
   
   console.log("FamilyMatchingPage - Navigation context:", {
     referringPath,
@@ -659,3 +659,4 @@ export default function FamilyMatchingPage() {
     </div>
   );
 }
+

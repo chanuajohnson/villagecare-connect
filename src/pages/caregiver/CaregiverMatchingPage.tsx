@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,33 +124,11 @@ export default function CaregiverMatchingPage() {
   const [requiredCertifications, setRequiredCertifications] = useState<string[]>([]);
   const [minimumExperience, setMinimumExperience] = useState<string>("any");
 
-  const getUserDashboardPath = () => {
-    if (location.state?.referringPagePath && location.state?.referringPageLabel) {
-      return {
-        path: location.state.referringPagePath,
-        label: location.state.referringPageLabel
-      };
-    }
-    
-    if (user?.role === 'family') {
-      return {
-        path: '/dashboard/family',
-        label: 'Family Dashboard'
-      };
-    } else if (user?.role === 'professional') {
-      return {
-        path: '/dashboard/professional',
-        label: 'Professional Dashboard'
-      };
-    }
-    
-    return {
-      path: '/',
-      label: 'Home'
-    };
-  };
-
-  const { path: referringPath, label: referringLabel } = getUserDashboardPath();
+  const referringPath = location.state?.referringPagePath || 
+    (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
+  
+  const referringLabel = location.state?.referringPageLabel || 
+    (referringPath.includes('professional') ? 'Professional Dashboard' : 'Family Dashboard');
   
   console.log("CaregiverMatching breadcrumb info:", {
     referringPath,
