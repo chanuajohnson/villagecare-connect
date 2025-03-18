@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Heart, ArrowRight, Check, Vote } from "lucide-react";
+import { Users, UserCog, Heart, ArrowRight, Check, Vote, HelpCircle } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -67,11 +67,6 @@ const Index = () => {
 
   const goToFeatures = () => {
     navigate('/features');
-  };
-
-  const handleFabClick = () => {
-    toast.success("Choose a role to get started!");
-    handleGetStarted();
   };
 
   return <div className="min-h-screen w-full bg-gradient-to-b from-white to-primary-100">
@@ -310,14 +305,12 @@ const Index = () => {
       </div>
       
       <Fab 
-        onClick={handleFabClick} 
-        label="Get Started" 
+        icon={<HelpCircle className="h-5 w-5" />}
         className="bg-primary-500 hover:bg-primary-600 text-white" 
-        showMenu={false} 
-        icon={<ArrowRight className="h-5 w-5" />}
+        showMenu={true}
+        label="Support options"
       />
     </div>;
 };
 
 export default Index;
-
