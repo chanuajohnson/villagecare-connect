@@ -24,6 +24,11 @@ export const PodcastCard = () => {
       title: "Podcast Request Received!",
       description: "We have your request logged and you will receive an email when this feature is live and launched.",
       duration: 5000, // 5 seconds auto-dismiss
+      onOpenChange: (open) => {
+        if (!open) {
+          console.log("Toast was dismissed");
+        }
+      }
     });
   };
 
