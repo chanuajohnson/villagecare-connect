@@ -53,6 +53,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -146,7 +147,6 @@ function toast(props: ToastOptions) {
   
   // Setup auto-dismiss timeout if duration is provided
   const { duration = DEFAULT_TOAST_DURATION } = props
-  let autoRemoveTimeout: ReturnType<typeof setTimeout> | null = null
   
   const update = (props: ToasterToast) =>
     dispatch({
@@ -155,10 +155,12 @@ function toast(props: ToastOptions) {
     })
     
   const dismiss = () => {
-    if (autoRemoveTimeout) {
-      clearTimeout(autoRemoveTimeout)
-      autoRemoveTimeout = null
+    // Clear any existing auto-dismiss timeout
+    if (dismissTimeouts.has(id)) {
+      clearTimeout(dismissTimeouts.get(id)!)
+      dismissTimeouts.delete(id)
     }
+    
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
   }
 
@@ -166,24 +168,33 @@ function toast(props: ToastOptions) {
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
-      duration,
+      id,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
+        // Call the original onOpenChange if provided
         props.onOpenChange?.(open)
       },
     },
   })
   
   // Set up auto-dismiss if duration is positive
-  if (duration > 0) {
-    autoRemoveTimeout = setTimeout(() => {
+  if (duration && duration > 0) {
+    // Clear any existing timeout first
+    if (dismissTimeouts.has(id)) {
+      clearTimeout(dismissTimeouts.get(id)!)
+    }
+    
+    const timeout = setTimeout(() => {
       dismiss()
+      dismissTimeouts.delete(id)
     }, duration)
+    
+    dismissTimeouts.set(id, timeout)
   }
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
