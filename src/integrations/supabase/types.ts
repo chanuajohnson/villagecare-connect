@@ -403,6 +403,66 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          provider: string
+          provider_subscription_id: string | null
+          provider_transaction_id: string | null
+          status: string
+          subscription_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          provider_subscription_id?: string | null
+          provider_transaction_id?: string | null
+          status?: string
+          subscription_id?: string | null
+          transaction_type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          provider_subscription_id?: string | null
+          provider_transaction_id?: string | null
+          status?: string
+          subscription_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prepped_meal_orders: {
         Row: {
           created_at: string
@@ -832,27 +892,48 @@ export type Database = {
           created_at: string | null
           end_date: string
           id: string
+          last_payment_date: string | null
+          next_payment_date: string | null
+          payment_method: string | null
+          paypal_order_id: string | null
+          paypal_payer_id: string | null
+          paypal_subscription_id: string | null
           plan_id: string
           start_date: string | null
           status: string
+          subscription_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           end_date: string
           id?: string
+          last_payment_date?: string | null
+          next_payment_date?: string | null
+          payment_method?: string | null
+          paypal_order_id?: string | null
+          paypal_payer_id?: string | null
+          paypal_subscription_id?: string | null
           plan_id: string
           start_date?: string | null
           status?: string
+          subscription_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
           end_date?: string
           id?: string
+          last_payment_date?: string | null
+          next_payment_date?: string | null
+          payment_method?: string | null
+          paypal_order_id?: string | null
+          paypal_payer_id?: string | null
+          paypal_subscription_id?: string | null
           plan_id?: string
           start_date?: string | null
           status?: string
+          subscription_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -864,6 +945,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          processed: boolean
+          processed_at: string | null
+          provider: string
+          raw_data: Json
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          processed?: boolean
+          processed_at?: string | null
+          provider?: string
+          raw_data: Json
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          processed?: boolean
+          processed_at?: string | null
+          provider?: string
+          raw_data?: Json
+        }
+        Relationships: []
       }
     }
     Views: {

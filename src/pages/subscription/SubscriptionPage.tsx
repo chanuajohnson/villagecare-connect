@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -18,6 +17,8 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useTracking } from "@/hooks/useTracking";
 import { supabase } from "@/integrations/supabase/client";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { PayPalSubscribeButton } from "@/components/subscription/PayPalSubscribeButton";
 
 const SubscriptionPage = () => {
   const navigate = useNavigate();
@@ -29,21 +30,20 @@ const SubscriptionPage = () => {
   const [userSubscription, setUserSubscription] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Get context from location state with fallbacks
   const returnPath = location.state?.returnPath || (userRole === 'professional' ? "/dashboard/professional" : "/dashboard/family");
   const featureType = location.state?.featureType || "premium feature";
   const referringPagePath = location.state?.referringPagePath || returnPath;
   const referringPageLabel = location.state?.referringPageLabel || "Dashboard";
   
-  // Set up breadcrumb items based on referring page
   const breadcrumbItems = [
     { label: "Dashboard", path: referringPagePath.split('/').slice(0, 3).join('/') },
     { label: referringPageLabel !== "Dashboard" ? referringPageLabel : "Family Dashboard", path: referringPagePath },
     { label: "Subscription", path: "/subscription" },
   ];
   
+  const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || "sb";
+  
   useEffect(() => {
-    // If no user is logged in, redirect to auth page
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -60,16 +60,13 @@ const SubscriptionPage = () => {
       return;
     }
     
-    // Fetch user's current subscription
     const fetchUserSubscription = async () => {
       try {
         setIsLoading(true);
-        // This is a mock implementation - in a real app, you would fetch from your database
-        // For now we'll check local storage as a simple demonstration
         if (userRole === 'professional') {
-          setUserSubscription('basic'); // For demo: assume professional users start with basic plan
+          setUserSubscription('basic');
         } else if (userRole === 'family') {
-          setUserSubscription('basic'); // For demo: assume family users start with basic plan
+          setUserSubscription('basic');
         } else {
           setUserSubscription(null);
         }
@@ -88,21 +85,17 @@ const SubscriptionPage = () => {
     fetchUserSubscription();
   }, [user, userRole, navigate, referringPagePath, referringPageLabel]);
   
-  // Filter plans based on user role or show all plans if not logged in
   const getUserSpecificPlans = () => {
-    // For professional users or when accessed from professional dashboard or subscription features
     if (userRole === 'professional' || 
         referringPagePath.includes('professional') || 
         location.state?.fromProfessionalFeatures) {
       return professionalPlans;
     }
     
-    // For family users or when accessed from family dashboard
     if (userRole === 'family' || referringPagePath.includes('family')) {
       return familyPlans;
     }
     
-    // Default fallback to show plans based on referring path context
     return referringPagePath.includes('professional') ? professionalPlans : familyPlans;
   };
   
@@ -232,54 +225,31 @@ const SubscriptionPage = () => {
     }
   ];
   
-  // Get the appropriate plans based on user role and context
   const plans = getUserSpecificPlans();
   
-  // Check if a plan is the user's current plan
   const isCurrentPlan = (planId: string) => {
     return userSubscription === planId;
   };
   
-  // Determine if a plan is an upgrade, downgrade or the same level
   const getPlanAction = (planId: string) => {
-    if (!userSubscription) return "upgrade"; // If no subscription, any plan is an upgrade
+    if (!userSubscription) return "upgrade";
     
-    // For family plans
-    if (userRole === 'family' || referringPagePath.includes('family')) {
-      const planRank = {
-        "basic": 1,
-        "care": 2,
-        "premium": 3
-      };
-      
-      const currentRank = planRank[userSubscription as keyof typeof planRank] || 0;
-      const newRank = planRank[planId as keyof typeof planRank] || 0;
-      
-      if (newRank > currentRank) return "upgrade";
-      if (newRank < currentRank) return "downgrade";
-      return "same";
-    }
+    const planRank = {
+      "basic": 1,
+      "care": 2,
+      "premium": 3,
+      "pro": 2,
+      "expert": 3
+    };
     
-    // For professional plans
-    if (userRole === 'professional' || referringPagePath.includes('professional')) {
-      const planRank = {
-        "basic": 1,
-        "pro": 2,
-        "expert": 3
-      };
-      
-      const currentRank = planRank[userSubscription as keyof typeof planRank] || 0;
-      const newRank = planRank[planId as keyof typeof planRank] || 0;
-      
-      if (newRank > currentRank) return "upgrade";
-      if (newRank < currentRank) return "downgrade";
-      return "same";
-    }
+    const currentRank = planRank[userSubscription as keyof typeof planRank] || 0;
+    const newRank = planRank[planId as keyof typeof planRank] || 0;
     
-    return "unknown";
+    if (newRank > currentRank) return "upgrade";
+    if (newRank < currentRank) return "downgrade";
+    return "same";
   };
   
-  // Get button text based on plan action
   const getButtonText = (plan: any) => {
     if (isCurrentPlan(plan.id)) {
       return "Current Plan";
@@ -295,7 +265,6 @@ const SubscriptionPage = () => {
     return plan.buttonText;
   };
   
-  // Get button color based on plan action
   const getButtonColor = (plan: any) => {
     if (isCurrentPlan(plan.id)) {
       return "bg-muted text-muted-foreground hover:bg-muted/90";
@@ -312,7 +281,6 @@ const SubscriptionPage = () => {
   };
   
   const handleSubscribe = async (planId: string) => {
-    // First check if user is logged in
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -329,7 +297,6 @@ const SubscriptionPage = () => {
       return;
     }
     
-    // Check if user is trying to subscribe to their current plan
     if (isCurrentPlan(planId)) {
       toast({
         title: "Already Subscribed",
@@ -343,7 +310,6 @@ const SubscriptionPage = () => {
       setSelectedPlan(planId);
       setProcessingPayment(true);
       
-      // Track the subscription event for admin analytics
       await trackEngagement('subscription_plan_selected', {
         plan_id: planId,
         plan_name: plans.find(p => p.id === planId)?.name,
@@ -353,24 +319,19 @@ const SubscriptionPage = () => {
         action: getPlanAction(planId)
       });
       
-      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Get plan name for the toast message
       const planName = plans.find(p => p.id === planId)?.name;
       const action = getPlanAction(planId);
       
-      // Show success message with improved payment clarification
       toast({
         title: action === "upgrade" ? "Subscription Upgraded!" : "Subscription Changed!",
         description: `Successfully ${action === "upgrade" ? "upgraded to" : "changed to"} ${planName} plan! (Demo only: No payment has been processed. When launched, an email with payment details will be sent to complete your subscription.)`,
         variant: "default",
       });
       
-      // Update the user's subscription (mock implementation)
       setUserSubscription(planId);
       
-      // Track successful subscription for admin analytics
       await trackEngagement('subscription_completed', {
         plan_id: planId,
         plan_name: planName,
@@ -380,33 +341,23 @@ const SubscriptionPage = () => {
         action: action
       });
       
-      // Enhanced redirect logic that correctly handles family vs professional plans
-      // This is the critical part that needs to be fixed to avoid 404 errors
-      
-      // First, check if the selected plan is a professional plan
       const isProfessionalPlan = professionalPlans.some(p => p.id === planId);
       
-      // Determine dashboard path based on plan type and context
       let dashboardPath;
       
-      // Prioritize the specific return path if provided
       if (returnPath && returnPath !== '/dashboard/professional' && returnPath !== '/dashboard/family') {
-        // Use the exact return path that was passed (e.g., from a specific feature)
         dashboardPath = returnPath;
       } else {
-        // Otherwise, base it on plan type and user role
         if (isProfessionalPlan || 
             userRole === 'professional' || 
             referringPagePath.includes('professional') || 
             location.state?.fromProfessionalFeatures) {
           dashboardPath = '/dashboard/professional';
         } else {
-          // Default to family dashboard for family plans
           dashboardPath = '/dashboard/family';
         }
       }
       
-      // Log detailed information for debugging
       console.log('Subscription redirect details:', {
         returnPath,
         referringPagePath,
@@ -417,7 +368,6 @@ const SubscriptionPage = () => {
         userRole
       });
       
-      // Navigate to the determined path with subscription state
       navigate(dashboardPath, { 
         state: { 
           from: 'subscription',
@@ -436,7 +386,6 @@ const SubscriptionPage = () => {
         variant: "destructive"
       });
       
-      // Track failed subscription for admin analytics
       await trackEngagement('subscription_failed', {
         plan_id: planId,
         plan_name: plans.find(p => p.id === planId)?.name,
@@ -491,133 +440,186 @@ const SubscriptionPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container px-4 py-8">
-        <DashboardHeader breadcrumbItems={breadcrumbItems} />
-        
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-6"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">Subscribe to Access Premium Features</h1>
-              {featureType && (
-                <p className="text-lg text-primary mt-2">
-                  <span className="font-medium">Feature: {featureType}</span>
-                </p>
-              )}
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleGoBack}
-              className="flex items-center gap-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Go Back
-            </Button>
-          </div>
+    <PayPalScriptProvider options={{ 
+      "client-id": paypalClientId,
+      currency: "USD",
+      intent: "subscription",
+      vault: true,
+    }}>
+      <div className="min-h-screen bg-background">
+        <div className="container px-4 py-8">
+          <DashboardHeader breadcrumbItems={breadcrumbItems} />
           
-          <div className="bg-muted/30 border p-4 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Crown className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="font-semibold text-lg">Upgrade to Unlock {featureType}</h3>
-                <p className="text-muted-foreground">
-                  Choose the plan that best fits your needs to access this premium feature and more.
-                </p>
-                {userSubscription && (
-                  <p className="mt-2 text-sm">
-                    <span className="font-medium">Your Current Plan:</span> {
-                      plans.find(p => p.id === userSubscription)?.name || "Basic"
-                    }
+                <h1 className="text-3xl font-bold">Subscribe to Access Premium Features</h1>
+                {featureType && (
+                  <p className="text-lg text-primary mt-2">
+                    <span className="font-medium">Feature: {featureType}</span>
                   </p>
                 )}
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleGoBack}
+                className="flex items-center gap-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Go Back
+              </Button>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            {plans.map((plan) => {
-              const isCurrentUserPlan = isCurrentPlan(plan.id);
-              const planAction = getPlanAction(plan.id);
-              
-              return (
-                <Card 
-                  key={plan.id} 
-                  className={`border-2 ${isCurrentUserPlan ? 'border-primary/30 bg-primary/5' : planAction === "same" ? 'border-gray-300' : selectedPlan === plan.id ? 'border-primary' : 'border-border'} ${
-                    plan.popular ? 'relative shadow-lg' : ''
-                  }`}
-                >
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 right-4 bg-primary">Most Popular</Badge>
+            
+            <div className="bg-muted/30 border p-4 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Crown className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-lg">Upgrade to Unlock {featureType}</h3>
+                  <p className="text-muted-foreground">
+                    Choose the plan that best fits your needs to access this premium feature and more.
+                  </p>
+                  {userSubscription && (
+                    <p className="mt-2 text-sm">
+                      <span className="font-medium">Your Current Plan:</span> {
+                        plans.find(p => p.id === userSubscription)?.name || "Basic"
+                      }
+                    </p>
                   )}
-                  {isCurrentUserPlan && (
-                    <Badge className="absolute -top-3 left-4 bg-green-500">Current Plan</Badge>
-                  )}
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <div className="flex items-end gap-1">
-                      <span className="text-3xl font-bold">{plan.price}</span>
-                      {plan.period && <span className="text-gray-500">/{plan.period}</span>}
-                    </div>
-                    <CardDescription>{plan.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          {feature.included ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-gray-300 flex-shrink-0" />
-                          )}
-                          <span className={feature.included ? "text-gray-700" : "text-gray-400"}>
-                            {feature.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      className={`w-full ${getButtonColor(plan)}`}
-                      onClick={() => handleSubscribe(plan.id)}
-                      disabled={processingPayment || isCurrentUserPlan || planAction === "same"}
-                    >
-                      {processingPayment && selectedPlan === plan.id ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Processing...
-                        </div>
-                      ) : (
-                        isCurrentUserPlan ? "Current Plan" : planAction === "same" ? "Already Subscribed" : getButtonText(plan)
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+              {plans.map((plan) => {
+                const isCurrentUserPlan = isCurrentPlan(plan.id);
+                const planAction = getPlanAction(plan.id);
+                
+                return (
+                  <Card 
+                    key={plan.id} 
+                    className={`border-2 ${isCurrentUserPlan ? 'border-primary/30 bg-primary/5' : planAction === "same" ? 'border-gray-300' : selectedPlan === plan.id ? 'border-primary' : 'border-border'} ${
+                      plan.popular ? 'relative shadow-lg' : ''
+                    }`}
+                  >
+                    {plan.popular && (
+                      <Badge className="absolute -top-3 right-4 bg-primary">Most Popular</Badge>
+                    )}
+                    {isCurrentUserPlan && (
+                      <Badge className="absolute -top-3 left-4 bg-green-500">Current Plan</Badge>
+                    )}
+                    <CardHeader>
+                      <CardTitle>{plan.name}</CardTitle>
+                      <div className="flex items-end gap-1">
+                        <span className="text-3xl font-bold">{plan.price}</span>
+                        {plan.period && <span className="text-gray-500">/{plan.period}</span>}
+                      </div>
+                      <CardDescription>{plan.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        {plan.features.map((feature, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            {feature.included ? (
+                              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                            )}
+                            <span className={feature.included ? "text-gray-700" : "text-gray-400"}>
+                              {feature.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col gap-2">
+                      {!isCurrentUserPlan && plan.id !== "basic" && (
+                        <PayPalSubscribeButton
+                          planId={plan.id}
+                          planName={plan.name}
+                          price={plan.price.toString()}
+                          className="w-full"
+                          variant={plan.popular ? "default" : "outline"}
+                          onSuccess={(subscriptionId) => {
+                            toast({
+                              title: "Subscription Activated",
+                              description: `Successfully subscribed to ${plan.name}!`,
+                              variant: "default",
+                            });
+                            
+                            trackEngagement('subscription_completed', {
+                              plan_id: plan.id,
+                              plan_name: plan.name,
+                              feature_accessed: featureType,
+                              price: plan.price,
+                              previous_plan: userSubscription,
+                              action: planAction,
+                              payment_method: 'paypal'
+                            });
+                            
+                            setUserSubscription(plan.id);
+                          }}
+                          onError={(error) => {
+                            toast({
+                              title: "Subscription Failed",
+                              description: "There was an error processing your subscription.",
+                              variant: "destructive",
+                            });
+                            
+                            trackEngagement('subscription_failed', {
+                              plan_id: plan.id,
+                              plan_name: plan.name,
+                              error: error.message,
+                              payment_method: 'paypal'
+                            });
+                          }}
+                        />
                       )}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg mt-6">
-            <h3 className="font-medium text-lg">Payment Options</h3>
-            <p className="text-gray-600 mt-2">
-              We accept all major credit cards as well as PayPal. For premium plans, we also offer invoice payments.
-              All payments are securely processed and your information is never stored on our servers.
-            </p>
-            <div className="flex gap-4 mt-4">
-              <img src="https://cdn.pixabay.com/photo/2015/05/26/09/37/paypal-784404_1280.png" alt="PayPal" className="h-8" />
-              <img src="https://cdn.pixabay.com/photo/2021/12/08/05/16/visa-6855535_1280.png" alt="Visa" className="h-8" />
-              <img src="https://cdn.pixabay.com/photo/2015/09/15/18/17/mastercard-941393_1280.jpg" alt="Mastercard" className="h-8" />
+                      
+                      <Button 
+                        className={`w-full ${getButtonColor(plan)}`}
+                        onClick={() => handleSubscribe(plan.id)}
+                        disabled={processingPayment || isCurrentUserPlan || planAction === "same" || plan.id !== "basic"}
+                      >
+                        {processingPayment && selectedPlan === plan.id ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Processing...
+                          </div>
+                        ) : (
+                          isCurrentUserPlan ? "Current Plan" : 
+                          planAction === "same" ? "Already Subscribed" : 
+                          plan.id === "basic" ? "Select Free Plan" : 
+                          "Other Payment Options"
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
-          </div>
-        </motion.div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg mt-6">
+              <h3 className="font-medium text-lg">Payment Options</h3>
+              <p className="text-gray-600 mt-2">
+                We accept all major credit cards through PayPal. For premium plans, we also offer invoice payments.
+                All payments are securely processed and your information is never stored on our servers.
+              </p>
+              <div className="flex gap-4 mt-4">
+                <img src="https://cdn.pixabay.com/photo/2015/05/26/09/37/paypal-784404_1280.png" alt="PayPal" className="h-8" />
+                <img src="https://cdn.pixabay.com/photo/2021/12/08/05/16/visa-6855535_1280.png" alt="Visa" className="h-8" />
+                <img src="https://cdn.pixabay.com/photo/2015/09/15/18/17/mastercard-941393_1280.jpg" alt="Mastercard" className="h-8" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </PayPalScriptProvider>
   );
 };
 
