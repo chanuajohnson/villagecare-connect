@@ -136,9 +136,7 @@ const Index = () => {
           once: true
         }} className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Who is Tavara For?</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Compare our different user journeys and find the perfect fit for your role in the care ecosystem.
-            </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Find your perfect match, whether you’re seeking care or providing care</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
