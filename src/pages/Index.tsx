@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCog, Heart, ArrowRight, Check, Vote, HelpCircle } from "lucide-react";
@@ -7,7 +6,6 @@ import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Fab } from "@/components/ui/fab";
-
 const roles = [{
   id: "family",
   title: "Family",
@@ -27,7 +25,6 @@ const roles = [{
   cta: "Get Hired as a Skilled Care Professional",
   features: ["Showcase qualifications", "Find care opportunities", "Manage client relationships", "Track care delivery", "Access training resources", "Professional development"]
 }];
-
 const communityRole = {
   id: "community",
   title: "Community",
@@ -38,12 +35,10 @@ const communityRole = {
   cta: "Join the Village",
   features: ["Join care circles", "Share local resources", "Participate in community events", "Offer support services", "Connect with families", "Track community impact"]
 };
-
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const comparisonRef = useRef<HTMLDivElement>(null);
-
   const handleRoleSelect = (roleId: string) => {
     if (roleId === "community") {
       const role = communityRole;
@@ -59,17 +54,14 @@ const Index = () => {
       }
     }
   };
-
   const handleGetStarted = () => {
     comparisonRef.current?.scrollIntoView({
       behavior: "smooth"
     });
   };
-
   const goToFeatures = () => {
     navigate('/features');
   };
-
   return <div className="min-h-screen w-full bg-gradient-to-b from-white to-primary-100">
       <div className="container px-4 py-12 mx-auto">
         <motion.div initial={{
@@ -143,9 +135,7 @@ const Index = () => {
         }} viewport={{
           once: true
         }} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Who is This For?
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Who is Tavara For?</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Compare our different user journeys and find the perfect fit for your role in the care ecosystem.
             </p>
@@ -212,16 +202,16 @@ const Index = () => {
 
           <div className="max-w-3xl mx-auto">
             <motion.div initial={{
-              opacity: 0,
-              y: 20
-            }} whileInView={{
-              opacity: 1,
-              y: 0
-            }} transition={{
-              duration: 0.5
-            }} viewport={{
-              once: true
-            }}>
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }} viewport={{
+            once: true
+          }}>
               <Card className="h-full">
                 <CardHeader>
                   <div className="mb-4">
@@ -305,13 +295,7 @@ const Index = () => {
         </div>
       </div>
       
-      <Fab 
-        icon={<HelpCircle className="h-5 w-5" />}
-        className="bg-primary-500 hover:bg-primary-600 text-white" 
-        showMenu={true}
-        label="Support options"
-      />
+      <Fab icon={<HelpCircle className="h-5 w-5" />} className="bg-primary-500 hover:bg-primary-600 text-white" showMenu={true} label="Support options" />
     </div>;
 };
-
 export default Index;
