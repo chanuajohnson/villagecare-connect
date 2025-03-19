@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
 import { FeatureInterestTracker } from "@/components/admin/FeatureInterestTracker";
+import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 
 const AdminDashboard = () => {
   const breadcrumbItems = [
@@ -33,11 +34,15 @@ const AdminDashboard = () => {
           <p className="text-gray-600 mt-2">Manage system settings and user accounts.</p>
         </motion.div>
 
-        <div className="mb-8">
-          <FeatureInterestTracker />
-        </div>
+        <div className="space-y-8">
+          <AdminUserManagement />
+          
+          <div className="mt-8">
+            <FeatureInterestTracker />
+          </div>
 
-        <DashboardCardGrid />
+          <DashboardCardGrid />
+        </div>
       </div>
     </div>
   );
