@@ -14,11 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { updateUserProfile } from '@/lib/profile-utils';
 
 // Define form schema with Zod
 const professionalFormSchema = z.object({
@@ -223,47 +221,64 @@ const ProfessionalRegistration = () => {
       // Combine first and last name for full_name
       const full_name = `${data.first_name} ${data.last_name}`.trim();
   
-      // Update profile using the utility function
-      const { success, error } = await updateUserProfile(user.id, {
-        // Basic information
-        full_name,
-        avatar_url: avatar_url || undefined, // Only update if we have a new image
-        phone_number: data.phone,
-        address: data.location,
-        preferred_contact_method: data.preferred_contact_method,
-        
-        // Professional specific fields
-        professional_type: data.professional_type,
-        other_certification: data.other_professional_type,
-        years_of_experience: data.years_of_experience,
-        certifications: data.certifications ? [data.certifications] : [],
-        care_services: data.care_services,
-        medical_conditions_experience: data.medical_conditions_experience,
-        other_medical_condition: data.other_medical_condition,
-        availability: data.availability,
-        work_type: data.work_type,
-        
-        // Specific capabilities
-        administers_medication: data.administers_medication,
-        provides_housekeeping: data.provides_housekeeping,
-        provides_transportation: data.provides_transportation,
-        handles_medical_equipment: data.handles_medical_equipment,
-        has_liability_insurance: data.has_liability_insurance,
-        background_check: data.background_check,
-        
-        // Additional information
-        emergency_contact: data.emergency_contact,
-        hourly_rate: data.hourly_rate,
-        additional_professional_notes: data.additional_professional_notes,
-        
-        // Important role flag
-        role: 'professional',
-        location: data.location,
-      });
+      // Update profile directly, similar to the family registration flow
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          // Basic information
+          full_name,
+          avatar_url: avatar_url || undefined, // Only update if we have a new image
+          phone_number: data.phone,
+          address: data.location,
+          location: data.location,
+          preferred_contact_method: data.preferred_contact_method,
+          
+          // Professional specific fields
+          professional_type: data.professional_type,
+          other_certification: data.other_professional_type,
+          years_of_experience: data.years_of_experience,
+          certifications: data.certifications ? [data.certifications] : [],
+          care_services: data.care_services,
+          medical_conditions_experience: data.medical_conditions_experience,
+          other_medical_condition: data.other_medical_condition,
+          availability: data.availability,
+          work_type: data.work_type,
+          
+          // Specific capabilities
+          administers_medication: data.administers_medication,
+          provides_housekeeping: data.provides_housekeeping,
+          provides_transportation: data.provides_transportation,
+          handles_medical_equipment: data.handles_medical_equipment,
+          has_liability_insurance: data.has_liability_insurance,
+          background_check: data.background_check,
+          
+          // Additional information
+          emergency_contact: data.emergency_contact,
+          hourly_rate: data.hourly_rate,
+          additional_professional_notes: data.additional_professional_notes,
+          
+          // Important role flag
+          role: 'professional',
+          
+          // First name and last name separately
+          first_name: data.first_name,
+          last_name: data.last_name
+        })
+        .eq('id', user.id);
   
-      if (!success) {
+      if (error) {
         console.error("Error updating profile:", error);
-        throw new Error(`Error updating professional profile: ${error}`);
+        throw new Error(`Error updating professional profile: ${error.message}`);
+      }
+      
+      // Update user metadata to match database role
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { role: 'professional' }
+      });
+      
+      if (metadataError) {
+        console.warn("Error updating user metadata:", metadataError);
+        // Continue anyway - this is not critical
       }
   
       toast.success(isProfileManagement 
@@ -271,6 +286,7 @@ const ProfessionalRegistration = () => {
         : "Professional registration completed successfully!"
       );
       
+      // Navigate directly to the professional dashboard
       navigate('/dashboard/professional');
     } catch (error) {
       console.error('Registration error:', error);
