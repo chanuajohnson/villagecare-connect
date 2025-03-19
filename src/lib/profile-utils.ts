@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -119,6 +118,35 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
         success: false, 
         error: `Profile update error: ${updateError.message}` 
       };
+    }
+    
+    // Force update the user's metadata to keep it in sync with profile
+    if (profileData.role || profileData.full_name || profileData.first_name || profileData.last_name) {
+      try {
+        const metadata: any = {};
+        
+        if (profileData.role) {
+          metadata.role = profileData.role;
+        }
+        
+        if (profileData.full_name) {
+          metadata.full_name = profileData.full_name;
+        }
+        
+        if (profileData.first_name) {
+          metadata.first_name = profileData.first_name;
+        }
+        
+        if (profileData.last_name) {
+          metadata.last_name = profileData.last_name;
+        }
+        
+        console.log('Updating user metadata:', metadata);
+        await supabase.auth.updateUser({ data: metadata });
+      } catch (metadataError) {
+        console.error('Error updating user metadata:', metadataError);
+        // Continue anyway as profile was updated
+      }
     }
     
     console.log('Profile updated successfully, response:', data);

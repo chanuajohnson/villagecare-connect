@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Checking profile completion for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, role')
+        .select('full_name, avatar_url, role, professional_type, first_name, last_name')
         .eq('id', userId)
         .maybeSingle();
       
@@ -178,9 +178,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(profile.role);
       }
       
-      const profileComplete = profile && !!profile.full_name;
-      setIsProfileComplete(profileComplete);
+      let profileComplete = false;
+      
+      if (profile) {
+        if (profile.role === 'professional') {
+          profileComplete = !!(profile.full_name || (profile.first_name && profile.last_name)) && 
+                           !!profile.professional_type;
+        } else {
+          profileComplete = !!(profile.full_name || (profile.first_name && profile.last_name));
+        }
+      }
+      
       console.log('[AuthProvider] Profile complete:', profileComplete);
+      setIsProfileComplete(profileComplete);
       return profileComplete;
     } catch (error) {
       console.error('[AuthProvider] Error checking profile completion:', error);
@@ -273,7 +283,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthProvider] Current user role:', userRole);
       console.log('[AuthProvider] Current path:', location.pathname);
       
-      // Determine user role
       let effectiveRole = userRole;
       if (!effectiveRole && user.user_metadata?.role) {
         console.log('[AuthProvider] Setting user role from metadata:', user.user_metadata.role);
@@ -281,11 +290,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(user.user_metadata.role);
       }
       
-      // Check if profile is complete
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
-      // If profile is not complete, redirect to registration page
+      if (profileComplete && location.pathname.includes('/registration/')) {
+        console.log('[AuthProvider] Profile is complete and user is on registration page, redirecting to dashboard');
+        const dashboardPath = effectiveRole ? `/dashboard/${effectiveRole.toLowerCase()}` : '/';
+        safeNavigate(dashboardPath, { skipCheck: true });
+        toast.success(`Profile completed successfully! Welcome to your dashboard.`);
+        isRedirectingRef.current = false;
+        return;
+      }
+      
       if (!profileComplete) {
         let registrationPath = '/registration/family';
         
@@ -303,7 +319,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Handle pending actions first if they exist
       const pendingFeatureId = localStorage.getItem('pendingFeatureId') || localStorage.getItem('pendingFeatureUpvote');
       if (pendingFeatureId) {
         await checkPendingUpvote();
@@ -311,7 +326,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Other pending actions
       const pendingBooking = localStorage.getItem('pendingBooking');
       if (pendingBooking) {
         localStorage.removeItem('pendingBooking');
@@ -336,7 +350,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // If no pending actions, redirect to role-specific dashboard
       if (effectiveRole) {
         const dashboardRoutes: Record<UserRole, string> = {
           'family': '/dashboard/family',
@@ -451,11 +464,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     console.log('[AuthProvider] User loaded. Handling redirection...');
     
-    // Redirect to appropriate dashboard only if on auth page or if initial redirection hasn't happened
+    if (location.pathname.includes('/registration/') && isProfileComplete) {
+      console.log('[AuthProvider] User has completed profile but is still on registration page');
+      const dashboardPath = userRole ? `/dashboard/${userRole.toLowerCase()}` : '/';
+      safeNavigate(dashboardPath, { skipCheck: true });
+      toast.success(`Welcome to your dashboard!`);
+      return;
+    }
+    
     if (!initialRedirectionDoneRef.current || location.pathname === '/auth') {
       handlePostLoginRedirection();
     }
-  }, [isLoading, user, userRole]);
+  }, [isLoading, user, userRole, isProfileComplete, location.pathname]);
 
   useEffect(() => {
     const clearStaleState = async () => {
@@ -580,7 +600,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isSigningOutRef.current = true;
       setLoadingWithTimeout(true, 'sign-out');
       
-      // First, clear local state regardless of Supabase API success
       setSession(null);
       setUser(null);
       setUserRole(null);
@@ -593,20 +612,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('lastAuthState');
       
       try {
-        // Try to sign out from Supabase, but don't block on it
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('[AuthProvider] Supabase sign out error:', error);
-          // Still consider the sign-out successful from user perspective
-          // We already cleared local state above
         }
       } catch (supabaseError) {
-        // Catch any Supabase API errors, including network errors
-        console.error('[AuthProvider] Exception during Supabase signOut:', supabaseError);
-        // We can still consider the sign-out successful as we cleared local state
+        console.error('[AuthProvider] Exception during Supabase signOut:', supababError);
       }
       
-      // Always navigate away and show success message regardless of Supabase API result
       safeNavigate('/', { skipCheck: true, replace: true });
       toast.success('You have been signed out successfully');
       
@@ -615,7 +628,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('[AuthProvider] Error in signOut outer try/catch:', error);
       
-      // Failsafe: ensure user is signed out locally even if something went wrong
       setSession(null);
       setUser(null);
       setUserRole(null);
