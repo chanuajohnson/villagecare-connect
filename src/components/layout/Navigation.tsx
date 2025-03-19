@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -22,7 +21,6 @@ export function Navigation() {
   const { user, signOut, isLoading, userRole } = useAuth();
   const location = useLocation();
 
-  // Enhanced logging for debugging purposes
   console.log('Navigation render -', { 
     user: !!user, 
     isLoading, 
@@ -40,22 +38,16 @@ export function Navigation() {
     try {
       toast.loading("Signing out...");
       
-      // Attempt sign out with timeout to prevent hanging
       const signOutPromise = signOut();
       
-      // Set a timeout to ensure the operation doesn't hang
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Sign out timed out')), 5000);
       });
       
-      // Race between normal sign out and timeout
       await Promise.race([signOutPromise, timeoutPromise]);
-      
-      // The signOut function now handles success messaging
     } catch (error) {
       console.error('Error in Navigation signOut handler:', error);
       
-      // If the error is a timeout or other critical error, use the reset function
       if (error instanceof Error && (
         error.message.includes('timed out') || 
         error.message.includes('JWT') ||
@@ -65,13 +57,11 @@ export function Navigation() {
         await resetAuthState();
       }
       
-      // Force a successful logout even if there's an error with Supabase
       toast.dismiss();
       toast.success('You have been signed out successfully');
     }
   };
 
-  // Get dashboard path based on user role
   const getDashboardPath = () => {
     if (!userRole) return null;
     
@@ -109,7 +99,6 @@ export function Navigation() {
           </Link>
           
           {user && dashboardPath ? (
-            // Show only user's specific dashboard when logged in
             <Link to={dashboardPath} className="flex items-center gap-1 text-gray-700 hover:text-primary">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">
@@ -117,7 +106,6 @@ export function Navigation() {
               </span>
             </Link>
           ) : !user ? (
-            // Show all dashboards dropdown when not logged in
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center gap-1">
@@ -154,9 +142,8 @@ export function Navigation() {
           ) : user ? (
             <Button 
               onClick={handleSignOut}
-              variant="destructive"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-primary-600 text-white hover:bg-primary-700 transition-colors"
             >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
