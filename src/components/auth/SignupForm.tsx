@@ -75,7 +75,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
     return (
       <div className="space-y-4 text-center py-8">
         <div className="flex justify-center">
-          <div className="bg-green-100 text-green-800 p-4 rounded-md">
+          <div className="bg-primary-100 text-primary-800 p-4 rounded-md">
             <h3 className="font-medium text-lg">Registration Started!</h3>
             <div className="mt-2 space-y-4">
               <p>
