@@ -27,7 +27,9 @@ serve(async (req) => {
     console.log("PayPal Complete Subscription function called");
     
     // Get the request body
-    const { subscriptionId } = await req.json();
+    const requestBody = await req.json();
+    const { subscriptionId } = requestBody;
+    
     console.log("Completing subscription:", subscriptionId);
 
     if (!subscriptionId) {
@@ -57,37 +59,41 @@ serve(async (req) => {
     console.log("Connecting to Supabase...");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log("Fetching subscription details for ID:", subscriptionId);
-    const { data: subscriptionData, error: subscriptionError } = await supabase
+    let subscriptionData;
+    
+    // First try to find the subscription by PayPal subscription ID
+    console.log("Trying to find subscription by PayPal ID:", subscriptionId);
+    const { data: paypalSubscriptionData, error: paypalSubscriptionError } = await supabase
       .from("user_subscriptions")
       .select("*")
-      .eq("id", subscriptionId)
+      .eq("paypal_subscription_id", subscriptionId)
       .single();
-
-    if (subscriptionError || !subscriptionData) {
-      console.error("Subscription not found:", subscriptionError);
       
-      // Try to find by PayPal subscription ID if not found by our ID
-      console.log("Trying to find by PayPal subscription ID...");
-      const { data: paypalSubscriptionData, error: paypalSubscriptionError } = await supabase
+    if (paypalSubscriptionData) {
+      console.log("Found subscription by PayPal ID:", paypalSubscriptionData);
+      subscriptionData = paypalSubscriptionData;
+    } else {
+      // If not found by PayPal ID, try by our internal ID
+      console.log("Fetching subscription details for ID:", subscriptionId);
+      const { data, error } = await supabase
         .from("user_subscriptions")
         .select("*")
-        .eq("paypal_subscription_id", subscriptionId)
+        .eq("id", subscriptionId)
         .single();
-        
-      if (paypalSubscriptionError || !paypalSubscriptionData) {
-        console.error("Subscription not found by PayPal ID either:", paypalSubscriptionError);
+  
+      if (error || !data) {
+        console.error("Subscription not found:", error);
         return new Response(
           JSON.stringify({ 
             error: "Subscription not found", 
-            details: subscriptionError || paypalSubscriptionError
+            details: error
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
-      console.log("Found subscription by PayPal ID:", paypalSubscriptionData);
-      subscriptionData = paypalSubscriptionData;
+      console.log("Found subscription by internal ID:", data);
+      subscriptionData = data;
     }
 
     // Verify the subscription status with PayPal
@@ -140,8 +146,9 @@ serve(async (req) => {
     console.error("Error completing subscription:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Unknown error",
-        stack: error.stack
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : "No stack trace",
+        type: typeof error
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -188,15 +195,23 @@ async function getPayPalSubscriptionDetails(accessToken, subscriptionId) {
       },
     });
 
+    const responseText = await response.text();
+    console.log(`PayPal API response (status ${response.status}):`, responseText);
+
     if (!response.ok) {
-      const errorResponse = await response.text();
-      console.error("PayPal subscription details error:", errorResponse);
-      throw new Error(`Failed to get subscription details from PayPal: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to get subscription details from PayPal: ${response.status} ${response.statusText} - ${responseText}`);
     }
 
-    const data = await response.json();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse PayPal response as JSON:", e);
+      throw new Error("Invalid response format from PayPal");
+    }
+    
     console.log("PayPal subscription details retrieved successfully");
-    return data;
+    return jsonResponse;
   } catch (error) {
     console.error("Error in getPayPalSubscriptionDetails:", error);
     throw error;

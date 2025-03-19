@@ -5,7 +5,7 @@ import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { usePayPalSubscription } from '@/hooks/usePayPalSubscription';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface PayPalSubscribeButtonProps {
   planId: string;
@@ -75,12 +75,10 @@ export function PayPalSubscribeButton({
       console.error("Error creating subscription:", error);
       
       // Show toast with error
-      toast({
-        title: "Subscription Error",
+      toast.error("Subscription Error", {
         description: error instanceof Error 
           ? error.message 
-          : "An unknown error occurred while creating your subscription",
-        variant: "destructive",
+          : "An unknown error occurred while creating your subscription"
       });
       
       if (onError) onError(error instanceof Error ? error : new Error('Unknown error'));
@@ -147,10 +145,8 @@ export function PayPalSubscribeButton({
               }
               
               // Show success toast
-              toast({
-                title: "Subscription Activated",
-                description: `Your ${planName} subscription has been activated successfully!`,
-                variant: "default",
+              toast.success("Subscription Activated", {
+                description: `Your ${planName} subscription has been activated successfully!`
               });
               
               // Navigate to success page
@@ -164,12 +160,10 @@ export function PayPalSubscribeButton({
               console.error("Error completing subscription:", error);
               
               // Show error toast
-              toast({
-                title: "Subscription Error",
+              toast.error("Subscription Error", {
                 description: error instanceof Error 
                   ? error.message 
-                  : "An unknown error occurred while activating your subscription",
-                variant: "destructive",
+                  : "An unknown error occurred while activating your subscription"
               });
               
               if (onError) onError(error instanceof Error ? error : new Error('Unknown error'));
@@ -196,12 +190,10 @@ export function PayPalSubscribeButton({
             }
             
             // Show error toast
-            toast({
-              title: "PayPal Error",
+            toast.error("PayPal Error", {
               description: typeof err === 'object' && err !== null && 'message' in err 
                 ? String(err.message) 
-                : 'An error occurred with PayPal. Please try again.',
-              variant: "destructive",
+                : 'An error occurred with PayPal. Please try again.'
             });
           }}
           onCancel={() => {

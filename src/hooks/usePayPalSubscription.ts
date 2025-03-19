@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { useTracking } from './useTracking';
 
 interface CreateSubscriptionParams {
@@ -26,10 +26,8 @@ export function usePayPalSubscription() {
    */
   const createSubscription = async ({ planId, returnUrl, cancelUrl }: CreateSubscriptionParams) => {
     if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be logged in to subscribe",
-        variant: "destructive",
+      toast.error("Authentication Required", {
+        description: "You must be logged in to subscribe"
       });
       return null;
     }
@@ -90,10 +88,8 @@ export function usePayPalSubscription() {
    */
   const completeSubscription = async ({ subscriptionId }: CompleteSubscriptionParams) => {
     if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be logged in to complete subscription",
-        variant: "destructive",
+      toast.error("Authentication Required", {
+        description: "You must be logged in to complete subscription"
       });
       return null;
     }
@@ -130,10 +126,8 @@ export function usePayPalSubscription() {
         payment_method: 'paypal',
       });
 
-      toast({
-        title: "Subscription Active",
-        description: "Your subscription has been activated successfully!",
-        variant: "default",
+      toast.success("Subscription Active", {
+        description: "Your subscription has been activated successfully!"
       });
 
       return data.subscription;
@@ -193,10 +187,8 @@ export function usePayPalSubscription() {
    */
   const cancelSubscription = async (subscriptionId: string) => {
     if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "You must be logged in to cancel a subscription",
-        variant: "destructive",
+      toast.error("Authentication Required", {
+        description: "You must be logged in to cancel a subscription"
       });
       return false;
     }
@@ -218,10 +210,8 @@ export function usePayPalSubscription() {
 
       if (error) {
         console.error('Error cancelling subscription:', error);
-        toast({
-          title: "Cancellation Failed",
-          description: "Failed to cancel your subscription. Please try again.",
-          variant: "destructive",
+        toast.error("Cancellation Failed", {
+          description: "Failed to cancel your subscription. Please try again."
         });
         return false;
       }
@@ -232,19 +222,15 @@ export function usePayPalSubscription() {
         user_id: user.id,
       });
 
-      toast({
-        title: "Subscription Cancelled",
-        description: "Your subscription has been cancelled successfully.",
-        variant: "default",
+      toast.success("Subscription Cancelled", {
+        description: "Your subscription has been cancelled successfully."
       });
 
       return true;
     } catch (error) {
       console.error('Error in cancelSubscription:', error);
-      toast({
-        title: "Cancellation Error",
-        description: "An unexpected error occurred. Please try again later.",
-        variant: "destructive",
+      toast.error("Cancellation Error", {
+        description: "An unexpected error occurred. Please try again later."
       });
       return false;
     } finally {
