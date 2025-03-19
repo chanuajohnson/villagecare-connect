@@ -102,11 +102,21 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
-      // Use the exact domain as configured in Supabase site URL
-      // This is critical for password reset to work correctly
-      const siteUrl = window.location.origin;
+      // Get the main domain (not preview domain)
+      // This ensures we use the actual production URL and not the preview URL
+      const currentDomain = window.location.hostname;
+      // Extract the base domain by removing any preview subdomain
+      const baseDomain = currentDomain.includes('preview--') 
+        ? currentDomain.replace('preview--', '') 
+        : currentDomain;
+      
+      // Construct the site URL using either https://domain or http://localhost for development
+      const protocol = window.location.protocol;
+      const port = window.location.port ? `:${window.location.port}` : '';
+      const baseUrl = `${protocol}//${baseDomain}${port}`;
+      
       const resetPath = "/auth/reset-password";
-      const resetPasswordUrl = `${siteUrl}${resetPath}`;
+      const resetPasswordUrl = `${baseUrl}${resetPath}`;
       
       console.log("[AuthPage] Using reset password redirect URL:", resetPasswordUrl);
 
