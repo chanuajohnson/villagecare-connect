@@ -33,6 +33,7 @@ export const AdminUserManagement = () => {
       
       // Check if Supabase is available
       if (!supabase) {
+        console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
@@ -68,6 +69,7 @@ export const AdminUserManagement = () => {
       
       // Check if Supabase is available
       if (!supabase) {
+        console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
@@ -153,7 +155,7 @@ export const AdminUserManagement = () => {
     }
   };
 
-  // Use useEffect instead of useState for initial fetch
+  // Use useEffect for initial fetch
   useEffect(() => {
     fetchUsers();
     fetchSubscriptionData();
