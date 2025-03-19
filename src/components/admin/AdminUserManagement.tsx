@@ -12,7 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export const AdminUserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -20,6 +25,7 @@ export const AdminUserManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -64,30 +70,36 @@ export const AdminUserManagement = () => {
     }
   };
 
+  // Array of tables to clean up before deleting a user
+  const tablesToCleanup = [
+    { name: 'feature_interest_tracking', column: 'user_id' },
+    { name: 'professional_locations', column: 'user_id' },
+    { name: 'cta_engagement_tracking', column: 'user_id' },
+    { name: 'feature_upvotes', column: 'user_id' },
+    { name: 'feature_votes', column: 'user_id' },
+    { name: 'user_module_progress', column: 'user_id' },
+    { name: 'user_subscriptions', column: 'user_id' },
+    { name: 'meal_plans', column: 'user_id' },
+    { name: 'payment_transactions', column: 'user_id' },
+    { name: 'prepped_meal_orders', column: 'user_id' }
+  ];
+
   const handleDeleteUser = async (userId: string) => {
     try {
       setIsLoadingDelete(userId);
+      setDeleteError(null);
       
-      // First, manually delete any records in feature_interest_tracking that reference this user
-      const { error: deleteTrackingError } = await supabase
-        .from('feature_interest_tracking')
-        .delete()
-        .eq('user_id', userId);
-        
-      if (deleteTrackingError) {
-        console.error('Error deleting feature tracking data:', deleteTrackingError);
-        // Continue anyway as we'll try the admin function
-      }
-      
-      // Check for and delete professional_locations records
-      const { error: deleteLocationsError } = await supabase
-        .from('professional_locations')
-        .delete()
-        .eq('user_id', userId);
-        
-      if (deleteLocationsError) {
-        console.error('Error deleting location data:', deleteLocationsError);
-        // Continue anyway
+      // First, sequentially delete records from all related tables
+      for (const table of tablesToCleanup) {
+        const { error } = await supabase
+          .from(table.name)
+          .delete()
+          .eq(table.column, userId);
+          
+        if (error) {
+          console.error(`Error deleting from ${table.name}:`, error);
+          // Continue with other tables even if one fails
+        }
       }
 
       // Now try the admin delete function which handles the rest
@@ -104,6 +116,7 @@ export const AdminUserManagement = () => {
       setUsers(users.filter(user => user.id !== userId));
     } catch (error: any) {
       console.error('Full delete user error:', error);
+      setDeleteError(error.message);
       toast.error('Error deleting user: ' + error.message);
     } finally {
       setIsLoadingDelete(null);
@@ -136,6 +149,22 @@ export const AdminUserManagement = () => {
               ) : "Refresh"}
             </Button>
           </div>
+
+          {deleteError && (
+            <div className="bg-destructive/15 p-4 rounded-md mb-4 border border-destructive/30">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-destructive mr-2 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-destructive">Error deleting user</h3>
+                  <p className="text-sm text-destructive/90 mt-1">{deleteError}</p>
+                  <p className="text-sm text-destructive/80 mt-2">
+                    Note: If deletion fails through this interface, you may need to manually delete
+                    records in the database that reference this user before trying again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-md border">
             <Table>
