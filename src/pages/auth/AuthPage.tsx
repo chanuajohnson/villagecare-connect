@@ -19,8 +19,23 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
 
   useEffect(() => {
+    // Check for pending email verification by looking at localStorage
+    const registeringAs = localStorage.getItem('registeringAs');
+
+    // If user is already logged in, AuthProvider will handle redirection
     if (user) {
       console.log("[AuthPage] User already logged in, AuthProvider will handle redirection");
+      return;
+    }
+
+    // Check URL for any special parameters that might indicate post-action states
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'verification-pending') {
+      // This state would be set if the user was redirected back here after signup
+      setActiveTab("login");
+      toast.info("Please check your email and click the verification link to continue.");
     }
   }, [user, navigate]);
 
@@ -88,8 +103,11 @@ export default function AuthPage() {
         return true;
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
-        toast.success("Account created! Please check your email to confirm your account.");
-        // We'll stay on the signup page but the component will show a success message
+        // Instead of just showing a toast, we need to store that verification is pending
+        localStorage.setItem('registeringAs', role);
+        
+        // Note: We don't add any URL parameters here since the form will show a proper
+        // success message with instructions
         return true;
       }
 
