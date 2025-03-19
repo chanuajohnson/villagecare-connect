@@ -417,19 +417,31 @@ export const isSupabaseExperiencingIssues = (): boolean => {
   return !isSupabaseAvailable;
 };
 
-// Added utility function to reset auth state in case of persistent issues
+// Enhanced utility function to reset auth state in case of persistent issues
 export const resetAuthState = async () => {
   try {
     console.log('Resetting auth state...');
     
-    // Clear local storage items related to auth
+    // Clear all auth-related local storage items
     localStorage.removeItem('supabase.auth.token');
     localStorage.removeItem('authStateError');
     localStorage.removeItem('authTimeoutRecovery');
     localStorage.removeItem('lastAuthState');
+    localStorage.removeItem('lastAction');
+    localStorage.removeItem('lastPath');
+    localStorage.removeItem('pendingFeatureId');
+    localStorage.removeItem('pendingFeatureUpvote');
+    localStorage.removeItem('pendingBooking');
+    localStorage.removeItem('pendingMessage');
+    localStorage.removeItem('pendingProfileUpdate');
     
-    // Force sign out
-    await supabase.auth.signOut({ scope: 'local' });
+    // Force sign out without relying on the existing session
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.error('Error during forced signOut (non-critical):', error);
+      // Ignore errors here - we've already cleared localStorage
+    }
     
     console.log('Auth state reset complete');
     return true;

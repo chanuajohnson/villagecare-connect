@@ -38,25 +38,23 @@ export function Navigation() {
     try {
       toast.loading("Signing out...");
       
-      const signOutPromise = signOut();
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Sign out timed out')), 5000);
-      });
-      
-      await Promise.race([signOutPromise, timeoutPromise]);
-    } catch (error) {
-      console.error('Error in Navigation signOut handler:', error);
-      
-      if (error instanceof Error && (
-        error.message.includes('timed out') || 
-        error.message.includes('JWT') ||
-        error.message.includes('network')
-      )) {
+      try {
+        await signOut();
+      } catch (error) {
+        console.error('Error in Navigation signOut handler:', error);
+        
+        // Force reset auth state on any sign out error
         console.log('Attempting to force reset auth state...');
         await resetAuthState();
+        
+        // Refresh the page to ensure clean state
+        window.location.href = '/';
       }
-      
+    } catch (finalError) {
+      console.error('Critical error during sign out recovery:', finalError);
+      toast.dismiss();
+      toast.error('Error signing out. Please try refreshing the page.');
+    } finally {
       toast.dismiss();
       toast.success('You have been signed out successfully');
     }

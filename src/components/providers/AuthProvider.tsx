@@ -610,11 +610,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('registrationRole');
       localStorage.removeItem('registeringAs');
       localStorage.removeItem('lastAuthState');
+      localStorage.removeItem('lastAction');
+      localStorage.removeItem('lastPath');
       
       try {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
         if (error) {
           console.error('[AuthProvider] Supabase sign out error:', error);
+          
+          if (error.message && 
+              (error.message.includes('Auth session missing') || 
+               error.message.includes('JWT expired'))) {
+            console.log('[AuthProvider] Ignoring expected auth session error during sign out');
+          } else {
+            throw error;
+          }
         }
       } catch (supabaseError) {
         console.error('[AuthProvider] Exception during Supabase signOut:', supabaseError);
@@ -676,3 +686,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
