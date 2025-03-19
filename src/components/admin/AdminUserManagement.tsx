@@ -30,10 +30,24 @@ export const AdminUserManagement = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, role, created_at')
-        .order('created_at', { ascending: false });
+      
+      // Check if Supabase is available
+      if (!supabase) {
+        toast.error('Supabase client is not initialized');
+        return;
+      }
+
+      // Create query with error handling
+      let query = supabase.from('profiles').select('id, first_name, last_name, role, created_at');
+      
+      // Ensure query methods exist before calling them
+      if (typeof query.order === 'function') {
+        query = query.order('created_at', { ascending: false });
+      } else {
+        console.warn('order method not available on query');
+      }
+
+      const { data: profiles, error } = await query;
 
       if (error) {
         throw error;
@@ -41,6 +55,7 @@ export const AdminUserManagement = () => {
 
       setUsers(profiles || []);
     } catch (error: any) {
+      console.error('Error fetching users:', error);
       toast.error('Error fetching users: ' + error.message);
     } finally {
       setIsLoading(false);
@@ -51,12 +66,26 @@ export const AdminUserManagement = () => {
     try {
       setIsLoadingSubscriptions(true);
       
-      // Fetch subscription events from the tracking table
-      const { data, error } = await supabase
+      // Check if Supabase is available
+      if (!supabase) {
+        toast.error('Supabase client is not initialized');
+        return;
+      }
+      
+      // Create query with error handling
+      let query = supabase
         .from('cta_engagement_tracking')
         .select('*, profiles(first_name, last_name, role)')
-        .or('action_type.eq.subscription_plan_selected,action_type.eq.subscription_completed')
-        .order('created_at', { ascending: false });
+        .or('action_type.eq.subscription_plan_selected,action_type.eq.subscription_completed');
+      
+      // Ensure order method exists before calling it
+      if (typeof query.order === 'function') {
+        query = query.order('created_at', { ascending: false });
+      } else {
+        console.warn('order method not available on query');
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -64,6 +93,7 @@ export const AdminUserManagement = () => {
 
       setSubscriptions(data || []);
     } catch (error: any) {
+      console.error('Error fetching subscription data:', error);
       toast.error('Error fetching subscription data: ' + error.message);
     } finally {
       setIsLoadingSubscriptions(false);
