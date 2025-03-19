@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 
 export const AdminUserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -66,8 +67,32 @@ export const AdminUserManagement = () => {
   const handleDeleteUser = async (userId: string) => {
     try {
       setIsLoadingDelete(userId);
+      
+      // First, manually delete any records in feature_interest_tracking that reference this user
+      const { error: deleteTrackingError } = await supabase
+        .from('feature_interest_tracking')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (deleteTrackingError) {
+        console.error('Error deleting feature tracking data:', deleteTrackingError);
+        // Continue anyway as we'll try the admin function
+      }
+      
+      // Check for and delete professional_locations records
+      const { error: deleteLocationsError } = await supabase
+        .from('professional_locations')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (deleteLocationsError) {
+        console.error('Error deleting location data:', deleteLocationsError);
+        // Continue anyway
+      }
+
+      // Now try the admin delete function which handles the rest
       const { error } = await supabase.rpc('admin_delete_user', {
-        target_user_id: userId,
+        target_user_id: userId
       });
 
       if (error) {
@@ -78,6 +103,7 @@ export const AdminUserManagement = () => {
       // Remove the deleted user from the local state
       setUsers(users.filter(user => user.id !== userId));
     } catch (error: any) {
+      console.error('Full delete user error:', error);
       toast.error('Error deleting user: ' + error.message);
     } finally {
       setIsLoadingDelete(null);
@@ -102,7 +128,12 @@ export const AdminUserManagement = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
             <Button onClick={fetchUsers} disabled={isLoading}>
-              {isLoading ? "Loading..." : "Refresh"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : "Refresh"}
             </Button>
           </div>
 
@@ -133,11 +164,23 @@ export const AdminUserManagement = () => {
                         disabled={isLoadingDelete === user.id || user.role === 'admin'}
                         onClick={() => handleDeleteUser(user.id)}
                       >
-                        {isLoadingDelete === user.id ? "Deleting..." : "Delete"}
+                        {isLoadingDelete === user.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            Deleting...
+                          </>
+                        ) : "Delete"}
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
+                {users.length === 0 && !isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4 text-gray-500">
+                      No users found. Click "Refresh" to try again.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
