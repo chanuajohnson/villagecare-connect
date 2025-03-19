@@ -570,6 +570,7 @@ export type Database = {
           enable_community_notifications: boolean | null
           enable_job_alerts: boolean | null
           expected_rate: string | null
+          first_name: string | null
           full_name: string | null
           handles_medical_equipment: boolean | null
           has_liability_insurance: boolean | null
@@ -580,6 +581,7 @@ export type Database = {
           job_matching_criteria: string[] | null
           job_notification_method: string | null
           languages: string[] | null
+          last_name: string | null
           legally_authorized: boolean | null
           license_number: string | null
           list_in_community_directory: boolean | null
@@ -639,6 +641,7 @@ export type Database = {
           enable_community_notifications?: boolean | null
           enable_job_alerts?: boolean | null
           expected_rate?: string | null
+          first_name?: string | null
           full_name?: string | null
           handles_medical_equipment?: boolean | null
           has_liability_insurance?: boolean | null
@@ -649,6 +652,7 @@ export type Database = {
           job_matching_criteria?: string[] | null
           job_notification_method?: string | null
           languages?: string[] | null
+          last_name?: string | null
           legally_authorized?: boolean | null
           license_number?: string | null
           list_in_community_directory?: boolean | null
@@ -708,6 +712,7 @@ export type Database = {
           enable_community_notifications?: boolean | null
           enable_job_alerts?: boolean | null
           expected_rate?: string | null
+          first_name?: string | null
           full_name?: string | null
           handles_medical_equipment?: boolean | null
           has_liability_insurance?: boolean | null
@@ -718,6 +723,7 @@ export type Database = {
           job_matching_criteria?: string[] | null
           job_notification_method?: string | null
           languages?: string[] | null
+          last_name?: string | null
           legally_authorized?: boolean | null
           license_number?: string | null
           list_in_community_directory?: boolean | null

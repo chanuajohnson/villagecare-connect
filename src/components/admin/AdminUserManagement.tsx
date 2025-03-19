@@ -39,22 +39,25 @@ export const AdminUserManagement = () => {
       }
 
       // Create query with error handling
-      let query = supabase.from('profiles').select('id, first_name, last_name, role, created_at');
-      
-      // Ensure query methods exist before calling them
-      if (typeof query.order === 'function') {
-        query = query.order('created_at', { ascending: false });
-      } else {
-        console.warn('order method not available on query');
-      }
-
-      const { data: profiles, error } = await query;
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, full_name, role, created_at')
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      setUsers(profiles || []);
+      // Process the data to handle both first_name/last_name and full_name fields
+      const processedProfiles = profiles?.map(profile => ({
+        ...profile,
+        // If first_name exists, use it; otherwise fall back to full_name
+        display_name: (profile.first_name && profile.last_name) 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile.full_name || 'Unknown User'
+      })) || [];
+
+      setUsers(processedProfiles);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast.error('Error fetching users: ' + error.message);
@@ -74,26 +77,59 @@ export const AdminUserManagement = () => {
         return;
       }
       
-      // Create query with error handling
-      let query = supabase
+      // Updated query that doesn't rely on the problematic join
+      const { data, error } = await supabase
         .from('cta_engagement_tracking')
-        .select('*, profiles(first_name, last_name, role)')
-        .or('action_type.eq.subscription_plan_selected,action_type.eq.subscription_completed');
-      
-      // Ensure order method exists before calling it
-      if (typeof query.order === 'function') {
-        query = query.order('created_at', { ascending: false });
-      } else {
-        console.warn('order method not available on query');
-      }
-
-      const { data, error } = await query;
+        .select('*, user_id')
+        .or('action_type.eq.subscription_plan_selected,action_type.eq.subscription_completed')
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      setSubscriptions(data || []);
+      // If we get data, fetch the profile information separately for each user_id
+      if (data && data.length > 0) {
+        // Get unique user IDs
+        const userIds = [...new Set(data.map(item => item.user_id))];
+        
+        // Fetch profiles for these users
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, full_name, role')
+          .in('id', userIds);
+          
+        if (profilesError) {
+          console.error('Error fetching profiles for subscriptions:', profilesError);
+          // Continue with what we have
+        }
+        
+        // Create a map of user_id to profile data
+        const profilesMap = (profiles || []).reduce((acc, profile) => {
+          acc[profile.id] = {
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            full_name: profile.full_name || '',
+            role: profile.role
+          };
+          return acc;
+        }, {});
+        
+        // Combine the data
+        const enrichedData = data.map(item => ({
+          ...item,
+          profiles: profilesMap[item.user_id] || { 
+            first_name: 'Unknown', 
+            last_name: 'User',
+            full_name: 'Unknown User',
+            role: 'unknown'
+          }
+        }));
+        
+        setSubscriptions(enrichedData);
+      } else {
+        setSubscriptions([]);
+      }
     } catch (error: any) {
       console.error('Error fetching subscription data:', error);
       toast.error('Error fetching subscription data: ' + error.message);
@@ -212,7 +248,7 @@ export const AdminUserManagement = () => {
                 {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      {user.first_name} {user.last_name}
+                      {user.display_name}
                     </TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell>
@@ -277,7 +313,9 @@ export const AdminUserManagement = () => {
                 {subscriptions.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell>
-                      {sub.profiles?.first_name} {sub.profiles?.last_name}
+                      {sub.profiles?.first_name && sub.profiles?.last_name 
+                        ? `${sub.profiles.first_name} ${sub.profiles.last_name}`
+                        : sub.profiles?.full_name || 'Unknown User'}
                       <div className="text-xs text-muted-foreground">{sub.profiles?.role}</div>
                     </TableCell>
                     <TableCell>
