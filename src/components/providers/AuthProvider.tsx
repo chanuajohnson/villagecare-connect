@@ -617,7 +617,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('[AuthProvider] Supabase sign out error:', error);
         }
       } catch (supabaseError) {
-        console.error('[AuthProvider] Exception during Supabase signOut:', supababError);
+        console.error('[AuthProvider] Exception during Supabase signOut:', supabaseError);
       }
       
       safeNavigate('/', { skipCheck: true, replace: true });
