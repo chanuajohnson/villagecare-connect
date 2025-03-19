@@ -16,6 +16,7 @@ export default function AuthPage() {
   const { user } = useAuth();
   const [showResetForm, setShowResetForm] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [activeTab, setActiveTab] = useState("login");
 
   useEffect(() => {
     if (user) {
@@ -77,14 +78,19 @@ export default function AuthPage() {
       }
 
       console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
-      toast.success("Account created successfully! Please check your email to confirm your account.");
       
       if (data.session) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
+        toast.success("Account created successfully! You'll be redirected to your dashboard shortly.");
         
         console.log("[AuthPage] Auth provider will handle redirects");
+        // No need for explicit redirect - the auth provider will handle it
+        return true;
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
+        toast.success("Account created! Please check your email to confirm your account.");
+        // We'll stay on the signup page but the component will show a success message
+        return true;
       }
 
     } catch (error: any) {
@@ -172,7 +178,7 @@ export default function AuthPage() {
               isLoading={isLoading}
             />
           ) : (
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -185,7 +191,10 @@ export default function AuthPage() {
                 />
               </TabsContent>
               <TabsContent value="signup">
-                <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
+                <SignupForm 
+                  onSubmit={handleSignup} 
+                  isLoading={isLoading} 
+                />
               </TabsContent>
             </Tabs>
           )}

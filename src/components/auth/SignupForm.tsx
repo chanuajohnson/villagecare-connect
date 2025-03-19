@@ -22,6 +22,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
   const [role, setRole] = useState<UserRole>("family");
   const [showPassword, setShowPassword] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +39,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
     
     try {
       setFormSubmitted(true);
+      setSubmissionStatus("submitting");
       console.log('SignupForm submitting with role:', role);
       
       // Store the registration role in localStorage for redirect handling
@@ -55,6 +57,10 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       
       // Pass the registration to the parent component
       await onSubmit(email, password, firstName, lastName, role);
+      
+      // Show success message
+      toast.success("Account created successfully! Please wait while we set up your account...");
+      setSubmissionStatus("success");
       
       // After successful registration, explicitly update the profile to ensure the role is set
       try {
@@ -128,18 +134,53 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
             }
           }
         } else {
-          console.error('No session available after signup');
+          // No session available, inform user they need to check email
+          toast.info("Please check your email to confirm your account before logging in.");
+          setSubmissionStatus("success");
         }
       } catch (profileError) {
         console.error('Error updating profile after signup:', profileError);
         toast.error('Account created but profile setup had an error. Please try again later.');
+        setSubmissionStatus("error");
       }
     } catch (error: any) {
       console.error("Signup error:", error);
       toast.error(error.message || "Failed to create account. Please try again.");
       setFormSubmitted(false);
+      setSubmissionStatus("error");
     }
   };
+
+  // Redirect to login tab after successful registration
+  if (submissionStatus === "success") {
+    return (
+      <div className="space-y-4 text-center py-8">
+        <div className="flex justify-center">
+          <div className="bg-green-100 text-green-800 p-4 rounded-md">
+            <h3 className="font-medium text-lg">Registration Successful!</h3>
+            <p className="mt-2">
+              Your account has been created successfully. You can now log in with your credentials.
+            </p>
+          </div>
+        </div>
+        <Button 
+          className="mt-4" 
+          onClick={() => {
+            // Reset form state and tell the parent component to switch to login tab
+            setFormSubmitted(false);
+            setSubmissionStatus("idle");
+            const tabsList = document.querySelector('[role="tablist"]');
+            const loginTab = tabsList?.querySelector('[value="login"]') as HTMLButtonElement;
+            if (loginTab) {
+              loginTab.click();
+            }
+          }}
+        >
+          Go to Login
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
