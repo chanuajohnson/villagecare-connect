@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -152,37 +151,85 @@ const FamilyStoryPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Save the data to Supabase
-      const { error } = await supabase
+      console.log("Saving data to Supabase for user:", user.id);
+      
+      // Check if a profile already exists
+      const { data: existingProfiles, error: fetchError } = await supabase
         .from('care_recipient_profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: data.fullName,
-          birth_year: data.birthYear,
-          personality_traits: data.personalityTraits,
-          hobbies_interests: data.hobbiesInterests,
-          notable_events: data.notableEvents,
-          career_fields: data.careerFields,
-          family_social_info: data.familySocialInfo,
-          caregiver_personality: data.caregiverPersonality,
-          cultural_preferences: data.culturalPreferences,
-          daily_routines: data.dailyRoutines,
-          challenges: data.challenges,
-          sensitivities: data.sensitivities,
-          specific_requests: data.specificRequests,
-          life_story: data.lifeStory,
-          joyful_things: data.joyfulThings,
-          unique_facts: data.uniqueFacts,
-          last_updated: new Date().toISOString(),
-        })
-        .select();
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (fetchError) {
+        console.error("Error checking for existing profile:", fetchError);
+        throw new Error("Failed to check for existing profile");
+      }
+      
+      // Create or update profile based on existence
+      let operation;
+      if (existingProfiles) {
+        console.log("Updating existing profile");
+        operation = supabase
+          .from('care_recipient_profiles')
+          .update({
+            full_name: data.fullName,
+            birth_year: data.birthYear,
+            personality_traits: data.personalityTraits,
+            hobbies_interests: data.hobbiesInterests,
+            notable_events: data.notableEvents,
+            career_fields: data.careerFields,
+            family_social_info: data.familySocialInfo,
+            caregiver_personality: data.caregiverPersonality,
+            cultural_preferences: data.culturalPreferences,
+            daily_routines: data.dailyRoutines,
+            challenges: data.challenges,
+            sensitivities: data.sensitivities,
+            specific_requests: data.specificRequests,
+            life_story: data.lifeStory,
+            joyful_things: data.joyfulThings,
+            unique_facts: data.uniqueFacts,
+            last_updated: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
+      } else {
+        console.log("Creating new profile");
+        operation = supabase
+          .from('care_recipient_profiles')
+          .insert({
+            user_id: user.id,
+            full_name: data.fullName,
+            birth_year: data.birthYear,
+            personality_traits: data.personalityTraits,
+            hobbies_interests: data.hobbiesInterests,
+            notable_events: data.notableEvents,
+            career_fields: data.careerFields,
+            family_social_info: data.familySocialInfo,
+            caregiver_personality: data.caregiverPersonality,
+            cultural_preferences: data.culturalPreferences,
+            daily_routines: data.dailyRoutines,
+            challenges: data.challenges,
+            sensitivities: data.sensitivities,
+            specific_requests: data.specificRequests,
+            life_story: data.lifeStory,
+            joyful_things: data.joyfulThings,
+            unique_facts: data.uniqueFacts,
+            last_updated: new Date().toISOString(),
+          });
+      }
 
-      if (error) {
-        throw error;
+      const { error: saveError } = await operation;
+
+      if (saveError) {
+        console.error("Error saving profile:", saveError);
+        throw saveError;
       }
 
       toast.success("Story saved successfully!");
-      navigate("/dashboard/family");
+      
+      // Add a small delay before navigating to ensure the toast is seen
+      setTimeout(() => {
+        navigate("/dashboard/family");
+      }, 500);
     } catch (error) {
       console.error("Error saving story:", error);
       toast.error("Failed to save story. Please try again.");
