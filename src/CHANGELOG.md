@@ -11,6 +11,13 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Advanced meal planning with dietary restrictions
 - Mobile app notifications
 
+## [0.1.4] - 2025-03-26
+
+### Fixed
+- Fixed professional registration card showing up even when profile is complete
+- Improved profile completion detection for professional users
+- Enhanced state management for registration workflow
+
 ## [0.1.3] - 2025-03-19
 
 ### Fixed
