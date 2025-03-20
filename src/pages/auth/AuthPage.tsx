@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,21 +20,17 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
 
   useEffect(() => {
-    // Check for pending email verification by looking at localStorage
     const registeringAs = localStorage.getItem('registeringAs');
 
-    // If user is already logged in, AuthProvider will handle redirection
     if (user) {
       console.log("[AuthPage] User already logged in, AuthProvider will handle redirection");
       return;
     }
 
-    // Check URL for any special parameters that might indicate post-action states
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     
     if (action === 'verification-pending') {
-      // This state would be set if the user was redirected back here after signup
       setActiveTab("login");
       toast.info("Please check your email and click the verification link to continue.");
     }
@@ -57,8 +52,6 @@ export default function AuthPage() {
       }
 
       console.log("[AuthPage] Login successful:", data.session ? "Has session" : "No session");
-      // No need to navigate here, the AuthProvider will handle it based on user role
-
     } catch (error: any) {
       console.error("[AuthPage] Login error:", error);
       toast.error(error.message || "Failed to log in");
@@ -98,12 +91,11 @@ export default function AuthPage() {
       
       if (data.session && data.user) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
+        console.log("[AuthPage] Ensuring profile is created with role:", role);
         
-        // Ensure profile is created with the correct role
         const userRole = role as UserRole;
         await ensureUserProfile(data.user.id, userRole);
         
-        // Also update the user metadata to ensure role consistency
         await supabase.auth.updateUser({
           data: { 
             role: userRole,
@@ -116,15 +108,10 @@ export default function AuthPage() {
         toast.success("Account created successfully! You'll be redirected to your dashboard shortly.");
         
         console.log("[AuthPage] Auth provider will handle redirects");
-        // No need for explicit redirect - the auth provider will handle it
         return true;
       } else {
         console.log("[AuthPage] No session after signup - auto-confirm may be disabled");
-        // Instead of just showing a toast, we need to store that verification is pending
         localStorage.setItem('registeringAs', role);
-        
-        // Note: We don't add any URL parameters here since the form will show a proper
-        // success message with instructions
         return true;
       }
 
@@ -143,15 +130,11 @@ export default function AuthPage() {
       console.log("[AuthPage] Starting password reset process...");
       setIsLoading(true);
 
-      // Get the main domain (not preview domain)
-      // This ensures we use the actual production URL and not the preview URL
       const currentDomain = window.location.hostname;
-      // Extract the base domain by removing any preview subdomain
       const baseDomain = currentDomain.includes('preview--') 
         ? currentDomain.replace('preview--', '') 
         : currentDomain;
       
-      // Construct the site URL using either https://domain or http://localhost for development
       const protocol = window.location.protocol;
       const port = window.location.port ? `:${window.location.port}` : '';
       const baseUrl = `${protocol}//${baseDomain}${port}`;

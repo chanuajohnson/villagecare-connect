@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/types/database';
 
@@ -48,6 +47,34 @@ export const ensureUserProfile = async (userId: string, role: UserRole = 'family
     
     if (existingProfile) {
       console.log('Profile already exists:', existingProfile);
+      
+      // If the role doesn't match what was requested, update it
+      if (existingProfile.role !== role) {
+        console.log(`Updating profile role from ${existingProfile.role} to ${role}`);
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: role })
+          .eq('id', userId);
+          
+        if (updateError) {
+          console.error('Error updating profile role:', updateError);
+          return { 
+            success: false, 
+            error: `Profile update error: ${updateError.message}` 
+          };
+        }
+        
+        // Also update user metadata to keep roles in sync
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: { role: role }
+        });
+        
+        if (metadataError) {
+          console.error('Error updating user metadata role:', metadataError);
+          // Continue anyway as profile was updated
+        }
+      }
+      
       return { success: true };
     }
     
