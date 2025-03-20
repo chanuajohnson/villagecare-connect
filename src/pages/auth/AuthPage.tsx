@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +10,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ensureUserProfile, updateUserProfile } from "@/lib/profile-utils";
 import { UserRole } from "@/types/database";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isProcessingAdmin, setIsProcessingAdmin] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showResetForm, setShowResetForm] = useState(false);
@@ -38,36 +34,7 @@ export default function AuthPage() {
       setActiveTab("login");
       toast.info("Please check your email and click the verification link to continue.");
     }
-    
-    // Check for admin login request
-    if (action === 'admin-login') {
-      setActiveTab("login");
-      toast.info("Please sign in with your admin credentials.");
-    }
   }, [user, navigate]);
-
-  const handleMakeAdmin = async () => {
-    try {
-      setIsProcessingAdmin(true);
-      
-      const { data, error } = await supabase.functions.invoke("make-admin");
-      
-      if (error) {
-        throw new Error(error.message || "Failed to make user admin");
-      }
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      toast.success("Admin account setup successful. Please log in with your credentials.");
-    } catch (error) {
-      console.error("Error making admin:", error);
-      toast.error(error.message || "Failed to set up admin account");
-    } finally {
-      setIsProcessingAdmin(false);
-    }
-  };
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -210,7 +177,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-20">
+    <div className="container flex items-center justify-center py-20">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Welcome</CardTitle>
@@ -240,29 +207,6 @@ export default function AuthPage() {
                   isLoading={isLoading}
                   onForgotPassword={handleForgotPassword} 
                 />
-
-                {/* Admin Account Setup Button */}
-                <div className="mt-6 pt-6 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-2">Admin setup:</p>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleMakeAdmin}
-                    disabled={isProcessingAdmin}
-                  >
-                    {isProcessingAdmin ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Setting up admin account...
-                      </>
-                    ) : (
-                      "Set up admin account"
-                    )}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    This will create an admin account for the primary user (chanuajohnson@gmail.com).
-                  </p>
-                </div>
               </TabsContent>
               <TabsContent value="signup">
                 <SignupForm 

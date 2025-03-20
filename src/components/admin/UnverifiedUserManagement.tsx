@@ -12,8 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, AlertCircle, RefreshCw, Send, Trash, CheckCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,28 +33,6 @@ type UnverifiedUser = {
   user_metadata?: Record<string, any>;
 };
 
-// Sample demo data for unverified users
-const DEMO_UNVERIFIED_USERS: UnverifiedUser[] = [
-  {
-    id: "unverified-user-1",
-    email: "unverified1@example.com",
-    created_at: "2024-10-05T10:15:00Z",
-    user_metadata: { role: "family" }
-  },
-  {
-    id: "unverified-user-2",
-    email: "unverified2@example.com",
-    created_at: "2024-10-06T14:22:00Z",
-    user_metadata: { role: "professional" }
-  },
-  {
-    id: "unverified-user-3",
-    email: "unverified3@example.com",
-    created_at: "2024-10-07T09:45:00Z",
-    user_metadata: { role: "community" }
-  }
-];
-
 export const UnverifiedUserManagement = () => {
   const [unverifiedUsers, setUnverifiedUsers] = useState<UnverifiedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,31 +40,19 @@ export const UnverifiedUserManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UnverifiedUser | null>(null);
-  const { user, userRole } = useAuth();
-
-  // Check if user is admin - in production this would be a more robust check
-  const isAdmin = userRole === 'admin';
-  const isPublicDemoMode = !user || !isAdmin;
+  const { user, session } = useAuth();
 
   const fetchUnverifiedUsers = async () => {
+    if (!user || !session) return;
+    
     try {
       setIsLoading(true);
       setError(null);
 
-      if (isPublicDemoMode) {
-        // In demo mode, use the sample data
-        setTimeout(() => {
-          setUnverifiedUsers(DEMO_UNVERIFIED_USERS);
-          setIsLoading(false);
-        }, 800); // Add a small delay to simulate network request
-        return;
-      }
-
-      // Get unconfirmed users via admin API endpoint
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        body: {
-          action: "get_unverified_users"
-        }
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) {
@@ -97,7 +63,6 @@ export const UnverifiedUserManagement = () => {
         throw new Error(data.error);
       }
 
-      console.log("Unverified users fetched:", data.users);
       setUnverifiedUsers(data.users || []);
     } catch (err: any) {
       console.error("Error fetching unverified users:", err);
@@ -109,20 +74,17 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleResendVerification = async (email: string) => {
+    if (!session) return;
+    
     try {
       setActionInProgress(email);
       setError(null);
 
-      if (isPublicDemoMode) {
-        // Simulate action in demo mode
-        setTimeout(() => {
-          toast.success(`Verification email resent to ${email} (Demo Mode)`);
-          setActionInProgress(null);
-        }, 1000);
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           action: "resend_verification",
           email,
@@ -153,25 +115,18 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleDeleteUser = async () => {
-    if (!userToDelete) return;
+    if (!session || !userToDelete) return;
     
     try {
       setActionInProgress(userToDelete.id);
       setError(null);
       setDeleteDialogOpen(false);
 
-      if (isPublicDemoMode) {
-        // Simulate action in demo mode
-        setTimeout(() => {
-          setUnverifiedUsers(unverifiedUsers.filter(u => u.id !== userToDelete.id));
-          toast.success(`User ${userToDelete.email} deleted successfully (Demo Mode)`);
-          setActionInProgress(null);
-          setUserToDelete(null);
-        }, 1000);
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           action: "delete_user",
           userId: userToDelete.id,
@@ -199,21 +154,17 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleManuallyVerify = async (userId: string, email: string) => {
+    if (!session) return;
+    
     try {
       setActionInProgress(userId);
       setError(null);
 
-      if (isPublicDemoMode) {
-        // Simulate action in demo mode
-        setTimeout(() => {
-          setUnverifiedUsers(unverifiedUsers.filter(u => u.id !== userId));
-          toast.success(`User ${email} verified successfully (Demo Mode)`);
-          setActionInProgress(null);
-        }, 1000);
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           action: "manually_verify",
           userId,
@@ -240,8 +191,21 @@ export const UnverifiedUserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUnverifiedUsers();
-  }, [isAdmin]);
+    if (user && session) {
+      fetchUnverifiedUsers();
+    }
+  }, [user, session]);
+
+  if (!user || !session) {
+    return (
+      <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <p>You must be signed in as an admin to access this section.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -266,21 +230,6 @@ export const UnverifiedUserManagement = () => {
           )}
         </Button>
       </div>
-
-      {!isAdmin && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                You are viewing demo data. Sign in as an admin to manage real users.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="bg-destructive/15 p-4 rounded-md mb-4 border border-destructive/30">

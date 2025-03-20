@@ -34,13 +34,6 @@ const AdminDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage system settings and user accounts.</p>
-          
-          {/* Public access notice */}
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-sm text-yellow-800">
-              <strong>Public Access Mode:</strong> This admin dashboard is currently publicly accessible for demonstration purposes.
-            </p>
-          </div>
         </motion.div>
 
         <div className="space-y-8">

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, deleteUserWithCleanup } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -13,80 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, AlertCircle } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { 
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { deleteUserWithCleanup } from "@/lib/supabase";
-
-// Sample demo data for public access mode
-const DEMO_USERS = [
-  {
-    id: "demo-user-1",
-    display_name: "John Smith",
-    first_name: "John",
-    last_name: "Smith",
-    full_name: "John Smith",
-    role: "admin",
-    created_at: "2024-10-01T00:00:00Z"
-  },
-  {
-    id: "demo-user-2",
-    display_name: "Jane Doe",
-    first_name: "Jane",
-    last_name: "Doe",
-    full_name: "Jane Doe",
-    role: "family",
-    created_at: "2024-10-02T00:00:00Z"
-  },
-  {
-    id: "demo-user-3",
-    display_name: "Mark Williams",
-    first_name: "Mark",
-    last_name: "Williams",
-    full_name: "Mark Williams",
-    role: "professional",
-    created_at: "2024-10-03T00:00:00Z"
-  }
-];
-
-// Sample demo subscription data
-const DEMO_SUBSCRIPTIONS = [
-  {
-    id: "sub-1",
-    user_id: "demo-user-1",
-    action_type: "subscription_plan_selected",
-    created_at: "2024-10-01T12:30:00Z",
-    additional_data: {
-      plan_name: "Professional Plan",
-      feature_accessed: "Caregiver Matching"
-    },
-    profiles: {
-      first_name: "John",
-      last_name: "Smith",
-      full_name: "John Smith",
-      role: "admin"
-    }
-  },
-  {
-    id: "sub-2",
-    user_id: "demo-user-2",
-    action_type: "subscription_completed",
-    created_at: "2024-10-02T14:45:00Z",
-    additional_data: {
-      plan_name: "Family Basic",
-      feature_accessed: "Care Planning"
-    },
-    profiles: {
-      first_name: "Jane",
-      last_name: "Doe",
-      full_name: "Jane Doe",
-      role: "family"
-    }
-  }
-];
 
 export const AdminUserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -99,31 +30,19 @@ export const AdminUserManagement = () => {
     isOpen: false,
     message: ""
   });
-  const { user, userRole } = useAuth();
-
-  // Check if user is admin - in production this would be a more robust check
-  const isAdmin = userRole === 'admin';
-  const isPublicDemoMode = !user || !isAdmin;
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
       
-      if (isPublicDemoMode) {
-        // In demo mode, use the sample data
-        setTimeout(() => {
-          setUsers(DEMO_USERS);
-          setIsLoading(false);
-        }, 800); // Add a small delay to simulate network request
-        return;
-      }
-      
+      // Check if Supabase is available
       if (!supabase) {
         console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
 
+      // Create query with error handling
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, full_name, role, created_at')
@@ -133,8 +52,10 @@ export const AdminUserManagement = () => {
         throw error;
       }
 
+      // Process the data to handle both first_name/last_name and full_name fields
       const processedProfiles = profiles?.map(profile => ({
         ...profile,
+        // If first_name exists, use it; otherwise fall back to full_name
         display_name: (profile.first_name && profile.last_name) 
           ? `${profile.first_name} ${profile.last_name}`
           : profile.full_name || 'Unknown User'
@@ -153,21 +74,14 @@ export const AdminUserManagement = () => {
     try {
       setIsLoadingSubscriptions(true);
       
-      if (isPublicDemoMode) {
-        // In demo mode, use the sample data
-        setTimeout(() => {
-          setSubscriptions(DEMO_SUBSCRIPTIONS);
-          setIsLoadingSubscriptions(false);
-        }, 800); // Add a small delay to simulate network request
-        return;
-      }
-      
+      // Check if Supabase is available
       if (!supabase) {
         console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
       
+      // Updated query that doesn't rely on the problematic join
       const { data, error } = await supabase
         .from('cta_engagement_tracking')
         .select('*, user_id')
@@ -178,9 +92,12 @@ export const AdminUserManagement = () => {
         throw error;
       }
 
+      // If we get data, fetch the profile information separately for each user_id
       if (data && data.length > 0) {
+        // Get unique user IDs
         const userIds = [...new Set(data.map(item => item.user_id))];
         
+        // Fetch profiles for these users
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, full_name, role')
@@ -188,8 +105,10 @@ export const AdminUserManagement = () => {
           
         if (profilesError) {
           console.error('Error fetching profiles for subscriptions:', profilesError);
+          // Continue with what we have
         }
         
+        // Create a map of user_id to profile data
         const profilesMap = (profiles || []).reduce((acc, profile) => {
           acc[profile.id] = {
             first_name: profile.first_name || '',
@@ -200,6 +119,7 @@ export const AdminUserManagement = () => {
           return acc;
         }, {});
         
+        // Combine the data
         const enrichedData = data.map(item => ({
           ...item,
           profiles: profilesMap[item.user_id] || { 
@@ -228,19 +148,11 @@ export const AdminUserManagement = () => {
       setDeleteError(null);
       setDeletionDetails({ isOpen: false, message: "" });
       
-      if (isPublicDemoMode) {
-        // Simulate deletion in demo mode
-        setTimeout(() => {
-          setUsers(users.filter(user => user.id !== userId));
-          toast.success('User deleted successfully (Demo Mode)');
-          setIsLoadingDelete(null);
-        }, 1000);
-        return;
-      }
-      
+      // Use the enhanced deleteUserWithCleanup function
       const { success, error, details } = await deleteUserWithCleanup(userId);
       
       if (!success) {
+        // If we have detailed information about tables that were cleaned up, show it
         if (details && details.length > 0) {
           setDeletionDetails({
             isOpen: true,
@@ -251,6 +163,7 @@ export const AdminUserManagement = () => {
       }
 
       toast.success('User deleted successfully');
+      // Remove the deleted user from the local state
       setUsers(users.filter(user => user.id !== userId));
     } catch (error: any) {
       console.error('Full delete user error:', error);
@@ -261,58 +174,10 @@ export const AdminUserManagement = () => {
     }
   };
 
-  const handleSetAdminRole = async (userId: string) => {
-    try {
-      setIsLoadingDelete(userId); // Reuse loading state
-      
-      if (isPublicDemoMode) {
-        // Simulate action in demo mode
-        setTimeout(() => {
-          const updatedUsers = users.map(u => 
-            u.id === userId ? { ...u, role: 'admin' } : u
-          );
-          setUsers(updatedUsers);
-          toast.success('User role updated to admin (Demo Mode)');
-          setIsLoadingDelete(null);
-        }, 1000);
-        return;
-      }
-      
-      // Call the admin-manage-users function to update the role
-      const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        body: {
-          action: "set_admin_role",
-          userId,
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message || "Failed to update user role");
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // Update the local state
-      const updatedUsers = users.map(u => 
-        u.id === userId ? { ...u, role: 'admin' } : u
-      );
-      setUsers(updatedUsers);
-      
-      toast.success('User role updated to admin successfully');
-    } catch (error: any) {
-      console.error('Error updating user role:', error);
-      toast.error('Error updating user role: ' + error.message);
-    } finally {
-      setIsLoadingDelete(null);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
     fetchSubscriptionData();
-  }, [isAdmin]);
+  }, []); // Empty dependency array means this only runs once when component mounts
 
   return (
     <div className="space-y-6">
@@ -334,21 +199,6 @@ export const AdminUserManagement = () => {
               ) : "Refresh"}
             </Button>
           </div>
-
-          {!isAdmin && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-yellow-500" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-yellow-700">
-                    You are viewing demo data. Sign in as an admin to manage real users.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {deleteError && (
             <div className="bg-destructive/15 p-4 rounded-md mb-4 border border-destructive/30">
@@ -401,36 +251,19 @@ export const AdminUserManagement = () => {
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        {user.role !== 'admin' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isLoadingDelete === user.id}
-                            onClick={() => handleSetAdminRole(user.id)}
-                          >
-                            {isLoadingDelete === user.id ? (
-                              <>
-                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                Processing...
-                              </>
-                            ) : "Make Admin"}
-                          </Button>
-                        )}
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={isLoadingDelete === user.id}
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          {isLoadingDelete === user.id ? (
-                            <>
-                              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                              Deleting...
-                            </>
-                          ) : "Delete"}
-                        </Button>
-                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={isLoadingDelete === user.id || user.role === 'admin'}
+                        onClick={() => handleDeleteUser(user.id)}
+                      >
+                        {isLoadingDelete === user.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            Deleting...
+                          </>
+                        ) : "Delete"}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
