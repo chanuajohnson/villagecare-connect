@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 import { DashboardTracker } from "@/components/tracking/DashboardTracker";
 import { AdvancedMatchingCard } from "@/components/family/AdvancedMatchingCard";
+import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
 
 export default function FamilyDashboard() {
   const { user } = useAuth();
@@ -81,6 +82,10 @@ export default function FamilyDashboard() {
               <AdvancedMatchingCard />
             )}
           </div>
+          
+          {user && hasProfile && (
+            <DashboardCaregiverMatches />
+          )}
           
           <DashboardCardGrid>
             <CaregiverMatchingCard />
