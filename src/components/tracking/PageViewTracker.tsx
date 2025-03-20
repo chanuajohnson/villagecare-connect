@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useTracking } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-interface PageViewTrackerProps {
+export interface PageViewTrackerProps {
   /**
    * The name of the page being tracked
    */
@@ -29,6 +29,11 @@ interface PageViewTrackerProps {
    * Journey stage associated with this page view (optional)
    */
   journeyStage?: string;
+  
+  /**
+   * Custom action type (optional)
+   */
+  actionType?: string;
 }
 
 /**
@@ -39,7 +44,8 @@ export const PageViewTracker = ({
   children,
   additionalData = {}, 
   trackPathChanges = false,
-  journeyStage
+  journeyStage,
+  actionType = 'page_view'
 }: PageViewTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
@@ -72,7 +78,7 @@ export const PageViewTracker = ({
       // Determine if this is a return visit to the page
       const isReturnVisit = visitHistory.slice(0, -1).some(visit => visit.path === location.pathname);
       
-      await trackEngagement('page_view', {
+      await trackEngagement(actionType, {
         ...additionalData,
         page_name: pageName,
         path: location.pathname,

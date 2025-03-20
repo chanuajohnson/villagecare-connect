@@ -15,24 +15,37 @@ export const JourneyTrackingExample = () => {
     <div>
       {/* Track landing page with journey stage */}
       <PageViewTracker 
+        pageName="Landing Page"
         actionType="landing_page_view"
         journeyStage="discovery" 
-      />
+      >
+        <div>Page content would go here</div>
+      </PageViewTracker>
       
       {/* For tracking specific journey stages (key user actions) */}
       <UserJourneyTracker 
-        journeyStage="feature_discovery" 
+        stage="feature_discovery"
+        feature="caregiver_matching"
+        component="feature_overview"
         additionalData={{ feature: "caregiver_matching" }}
-      />
+      >
+        <div>Feature content would go here</div>
+      </UserJourneyTracker>
       
       {/* For tracking first-time experiences (only once per session) */}
       <UserJourneyTracker 
-        journeyStage="first_login_experience" 
+        stage="first_login_experience"
+        feature="onboarding"
+        component="welcome_screen"
         trackOnce={true}
-      />
+      >
+        <div>First-time experience content would go here</div>
+      </UserJourneyTracker>
       
       {/* For dashboard visits with user context */}
-      <DashboardTracker dashboardType="professional" />
+      <DashboardTracker dashboardType="professional">
+        <div>Dashboard content would go here</div>
+      </DashboardTracker>
       
       {/* Other components would go here */}
     </div>
@@ -43,26 +56,26 @@ export const JourneyTrackingExample = () => {
  * EXAMPLES OF JOURNEY STAGE TRACKING IN DIFFERENT COMPONENTS:
  * 
  * 1. On landing page:
- * <UserJourneyTracker journeyStage="first_visit" />
+ * <UserJourneyTracker stage="first_visit" feature="landing_page" component="hero_section" />
  * 
  * 2. On signup page:
- * <UserJourneyTracker journeyStage="authentication" />
+ * <UserJourneyTracker stage="authentication" feature="signup" component="signup_form" />
  * 
  * 3. On first profile creation:
- * <UserJourneyTracker journeyStage="profile_creation" />
+ * <UserJourneyTracker stage="profile_creation" feature="onboarding" component="profile_form" />
  * 
  * 4. On features page:
- * <UserJourneyTracker journeyStage="feature_discovery" />
+ * <UserJourneyTracker stage="feature_discovery" feature="feature_overview" component="feature_grid" />
  * 
  * 5. On matching page:
- * <UserJourneyTracker journeyStage="matching_exploration" />
+ * <UserJourneyTracker stage="matching_exploration" feature="caregiver_matching" component="matching_results" />
  * 
  * 6. On subscription page:
- * <UserJourneyTracker journeyStage="subscription_consideration" />
+ * <UserJourneyTracker stage="subscription_consideration" feature="premium_features" component="pricing_cards" />
  * 
  * 7. On successful subscription:
- * <UserJourneyTracker journeyStage="subscription_conversion" />
+ * <UserJourneyTracker stage="subscription_conversion" feature="checkout" component="success_page" />
  * 
  * 8. For returning users:
- * <UserJourneyTracker journeyStage="return_visit" />
+ * <UserJourneyTracker stage="return_visit" feature="dashboard" component="welcome_back" />
  */

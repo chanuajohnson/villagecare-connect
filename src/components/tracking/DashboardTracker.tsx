@@ -62,3 +62,5 @@ export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerPr
   
   return <>{children}</>; // Render children
 };
+
+export type { DashboardTrackerProps };

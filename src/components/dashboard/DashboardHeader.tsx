@@ -16,11 +16,11 @@ interface BreadcrumbItem {
   path: string;
 }
 
-interface DashboardHeaderProps {
+export interface DashboardHeaderProps {
   /**
    * The title to display at the top of the dashboard
    */
-  title: string;
+  title?: string;
   
   /**
    * A brief description of the dashboard's purpose
@@ -70,7 +70,7 @@ export const DashboardHeader = ({
         </div>
       )}
       
-      <h1 className="text-2xl font-bold">{title}</h1>
+      {title && <h1 className="text-2xl font-bold">{title}</h1>}
       {description && <p className="text-muted-foreground mt-1">{description}</p>}
     </div>
   );

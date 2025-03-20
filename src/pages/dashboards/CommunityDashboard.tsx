@@ -7,29 +7,35 @@ import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TechInnovatorsHub } from "@/components/features/TechInnovatorsHub";
+
 const CommunityDashboard = () => {
   const {
     user,
     isProfileComplete
   } = useAuth();
+  
   const breadcrumbItems = [{
     label: "Community",
     path: "/dashboard/community"
   }];
-  return <div className="min-h-screen bg-background">
+  
+  return (
+    <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
-        <DashboardHeader breadcrumbItems={breadcrumbItems} />
+        <DashboardHeader 
+          title="Community Dashboard"
+          description="Connect and contribute to your local care community"
+          breadcrumbItems={breadcrumbItems} 
+        />
 
-        <motion.div initial={{
-        opacity: 0,
-        y: 20
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.5
-      }} className="space-y-6">
-          {!user ? <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg mb-8 border border-blue-100">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }} 
+          className="space-y-6"
+        >
+          {!user ? (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg mb-8 border border-blue-100">
               <h2 className="text-2xl font-bold mb-2">Join the Movement! 🌍 Supporting Care, Together.</h2>
               <p className="text-gray-600 mb-4">Help families, participate in care circles, and engage with the growing community</p>
               <div className="flex flex-wrap gap-3 mt-4">
@@ -49,7 +55,9 @@ const CommunityDashboard = () => {
                   </Button>
                 </Link>
               </div>
-            </div> : !isProfileComplete ? <div className="bg-yellow-50 p-6 rounded-lg mb-8">
+            </div>
+          ) : !isProfileComplete ? (
+            <div className="bg-yellow-50 p-6 rounded-lg mb-8">
               <h2 className="text-xl mb-2">Complete Your Profile</h2>
               <p className="text-gray-600 mb-4">Please complete your profile to access all features.</p>
               <Link to="/registration/community">
@@ -57,7 +65,8 @@ const CommunityDashboard = () => {
                   Complete Profile
                 </Button>
               </Link>
-            </div> : null}
+            </div>
+          ) : null}
 
           <h1 className="text-3xl font-bold">Community Dashboard</h1>
           <p className="text-muted-foreground mt-2">
@@ -161,6 +170,8 @@ const CommunityDashboard = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default CommunityDashboard;

@@ -21,6 +21,8 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8">
         <DashboardHeader
+          title="Admin Dashboard"
+          description="Manage system settings and user accounts"
           breadcrumbItems={breadcrumbItems}
         />
 

@@ -28,6 +28,11 @@ export interface MatchingTrackerProps {
    * Children components to be rendered
    */
   children: ReactNode;
+
+  /**
+   * For backwards compatibility - alias for matchType
+   */
+  matchingType?: string;
 }
 
 /**
@@ -38,7 +43,8 @@ export const MatchingTracker = ({
   matchId,
   matchScore,
   additionalData = {},
-  children
+  children,
+  matchingType, // For backwards compatibility
 }: MatchingTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user } = useAuth();
@@ -52,7 +58,7 @@ export const MatchingTracker = ({
         hasTracked.current = true;
         
         await trackEngagement('match_view', {
-          match_type: matchType,
+          match_type: matchingType || matchType,
           match_id: matchId,
           match_score: matchScore,
           user_id: user?.id || 'anonymous',
@@ -66,7 +72,7 @@ export const MatchingTracker = ({
     };
     
     trackMatchView();
-  }, [matchType, matchId, matchScore, user, trackEngagement, additionalData]);
+  }, [matchType, matchId, matchScore, user, trackEngagement, additionalData, matchingType]);
   
   return <>{children}</>;
 };

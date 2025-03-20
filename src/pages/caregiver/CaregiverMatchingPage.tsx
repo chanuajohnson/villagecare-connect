@@ -441,17 +441,22 @@ export default function CaregiverMatchingPage() {
   ];
 
   return (
-    <div className="container px-4 py-8">
-      <MatchingTracker 
-        matchingType="caregiver" 
+    <MatchingTracker 
+        matchType="caregiver"
+        matchId="general-matching-view" 
+        matchScore={100}
         additionalData={{
           referrer: referringPath,
           filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
             (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
         }}
-      />
-      
-      <DashboardHeader breadcrumbItems={breadcrumbItems} />
+      >
+        <div className="container px-4 py-8">
+          <DashboardHeader 
+            title="Caregiver Matches"
+            description="Find the perfect caregiver match"
+            breadcrumbItems={breadcrumbItems} 
+          />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
@@ -849,22 +854,3 @@ export default function CaregiverMatchingPage() {
                         <Star className="h-4 w-4 text-amber-500" />
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Button 
-                        className="w-full"
-                        onClick={() => handleUnlockProfile(caregiver.id, caregiver.is_premium)}
-                      >
-                        Unlock Profile
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

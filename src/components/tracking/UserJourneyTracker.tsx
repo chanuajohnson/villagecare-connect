@@ -28,6 +28,16 @@ export interface UserJourneyTrackerProps {
    * Children components to be rendered
    */
   children: ReactNode;
+
+  /**
+   * For backwards compatibility with older usage
+   */
+  journeyStage?: string;
+
+  /**
+   * Whether to track only once per session
+   */
+  trackOnce?: boolean;
 }
 
 /**
@@ -38,23 +48,42 @@ export const UserJourneyTracker = ({
   feature,
   component,
   additionalData = {},
-  children
+  children,
+  journeyStage, // For backwards compatibility
+  trackOnce = false
 }: UserJourneyTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user } = useAuth();
   const hasTracked = useRef(false);
+  const [sessionTracked, setSessionTracked] = useState(false);
   
   // Track the component view once when mounted
   useEffect(() => {
-    // Only track once per component instance
-    if (hasTracked.current) return;
+    // Handle backwards compatibility
+    const effectiveStage = journeyStage || stage;
+    
+    // Check if we already tracked in this session and trackOnce is true
+    if (trackOnce) {
+      const sessionKey = `tracked_journey_${effectiveStage}_${feature || component}`;
+      const alreadyTracked = sessionStorage.getItem(sessionKey) === 'true';
+      
+      if (alreadyTracked || sessionTracked) {
+        return;
+      }
+      
+      setSessionTracked(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    } else if (hasTracked.current) {
+      // Only track once per component instance if not using trackOnce
+      return;
+    }
     
     const trackJourneyStage = async () => {
       try {
         hasTracked.current = true;
         
         await trackEngagement('journey_stage_view', {
-          stage,
+          stage: effectiveStage,
           feature,
           component,
           user_id: user?.id || 'anonymous',
@@ -68,7 +97,7 @@ export const UserJourneyTracker = ({
     };
     
     trackJourneyStage();
-  }, [stage, feature, component, user, trackEngagement, additionalData]);
+  }, [stage, feature, component, user, trackEngagement, additionalData, journeyStage, trackOnce, sessionTracked]);
   
   return <>{children}</>; // Render children
 };

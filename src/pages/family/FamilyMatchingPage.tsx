@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Clock, Filter, MapPin, Star, Lock, Calendar, MapPinned, UserCheck, DollarSign } from "lucide-react";
+import { Clock, Filter, MapPin, DollarSign, Star, Lock, BookOpen, UserCheck, Calendar, MapPinned, Check, CheckSquare } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -20,69 +20,89 @@ import { MatchingTracker } from "@/components/tracking/MatchingTracker";
 interface Family {
   id: string;
   full_name: string;
+  first_name: string;
   avatar_url: string | null;
+  hourly_rate: string | null;
   location: string | null;
+  years_of_experience: string | null;
   care_types: string[] | null;
-  special_needs: string[] | null;
-  care_schedule: string | null;
+  specialized_care: string[] | null;
+  availability: string[] | null;
   match_score: number;
   is_premium: boolean;
+  has_training: boolean;
+  certifications: string[] | null;
   distance: number;
-  budget_preferences?: string | null;
 }
 
 const MOCK_FAMILIES: Family[] = [
   {
     id: "1",
-    full_name: "Garcia Family",
+    full_name: "Maria Johnson",
+    first_name: "Maria",
     avatar_url: null,
+    hourly_rate: "$18-25",
     location: "Port of Spain",
+    years_of_experience: "5+",
     care_types: ["Elderly Care", "Companionship"],
-    special_needs: ["Alzheimer's", "Mobility Assistance"],
-    care_schedule: "Weekdays, Evenings",
+    specialized_care: ["Alzheimer's", "Mobility Assistance"],
+    availability: ["Weekdays", "Evenings"],
     match_score: 95,
     is_premium: false,
-    distance: 3.2,
-    budget_preferences: "$15-25/hr"
+    has_training: true,
+    certifications: ["CPR Certified", "First Aid"],
+    distance: 3.2
   },
   {
     id: "2",
-    full_name: "Wilson Family",
+    full_name: "James Wilson",
+    first_name: "James",
     avatar_url: null,
+    hourly_rate: "$22-30",
     location: "San Fernando",
+    years_of_experience: "8+",
     care_types: ["Special Needs", "Medical Support"],
-    special_needs: ["Autism Care", "Medication Management"],
-    care_schedule: "Full-time, Weekends",
+    specialized_care: ["Autism Care", "Medication Management"],
+    availability: ["Full-time", "Weekends"],
     match_score: 89,
     is_premium: true,
-    distance: 15.7,
-    budget_preferences: "$25-35/hr"
+    has_training: true,
+    certifications: ["Registered Nurse", "Dementia Care"],
+    distance: 15.7
   },
   {
     id: "3",
-    full_name: "Thomas Family",
+    full_name: "Sophia Thomas",
+    first_name: "Sophia",
     avatar_url: null,
+    hourly_rate: "$20-28",
     location: "Arima",
+    years_of_experience: "3+",
     care_types: ["Child Care", "Housekeeping"],
-    special_needs: ["Early Childhood Development", "Meal Preparation"],
-    care_schedule: "Part-time, Mornings",
+    specialized_care: ["Early Childhood Development", "Meal Preparation"],
+    availability: ["Part-time", "Mornings"],
     match_score: 82,
     is_premium: false,
-    distance: 8.5,
-    budget_preferences: "$20-30/hr"
+    has_training: false,
+    certifications: ["Child Development"],
+    distance: 8.5
   },
   {
     id: "4",
-    full_name: "Ramirez Family",
+    full_name: "Robert Garcia",
+    first_name: "Robert",
     avatar_url: null,
+    hourly_rate: "$25-35",
     location: "Chaguanas",
+    years_of_experience: "10+",
     care_types: ["Elderly Care", "Overnight Care"],
-    special_needs: ["Dementia Care", "Stroke Recovery"],
-    care_schedule: "Overnight, Weekends",
+    specialized_care: ["Dementia Care", "Stroke Recovery"],
+    availability: ["Overnight", "Weekends"],
     match_score: 78,
     is_premium: true,
-    distance: 12.3,
-    budget_preferences: "$30-40/hr"
+    has_training: false,
+    certifications: ["Home Health Aide"],
+    distance: 12.3
   }
 ];
 
@@ -93,14 +113,16 @@ export default function FamilyMatchingPage() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [filteredFamilies, setFilteredFamilies] = useState<Family[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dataLoaded, setDataLoaded] = useState(false);
   const { trackEngagement } = useTracking();
   
   const [careTypes, setCareTypes] = useState<string[]>([]);
-  const [specialNeeds, setSpecialNeeds] = useState<string[]>([]);
-  const [scheduleType, setScheduleType] = useState<string>("all");
+  const [specializedCare, setSpecializedCare] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<string>("all");
   const [maxDistance, setMaxDistance] = useState<number>(30);
-  const [budgetRange, setBudgetRange] = useState<[number, number]>([15, 50]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [onlyTrained, setOnlyTrained] = useState<boolean>(false);
+  const [requiredCertifications, setRequiredCertifications] = useState<string[]>([]);
+  const [minimumExperience, setMinimumExperience] = useState<string>("any");
 
   const referringPath = location.state?.referringPagePath || 
     (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard/family');
@@ -108,7 +130,7 @@ export default function FamilyMatchingPage() {
   const referringLabel = location.state?.referringPageLabel || 
     (referringPath.includes('professional') ? 'Professional Dashboard' : 'Family Dashboard');
   
-  console.log("FamilyMatchingPage - Navigation context:", {
+  console.log("FamilyMatching breadcrumb info:", {
     referringPath,
     referringLabel,
     locationState: location.state,
@@ -125,123 +147,140 @@ export default function FamilyMatchingPage() {
     "Housekeeping"
   ];
   
-  const specialNeedsOptions = [
+  const specializedCareOptions = [
     "Alzheimer's",
+    "Dementia Care",
     "Mobility Assistance",
     "Medication Management",
     "Autism Care", 
-    "Dementia Care",
     "Stroke Recovery",
     "Meal Preparation",
-    "Early Childhood Development",
-    "Diabetes Management",
-    "Parkinson's Care",
-    "Physical Therapy Assistance",
-    "Post-Surgery Care",
-    "Hospice Support",
-    "Respiratory Care"
+    "Early Childhood Development"
   ];
   
-  const scheduleOptions = [
-    { value: "all", label: "Any Schedule" },
+  const certificationOptions = [
+    "CPR Certified",
+    "First Aid",
+    "Registered Nurse",
+    "Home Health Aide",
+    "Certified Nursing Assistant",
+    "Dementia Care",
+    "Child Development"
+  ];
+  
+  const experienceOptions = [
+    { value: "any", label: "Any Experience" },
+    { value: "1+", label: "1+ Years" },
+    { value: "3+", label: "3+ Years" },
+    { value: "5+", label: "5+ Years" },
+    { value: "10+", label: "10+ Years" }
+  ];
+  
+  const availabilityOptions = [
+    { value: "all", label: "Any Availability" },
+    { value: "immediate", label: "Immediate / ASAP" },
+    { value: "scheduled", label: "Scheduled" },
     { value: "full-time", label: "Full-time" },
     { value: "part-time", label: "Part-time" },
     { value: "weekdays", label: "Weekdays" },
     { value: "weekends", label: "Weekends" },
     { value: "evenings", label: "Evenings" },
-    { value: "mornings", label: "Mornings" },
     { value: "overnight", label: "Overnight" }
   ];
   
-  const loadFamilies = useCallback(async () => {
-    if (!user || dataLoaded) return;
-    
-    try {
-      setIsLoading(true);
-      
-      // Immediately set mock families to prevent empty UI
-      setFamilies(MOCK_FAMILIES);
-      setFilteredFamilies(MOCK_FAMILIES);
-      
-      const { data: familyUsers, error: familyError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'family');
-      
-      if (familyError) {
-        console.error("Error fetching family users:", familyError);
-        toast.error("Failed to load family matches");
-        setDataLoaded(true); // Mark as loaded even if there was an error to prevent retries
-        return; // Keep showing mock data
-      }
-      
-      if (!familyUsers || familyUsers.length === 0) {
-        console.log("No family users found, using mock data only");
-        
-        await trackEngagement('family_matching_page_view', { 
-          data_source: 'mock_data',
-          family_count: MOCK_FAMILIES.length
-        });
-        
-        setDataLoaded(true);
-        return; // Keep showing mock data
-      }
-      
-      const realFamilies: Family[] = familyUsers.map(family => {
-        const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
-        const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
-        
-        return {
-          id: family.id,
-          full_name: family.full_name || `${family.care_recipient_name || ''} Family`,
-          avatar_url: family.avatar_url,
-          location: family.location || 'Port of Spain',
-          care_types: family.care_types || ['Elderly Care'],
-          special_needs: family.special_needs || [],
-          care_schedule: family.care_schedule || 'Weekdays',
-          match_score: matchScore,
-          is_premium: false,
-          distance: distance,
-          budget_preferences: family.budget_preferences || '$15-30/hr'
-        };
-      });
-      
-      console.log("Loaded real family users:", realFamilies.length);
-      
-      // Combine real families with mock ones if needed
-      const allFamilies = [...realFamilies, ...MOCK_FAMILIES];
-      
-      await trackEngagement('family_matching_page_view', {
-        data_source: realFamilies.length > 0 ? 'mixed_data' : 'mock_data',
-        real_family_count: realFamilies.length,
-        mock_family_count: MOCK_FAMILIES.length
-      });
-      
-      setFamilies(allFamilies);
-      setFilteredFamilies(allFamilies);
-      setDataLoaded(true);
-    } catch (error) {
-      console.error("Error loading families:", error);
-      toast.error("Failed to load family matches");
-      setDataLoaded(true); // Mark as loaded even if there was an error
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, trackEngagement, dataLoaded]);
-  
   useEffect(() => {
-    if (user && isProfileComplete && !dataLoaded) {
+    const loadFamilies = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data: professionalUsers, error: professionalError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'family');
+        
+        if (professionalError) {
+          console.error("Error fetching professional users:", professionalError);
+          toast.error("Failed to load professional families");
+          setFamilies(MOCK_FAMILIES);
+          setFilteredFamilies(MOCK_FAMILIES);
+          toast.info("Showing sample families");
+          return;
+        }
+        
+        const realFamilies: Family[] = professionalUsers ? professionalUsers.map(prof => {
+          const matchScore = Math.floor(Math.random() * (99 - 65) + 65);
+          const distance = parseFloat((Math.random() * 19 + 1).toFixed(1));
+          const fullName = prof.full_name || 'Professional Family';
+          const firstName = fullName.split(' ')[0];
+          
+          return {
+            id: prof.id,
+            full_name: fullName,
+            first_name: firstName,
+            avatar_url: prof.avatar_url,
+            hourly_rate: prof.hourly_rate || '$15-25',
+            location: prof.location || 'Port of Spain',
+            years_of_experience: prof.years_of_experience || '1+',
+            care_types: prof.care_types || ['Elderly Care'],
+            specialized_care: prof.specialized_care || [],
+            availability: prof.availability || ['Weekdays'],
+            match_score: matchScore,
+            is_premium: false,
+            has_training: Boolean(prof.has_training || prof.certifications?.length > 0),
+            certifications: prof.certifications || [],
+            distance: distance
+          };
+        }) : [];
+        
+        console.log("Loaded real professional families:", realFamilies.length);
+        
+        let displayFamilies;
+        if (realFamilies.length === 0) {
+          displayFamilies = MOCK_FAMILIES;
+          toast.info("Showing sample families");
+        } else {
+          displayFamilies = [...realFamilies, ...MOCK_FAMILIES.slice(0, 2)];
+        }
+        
+        setFamilies(displayFamilies);
+        setFilteredFamilies(displayFamilies);
+      } catch (error) {
+        console.error("Error loading families:", error);
+        toast.error("Failed to load family matches");
+        setFamilies(MOCK_FAMILIES);
+        setFilteredFamilies(MOCK_FAMILIES);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    let isMounted = true;
+    if (user && isProfileComplete && isMounted) {
       loadFamilies();
-    } else if (user && !isProfileComplete) {
-      navigate("/registration/professional", { 
-        state: { returnPath: "/family-matching", action: "findFamilies" }
+    } else if (user && !isProfileComplete && isMounted) {
+      navigate("/registration/family", { 
+        state: { 
+          returnPath: "/family-matching", 
+          referringPagePath: referringPath,
+          referringPageLabel: referringLabel,
+          action: "findFamily" 
+        }
       });
-    } else if (!user) {
+    } else if (!user && isMounted) {
       navigate("/auth", { 
-        state: { returnPath: "/family-matching", action: "findFamilies" }
+        state: { 
+          returnPath: "/family-matching",
+          referringPagePath: referringPath,
+          referringPageLabel: referringLabel,
+          action: "findFamily" 
+        }
       });
     }
-  }, [user, isProfileComplete, navigate, loadFamilies, dataLoaded]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isProfileComplete, navigate, referringPath, referringLabel]);
   
   useEffect(() => {
     if (families.length === 0) return;
@@ -249,73 +288,80 @@ export default function FamilyMatchingPage() {
     const applyFilters = () => {
       let result = [...families];
 
+      // Care Types Filter
       if (careTypes.length > 0) {
         result = result.filter(family => 
           family.care_types?.some(type => careTypes.includes(type))
         );
       }
 
-      if (specialNeeds.length > 0) {
+      // Specialized Care Filter
+      if (specializedCare.length > 0) {
         result = result.filter(family =>
-          family.special_needs?.some(need => specialNeeds.includes(need))
+          family.specialized_care?.some(care => specializedCare.includes(care))
         );
       }
 
-      if (scheduleType !== "all") {
+      // Availability Filter
+      if (availability !== "all") {
         result = result.filter(family =>
-          family.care_schedule?.toLowerCase().includes(scheduleType.toLowerCase())
+          family.availability?.some(avail => 
+            avail.toLowerCase().includes(availability.toLowerCase())
+          )
         );
       }
 
+      // Distance Filter
       result = result.filter(family => family.distance <= maxDistance);
-      
-      // Apply budget filter
+
+      // Price Range Filter
       result = result.filter(family => {
-        // Extract numeric values from budget_preferences
-        if (!family.budget_preferences) return true; // Include if no budget specified
-        
-        const match = family.budget_preferences.match(/\$(\d+)(?:-(\d+))?/);
-        if (!match) return true;
-        
-        const minBudget = parseInt(match[1]);
-        const maxBudget = match[2] ? parseInt(match[2]) : minBudget;
-        
-        // Check if there's overlap between the family's budget range and filter range
-        return (minBudget <= budgetRange[1] && maxBudget >= budgetRange[0]);
+        const minPrice = parseInt(family.hourly_rate?.split('-')[0].replace('$', '') || '0');
+        const maxPrice = parseInt(family.hourly_rate?.split('-')[1]?.replace('$', '') || minPrice.toString());
+        return minPrice <= priceRange[1] && maxPrice >= priceRange[0];
       });
 
+      // Training Filter
+      if (onlyTrained) {
+        result = result.filter(family => family.has_training);
+      }
+
+      // Certifications Filter
+      if (requiredCertifications.length > 0) {
+        result = result.filter(family =>
+          family.certifications?.some(cert => requiredCertifications.includes(cert))
+        );
+      }
+
+      // Experience Filter
+      if (minimumExperience !== "any") {
+        result = result.filter(family => {
+          const familyYears = parseInt(family.years_of_experience?.replace('+', '') || '0');
+          const requiredYears = parseInt(minimumExperience.replace('+', '') || '0');
+          return familyYears >= requiredYears;
+        });
+      }
+
+      // Sort by match score
       result.sort((a, b) => b.match_score - a.match_score);
 
       setFilteredFamilies(result);
     };
 
     applyFilters();
-  }, [families, careTypes, specialNeeds, scheduleType, maxDistance, budgetRange]);
+  }, [families, careTypes, specializedCare, availability, maxDistance, priceRange, onlyTrained, requiredCertifications, minimumExperience]);
   
-  const handleUnlockProfile = async (familyId: string, isPremium: boolean) => {
-    await trackEngagement('unlock_family_profile_click', { 
-      family_id: familyId, 
-      is_premium: isPremium 
-    });
-    
-    navigate("/subscription-features", { 
-      state: { 
-        returnPath: "/family-matching",
-        referringPagePath: referringPath,
-        referringPageLabel: referringLabel,
-        featureType: "Premium Family Profiles",
-        familyId: familyId
-      } 
-    });
-  };
-
   const handleCareTypeChange = (type: string) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'care_type', 
-      filter_value: type,
-      previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
-      new_state: careTypes.includes(type) ? 'unselected' : 'selected'
-    });
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'care_type', 
+        filter_value: type,
+        previous_state: careTypes.includes(type) ? 'selected' : 'unselected',
+        new_state: careTypes.includes(type) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking care type change:", error);
+    }
     
     setCareTypes(prev => 
       prev.includes(type) 
@@ -324,49 +370,63 @@ export default function FamilyMatchingPage() {
     );
   };
   
-  const handleSpecialNeedsChange = (need: string) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'special_needs', 
-      filter_value: need,
-      previous_state: specialNeeds.includes(need) ? 'selected' : 'unselected',
-      new_state: specialNeeds.includes(need) ? 'unselected' : 'selected'
-    });
+  const handleSpecializedCareChange = (care: string) => {
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'specialized_care', 
+        filter_value: care,
+        previous_state: specializedCare.includes(care) ? 'selected' : 'unselected',
+        new_state: specializedCare.includes(care) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking specialized care change:", error);
+    }
     
-    setSpecialNeeds(prev => 
-      prev.includes(need) 
-        ? prev.filter(n => n !== need) 
-        : [...prev, need]
+    setSpecializedCare(prev => 
+      prev.includes(care) 
+        ? prev.filter(c => c !== care) 
+        : [...prev, care]
     );
   };
-
-  const handleScheduleChange = (value: string) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'schedule', 
-      previous_value: scheduleType,
-      new_value: value
-    });
+  
+  const handleCertificationChange = (cert: string) => {
+    try {
+      trackEngagement('filter_change', { 
+        filter_type: 'certification', 
+        filter_value: cert,
+        previous_state: requiredCertifications.includes(cert) ? 'selected' : 'unselected',
+        new_state: requiredCertifications.includes(cert) ? 'unselected' : 'selected'
+      });
+    } catch (error) {
+      console.error("Error tracking certification change:", error);
+    }
     
-    setScheduleType(value);
+    setRequiredCertifications(prev => 
+      prev.includes(cert) 
+        ? prev.filter(c => c !== cert) 
+        : [...prev, cert]
+    );
   };
   
-  const handleDistanceChange = (value: number[]) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'distance', 
-      previous_value: maxDistance,
-      new_value: value[0]
-    });
+  const handleUnlockProfile = async (familyId: string, isPremium: boolean) => {
+    try {
+      await trackEngagement('unlock_profile_click', { 
+        caregiver_id: familyId, 
+        is_premium: isPremium 
+      });
+    } catch (error) {
+      console.error("Error tracking unlock profile click:", error);
+    }
     
-    setMaxDistance(value[0]);
-  };
-  
-  const handleBudgetChange = (value: [number, number]) => {
-    trackEngagement('filter_change', { 
-      filter_type: 'budget_range', 
-      previous_value: `${budgetRange[0]}-${budgetRange[1]}`,
-      new_value: `${value[0]}-${value[1]}`
+    navigate("/subscription-features", { 
+      state: { 
+        returnPath: "/family-matching",
+        referringPagePath: referringPath,
+        referringPageLabel: referringLabel,
+        featureType: "Premium Family Profiles",
+        caregiverId: familyId
+      } 
     });
-    
-    setBudgetRange(value);
   };
 
   const breadcrumbItems = [
@@ -381,21 +441,27 @@ export default function FamilyMatchingPage() {
   ];
 
   return (
-    <div className="container px-4 py-8">
-      <MatchingTracker 
-        matchingType="family" 
+    <MatchingTracker 
+        matchType="family"
+        matchId="general-family-matching-view" 
+        matchScore={100}
         additionalData={{
           referrer: referringPath,
-          filter_count: careTypes.length + specialNeeds.length + (scheduleType !== 'all' ? 1 : 0) + 1
+          filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
+            (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
         }}
-      />
-      
-      <DashboardHeader breadcrumbItems={breadcrumbItems} />
-      
+      >
+        <div className="container px-4 py-8">
+          <DashboardHeader 
+            title="Family Matches"
+            description="Find the perfect family match"
+            breadcrumbItems={breadcrumbItems} 
+          />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
         <p className="text-gray-600">
-          We've found {filteredFamilies.length} families that match your skills and experience
+          We've found {filteredFamilies.length} families that match your profile requirements
         </p>
       </div>
       
@@ -408,46 +474,109 @@ export default function FamilyMatchingPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <h3 className="font-medium text-sm">Care Types</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {careTypeOptions.map((type) => (
-                <div key={type} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`care-type-${type}`}
-                    checked={careTypes.includes(type)}
-                    onCheckedChange={() => handleCareTypeChange(type)}
-                  />
-                  <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h3 className="font-medium text-sm">Care Type Needed</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {careTypeOptions.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`care-type-${type}`}
+                        checked={careTypes.includes(type)}
+                        onCheckedChange={() => handleCareTypeChange(type)}
+                      />
+                      <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-medium text-sm">Specialized Care Needs</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {specializedCareOptions.map((care) => (
+                    <div key={care} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`specialized-care-${care}`}
+                        checked={specializedCare.includes(care)}
+                        onCheckedChange={() => handleSpecializedCareChange(care)}
+                      />
+                      <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-
-            <h3 className="font-medium text-sm">Special Needs</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {specialNeedsOptions.map((need) => (
-                <div key={need} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`special-need-${need}`}
-                    checked={specialNeeds.includes(need)}
-                    onCheckedChange={() => handleSpecialNeedsChange(need)}
-                  />
-                  <Label htmlFor={`special-need-${need}`} className="text-sm">{need}</Label>
-                </div>
-              ))}
+            
+            <div className="space-y-2">
+              <h3 className="font-medium text-sm">Required Certifications</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {certificationOptions.map((cert) => (
+                  <div key={cert} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`cert-${cert}`}
+                      checked={requiredCertifications.includes(cert)}
+                      onCheckedChange={() => handleCertificationChange(cert)}
+                    />
+                    <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="schedule" className="text-sm">Care Schedule</Label>
+                <Label htmlFor="availability" className="text-sm">Family Availability</Label>
                 <Select
-                  value={scheduleType}
-                  onValueChange={handleScheduleChange}
+                  value={availability}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'availability', 
+                        previous_value: availability,
+                        new_value: value
+                      });
+                    } catch (error) {
+                      console.error("Error tracking availability change:", error);
+                    }
+                    setAvailability(value);
+                  }}
                 >
-                  <SelectTrigger id="schedule">
-                    <SelectValue placeholder="Select schedule" />
+                  <SelectTrigger id="availability">
+                    <SelectValue placeholder="Select availability" />
                   </SelectTrigger>
                   <SelectContent>
-                    {scheduleOptions.map(option => (
+                    {availabilityOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
+                <Select
+                  value={minimumExperience}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'experience', 
+                        previous_value: minimumExperience,
+                        new_value: value
+                      });
+                    } catch (error) {
+                      console.error("Error tracking experience change:", error);
+                    }
+                    setMinimumExperience(value);
+                  }}
+                >
+                  <SelectTrigger id="experience">
+                    <SelectValue placeholder="Select minimum experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {experienceOptions.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -465,22 +594,64 @@ export default function FamilyMatchingPage() {
                   min={1} 
                   max={50} 
                   step={1}
-                  onValueChange={(value) => handleDistanceChange(value)}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'distance', 
+                        previous_value: maxDistance,
+                        new_value: value[0]
+                      });
+                    } catch (error) {
+                      console.error("Error tracking distance change:", error);
+                    }
+                    setMaxDistance(value[0]);
+                  }}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label className="text-sm flex justify-between">
-                  <span>Budget Range: ${budgetRange[0]}-${budgetRange[1]}/hr</span>
-                </Label>
-                <Slider 
-                  value={budgetRange} 
-                  min={15} 
-                  max={50} 
-                  step={5}
-                  onValueChange={(value) => handleBudgetChange(value as [number, number])}
-                />
-              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm flex justify-between">
+                <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
+              </Label>
+              <Slider 
+                value={priceRange} 
+                min={0} 
+                max={100} 
+                step={5}
+                onValueChange={(value: number[]) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'price_range', 
+                      previous_value: `${priceRange[0]}-${priceRange[1]}`,
+                      new_value: `${value[0]}-${value[1]}`
+                    });
+                  } catch (error) {
+                    console.error("Error tracking price range change:", error);
+                  }
+                  setPriceRange([value[0], value[1]] as [number, number]);
+                }}
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="trained-families" 
+                checked={onlyTrained}
+                onCheckedChange={(checked) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'trained_only', 
+                      previous_value: onlyTrained,
+                      new_value: checked
+                    });
+                  } catch (error) {
+                    console.error("Error tracking trained only change:", error);
+                  }
+                  setOnlyTrained(checked as boolean);
+                }}
+              />
+              <Label htmlFor="trained-families" className="text-sm">Show only platform-trained families</Label>
             </div>
           </div>
         </CardContent>
@@ -498,10 +669,13 @@ export default function FamilyMatchingPage() {
             className="mt-4"
             onClick={() => {
               setCareTypes([]);
-              setSpecialNeeds([]);
-              setScheduleType("all");
+              setSpecializedCare([]);
+              setRequiredCertifications([]);
+              setAvailability("all");
+              setMinimumExperience("any");
               setMaxDistance(30);
-              setBudgetRange([15, 50]);
+              setPriceRange([0, 100]);
+              setOnlyTrained(false);
             }}
           >
             Reset Filters
@@ -514,14 +688,19 @@ export default function FamilyMatchingPage() {
               <div className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-amber-600" />
                 <p className="font-medium text-amber-800">
-                  Unlock Premium Matching: Get priority placement with families and access to exclusive job opportunities.
+                  Unlock Premium Matching: Upgrade for priority placement & access to exclusive family profiles.
                 </p>
               </div>
               <Button 
                 variant="default" 
                 className="bg-amber-600 hover:bg-amber-700"
                 onClick={() => {
-                  trackEngagement('premium_family_matching_cta_click');
+                  try {
+                    trackEngagement('premium_matching_cta_click');
+                  } catch (error) {
+                    console.error("Error tracking premium matching click:", error);
+                  }
+                  
                   navigate("/subscription-features", { 
                     state: { 
                       returnPath: "/family-matching",
@@ -557,12 +736,12 @@ export default function FamilyMatchingPage() {
                       <Avatar className="h-20 w-20 border-2 border-primary/20">
                         <AvatarImage src={family.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {family.full_name.split(' ')[0][0] || 'F'}
+                          {family.full_name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="mt-3 text-center">
-                        <h3 className="text-lg font-semibold">{family.full_name}</h3>
+                        <h3 className="text-lg font-semibold">{family.first_name}</h3>
                         <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
                           <MapPin className="h-3.5 w-3.5" />
                           <span>{family.location}</span>
@@ -577,38 +756,34 @@ export default function FamilyMatchingPage() {
                   </div>
                   
                   <div className="col-span-2 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-primary-600" />
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary-600" />
                         <div>
-                          <div className="text-sm text-gray-500">Care Schedule</div>
-                          <div className="font-medium">{family.care_schedule}</div>
+                          <div className="text-sm text-gray-500">Hourly Rate</div>
+                          <div className="font-medium">{family.hourly_rate}</div>
                         </div>
                       </div>
                       
-                      <span className="text-gray-300 mx-2">|</span>
-                      
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Experience</div>
+                          <div className="font-medium">{family.years_of_experience} Years</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <MapPinned className="h-4 w-4 text-primary-600" />
                         <div>
                           <div className="text-sm text-gray-500">Distance</div>
                           <div className="font-medium">{family.distance.toFixed(1)} km</div>
                         </div>
                       </div>
-                      
-                      <span className="text-gray-300 mx-2">|</span>
-                      
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-primary-600" />
-                        <div>
-                          <div className="text-sm text-gray-500">Budget</div>
-                          <div className="font-medium">{family.budget_preferences || 'Not specified'}</div>
-                        </div>
-                      </div>
                     </div>
                     
                     <div>
-                      <div className="text-sm text-gray-500 mb-1">Care Types Needed</div>
+                      <div className="text-sm text-gray-500 mb-1">Care Specialties</div>
                       <div className="flex flex-wrap gap-1">
                         {family.care_types?.map((type, i) => (
                           <Badge key={i} variant="outline" className="bg-gray-50">
@@ -618,26 +793,65 @@ export default function FamilyMatchingPage() {
                       </div>
                     </div>
                     
-                    {family.special_needs && family.special_needs.length > 0 && (
+                    {family.specialized_care && family.specialized_care.length > 0 && (
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Special Care Needs</div>
+                        <div className="text-sm text-gray-500 mb-1">Special Care Expertise</div>
                         <div className="flex flex-wrap gap-1">
-                          {family.special_needs?.map((need, i) => (
+                          {family.specialized_care?.map((specialty, i) => (
                             <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {need}
+                              {specialty}
                             </Badge>
                           ))}
                         </div>
                       </div>
                     )}
+                    
+                    {family.certifications && family.certifications.length > 0 && (
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Certifications</div>
+                        <div className="flex flex-wrap gap-1">
+                          {family.certifications.map((cert, i) => (
+                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {cert}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Availability</div>
+                      <div className="flex flex-wrap gap-1">
+                        {family.availability?.map((avail, i) => (
+                          <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            <Calendar className="h-3 w-3" />
+                            <span>{avail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex flex-col justify-between space-y-4">
                     <div>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-4 w-4 text-amber-500" />
-                        ))}
+                      <div className="flex items-center gap-1 mb-2">
+                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-700">Background Checked</span>
+                      </div>
+
+                      {family.has_training && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <Check className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm text-blue-700">Platform Trained</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
                       </div>
                     </div>
                     
@@ -657,6 +871,3 @@ export default function FamilyMatchingPage() {
         </div>
       )}
     </div>
-  );
-}
-
