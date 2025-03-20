@@ -196,7 +196,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="family">Family Member</SelectItem>
-            <SelectItem value="professional">Healthcare Professional</SelectItem>
+            <SelectItem value="professional">Care Professional</SelectItem>
             <SelectItem value="community">Community Member</SelectItem>
           </SelectContent>
         </Select>
