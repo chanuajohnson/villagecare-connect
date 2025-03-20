@@ -4,6 +4,8 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardCardGrid } from "@/components/dashboard/DashboardCardGrid";
 import { FeatureInterestTracker } from "@/components/admin/FeatureInterestTracker";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
+import { UnverifiedUserManagement } from "@/components/admin/UnverifiedUserManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminDashboard = () => {
   const breadcrumbItems = [
@@ -35,11 +37,25 @@ const AdminDashboard = () => {
         </motion.div>
 
         <div className="space-y-8">
-          <AdminUserManagement />
-          
-          <div className="mt-8">
-            <FeatureInterestTracker />
-          </div>
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="users">Active Users</TabsTrigger>
+              <TabsTrigger value="unverified">Unverified Users</TabsTrigger>
+              <TabsTrigger value="features">Feature Tracking</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="users">
+              <AdminUserManagement />
+            </TabsContent>
+            
+            <TabsContent value="unverified">
+              <UnverifiedUserManagement />
+            </TabsContent>
+            
+            <TabsContent value="features">
+              <FeatureInterestTracker />
+            </TabsContent>
+          </Tabs>
 
           <DashboardCardGrid />
         </div>
