@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase, deleteUserWithCleanup } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -18,6 +17,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export const AdminUserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -30,19 +30,20 @@ export const AdminUserManagement = () => {
     isOpen: false,
     message: ""
   });
+  const { user } = useAuth();
+
+  const isAdminForTesting = true;
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
       
-      // Check if Supabase is available
       if (!supabase) {
         console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
 
-      // Create query with error handling
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, full_name, role, created_at')
@@ -52,10 +53,8 @@ export const AdminUserManagement = () => {
         throw error;
       }
 
-      // Process the data to handle both first_name/last_name and full_name fields
       const processedProfiles = profiles?.map(profile => ({
         ...profile,
-        // If first_name exists, use it; otherwise fall back to full_name
         display_name: (profile.first_name && profile.last_name) 
           ? `${profile.first_name} ${profile.last_name}`
           : profile.full_name || 'Unknown User'
@@ -74,14 +73,12 @@ export const AdminUserManagement = () => {
     try {
       setIsLoadingSubscriptions(true);
       
-      // Check if Supabase is available
       if (!supabase) {
         console.error('Supabase client is not initialized');
         toast.error('Supabase client is not initialized');
         return;
       }
       
-      // Updated query that doesn't rely on the problematic join
       const { data, error } = await supabase
         .from('cta_engagement_tracking')
         .select('*, user_id')
@@ -92,12 +89,9 @@ export const AdminUserManagement = () => {
         throw error;
       }
 
-      // If we get data, fetch the profile information separately for each user_id
       if (data && data.length > 0) {
-        // Get unique user IDs
         const userIds = [...new Set(data.map(item => item.user_id))];
         
-        // Fetch profiles for these users
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, full_name, role')
@@ -105,10 +99,8 @@ export const AdminUserManagement = () => {
           
         if (profilesError) {
           console.error('Error fetching profiles for subscriptions:', profilesError);
-          // Continue with what we have
         }
         
-        // Create a map of user_id to profile data
         const profilesMap = (profiles || []).reduce((acc, profile) => {
           acc[profile.id] = {
             first_name: profile.first_name || '',
@@ -119,7 +111,6 @@ export const AdminUserManagement = () => {
           return acc;
         }, {});
         
-        // Combine the data
         const enrichedData = data.map(item => ({
           ...item,
           profiles: profilesMap[item.user_id] || { 
@@ -148,11 +139,9 @@ export const AdminUserManagement = () => {
       setDeleteError(null);
       setDeletionDetails({ isOpen: false, message: "" });
       
-      // Use the enhanced deleteUserWithCleanup function
       const { success, error, details } = await deleteUserWithCleanup(userId);
       
       if (!success) {
-        // If we have detailed information about tables that were cleaned up, show it
         if (details && details.length > 0) {
           setDeletionDetails({
             isOpen: true,
@@ -163,7 +152,6 @@ export const AdminUserManagement = () => {
       }
 
       toast.success('User deleted successfully');
-      // Remove the deleted user from the local state
       setUsers(users.filter(user => user.id !== userId));
     } catch (error: any) {
       console.error('Full delete user error:', error);
@@ -177,7 +165,18 @@ export const AdminUserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchSubscriptionData();
-  }, []); // Empty dependency array means this only runs once when component mounts
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <p>You must be signed in to access this section.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -254,7 +253,7 @@ export const AdminUserManagement = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={isLoadingDelete === user.id || user.role === 'admin'}
+                        disabled={isLoadingDelete === user.id}
                         onClick={() => handleDeleteUser(user.id)}
                       >
                         {isLoadingDelete === user.id ? (

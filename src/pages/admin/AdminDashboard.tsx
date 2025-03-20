@@ -6,8 +6,11 @@ import { FeatureInterestTracker } from "@/components/admin/FeatureInterestTracke
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { UnverifiedUserManagement } from "@/components/admin/UnverifiedUserManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  
   const breadcrumbItems = [
     {
       label: "Dashboard",
@@ -18,6 +21,18 @@ const AdminDashboard = () => {
       path: "/dashboard/admin",
     },
   ];
+
+  // Check if user is authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="p-8 bg-white rounded-lg shadow-md max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+          <p>You need to be signed in to access the Admin Dashboard.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,6 +49,13 @@ const AdminDashboard = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage system settings and user accounts.</p>
+          
+          {/* Testing mode notice */}
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-sm text-yellow-800">
+              <strong>Testing Mode:</strong> Admin checks are currently bypassed to allow testing of the admin features.
+            </p>
+          </div>
         </motion.div>
 
         <div className="space-y-8">
