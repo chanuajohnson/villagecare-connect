@@ -537,7 +537,7 @@ const SubscriptionPage = () => {
               const planAction = getPlanAction(plan.id);
               return <Card key={plan.id} className={`border-2 ${isCurrentUserPlan ? 'border-primary/30 bg-primary/5' : planAction === "same" ? 'border-gray-300' : selectedPlan === plan.id ? 'border-primary' : 'border-border'} ${plan.popular ? 'relative shadow-lg' : ''}`}>
                     {plan.popular && <Badge className="absolute -top-3 right-4 bg-primary">Most Popular</Badge>}
-                    {isCurrentUserPlan && <Badge className="absolute -top-3 left-4 bg-green-500">Current Plan</Badge>}
+                    {isCurrentUserPlan}
                     <CardHeader>
                       <CardTitle>{plan.name}</CardTitle>
                       <div className="flex items-end gap-1">
