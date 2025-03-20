@@ -1,6 +1,6 @@
 
 import { useTracking } from "@/hooks/useTracking";
-import { useEffect, useState, useRef, ReactNode } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface DashboardTrackerProps {
@@ -8,17 +8,12 @@ interface DashboardTrackerProps {
    * The type of dashboard being tracked
    */
   dashboardType: 'family' | 'professional' | 'community' | 'admin';
-  
-  /**
-   * Children components to be rendered
-   */
-  children: ReactNode;
 }
 
 /**
  * Component to track dashboard visits with user context
  */
-export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerProps) => {
+export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
@@ -60,7 +55,5 @@ export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerPr
     };
   }, [dashboardType, user?.id, isProfileComplete, trackEngagement, user]);
   
-  return <>{children}</>; // Render children
+  return null; // This component doesn't render anything
 };
-
-export type { DashboardTrackerProps };

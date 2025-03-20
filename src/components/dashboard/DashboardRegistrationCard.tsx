@@ -6,39 +6,50 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 interface DashboardRegistrationCardProps {
-  /**
-   * The type of user this registration card is for
-   */
-  userType: 'family' | 'professional' | 'community';
-  
-  /**
-   * The text to display on the call-to-action button
-   */
-  ctaText: string;
-  
-  /**
-   * The URL to navigate to when the CTA button is clicked
-   */
-  ctaLink: string;
-  
-  /**
-   * Whether the card is currently loading profile data
-   */
-  isLoading?: boolean;
+  session: any;
 }
 
-export const DashboardRegistrationCard = ({ 
-  userType, 
-  ctaText, 
-  ctaLink, 
-  isLoading = false 
-}: DashboardRegistrationCardProps) => {
-  const { user } = useAuth();
+export const DashboardRegistrationCard = ({ session }: DashboardRegistrationCardProps) => {
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
   
+  useEffect(() => {
+    const checkProfileCompletion = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('professional_type, full_name, care_services')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error checking profile completion:', error);
+          return;
+        }
+        
+        // For professional users, check if they have the minimum required fields
+        const isProfessionalComplete = profile?.professional_type && 
+                                      profile?.full_name && 
+                                      profile?.care_services;
+        
+        setIsProfileComplete(!!isProfessionalComplete);
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      }
+    };
+    
+    checkProfileCompletion();
+  }, [session]);
+  
+  // If profile is complete, don't show the registration card
+  if (isProfileComplete) {
+    return null;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -49,23 +60,17 @@ export const DashboardRegistrationCard = ({
       <Card>
         <CardHeader>
           <CardTitle>Complete Your Registration</CardTitle>
-          <CardDescription>
-            {userType === 'professional' 
-              ? 'Set up your professional profile to start connecting with families'
-              : userType === 'family'
-                ? 'Set up your family profile to find the perfect caregiver'
-                : 'Complete your community profile to share resources'}
-          </CardDescription>
+          <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link to={ctaLink}>
-            <Button className="w-full" disabled={isLoading}>
-              {isLoading ? 'Loading...' : ctaText}
+          <Link to={session ? '/register/professional' : '/auth'}>
+            <Button className="w-full">
+              {session ? 'Complete Registration' : 'Sign in to Register'}
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
           <UpvoteFeatureButton 
-            featureTitle={`${userType.charAt(0).toUpperCase() + userType.slice(1)} Registration`} 
+            featureTitle="Professional Registration" 
             className="w-full" 
           />
         </CardContent>

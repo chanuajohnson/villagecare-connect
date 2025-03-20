@@ -1,19 +1,14 @@
 
-import { useEffect, useRef, ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { useTracking } from "@/hooks/useTracking";
+import { useTracking, TrackingActionType } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-export interface PageViewTrackerProps {
+interface PageViewTrackerProps {
   /**
-   * The name of the page being tracked
+   * The action type to use for tracking this page view
    */
-  pageName: string;
-  
-  /**
-   * Children components to be rendered
-   */
-  children: ReactNode;
+  actionType: TrackingActionType;
   
   /**
    * Additional data to include with the tracking event
@@ -29,23 +24,16 @@ export interface PageViewTrackerProps {
    * Journey stage associated with this page view (optional)
    */
   journeyStage?: string;
-  
-  /**
-   * Custom action type (optional)
-   */
-  actionType?: string;
 }
 
 /**
  * Component to track page views automatically
  */
 export const PageViewTracker = ({ 
-  pageName, 
-  children,
+  actionType, 
   additionalData = {}, 
   trackPathChanges = false,
-  journeyStage,
-  actionType = 'page_view'
+  journeyStage
 }: PageViewTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
@@ -80,7 +68,6 @@ export const PageViewTracker = ({
       
       await trackEngagement(actionType, {
         ...additionalData,
-        page_name: pageName,
         path: location.pathname,
         search: location.search,
         referrer: document.referrer,
@@ -95,12 +82,10 @@ export const PageViewTracker = ({
       previousPath.current = location.pathname + location.search;
     };
     
-    trackPageView().catch(err => {
-      console.error("Error tracking page view:", err);
-    });
+    trackPageView();
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackPathChanges ? location.pathname + location.search : null]);
   
-  return <>{children}</>; // Render children
+  return null; // This component doesn't render anything
 };

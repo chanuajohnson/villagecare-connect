@@ -441,436 +441,430 @@ export default function CaregiverMatchingPage() {
   ];
 
   return (
-    <MatchingTracker 
-      matchType="caregiver"
-      matchId="general-matching-view" 
-      matchScore={100}
-      additionalData={{
-        referrer: referringPath,
-        filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
-          (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
-      }}
-    >
-      <div className="container px-4 py-8">
-        <DashboardHeader 
-          title="Caregiver Matches"
-          description="Find the perfect caregiver match"
-          breadcrumbItems={breadcrumbItems} 
-        />
+    <div className="container px-4 py-8">
+      <MatchingTracker 
+        matchingType="caregiver" 
+        additionalData={{
+          referrer: referringPath,
+          filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
+            (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
+        }}
+      />
+      
+      <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
-          <p className="text-gray-600">
-            We've found {filteredCaregivers.length} caregivers that match your profile requirements
-          </p>
-        </div>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-primary" />
-              <span>Filter & Sort</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-sm">Care Type Needed</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {careTypeOptions.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`care-type-${type}`}
-                          checked={careTypes.includes(type)}
-                          onCheckedChange={() => handleCareTypeChange(type)}
-                        />
-                        <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-sm">Specialized Care Needs</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {specializedCareOptions.map((care) => (
-                      <div key={care} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`specialized-care-${care}`}
-                          checked={specializedCare.includes(care)}
-                          onCheckedChange={() => handleSpecializedCareChange(care)}
-                        />
-                        <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-primary-900 mb-2">Caregiver Matches</h1>
+        <p className="text-gray-600">
+          We've found {filteredCaregivers.length} caregivers that match your profile requirements
+        </p>
+      </div>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-primary" />
+            <span>Filter & Sort</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h3 className="font-medium text-sm">Required Certifications</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {certificationOptions.map((cert) => (
-                    <div key={cert} className="flex items-center space-x-2">
+                <h3 className="font-medium text-sm">Care Type Needed</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {careTypeOptions.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
                       <Checkbox 
-                        id={`cert-${cert}`}
-                        checked={requiredCertifications.includes(cert)}
-                        onCheckedChange={() => handleCertificationChange(cert)}
+                        id={`care-type-${type}`}
+                        checked={careTypes.includes(type)}
+                        onCheckedChange={() => handleCareTypeChange(type)}
                       />
-                      <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                      <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
                     </div>
                   ))}
                 </div>
               </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-medium text-sm">Specialized Care Needs</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {specializedCareOptions.map((care) => (
+                    <div key={care} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`specialized-care-${care}`}
+                        checked={specializedCare.includes(care)}
+                        onCheckedChange={() => handleSpecializedCareChange(care)}
+                      />
+                      <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-medium text-sm">Required Certifications</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {certificationOptions.map((cert) => (
+                  <div key={cert} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`cert-${cert}`}
+                      checked={requiredCertifications.includes(cert)}
+                      onCheckedChange={() => handleCertificationChange(cert)}
+                    />
+                    <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="availability" className="text-sm">Caregiver Availability</Label>
-                  <Select
-                    value={availability}
-                    onValueChange={(value) => {
-                      try {
-                        trackEngagement('filter_change', { 
-                          filter_type: 'availability', 
-                          previous_value: availability,
-                          new_value: value
-                        });
-                      } catch (error) {
-                        console.error("Error tracking availability change:", error);
-                      }
-                      setAvailability(value);
-                    }}
-                  >
-                    <SelectTrigger id="availability">
-                      <SelectValue placeholder="Select availability" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availabilityOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
-                  <Select
-                    value={minimumExperience}
-                    onValueChange={(value) => {
-                      try {
-                        trackEngagement('filter_change', { 
-                          filter_type: 'experience', 
-                          previous_value: minimumExperience,
-                          new_value: value
-                        });
-                      } catch (error) {
-                        console.error("Error tracking experience change:", error);
-                      }
-                      setMinimumExperience(value);
-                    }}
-                  >
-                    <SelectTrigger id="experience">
-                      <SelectValue placeholder="Select minimum experience" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {experienceOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm flex justify-between">
-                    <span>Maximum Distance: {maxDistance} km</span>
-                  </Label>
-                  <Slider 
-                    value={[maxDistance]} 
-                    min={1} 
-                    max={50} 
-                    step={1}
-                    onValueChange={(value) => {
-                      try {
-                        trackEngagement('filter_change', { 
-                          filter_type: 'distance', 
-                          previous_value: maxDistance,
-                          new_value: value[0]
-                        });
-                      } catch (error) {
-                        console.error("Error tracking distance change:", error);
-                      }
-                      setMaxDistance(value[0]);
-                    }}
-                  />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="availability" className="text-sm">Caregiver Availability</Label>
+                <Select
+                  value={availability}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'availability', 
+                        previous_value: availability,
+                        new_value: value
+                      });
+                    } catch (error) {
+                      console.error("Error tracking availability change:", error);
+                    }
+                    setAvailability(value);
+                  }}
+                >
+                  <SelectTrigger id="availability">
+                    <SelectValue placeholder="Select availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availabilityOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm flex justify-between">
-                  <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
-                </Label>
-                <Slider 
-                  value={priceRange} 
-                  min={0} 
-                  max={100} 
-                  step={5}
-                  onValueChange={(value: number[]) => {
+                <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
+                <Select
+                  value={minimumExperience}
+                  onValueChange={(value) => {
                     try {
                       trackEngagement('filter_change', { 
-                        filter_type: 'price_range', 
-                        previous_value: `${priceRange[0]}-${priceRange[1]}`,
-                        new_value: `${value[0]}-${value[1]}`
+                        filter_type: 'experience', 
+                        previous_value: minimumExperience,
+                        new_value: value
                       });
                     } catch (error) {
-                      console.error("Error tracking price range change:", error);
+                      console.error("Error tracking experience change:", error);
                     }
-                    setPriceRange([value[0], value[1]] as [number, number]);
-                  }}
-                />
-              </div>
-              
-              <div className="flex items-center space-x-2 pt-2">
-                <Checkbox 
-                  id="trained-caregivers" 
-                  checked={onlyTrained}
-                  onCheckedChange={(checked) => {
-                    try {
-                      trackEngagement('filter_change', { 
-                        filter_type: 'trained_only', 
-                        previous_value: onlyTrained,
-                        new_value: checked
-                      });
-                    } catch (error) {
-                      console.error("Error tracking trained only change:", error);
-                    }
-                    setOnlyTrained(checked as boolean);
-                  }}
-                />
-                <Label htmlFor="trained-caregivers" className="text-sm">Show only platform-trained caregivers</Label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredCaregivers.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No caregivers match your current filters</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => {
-                setCareTypes([]);
-                setSpecializedCare([]);
-                setRequiredCertifications([]);
-                setAvailability("all");
-                setMinimumExperience("any");
-                setMaxDistance(30);
-                setPriceRange([0, 100]);
-                setOnlyTrained(false);
-              }}
-            >
-              Reset Filters
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-amber-600" />
-                  <p className="font-medium text-amber-800">
-                    Unlock Premium Matching: Upgrade for priority placement & access to exclusive caregiver profiles.
-                  </p>
-                </div>
-                <Button 
-                  variant="default" 
-                  className="bg-amber-600 hover:bg-amber-700"
-                  onClick={() => {
-                    try {
-                      trackEngagement('premium_matching_cta_click');
-                    } catch (error) {
-                      console.error("Error tracking premium matching click:", error);
-                    }
-                    
-                    navigate("/subscription-features", { 
-                      state: { 
-                        returnPath: "/caregiver-matching",
-                        referringPagePath: referringPath,
-                        referringPageLabel: referringLabel,
-                        featureType: "Premium Matching" 
-                      } 
-                    });
+                    setMinimumExperience(value);
                   }}
                 >
-                  Upgrade Now
-                </Button>
-              </CardContent>
-            </Card>
+                  <SelectTrigger id="experience">
+                    <SelectValue placeholder="Select minimum experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {experienceOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex justify-between">
+                  <span>Maximum Distance: {maxDistance} km</span>
+                </Label>
+                <Slider 
+                  value={[maxDistance]} 
+                  min={1} 
+                  max={50} 
+                  step={1}
+                  onValueChange={(value) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'distance', 
+                        previous_value: maxDistance,
+                        new_value: value[0]
+                      });
+                    } catch (error) {
+                      console.error("Error tracking distance change:", error);
+                    }
+                    setMaxDistance(value[0]);
+                  }}
+                />
+              </div>
+            </div>
             
-            {filteredCaregivers.map((caregiver) => (
-              <Card 
-                key={caregiver.id} 
-                className={`relative overflow-hidden ${caregiver.is_premium ? 'border-amber-300 shadow-amber-100' : ''}`}
+            <div className="space-y-2">
+              <Label className="text-sm flex justify-between">
+                <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
+              </Label>
+              <Slider 
+                value={priceRange} 
+                min={0} 
+                max={100} 
+                step={5}
+                onValueChange={(value: number[]) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'price_range', 
+                      previous_value: `${priceRange[0]}-${priceRange[1]}`,
+                      new_value: `${value[0]}-${value[1]}`
+                    });
+                  } catch (error) {
+                    console.error("Error tracking price range change:", error);
+                  }
+                  setPriceRange([value[0], value[1]] as [number, number]);
+                }}
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="trained-caregivers" 
+                checked={onlyTrained}
+                onCheckedChange={(checked) => {
+                  try {
+                    trackEngagement('filter_change', { 
+                      filter_type: 'trained_only', 
+                      previous_value: onlyTrained,
+                      new_value: checked
+                    });
+                  } catch (error) {
+                    console.error("Error tracking trained only change:", error);
+                  }
+                  setOnlyTrained(checked as boolean);
+                }}
+              />
+              <Label htmlFor="trained-caregivers" className="text-sm">Show only platform-trained caregivers</Label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredCaregivers.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No caregivers match your current filters</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => {
+              setCareTypes([]);
+              setSpecializedCare([]);
+              setRequiredCertifications([]);
+              setAvailability("all");
+              setMinimumExperience("any");
+              setMaxDistance(30);
+              setPriceRange([0, 100]);
+              setOnlyTrained(false);
+            }}
+          >
+            Reset Filters
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-amber-600" />
+                <p className="font-medium text-amber-800">
+                  Unlock Premium Matching: Upgrade for priority placement & access to exclusive caregiver profiles.
+                </p>
+              </div>
+              <Button 
+                variant="default" 
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={() => {
+                  try {
+                    trackEngagement('premium_matching_cta_click');
+                  } catch (error) {
+                    console.error("Error tracking premium matching click:", error);
+                  }
+                  
+                  navigate("/subscription-features", { 
+                    state: { 
+                      returnPath: "/caregiver-matching",
+                      referringPagePath: referringPath,
+                      referringPageLabel: referringLabel,
+                      featureType: "Premium Matching" 
+                    } 
+                  });
+                }}
               >
-                {caregiver.is_premium && (
-                  <div className="absolute top-0 right-0">
-                    <Badge className="bg-amber-500 text-white uppercase font-bold rounded-tl-none rounded-tr-sm rounded-br-none rounded-bl-sm px-2">
-                      Premium
-                    </Badge>
-                  </div>
-                )}
-                
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="flex flex-col items-center md:items-start gap-4">
-                      <div className="flex flex-col items-center">
-                        <Avatar className="h-20 w-20 border-2 border-primary/20">
-                          <AvatarImage src={caregiver.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                            {caregiver.full_name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="mt-3 text-center">
-                          <h3 className="text-lg font-semibold">{caregiver.first_name}</h3>
-                          <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            <span>{caregiver.location}</span>
-                          </div>
-                        </div>
-                      </div>
+                Upgrade Now
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {filteredCaregivers.map((caregiver) => (
+            <Card 
+              key={caregiver.id} 
+              className={`relative overflow-hidden ${caregiver.is_premium ? 'border-amber-300 shadow-amber-100' : ''}`}
+            >
+              {caregiver.is_premium && (
+                <div className="absolute top-0 right-0">
+                  <Badge className="bg-amber-500 text-white uppercase font-bold rounded-tl-none rounded-tr-sm rounded-br-none rounded-bl-sm px-2">
+                    Premium
+                  </Badge>
+                </div>
+              )}
+              
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="flex flex-col items-center md:items-start gap-4">
+                    <div className="flex flex-col items-center">
+                      <Avatar className="h-20 w-20 border-2 border-primary/20">
+                        <AvatarImage src={caregiver.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
+                          {caregiver.full_name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
                       
-                      <div className="bg-primary-50 w-full rounded-lg p-2 text-center">
-                        <span className="text-sm text-gray-600">Match Score</span>
-                        <div className="text-2xl font-bold text-primary-700">{caregiver.match_score}%</div>
+                      <div className="mt-3 text-center">
+                        <h3 className="text-lg font-semibold">{caregiver.first_name}</h3>
+                        <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{caregiver.location}</span>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="col-span-2 space-y-3">
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-primary-600" />
-                          <div>
-                            <div className="text-sm text-gray-500">Hourly Rate</div>
-                            <div className="font-medium">{caregiver.hourly_rate}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4 text-primary-600" />
-                          <div>
-                            <div className="text-sm text-gray-500">Experience</div>
-                            <div className="font-medium">{caregiver.years_of_experience} Years</div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <MapPinned className="h-4 w-4 text-primary-600" />
-                          <div>
-                            <div className="text-sm text-gray-500">Distance</div>
-                            <div className="font-medium">{caregiver.distance.toFixed(1)} km</div>
-                          </div>
+                    <div className="bg-primary-50 w-full rounded-lg p-2 text-center">
+                      <span className="text-sm text-gray-600">Match Score</span>
+                      <div className="text-2xl font-bold text-primary-700">{caregiver.match_score}%</div>
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-2 space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Hourly Rate</div>
+                          <div className="font-medium">{caregiver.hourly_rate}</div>
                         </div>
                       </div>
                       
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Experience</div>
+                          <div className="font-medium">{caregiver.years_of_experience} Years</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <MapPinned className="h-4 w-4 text-primary-600" />
+                        <div>
+                          <div className="text-sm text-gray-500">Distance</div>
+                          <div className="font-medium">{caregiver.distance.toFixed(1)} km</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Care Specialties</div>
+                      <div className="flex flex-wrap gap-1">
+                        {caregiver.care_types?.map((type, i) => (
+                          <Badge key={i} variant="outline" className="bg-gray-50">
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {caregiver.specialized_care && caregiver.specialized_care.length > 0 && (
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Care Specialties</div>
+                        <div className="text-sm text-gray-500 mb-1">Special Care Expertise</div>
                         <div className="flex flex-wrap gap-1">
-                          {caregiver.care_types?.map((type, i) => (
-                            <Badge key={i} variant="outline" className="bg-gray-50">
-                              {type}
+                          {caregiver.specialized_care?.map((specialty, i) => (
+                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {specialty}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      
-                      {caregiver.specialized_care && caregiver.specialized_care.length > 0 && (
-                        <div>
-                          <div className="text-sm text-gray-500 mb-1">Special Care Expertise</div>
-                          <div className="flex flex-wrap gap-1">
-                            {caregiver.specialized_care?.map((specialty, i) => (
-                              <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {specialty}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {caregiver.certifications && caregiver.certifications.length > 0 && (
-                        <div>
-                          <div className="text-sm text-gray-500 mb-1">Certifications</div>
-                          <div className="flex flex-wrap gap-1">
-                            {caregiver.certifications.map((cert, i) => (
-                              <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                {cert}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
+                    )}
+                    
+                    {caregiver.certifications && caregiver.certifications.length > 0 && (
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Availability</div>
+                        <div className="text-sm text-gray-500 mb-1">Certifications</div>
                         <div className="flex flex-wrap gap-1">
-                          {caregiver.availability?.map((avail, i) => (
-                            <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                              <Calendar className="h-3 w-3" />
-                              <span>{avail}</span>
-                            </div>
+                          {caregiver.certifications.map((cert, i) => (
+                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {cert}
+                            </Badge>
                           ))}
                         </div>
                       </div>
-                    </div>
+                    )}
                     
-                    <div className="flex flex-col justify-between space-y-4">
-                      <div>
-                        <div className="flex items-center gap-1 mb-2">
-                          <UserCheck className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-green-700">Background Checked</span>
-                        </div>
-
-                        {caregiver.has_training && (
-                          <div className="flex items-center gap-1 mb-2">
-                            <Check className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm text-blue-700">Platform Trained</span>
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">Availability</div>
+                      <div className="flex flex-wrap gap-1">
+                        {caregiver.availability?.map((avail, i) => (
+                          <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            <Calendar className="h-3 w-3" />
+                            <span>{avail}</span>
                           </div>
-                        )}
-                        
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 text-amber-500" />
-                          <Star className="h-4 w-4 text-amber-500" />
-                          <Star className="h-4 w-4 text-amber-500" />
-                          <Star className="h-4 w-4 text-amber-500" />
-                          <Star className="h-4 w-4 text-amber-500" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Button 
-                          className="w-full"
-                          onClick={() => handleUnlockProfile(caregiver.id, caregiver.is_premium)}
-                        >
-                          Unlock Profile
-                        </Button>
+                        ))}
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </MatchingTracker>
+                  
+                  <div className="flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center gap-1 mb-2">
+                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-700">Background Checked</span>
+                      </div>
+
+                      {caregiver.has_training && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <Check className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm text-blue-700">Platform Trained</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleUnlockProfile(caregiver.id, caregiver.is_premium)}
+                      >
+                        Unlock Profile
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
