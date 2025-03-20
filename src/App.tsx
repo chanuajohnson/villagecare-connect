@@ -35,6 +35,7 @@ import SubscriptionPage from "@/pages/subscription/SubscriptionPage";
 import SubscriptionFeaturesPage from "@/pages/subscription/SubscriptionFeaturesPage";
 import CaregiverMatchingPage from "@/pages/caregiver/CaregiverMatchingPage";
 import FamilyMatchingPage from "@/pages/family/FamilyMatchingPage";
+import LegacyStoriesPage from "@/pages/legacy/LegacyStoriesPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -143,6 +144,7 @@ const AppContent = () => {
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/family/message-board" element={<MessageBoardPage />} />
           <Route path="/family/story" element={<FamilyStoryPage />} />
+          <Route path="/legacy-stories" element={<LegacyStoriesPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />

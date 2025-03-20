@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, BookOpen, ArrowRight } from "lucide-react";
@@ -88,15 +88,27 @@ export const TellTheirStoryCard = () => {
               ))}
             </ul>
             
-            <Button 
-              size="lg" 
-              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold mt-4 group"
-              onClick={handleShareStoryClick}
-              disabled={isLoading}
-            >
-              <span>Share Their Story</span>
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold group"
+                onClick={handleShareStoryClick}
+                disabled={isLoading}
+              >
+                <span>Share Their Story</span>
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full text-primary border-primary/30 hover:bg-primary/5"
+                asChild
+              >
+                <Link to="/legacy-stories" className="flex items-center justify-center">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  <span>View Legacy Stories</span>
+                </Link>
+              </Button>
+            </div>
           </div>
           
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">

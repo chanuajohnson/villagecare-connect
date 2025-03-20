@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { Home, BookOpen } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
@@ -48,6 +48,13 @@ export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      
+      <Button asChild variant="outline" size="sm" className="hidden md:flex items-center gap-1">
+        <Link to="/legacy-stories">
+          <BookOpen className="h-4 w-4 mr-1" />
+          Legacy Stories
+        </Link>
+      </Button>
     </div>
   );
 };
