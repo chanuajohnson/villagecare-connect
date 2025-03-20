@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StoryCard } from "./StoryCard";
@@ -19,6 +18,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
 
 export interface Story {
   id: string;
@@ -44,38 +44,31 @@ export function StoryList({ className }: StoryListProps) {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
   const [careerFilter, setCareerFilter] = useState<string>("");
   const [personalityFilter, setPersonalityFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("recent");
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 9;
   
-  // Available filter options (extracted from data)
   const [availableCareers, setAvailableCareers] = useState<string[]>([]);
   const [availablePersonalityTraits, setAvailablePersonalityTraits] = useState<string[]>([]);
 
-  // Fetch stories from Supabase
   useEffect(() => {
     async function fetchStories() {
       setLoading(true);
       
       try {
-        // Calculate pagination offset
         const fromIndex = (currentPage - 1) * pageSize;
         const toIndex = fromIndex + pageSize - 1;
         
-        // Base query
         let query = supabase
           .from('care_recipient_profiles')
           .select('id, full_name, birth_year, personality_traits, career_fields, hobbies_interests, life_story, joyful_things, unique_facts, challenges')
           .range(fromIndex, toIndex);
         
-        // Add filters if set
         if (searchQuery) {
           query = query.textSearch('life_story', searchQuery, {
             type: 'websearch',
@@ -91,7 +84,6 @@ export function StoryList({ className }: StoryListProps) {
           query = query.contains('personality_traits', [personalityFilter]);
         }
         
-        // Add sorting
         switch (sortBy) {
           case 'recent':
             query = query.order('created_at', { ascending: false });
@@ -107,7 +99,6 @@ export function StoryList({ className }: StoryListProps) {
         
         if (error) throw error;
         
-        // Transform data to match our interface
         const formattedStories = data.map(item => ({
           id: item.id,
           fullName: item.full_name || '',
@@ -123,12 +114,10 @@ export function StoryList({ className }: StoryListProps) {
         
         setStories(formattedStories);
         
-        // Calculate total pages if count is available
         if (count !== null) {
           setTotalPages(Math.ceil(count / pageSize));
         }
         
-        // Fetch filter options if it's the first page
         if (currentPage === 1 && !availableCareers.length) {
           fetchFilterOptions();
         }
@@ -143,20 +132,16 @@ export function StoryList({ className }: StoryListProps) {
     fetchStories();
   }, [currentPage, searchQuery, careerFilter, personalityFilter, sortBy]);
   
-  // Fetch unique values for filter options
   async function fetchFilterOptions() {
     try {
-      // Fetch unique career fields
       const { data: careerData } = await supabase
         .from('care_recipient_profiles')
         .select('career_fields');
       
-      // Fetch unique personality traits
       const { data: personalityData } = await supabase
         .from('care_recipient_profiles')
         .select('personality_traits');
       
-      // Extract unique values
       const careers = new Set<string>();
       const traits = new Set<string>();
       
@@ -179,7 +164,6 @@ export function StoryList({ className }: StoryListProps) {
     }
   }
   
-  // Handle opening story detail modal
   const handleReadMore = (id: string) => {
     const story = stories.find(s => s.id === id);
     if (story) {
@@ -188,20 +172,17 @@ export function StoryList({ className }: StoryListProps) {
     }
   };
   
-  // Handle closing the modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedStory(null);
   };
   
-  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, careerFilter, personalityFilter, sortBy]);
 
   return (
     <div className={className}>
-      {/* Filters and sorting */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div>
           <Input
@@ -257,28 +238,24 @@ export function StoryList({ className }: StoryListProps) {
         </div>
       </div>
       
-      {/* Error state */}
       {error && (
         <div className="text-center py-8">
           <p className="text-red-500">{error}</p>
         </div>
       )}
       
-      {/* Loading state */}
       {loading && !error && (
         <div className="text-center py-8">
           <p className="text-gray-500">Loading stories...</p>
         </div>
       )}
       
-      {/* Empty state */}
       {!loading && !error && stories.length === 0 && (
         <div className="text-center py-8">
           <p className="text-gray-500">No stories found. Try adjusting your filters.</p>
         </div>
       )}
       
-      {/* Stories grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stories.map((story) => (
           <StoryCard
@@ -295,18 +272,17 @@ export function StoryList({ className }: StoryListProps) {
         ))}
       </div>
       
-      {/* Pagination */}
       {totalPages > 1 && (
         <Pagination className="mt-8">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                onClick={currentPage === 1 ? undefined : () => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                aria-disabled={currentPage === 1}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
             
-            {/* Show first page */}
             {currentPage > 2 && (
               <PaginationItem>
                 <PaginationLink onClick={() => setCurrentPage(1)}>
@@ -315,14 +291,12 @@ export function StoryList({ className }: StoryListProps) {
               </PaginationItem>
             )}
             
-            {/* Ellipsis for skipped pages */}
             {currentPage > 3 && (
               <PaginationItem>
-                <PaginationLink disabled>...</PaginationLink>
+                <PaginationLink aria-disabled={true} className="pointer-events-none">...</PaginationLink>
               </PaginationItem>
             )}
             
-            {/* Previous page */}
             {currentPage > 1 && (
               <PaginationItem>
                 <PaginationLink onClick={() => setCurrentPage(currentPage - 1)}>
@@ -331,12 +305,10 @@ export function StoryList({ className }: StoryListProps) {
               </PaginationItem>
             )}
             
-            {/* Current page */}
             <PaginationItem>
               <PaginationLink isActive>{currentPage}</PaginationLink>
             </PaginationItem>
             
-            {/* Next page */}
             {currentPage < totalPages && (
               <PaginationItem>
                 <PaginationLink onClick={() => setCurrentPage(currentPage + 1)}>
@@ -345,14 +317,12 @@ export function StoryList({ className }: StoryListProps) {
               </PaginationItem>
             )}
             
-            {/* Ellipsis for skipped pages */}
             {currentPage < totalPages - 2 && (
               <PaginationItem>
-                <PaginationLink disabled>...</PaginationLink>
+                <PaginationLink aria-disabled={true} className="pointer-events-none">...</PaginationLink>
               </PaginationItem>
             )}
             
-            {/* Last page */}
             {currentPage < totalPages - 1 && (
               <PaginationItem>
                 <PaginationLink onClick={() => setCurrentPage(totalPages)}>
@@ -363,15 +333,15 @@ export function StoryList({ className }: StoryListProps) {
             
             <PaginationItem>
               <PaginationNext 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={currentPage === totalPages ? undefined : () => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                aria-disabled={currentPage === totalPages}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       )}
       
-      {/* Story detail modal */}
       <StoryDetailModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

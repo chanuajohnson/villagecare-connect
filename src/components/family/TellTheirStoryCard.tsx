@@ -20,8 +20,8 @@ export function TellTheirStoryCard() {
           asChild 
           className="w-full" 
           variant="default"
-          actionType="family_story_create_click"
-          additionalData={{ source: "family_dashboard" }}
+          trackingAction="family_story_create_click"
+          trackingData={{ source: "family_dashboard" }}
         >
           <Link to="/family/story">Create Their Story</Link>
         </TrackableButton>
@@ -31,8 +31,8 @@ export function TellTheirStoryCard() {
             asChild 
             className="w-full" 
             variant="default"
-            actionType="auth_signup_from_story_card"
-            additionalData={{ source: "family_dashboard" }}
+            trackingAction="auth_signup_from_story_card"
+            trackingData={{ source: "family_dashboard" }}
           >
             <Link to="/auth?mode=signup&returnTo=/family/story">Sign Up to Create</Link>
           </TrackableButton>
