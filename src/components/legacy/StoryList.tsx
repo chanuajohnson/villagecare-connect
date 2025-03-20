@@ -28,6 +28,100 @@ interface Story {
   created_at: string;
 }
 
+// Sample dummy data to ensure we have at least 10 stories
+const dummyStories: Story[] = [
+  {
+    id: "dummy-1",
+    full_name: "Robert Kingston",
+    birth_year: "1944",
+    personality_traits: ["Analytical", "Meticulous", "Reserved"],
+    career_fields: ["Engineer", "Educator"],
+    hobbies_interests: ["Technology", "Cooking", "Sports"],
+    life_story: "Robert spent his early years developing innovative solutions for manufacturing companies. After a successful career as an engineer, he transitioned to education, teaching the next generation of engineers at a local university. His methodical approach to problem-solving influenced hundreds of students who went on to successful careers.",
+    created_at: "2023-04-15T10:30:00Z"
+  },
+  {
+    id: "dummy-2",
+    full_name: "Eleanor Williams",
+    birth_year: "1938",
+    personality_traits: ["Compassionate", "Patient", "Creative"],
+    career_fields: ["Nurse", "Community Organizer"],
+    hobbies_interests: ["Gardening", "Painting", "Reading"],
+    life_story: "Eleanor dedicated her life to caring for others, first as a pediatric nurse and later organizing health initiatives in underserved communities. Her garden was her sanctuary, and she spent weekends painting landscapes inspired by her travels. Her book collection featured novels from authors around the world, reflecting her curiosity about different cultures and histories.",
+    created_at: "2023-05-12T14:20:00Z"
+  },
+  {
+    id: "dummy-3",
+    full_name: "James Roberts",
+    birth_year: "1950",
+    personality_traits: ["Adventurous", "Optimistic", "Resourceful"],
+    career_fields: ["Journalist", "Photographer"],
+    hobbies_interests: ["Travel", "Hiking", "Jazz Music"],
+    life_story: "James traveled to over 50 countries as a photojournalist, documenting both natural wonders and human stories. His photographs appeared in leading magazines, capturing moments of both joy and struggle. When not on assignment, he explored hiking trails and became known in his community for hosting jazz listening sessions where he shared stories behind the music and the artists who created it.",
+    created_at: "2023-06-22T09:15:00Z"
+  },
+  {
+    id: "dummy-4",
+    full_name: "Margaret Chen",
+    birth_year: "1955",
+    personality_traits: ["Determined", "Generous", "Diplomatic"],
+    career_fields: ["Entrepreneur", "Consultant"],
+    hobbies_interests: ["Chess", "Cooking", "Economics"],
+    life_story: "Margaret built a successful consulting business helping small businesses navigate international markets. After selling her company, she mentored young entrepreneurs and funded scholarships for business students. She was a formidable chess player who enjoyed teaching strategy through the game, and her dinner parties featuring fusion cuisine were legendary in her social circle.",
+    created_at: "2023-07-18T16:45:00Z"
+  },
+  {
+    id: "dummy-5",
+    full_name: "David Thompson",
+    birth_year: "1942",
+    personality_traits: ["Witty", "Dedicated", "Thoughtful"],
+    career_fields: ["Architect", "Urban Planner"],
+    hobbies_interests: ["Classical Music", "Woodworking", "History"],
+    life_story: "David's architectural designs transformed several urban spaces, balancing functionality with beauty. He was particularly proud of his work on affordable housing projects that created vibrant communities. His woodworking shop became his second office after retirement, where he crafted furniture combining traditional techniques with modern design. His knowledge of architectural history made him a sought-after speaker at community events.",
+    created_at: "2023-08-05T11:30:00Z"
+  },
+  {
+    id: "dummy-6",
+    full_name: "Sarah Johnson",
+    birth_year: "1935",
+    personality_traits: ["Resilient", "Nurturing", "Pragmatic"],
+    career_fields: ["Farmer", "Local Politician"],
+    hobbies_interests: ["Birdwatching", "Quilting", "Community Service"],
+    life_story: "Sarah managed her family farm through decades of changing agricultural practices, eventually transitioning to sustainable methods that became a model for the region. She served three terms on the county council, advocating for rural infrastructure. Her detailed journals of local bird migrations were donated to a conservation society, and the quilts she made for family members preserved stories and traditions for generations.",
+    created_at: "2023-09-10T13:20:00Z"
+  },
+  {
+    id: "dummy-7",
+    full_name: "Michael Okafor",
+    birth_year: "1960",
+    personality_traits: ["Charismatic", "Innovative", "Persistent"],
+    career_fields: ["Medical Researcher", "Professor"],
+    hobbies_interests: ["Soccer", "Chess", "Documentary Films"],
+    life_story: "Michael's research team made breakthrough discoveries in treating tropical diseases, work that started during his childhood in Nigeria and continued through his career at research institutions in Europe and America. He mentored dozens of young scientists, emphasizing the importance of relating laboratory work to real-world needs. His passion for soccer never diminished, and he organized faculty matches well into his sixties.",
+    created_at: "2023-10-20T15:40:00Z"
+  },
+  {
+    id: "dummy-8",
+    full_name: "Linda Martinez",
+    birth_year: "1948",
+    personality_traits: ["Organized", "Adaptable", "Visionary"],
+    career_fields: ["Librarian", "Digital Archivist"],
+    hobbies_interests: ["Photography", "Genealogy", "Hiking"],
+    life_story: "Linda transformed her local library into a community hub, introducing digital resources and programs that bridged generational gaps. She pioneered efforts to digitize local historical records, preserving them for future researchers. Her personal photography project documented changing landscapes in her region over decades, and her genealogical research connected families separated by migration and historical events.",
+    created_at: "2023-11-15T10:10:00Z"
+  },
+  {
+    id: "dummy-9",
+    full_name: "Thomas Wright",
+    birth_year: "1940",
+    personality_traits: ["Methodical", "Curious", "Modest"],
+    career_fields: ["Mechanical Engineer", "Inventor"],
+    hobbies_interests: ["Astronomy", "Model Building", "Physics"],
+    life_story: "Thomas held numerous patents for mechanical components that improved efficiency in manufacturing processes. His greatest pride came from designing water pumps that could be easily maintained in remote locations. After retirement, he built an observatory in his backyard and volunteered at science education programs, helping children build working models that demonstrated physical principles.",
+    created_at: "2023-12-05T14:30:00Z"
+  }
+];
+
 export const StoryList = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [filteredStories, setFilteredStories] = useState<Story[]>([]);
@@ -62,8 +156,17 @@ export const StoryList = () => {
         throw error;
       }
       
-      setStories(data || []);
-      applySearch(data || [], searchTerm);
+      let allStories = data || [];
+      
+      // If we have fewer than 10 stories, add dummy data
+      if (allStories.length < 10) {
+        // Only add enough dummy stories to reach 10 total
+        const dummyToAdd = dummyStories.slice(0, Math.max(0, 10 - allStories.length));
+        allStories = [...allStories, ...dummyToAdd];
+      }
+      
+      setStories(allStories);
+      applySearch(allStories, searchTerm);
       
     } catch (err: any) {
       console.error("Error fetching stories:", err);
