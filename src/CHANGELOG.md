@@ -13,6 +13,11 @@ All notable changes to the Takes a Village care coordination platform will be do
 
 ## [0.1.4] - 2025-03-26
 
+### Added
+- New "Tell Their Story" feature for capturing detailed care recipient profiles
+- Comprehensive storytelling form with personality traits and care preferences
+- Enhanced caregiver matching based on personal stories and preferences
+
 ### Fixed
 - Fixed professional registration card showing up even when profile is complete
 - Improved profile completion detection for professional users

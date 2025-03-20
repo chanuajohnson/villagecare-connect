@@ -29,6 +29,7 @@ import MessageBoardPage from "@/pages/professional/MessageBoardPage";
 import TrainingResourcesPage from "@/pages/professional/TrainingResourcesPage";
 import ModuleViewerPage from "@/pages/professional/ModuleViewerPage";
 import FamilyFeaturesOverview from "@/pages/family/FamilyFeaturesOverview";
+import FamilyStoryPage from "@/pages/family/FamilyStoryPage";
 import FAQPage from "@/pages/support/FAQPage";
 import SubscriptionPage from "@/pages/subscription/SubscriptionPage";
 import SubscriptionFeaturesPage from "@/pages/subscription/SubscriptionFeaturesPage";
@@ -141,6 +142,7 @@ const AppContent = () => {
           
           <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
           <Route path="/family/message-board" element={<MessageBoardPage />} />
+          <Route path="/family/story" element={<FamilyStoryPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />

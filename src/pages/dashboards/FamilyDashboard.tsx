@@ -18,6 +18,8 @@ import { useNavigate } from "react-router-dom";
 import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard";
 import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
 import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
+import { TellTheirStoryCard } from "@/components/family/TellTheirStoryCard";
+
 const FamilyDashboard = () => {
   const {
     user,
@@ -157,6 +159,8 @@ const FamilyDashboard = () => {
           <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
 
           <CaregiverMatchingCard />
+          
+          <TellTheirStoryCard />
 
           <DashboardCaregiverMatches />
 
@@ -390,7 +394,6 @@ const FamilyDashboard = () => {
             </Card>
           </div>
 
-          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Medication Management</CardTitle>
@@ -469,7 +472,6 @@ const FamilyDashboard = () => {
             </CardContent>
           </Card>
 
-          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Meal Planning</CardTitle>
@@ -563,7 +565,6 @@ const FamilyDashboard = () => {
             </CardContent>
           </Card>
 
-          
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
