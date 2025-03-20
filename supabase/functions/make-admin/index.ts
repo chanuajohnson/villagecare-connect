@@ -42,6 +42,8 @@ serve(async (req: Request) => {
     const userId = "7d850934-a44f-4348-944b-ae7182dca237";
     const userEmail = "chanuajohnson@gmail.com";
 
+    console.log(`Starting to make user ${userId} (${userEmail}) an admin...`);
+
     // First check if this user exists
     const { data: { users }, error: findError } = await supabase.auth.admin.listUsers({
       filter: {
@@ -50,6 +52,7 @@ serve(async (req: Request) => {
     });
 
     if (findError) {
+      console.error("Error finding user:", findError);
       throw findError;
     }
 
@@ -66,6 +69,7 @@ serve(async (req: Request) => {
       });
 
       if (createError) {
+        console.error("Error creating user:", createError);
         throw createError;
       }
       
@@ -74,7 +78,13 @@ serve(async (req: Request) => {
     } else {
       user = users[0];
       console.log("Found existing user:", user.id);
+      
+      // Log current metadata to debug
+      console.log("Current user metadata:", user.user_metadata);
     }
+
+    // Log the update we're about to do
+    console.log(`Updating user ${user.id} to have admin role...`);
 
     // Update user to have admin role
     const { error: userUpdateError } = await supabase.auth.admin.updateUserById(user.id, {
@@ -82,8 +92,11 @@ serve(async (req: Request) => {
     });
 
     if (userUpdateError) {
+      console.error("Error updating user metadata:", userUpdateError);
       throw userUpdateError;
     }
+
+    console.log("Successfully updated user metadata, now checking profile table...");
 
     // Check if profile exists
     const { data: profile, error: profileCheckError } = await supabase
@@ -93,32 +106,60 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     if (profileCheckError) {
+      console.error("Error checking profile:", profileCheckError);
       throw profileCheckError;
     }
 
+    console.log("Profile check result:", profile ? "Profile exists" : "No profile found");
+
+    // Update or create profile with admin role
     if (profile) {
+      // Log current profile values
+      console.log("Current profile values:", profile);
+      
       // Update existing profile
-      const { error: profileUpdateError } = await supabase
+      const { data: updatedProfile, error: profileUpdateError } = await supabase
         .from('profiles')
         .update({ role: 'admin' })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (profileUpdateError) {
+        console.error("Error updating profile:", profileUpdateError);
         throw profileUpdateError;
       }
+      
+      console.log("Updated profile:", updatedProfile);
     } else {
       // Create new profile
-      const { error: profileCreateError } = await supabase
+      const { data: newProfile, error: profileCreateError } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
           role: 'admin',
           full_name: 'Admin User'
-        });
+        })
+        .select();
 
       if (profileCreateError) {
+        console.error("Error creating profile:", profileCreateError);
         throw profileCreateError;
       }
+      
+      console.log("Created new profile:", newProfile);
+    }
+
+    // Verify the role was updated correctly - double check
+    const { data: verifyProfile, error: verifyError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+      
+    if (verifyError) {
+      console.error("Error verifying profile update:", verifyError);
+    } else {
+      console.log("Verified profile role is now:", verifyProfile.role);
     }
 
     return new Response(

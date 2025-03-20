@@ -179,23 +179,45 @@ serve(async (req: Request) => {
           );
         }
 
+        console.log(`Attempting to set admin role for user ${userId}`);
+
         // First update the user's metadata
-        const { error: userUpdateError } = await supabase.auth.admin.updateUserById(userId, {
+        const { data: metadataUpdate, error: userUpdateError } = await supabase.auth.admin.updateUserById(userId, {
           user_metadata: { role: 'admin' }
         });
 
         if (userUpdateError) {
+          console.error("Error updating user metadata:", userUpdateError);
           throw userUpdateError;
         }
 
+        console.log("User metadata updated successfully:", metadataUpdate);
+
         // Then update the profile in the profiles table
-        const { error: profileUpdateError } = await supabase
+        const { data: profileUpdate, error: profileUpdateError } = await supabase
           .from('profiles')
           .update({ role: 'admin' })
-          .eq('id', userId);
+          .eq('id', userId)
+          .select();
 
         if (profileUpdateError) {
+          console.error("Error updating profile role:", profileUpdateError);
           throw profileUpdateError;
+        }
+
+        console.log("Profile updated successfully:", profileUpdate);
+
+        // Verify the update was successful
+        const { data: verifyProfile, error: verifyError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+          
+        if (verifyError) {
+          console.error("Error verifying profile update:", verifyError);
+        } else {
+          console.log("Verified profile role is now:", verifyProfile.role);
         }
 
         return new Response(
