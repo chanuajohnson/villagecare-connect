@@ -18,9 +18,10 @@ interface BreadcrumbItem {
 
 interface DashboardHeaderProps {
   breadcrumbItems: BreadcrumbItem[];
+  actions?: React.ReactNode;
 }
 
-export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ breadcrumbItems, actions }: DashboardHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-8">
       <Breadcrumb>
@@ -48,6 +49,12 @@ export const DashboardHeader = ({ breadcrumbItems }: DashboardHeaderProps) => {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      
+      {actions && (
+        <div>
+          {actions}
+        </div>
+      )}
     </div>
   );
 };
