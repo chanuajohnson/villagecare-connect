@@ -11,7 +11,7 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Advanced meal planning with dietary restrictions
 - Mobile app notifications
 
-## [0.1.3] - 2024-10-XX
+## [0.1.3] - 2025-03-19
 
 ### Fixed
 - Enhanced user deletion process with comprehensive cleanup strategy
@@ -20,14 +20,14 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Fixed foreign key constraints causing user deletion failures
 - Added manual cleanup steps for removing cta_engagement_tracking records before user deletion
 
-## [0.1.2] - 2024-10-XX
+## [0.1.2] - 2025-03-12
 
 ### Fixed
 - Resolved user deletion issues in admin dashboard
 - Improved error handling for database operations
 - Added comprehensive cleanup process for user data
 
-## [0.1.1] - 2024-10-XX
+## [0.1.1] - 2025-03-05
 
 ### Fixed
 - Resolved professional registration infinite loop issue
@@ -35,7 +35,7 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Improved authentication state handling during sign out
 - Enhanced error handling for user deletion process
 
-## [0.1.0] - 2024-10-XX
+## [0.1.0] - 2025-02-28
 
 ### Added
 - **Core Platform**
