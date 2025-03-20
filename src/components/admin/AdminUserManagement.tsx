@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,73 @@ import {
 } from "@/components/ui/collapsible";
 import { deleteUserWithCleanup } from "@/lib/supabase";
 
+// Sample demo data for public access mode
+const DEMO_USERS = [
+  {
+    id: "demo-user-1",
+    display_name: "John Smith",
+    first_name: "John",
+    last_name: "Smith",
+    full_name: "John Smith",
+    role: "admin",
+    created_at: "2024-10-01T00:00:00Z"
+  },
+  {
+    id: "demo-user-2",
+    display_name: "Jane Doe",
+    first_name: "Jane",
+    last_name: "Doe",
+    full_name: "Jane Doe",
+    role: "family",
+    created_at: "2024-10-02T00:00:00Z"
+  },
+  {
+    id: "demo-user-3",
+    display_name: "Mark Williams",
+    first_name: "Mark",
+    last_name: "Williams",
+    full_name: "Mark Williams",
+    role: "professional",
+    created_at: "2024-10-03T00:00:00Z"
+  }
+];
+
+// Sample demo subscription data
+const DEMO_SUBSCRIPTIONS = [
+  {
+    id: "sub-1",
+    user_id: "demo-user-1",
+    action_type: "subscription_plan_selected",
+    created_at: "2024-10-01T12:30:00Z",
+    additional_data: {
+      plan_name: "Professional Plan",
+      feature_accessed: "Caregiver Matching"
+    },
+    profiles: {
+      first_name: "John",
+      last_name: "Smith",
+      full_name: "John Smith",
+      role: "admin"
+    }
+  },
+  {
+    id: "sub-2",
+    user_id: "demo-user-2",
+    action_type: "subscription_completed",
+    created_at: "2024-10-02T14:45:00Z",
+    additional_data: {
+      plan_name: "Family Basic",
+      feature_accessed: "Care Planning"
+    },
+    profiles: {
+      first_name: "Jane",
+      last_name: "Doe",
+      full_name: "Jane Doe",
+      role: "family"
+    }
+  }
+];
+
 export const AdminUserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -33,10 +101,20 @@ export const AdminUserManagement = () => {
 
   // Always set this to true to enable functionality without authentication
   const isAdminForTesting = true;
+  const isPublicDemoMode = true; // New flag for demo mode
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
+      
+      if (isPublicDemoMode) {
+        // In demo mode, use the sample data
+        setTimeout(() => {
+          setUsers(DEMO_USERS);
+          setIsLoading(false);
+        }, 800); // Add a small delay to simulate network request
+        return;
+      }
       
       if (!supabase) {
         console.error('Supabase client is not initialized');
@@ -72,6 +150,15 @@ export const AdminUserManagement = () => {
   const fetchSubscriptionData = async () => {
     try {
       setIsLoadingSubscriptions(true);
+      
+      if (isPublicDemoMode) {
+        // In demo mode, use the sample data
+        setTimeout(() => {
+          setSubscriptions(DEMO_SUBSCRIPTIONS);
+          setIsLoadingSubscriptions(false);
+        }, 800); // Add a small delay to simulate network request
+        return;
+      }
       
       if (!supabase) {
         console.error('Supabase client is not initialized');
@@ -138,6 +225,16 @@ export const AdminUserManagement = () => {
       setIsLoadingDelete(userId);
       setDeleteError(null);
       setDeletionDetails({ isOpen: false, message: "" });
+      
+      if (isPublicDemoMode) {
+        // Simulate deletion in demo mode
+        setTimeout(() => {
+          setUsers(users.filter(user => user.id !== userId));
+          toast.success('User deleted successfully (Demo Mode)');
+          setIsLoadingDelete(null);
+        }, 1000);
+        return;
+      }
       
       const { success, error, details } = await deleteUserWithCleanup(userId);
       

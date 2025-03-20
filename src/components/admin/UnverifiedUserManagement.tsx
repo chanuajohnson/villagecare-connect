@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, AlertCircle, RefreshCw, Send, Trash, CheckCircle } from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -33,6 +32,28 @@ type UnverifiedUser = {
   user_metadata?: Record<string, any>;
 };
 
+// Sample demo data for unverified users
+const DEMO_UNVERIFIED_USERS: UnverifiedUser[] = [
+  {
+    id: "unverified-user-1",
+    email: "unverified1@example.com",
+    created_at: "2024-10-05T10:15:00Z",
+    user_metadata: { role: "family" }
+  },
+  {
+    id: "unverified-user-2",
+    email: "unverified2@example.com",
+    created_at: "2024-10-06T14:22:00Z",
+    user_metadata: { role: "professional" }
+  },
+  {
+    id: "unverified-user-3",
+    email: "unverified3@example.com",
+    created_at: "2024-10-07T09:45:00Z",
+    user_metadata: { role: "community" }
+  }
+];
+
 export const UnverifiedUserManagement = () => {
   const [unverifiedUsers, setUnverifiedUsers] = useState<UnverifiedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,21 +61,28 @@ export const UnverifiedUserManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UnverifiedUser | null>(null);
-  const { user, session } = useAuth();
 
   // For testing purposes, allow any authenticated user to access admin features
   const isAdminForTesting = true; // Set to true to bypass role check for testing
+  const isPublicDemoMode = true; // New flag for demo mode
 
   const fetchUnverifiedUsers = async () => {
-    if (!user || !session) return;
-    
     try {
       setIsLoading(true);
       setError(null);
 
+      if (isPublicDemoMode) {
+        // In demo mode, use the sample data
+        setTimeout(() => {
+          setUnverifiedUsers(DEMO_UNVERIFIED_USERS);
+          setIsLoading(false);
+        }, 800); // Add a small delay to simulate network request
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer token-would-go-here-in-real-app`,
         },
       });
 
@@ -77,16 +105,23 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleResendVerification = async (email: string) => {
-    if (!session) return;
-    
     try {
       setActionInProgress(email);
       setError(null);
 
+      if (isPublicDemoMode) {
+        // Simulate action in demo mode
+        setTimeout(() => {
+          toast.success(`Verification email resent to ${email} (Demo Mode)`);
+          setActionInProgress(null);
+        }, 1000);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer token-would-go-here-in-real-app`,
         },
         body: {
           action: "resend_verification",
@@ -118,17 +153,28 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleDeleteUser = async () => {
-    if (!session || !userToDelete) return;
+    if (!userToDelete) return;
     
     try {
       setActionInProgress(userToDelete.id);
       setError(null);
       setDeleteDialogOpen(false);
 
+      if (isPublicDemoMode) {
+        // Simulate action in demo mode
+        setTimeout(() => {
+          setUnverifiedUsers(unverifiedUsers.filter(u => u.id !== userToDelete.id));
+          toast.success(`User ${userToDelete.email} deleted successfully (Demo Mode)`);
+          setActionInProgress(null);
+          setUserToDelete(null);
+        }, 1000);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer token-would-go-here-in-real-app`,
         },
         body: {
           action: "delete_user",
@@ -157,16 +203,24 @@ export const UnverifiedUserManagement = () => {
   };
 
   const handleManuallyVerify = async (userId: string, email: string) => {
-    if (!session) return;
-    
     try {
       setActionInProgress(userId);
       setError(null);
 
+      if (isPublicDemoMode) {
+        // Simulate action in demo mode
+        setTimeout(() => {
+          setUnverifiedUsers(unverifiedUsers.filter(u => u.id !== userId));
+          toast.success(`User ${email} verified successfully (Demo Mode)`);
+          setActionInProgress(null);
+        }, 1000);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer token-would-go-here-in-real-app`,
         },
         body: {
           action: "manually_verify",
@@ -194,21 +248,8 @@ export const UnverifiedUserManagement = () => {
   };
 
   useEffect(() => {
-    if (user && session) {
-      fetchUnverifiedUsers();
-    }
-  }, [user, session]);
-
-  if (!user || !session) {
-    return (
-      <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
-        <div className="flex items-center">
-          <AlertCircle className="h-5 w-5 mr-2" />
-          <p>You must be signed in to access this section.</p>
-        </div>
-      </div>
-    );
-  }
+    fetchUnverifiedUsers();
+  }, []);
 
   return (
     <div className="space-y-6">
