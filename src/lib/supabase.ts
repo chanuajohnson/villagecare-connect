@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -448,5 +449,89 @@ export const resetAuthState = async () => {
   } catch (error) {
     console.error('Error resetting auth state:', error);
     return false;
+  }
+};
+
+// New enhanced function for deleting users that handles cascading deletes and cleanup
+export const deleteUserWithCleanup = async (userId: string): Promise<{ success: boolean, error?: string }> => {
+  try {
+    console.log('Starting user deletion process for user:', userId);
+    
+    // Tables to clean up before deleting a user (ordered by dependency)
+    const tablesToCleanup = [
+      'feature_interest_tracking',
+      'professional_locations',
+      'cta_engagement_tracking',
+      'feature_upvotes',
+      'feature_votes', 
+      'user_module_progress',
+      'user_subscriptions',
+      'meal_plans',
+      'payment_transactions',
+      'prepped_meal_orders'
+    ];
+    
+    // Clean up related records in each table
+    for (const table of tablesToCleanup) {
+      console.log(`Cleaning up ${table} records for user:`, userId);
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.warn(`Error cleaning up ${table}:`, error);
+        // Continue with other tables even if one fails
+      }
+    }
+    
+    // Now delete the profile (this will fail if there are still references)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+      
+    if (profileError) {
+      console.error('Error deleting profile:', profileError);
+      return { 
+        success: false, 
+        error: `Failed to delete profile: ${profileError.message}`
+      };
+    }
+    
+    // Finally try to delete the user from auth.users using admin API
+    try {
+      // Try using the admin API via RPC function
+      const { error: rpcError } = await supabase.rpc('admin_delete_user', { 
+        target_user_id: userId 
+      });
+      
+      if (rpcError) {
+        console.error('Error in admin_delete_user RPC:', rpcError);
+        throw rpcError;
+      }
+    } catch (rpcError) {
+      console.warn('RPC function approach failed, trying direct deletion:', rpcError);
+      
+      // Direct approach as fallback
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (authError) {
+        console.error('Error deleting auth user:', authError);
+        return { 
+          success: false, 
+          error: `Failed to delete auth user: ${authError.message}` 
+        };
+      }
+    }
+    
+    console.log('User deletion completed successfully');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Unhandled error in deleteUserWithCleanup:', error);
+    return { 
+      success: false, 
+      error: `Unhandled error: ${error.message || 'Unknown error'}`
+    };
   }
 };

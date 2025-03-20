@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, deleteUserWithCleanup } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -138,45 +137,16 @@ export const AdminUserManagement = () => {
     }
   };
 
-  // Array of tables to clean up before deleting a user
-  const tablesToCleanup = [
-    { name: 'feature_interest_tracking', column: 'user_id' },
-    { name: 'professional_locations', column: 'user_id' },
-    { name: 'cta_engagement_tracking', column: 'user_id' },
-    { name: 'feature_upvotes', column: 'user_id' },
-    { name: 'feature_votes', column: 'user_id' },
-    { name: 'user_module_progress', column: 'user_id' },
-    { name: 'user_subscriptions', column: 'user_id' },
-    { name: 'meal_plans', column: 'user_id' },
-    { name: 'payment_transactions', column: 'user_id' },
-    { name: 'prepped_meal_orders', column: 'user_id' }
-  ];
-
   const handleDeleteUser = async (userId: string) => {
     try {
       setIsLoadingDelete(userId);
       setDeleteError(null);
       
-      // First, sequentially delete records from all related tables
-      for (const table of tablesToCleanup) {
-        const { error } = await supabase
-          .from(table.name)
-          .delete()
-          .eq(table.column, userId);
-          
-        if (error) {
-          console.error(`Error deleting from ${table.name}:`, error);
-          // Continue with other tables even if one fails
-        }
-      }
-
-      // Now try the admin delete function which handles the rest
-      const { error } = await supabase.rpc('admin_delete_user', {
-        target_user_id: userId
-      });
-
-      if (error) {
-        throw error;
+      // Use the enhanced deleteUserWithCleanup function
+      const { success, error } = await deleteUserWithCleanup(userId);
+      
+      if (!success) {
+        throw new Error(error || 'Unknown error during user deletion');
       }
 
       toast.success('User deleted successfully');
@@ -191,7 +161,6 @@ export const AdminUserManagement = () => {
     }
   };
 
-  // Use useEffect for initial fetch
   useEffect(() => {
     fetchUsers();
     fetchSubscriptionData();
