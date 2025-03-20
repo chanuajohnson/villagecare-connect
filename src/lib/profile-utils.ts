@@ -1,13 +1,16 @@
+
 import { supabase } from '@/lib/supabase';
+import { UserRole } from '@/types/database';
 
 /**
  * Ensures a user profile exists in the database
  * @param userId The user ID to check/create a profile for
+ * @param role Optional role to set for the profile (defaults to 'family' if not provided)
  * @returns Object with success status and error message if applicable
  */
-export const ensureUserProfile = async (userId: string) => {
+export const ensureUserProfile = async (userId: string, role: UserRole = 'family') => {
   try {
-    console.log('Ensuring profile exists for user:', userId);
+    console.log('Ensuring profile exists for user:', userId, 'with role:', role);
     
     // First check if session is valid
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -49,12 +52,12 @@ export const ensureUserProfile = async (userId: string) => {
     }
     
     // Create profile if it doesn't exist
-    console.log('Creating new profile for user:', userId);
+    console.log('Creating new profile for user:', userId, 'with role:', role);
     const { error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: userId,
-        role: 'family' // Default role
+        role: role // Use the provided role instead of hardcoding 'family'
       });
     
     if (insertError) {
@@ -65,7 +68,7 @@ export const ensureUserProfile = async (userId: string) => {
       };
     }
     
-    console.log('Profile created successfully');
+    console.log('Profile created successfully with role:', role);
     return { success: true };
   } catch (error: any) {
     console.error('Unexpected error ensuring profile:', error);

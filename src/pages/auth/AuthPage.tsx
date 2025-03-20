@@ -9,6 +9,8 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ensureUserProfile } from "@/lib/profile-utils";
+import { UserRole } from "@/types/database";
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -94,8 +96,13 @@ export default function AuthPage() {
 
       console.log("[AuthPage] Signup successful:", data.user ? "User created" : "No user created");
       
-      if (data.session) {
+      if (data.session && data.user) {
         console.log("[AuthPage] Session created after signup - auto-confirm must be enabled");
+        
+        // Ensure profile is created with the correct role
+        const userRole = role as UserRole;
+        await ensureUserProfile(data.user.id, userRole);
+        
         toast.success("Account created successfully! You'll be redirected to your dashboard shortly.");
         
         console.log("[AuthPage] Auth provider will handle redirects");
