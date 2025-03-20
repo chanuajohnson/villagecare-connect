@@ -44,6 +44,7 @@ export function SignupForm({ onSubmit, isLoading }: SignupFormProps) {
       
       // Store the registration role in localStorage for redirect handling after email verification
       localStorage.setItem('registeringAs', role);
+      localStorage.setItem('registrationRole', role);
       
       // Set up user metadata with role and name for profile creation
       const metadata = {

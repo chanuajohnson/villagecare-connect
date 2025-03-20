@@ -9,7 +9,7 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ensureUserProfile } from "@/lib/profile-utils";
+import { ensureUserProfile, updateUserProfile } from "@/lib/profile-utils";
 import { UserRole } from "@/types/database";
 
 export default function AuthPage() {
@@ -102,6 +102,16 @@ export default function AuthPage() {
         // Ensure profile is created with the correct role
         const userRole = role as UserRole;
         await ensureUserProfile(data.user.id, userRole);
+        
+        // Also update the user metadata to ensure role consistency
+        await supabase.auth.updateUser({
+          data: { 
+            role: userRole,
+            full_name: fullName,
+            first_name: firstName,
+            last_name: lastName
+          }
+        });
         
         toast.success("Account created successfully! You'll be redirected to your dashboard shortly.");
         

@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { UserRole } from '@/types/database';
+import { updateUserProfile } from '@/lib/profile-utils';
 
 const COMMUNITY_ROLES = [
   { id: 'volunteer', label: '🤝 Community Volunteer' },
@@ -321,6 +322,18 @@ export default function CommunityRegistration() {
       if (updateError) {
         console.error("Profile update error:", updateError);
         throw new Error(`Failed to update profile: ${updateError.message}`);
+      }
+      
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { 
+          role: 'community',
+          full_name: data.fullName 
+        }
+      });
+      
+      if (metadataError) {
+        console.error("Metadata update error:", metadataError);
+        // Continue anyway as profile was updated
       }
       
       toast.success("Registration completed successfully!");
