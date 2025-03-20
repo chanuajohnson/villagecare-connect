@@ -25,11 +25,6 @@ interface TrackableButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "default" | "sm" | "lg" | "icon";
   
   /**
-   * Whether the button should forward its props to its child
-   */
-  asChild?: boolean;
-  
-  /**
    * Children to render inside the button
    */
   children: React.ReactNode;
@@ -39,7 +34,7 @@ interface TrackableButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * Button component that automatically tracks click events
  */
 export const TrackableButton = forwardRef<HTMLButtonElement, TrackableButtonProps>(
-  ({ trackingAction, trackingData = {}, onClick, asChild, ...props }, ref) => {
+  ({ trackingAction, trackingData = {}, onClick, ...props }, ref) => {
     const { trackEngagement } = useTracking();
     
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -56,7 +51,6 @@ export const TrackableButton = forwardRef<HTMLButtonElement, TrackableButtonProp
       <Button
         ref={ref}
         onClick={handleClick}
-        asChild={asChild}
         {...props}
       />
     );
