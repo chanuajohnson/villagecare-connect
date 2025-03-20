@@ -246,7 +246,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const safeNavigate = (path: string, options: { replace?: boolean, skipCheck?: boolean } = {}) => {
+  const safeNavigate = (path: string, options: { 
+    replace?: boolean, 
+    skipCheck?: boolean,
+    state?: Record<string, any>
+  } = {}) => {
     if (navigationInProgressRef.current && !options.skipCheck) {
       console.log(`[AuthProvider] Navigation already in progress, skipping navigation to: ${path}`);
       return;
@@ -263,9 +267,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log(`[AuthProvider] Navigating to: ${path}`);
     
     if (options.replace) {
-      navigate(path, { replace: true });
+      navigate(path, { replace: true, state: options.state });
     } else {
-      navigate(path);
+      navigate(path, { state: options.state });
     }
     
     setTimeout(() => {
@@ -701,4 +705,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
