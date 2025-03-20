@@ -2,18 +2,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bookmark, BookOpen, Calendar, Briefcase, Heart } from "lucide-react";
-
-interface Story {
-  id: string;
-  full_name: string;
-  birth_year: string;
-  personality_traits: string[];
-  career_fields: string[];
-  hobbies_interests: string[];
-  life_story: string;
-  created_at: string;
-}
+import { Calendar, Briefcase, Heart, BookOpen } from "lucide-react";
+import { Story } from "./StoryList";
 
 interface StoryDetailModalProps {
   story: Story;

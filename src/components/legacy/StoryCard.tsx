@@ -3,18 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Bookmark, BookOpen } from "lucide-react";
-
-interface Story {
-  id: string;
-  full_name: string;
-  birth_year: string;
-  personality_traits: string[];
-  career_fields: string[];
-  hobbies_interests: string[];
-  life_story: string;
-  created_at: string;
-}
+import { BookOpen } from "lucide-react";
+import { Story } from "./StoryList";
 
 interface StoryCardProps {
   story: Story;
