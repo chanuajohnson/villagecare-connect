@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -6,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/AuthProvider';
 
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import DashboardCardGrid from '@/components/dashboard/DashboardCardGrid';
-import FamilyNextStepsPanel from '@/components/family/FamilyNextStepsPanel';
-import DashboardCaregiverMatches from '@/components/family/DashboardCaregiverMatches';
-import TrackableButton from '@/components/tracking/TrackableButton';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { DashboardCardGrid } from '@/components/dashboard/DashboardCardGrid';
+import { FamilyNextStepsPanel } from '@/components/family/FamilyNextStepsPanel';
+import { DashboardCaregiverMatches } from '@/components/family/DashboardCaregiverMatches';
+import { TrackableButton } from '@/components/tracking/TrackableButton';
 
 const FamilyDashboard = () => {
   const { user, userRole } = useAuth();
@@ -86,8 +85,8 @@ const FamilyDashboard = () => {
             onClick={makeAdmin}
             disabled={isLoading}
             className="bg-purple-600 hover:bg-purple-700 text-white"
-            trackingLabel="activate_admin_role"
-            trackingCategory="user_management"
+            trackingAction="activate_admin_role"
+            trackingData={{ category: "user_management" }}
           >
             {isLoading ? 'Processing...' : 'Activate Admin Role'}
           </TrackableButton>
@@ -104,8 +103,8 @@ const FamilyDashboard = () => {
           <TrackableButton
             onClick={() => navigate('/family/story')}
             className="bg-blue-600 hover:bg-blue-700 text-white"
-            trackingLabel="tell_their_story"
-            trackingCategory="family_engagement"
+            trackingAction="tell_their_story"
+            trackingData={{ category: "family_engagement" }}
           >
             Tell Their Story
           </TrackableButton>
@@ -119,7 +118,7 @@ const FamilyDashboard = () => {
           <DashboardCaregiverMatches />
         </div>
         <div>
-          <DashboardCardGrid userType="family" />
+          <DashboardCardGrid />
         </div>
       </div>
     </div>
