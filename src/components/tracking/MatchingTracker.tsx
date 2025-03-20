@@ -31,6 +31,7 @@ export interface MatchingTrackerProps {
 
   /**
    * For backwards compatibility - alias for matchType
+   * @deprecated Use matchType instead
    */
   matchingType?: string;
 }

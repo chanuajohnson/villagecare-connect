@@ -474,186 +474,186 @@ export default function FamilyMatchingPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-medium text-sm">Care Type Needed</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {careTypeOptions.map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`care-type-${type}`}
-                        checked={careTypes.includes(type)}
-                        onCheckedChange={() => handleCareTypeChange(type)}
-                      />
-                      <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium text-sm">Specialized Care Needs</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {specializedCareOptions.map((care) => (
-                    <div key={care} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`specialized-care-${care}`}
-                        checked={specializedCare.includes(care)}
-                        onCheckedChange={() => handleSpecializedCareChange(care)}
-                      />
-                      <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="font-medium text-sm">Required Certifications</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                {certificationOptions.map((cert) => (
-                  <div key={cert} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`cert-${cert}`}
-                      checked={requiredCertifications.includes(cert)}
-                      onCheckedChange={() => handleCertificationChange(cert)}
-                    />
-                    <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-sm">Care Type Needed</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {careTypeOptions.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`care-type-${type}`}
+                          checked={careTypes.includes(type)}
+                          onCheckedChange={() => handleCareTypeChange(type)}
+                        />
+                        <Label htmlFor={`care-type-${type}`} className="text-sm">{type}</Label>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="availability" className="text-sm">Family Availability</Label>
-                <Select
-                  value={availability}
-                  onValueChange={(value) => {
-                    try {
-                      trackEngagement('filter_change', { 
-                        filter_type: 'availability', 
-                        previous_value: availability,
-                        new_value: value
-                      });
-                    } catch (error) {
-                      console.error("Error tracking availability change:", error);
-                    }
-                    setAvailability(value);
-                  }}
-                >
-                  <SelectTrigger id="availability">
-                    <SelectValue placeholder="Select availability" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availabilityOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="font-medium text-sm">Specialized Care Needs</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {specializedCareOptions.map((care) => (
+                      <div key={care} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`specialized-care-${care}`}
+                          checked={specializedCare.includes(care)}
+                          onCheckedChange={() => handleSpecializedCareChange(care)}
+                        />
+                        <Label htmlFor={`specialized-care-${care}`} className="text-sm">{care}</Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
-                <Select
-                  value={minimumExperience}
-                  onValueChange={(value) => {
-                    try {
-                      trackEngagement('filter_change', { 
-                        filter_type: 'experience', 
-                        previous_value: minimumExperience,
-                        new_value: value
-                      });
-                    } catch (error) {
-                      console.error("Error tracking experience change:", error);
-                    }
-                    setMinimumExperience(value);
-                  }}
-                >
-                  <SelectTrigger id="experience">
-                    <SelectValue placeholder="Select minimum experience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {experienceOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <h3 className="font-medium text-sm">Required Certifications</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {certificationOptions.map((cert) => (
+                    <div key={cert} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`cert-${cert}`}
+                        checked={requiredCertifications.includes(cert)}
+                        onCheckedChange={() => handleCertificationChange(cert)}
+                      />
+                      <Label htmlFor={`cert-${cert}`} className="text-sm">{cert}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="availability" className="text-sm">Family Availability</Label>
+                  <Select
+                    value={availability}
+                    onValueChange={(value) => {
+                      try {
+                        trackEngagement('filter_change', { 
+                          filter_type: 'availability', 
+                          previous_value: availability,
+                          new_value: value
+                        });
+                      } catch (error) {
+                        console.error("Error tracking availability change:", error);
+                      }
+                      setAvailability(value);
+                    }}
+                  >
+                    <SelectTrigger id="availability">
+                      <SelectValue placeholder="Select availability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availabilityOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="experience" className="text-sm">Minimum Experience</Label>
+                  <Select
+                    value={minimumExperience}
+                    onValueChange={(value) => {
+                      try {
+                        trackEngagement('filter_change', { 
+                          filter_type: 'experience', 
+                          previous_value: minimumExperience,
+                          new_value: value
+                        });
+                      } catch (error) {
+                        console.error("Error tracking experience change:", error);
+                      }
+                      setMinimumExperience(value);
+                    }}
+                  >
+                    <SelectTrigger id="experience">
+                      <SelectValue placeholder="Select minimum experience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {experienceOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm flex justify-between">
+                    <span>Maximum Distance: {maxDistance} km</span>
+                  </Label>
+                  <Slider 
+                    value={[maxDistance]} 
+                    min={1} 
+                    max={50} 
+                    step={1}
+                    onValueChange={(value) => {
+                      try {
+                        trackEngagement('filter_change', { 
+                          filter_type: 'distance', 
+                          previous_value: maxDistance,
+                          new_value: value[0]
+                        });
+                      } catch (error) {
+                        console.error("Error tracking distance change:", error);
+                      }
+                      setMaxDistance(value[0]);
+                    }}
+                  />
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label className="text-sm flex justify-between">
-                  <span>Maximum Distance: {maxDistance} km</span>
+                  <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
                 </Label>
                 <Slider 
-                  value={[maxDistance]} 
-                  min={1} 
-                  max={50} 
-                  step={1}
-                  onValueChange={(value) => {
+                  value={priceRange} 
+                  min={0} 
+                  max={100} 
+                  step={5}
+                  onValueChange={(value: number[]) => {
                     try {
                       trackEngagement('filter_change', { 
-                        filter_type: 'distance', 
-                        previous_value: maxDistance,
-                        new_value: value[0]
+                        filter_type: 'price_range', 
+                        previous_value: `${priceRange[0]}-${priceRange[1]}`,
+                        new_value: `${value[0]}-${value[1]}`
                       });
                     } catch (error) {
-                      console.error("Error tracking distance change:", error);
+                      console.error("Error tracking price range change:", error);
                     }
-                    setMaxDistance(value[0]);
+                    setPriceRange([value[0], value[1]] as [number, number]);
                   }}
                 />
               </div>
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox 
+                  id="trained-families" 
+                  checked={onlyTrained}
+                  onCheckedChange={(checked) => {
+                    try {
+                      trackEngagement('filter_change', { 
+                        filter_type: 'trained_only', 
+                        previous_value: onlyTrained,
+                        new_value: checked
+                      });
+                    } catch (error) {
+                      console.error("Error tracking trained only change:", error);
+                    }
+                    setOnlyTrained(checked as boolean);
+                  }}
+                />
+                <Label htmlFor="trained-families" className="text-sm">Show only platform-trained families</Label>
+              </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm flex justify-between">
-                <span>Price Range: ${priceRange[0]} - ${priceRange[1]}</span>
-              </Label>
-              <Slider 
-                value={priceRange} 
-                min={0} 
-                max={100} 
-                step={5}
-                onValueChange={(value: number[]) => {
-                  try {
-                    trackEngagement('filter_change', { 
-                      filter_type: 'price_range', 
-                      previous_value: `${priceRange[0]}-${priceRange[1]}`,
-                      new_value: `${value[0]}-${value[1]}`
-                    });
-                  } catch (error) {
-                    console.error("Error tracking price range change:", error);
-                  }
-                  setPriceRange([value[0], value[1]] as [number, number]);
-                }}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox 
-                id="trained-families" 
-                checked={onlyTrained}
-                onCheckedChange={(checked) => {
-                  try {
-                    trackEngagement('filter_change', { 
-                      filter_type: 'trained_only', 
-                      previous_value: onlyTrained,
-                      new_value: checked
-                    });
-                  } catch (error) {
-                    console.error("Error tracking trained only change:", error);
-                  }
-                  setOnlyTrained(checked as boolean);
-                }}
-              />
-              <Label htmlFor="trained-families" className="text-sm">Show only platform-trained families</Label>
-            </div>
-          </div>
           </CardContent>
         </Card>
         
@@ -757,80 +757,80 @@ export default function FamilyMatchingPage() {
                     
                     <div className="col-span-2 space-y-3">
                       <div className="grid grid-cols-3 gap-3">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-primary-600" />
-                        <div>
-                          <div className="text-sm text-gray-500">Hourly Rate</div>
-                          <div className="font-medium">{family.hourly_rate}</div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-primary-600" />
+                          <div>
+                            <div className="text-sm text-gray-500">Hourly Rate</div>
+                            <div className="font-medium">{family.hourly_rate}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-primary-600" />
+                          <div>
+                            <div className="text-sm text-gray-500">Experience</div>
+                            <div className="font-medium">{family.years_of_experience} Years</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <MapPinned className="h-4 w-4 text-primary-600" />
+                          <div>
+                            <div className="text-sm text-gray-500">Distance</div>
+                            <div className="font-medium">{family.distance.toFixed(1)} km</div>
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-primary-600" />
-                        <div>
-                          <div className="text-sm text-gray-500">Experience</div>
-                          <div className="font-medium">{family.years_of_experience} Years</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <MapPinned className="h-4 w-4 text-primary-600" />
-                        <div>
-                          <div className="text-sm text-gray-500">Distance</div>
-                          <div className="font-medium">{family.distance.toFixed(1)} km</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Care Specialties</div>
-                      <div className="flex flex-wrap gap-1">
-                        {family.care_types?.map((type, i) => (
-                          <Badge key={i} variant="outline" className="bg-gray-50">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {family.specialized_care && family.specialized_care.length > 0 && (
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Special Care Expertise</div>
+                        <div className="text-sm text-gray-500 mb-1">Care Specialties</div>
                         <div className="flex flex-wrap gap-1">
-                          {family.specialized_care?.map((specialty, i) => (
-                            <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {specialty}
+                          {family.care_types?.map((type, i) => (
+                            <Badge key={i} variant="outline" className="bg-gray-50">
+                              {type}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                    )}
-                    
-                    {family.certifications && family.certifications.length > 0 && (
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Certifications</div>
-                        <div className="flex flex-wrap gap-1">
-                          {family.certifications.map((cert, i) => (
-                            <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              {cert}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Availability</div>
-                      <div className="flex flex-wrap gap-1">
-                        {family.availability?.map((avail, i) => (
-                          <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                            <Calendar className="h-3 w-3" />
-                            <span>{avail}</span>
+                      
+                      {family.specialized_care && family.specialized_care.length > 0 && (
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Special Care Expertise</div>
+                          <div className="flex flex-wrap gap-1">
+                            {family.specialized_care?.map((specialty, i) => (
+                              <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                {specialty}
+                              </Badge>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      )}
+                      
+                      {family.certifications && family.certifications.length > 0 && (
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Certifications</div>
+                          <div className="flex flex-wrap gap-1">
+                            {family.certifications.map((cert, i) => (
+                              <Badge key={i} variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                {cert}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Availability</div>
+                        <div className="flex flex-wrap gap-1">
+                          {family.availability?.map((avail, i) => (
+                            <div key={i} className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                              <Calendar className="h-3 w-3" />
+                              <span>{avail}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
                     
                     <div className="flex flex-col justify-between space-y-4">
                       <div>
@@ -846,22 +846,23 @@ export default function FamilyMatchingPage() {
                           </div>
                         )}
                       
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-amber-500" />
-                        <Star className="h-4 w-4 text-amber-500" />
-                        <Star className="h-4 w-4 text-amber-500" />
-                        <Star className="h-4 w-4 text-amber-500" />
-                        <Star className="h-4 w-4 text-amber-500" />
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <Star className="h-4 w-4 text-amber-500" />
+                          <Star className="h-4 w-4 text-amber-500" />
+                        </div>
                       </div>
-                    </div>
                       
-                    <div className="space-y-2">
-                      <Button 
-                        className="w-full"
-                        onClick={() => handleUnlockProfile(family.id, family.is_premium)}
-                      >
-                        Unlock Profile
-                      </Button>
+                      <div className="space-y-2">
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleUnlockProfile(family.id, family.is_premium)}
+                        >
+                          Unlock Profile
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
