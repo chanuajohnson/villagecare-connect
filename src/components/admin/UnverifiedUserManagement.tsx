@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, AlertCircle, RefreshCw, Send, Trash, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,10 +62,11 @@ export const UnverifiedUserManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UnverifiedUser | null>(null);
+  const { user, userRole } = useAuth();
 
-  // For testing purposes, allow any authenticated user to access admin features
-  const isAdminForTesting = true; // Set to true to bypass role check for testing
-  const isPublicDemoMode = true; // New flag for demo mode
+  // Check if user is admin - in production this would be a more robust check
+  const isAdmin = userRole === 'admin';
+  const isPublicDemoMode = !user || !isAdmin;
 
   const fetchUnverifiedUsers = async () => {
     try {
@@ -80,10 +82,11 @@ export const UnverifiedUserManagement = () => {
         return;
       }
 
+      // Get unconfirmed users via admin API endpoint
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        headers: {
-          Authorization: `Bearer token-would-go-here-in-real-app`,
-        },
+        body: {
+          action: "get_unverified_users"
+        }
       });
 
       if (error) {
@@ -94,6 +97,7 @@ export const UnverifiedUserManagement = () => {
         throw new Error(data.error);
       }
 
+      console.log("Unverified users fetched:", data.users);
       setUnverifiedUsers(data.users || []);
     } catch (err: any) {
       console.error("Error fetching unverified users:", err);
@@ -119,10 +123,6 @@ export const UnverifiedUserManagement = () => {
       }
 
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer token-would-go-here-in-real-app`,
-        },
         body: {
           action: "resend_verification",
           email,
@@ -172,10 +172,6 @@ export const UnverifiedUserManagement = () => {
       }
 
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer token-would-go-here-in-real-app`,
-        },
         body: {
           action: "delete_user",
           userId: userToDelete.id,
@@ -218,10 +214,6 @@ export const UnverifiedUserManagement = () => {
       }
 
       const { data, error } = await supabase.functions.invoke("admin-manage-users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer token-would-go-here-in-real-app`,
-        },
         body: {
           action: "manually_verify",
           userId,
@@ -249,7 +241,7 @@ export const UnverifiedUserManagement = () => {
 
   useEffect(() => {
     fetchUnverifiedUsers();
-  }, []);
+  }, [isAdmin]);
 
   return (
     <div className="space-y-6">
@@ -274,6 +266,21 @@ export const UnverifiedUserManagement = () => {
           )}
         </Button>
       </div>
+
+      {!isAdmin && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                You are viewing demo data. Sign in as an admin to manage real users.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-destructive/15 p-4 rounded-md mb-4 border border-destructive/30">

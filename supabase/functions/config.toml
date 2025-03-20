@@ -1,0 +1,8 @@
+
+project_id = "cpdfmyemjrefnhddyrck"
+
+[admin-manage-users]
+verify_jwt = false
+
+[make-admin]
+verify_jwt = false

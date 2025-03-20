@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -98,10 +99,11 @@ export const AdminUserManagement = () => {
     isOpen: false,
     message: ""
   });
+  const { user, userRole } = useAuth();
 
-  // Always set this to true to enable functionality without authentication
-  const isAdminForTesting = true;
-  const isPublicDemoMode = true; // New flag for demo mode
+  // Check if user is admin - in production this would be a more robust check
+  const isAdmin = userRole === 'admin';
+  const isPublicDemoMode = !user || !isAdmin;
 
   const fetchUsers = async () => {
     try {
@@ -259,10 +261,58 @@ export const AdminUserManagement = () => {
     }
   };
 
+  const handleSetAdminRole = async (userId: string) => {
+    try {
+      setIsLoadingDelete(userId); // Reuse loading state
+      
+      if (isPublicDemoMode) {
+        // Simulate action in demo mode
+        setTimeout(() => {
+          const updatedUsers = users.map(u => 
+            u.id === userId ? { ...u, role: 'admin' } : u
+          );
+          setUsers(updatedUsers);
+          toast.success('User role updated to admin (Demo Mode)');
+          setIsLoadingDelete(null);
+        }, 1000);
+        return;
+      }
+      
+      // Call the admin-manage-users function to update the role
+      const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+        body: {
+          action: "set_admin_role",
+          userId,
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to update user role");
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update the local state
+      const updatedUsers = users.map(u => 
+        u.id === userId ? { ...u, role: 'admin' } : u
+      );
+      setUsers(updatedUsers);
+      
+      toast.success('User role updated to admin successfully');
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast.error('Error updating user role: ' + error.message);
+    } finally {
+      setIsLoadingDelete(null);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchSubscriptionData();
-  }, []);
+  }, [isAdmin]);
 
   return (
     <div className="space-y-6">
@@ -284,6 +334,21 @@ export const AdminUserManagement = () => {
               ) : "Refresh"}
             </Button>
           </div>
+
+          {!isAdmin && (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-yellow-500" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    You are viewing demo data. Sign in as an admin to manage real users.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {deleteError && (
             <div className="bg-destructive/15 p-4 rounded-md mb-4 border border-destructive/30">
@@ -336,19 +401,36 @@ export const AdminUserManagement = () => {
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={isLoadingDelete === user.id}
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        {isLoadingDelete === user.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : "Delete"}
-                      </Button>
+                      <div className="flex space-x-2">
+                        {user.role !== 'admin' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isLoadingDelete === user.id}
+                            onClick={() => handleSetAdminRole(user.id)}
+                          >
+                            {isLoadingDelete === user.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                Processing...
+                              </>
+                            ) : "Make Admin"}
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={isLoadingDelete === user.id}
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          {isLoadingDelete === user.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : "Delete"}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

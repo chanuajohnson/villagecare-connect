@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,12 @@ export default function AuthPage() {
     if (action === 'verification-pending') {
       setActiveTab("login");
       toast.info("Please check your email and click the verification link to continue.");
+    }
+    
+    // Check for admin login request
+    if (action === 'admin-login') {
+      setActiveTab("login");
+      toast.info("Please sign in with your admin credentials.");
     }
   }, [user, navigate]);
 
