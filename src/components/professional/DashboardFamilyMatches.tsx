@@ -68,8 +68,7 @@ const MOCK_FAMILIES: Family[] = [{
 
 export const DashboardFamilyMatches = () => {
   const {
-    user,
-    isProfileComplete
+    user
   } = useAuth();
   const navigate = useNavigate();
   const [families, setFamilies] = useState<Family[]>([]);
@@ -280,27 +279,6 @@ export const DashboardFamilyMatches = () => {
 
   if (!user) {
     return null;
-  }
-
-  if (!isProfileComplete) {
-    return <Card className="mb-8 border-l-4 border-l-primary">
-        <CardHeader>
-          <CardTitle className="text-xl">Complete Your Profile for Family Matches</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-gray-600">
-            Complete your professional profile to see personalized family matches that need your care services.
-          </p>
-          <Button onClick={() => navigate("/registration/professional", {
-          state: {
-            returnPath: "/family-matching",
-            action: "findFamilies"
-          }
-        })}>
-            Complete Profile
-          </Button>
-        </CardContent>
-      </Card>;
   }
 
   return <Card className="mb-8 border-l-4 border-l-primary">
