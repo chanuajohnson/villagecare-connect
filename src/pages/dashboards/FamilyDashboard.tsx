@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -68,9 +69,9 @@ const FamilyDashboard = () => {
   return (
     <div className="container px-4 py-8 mx-auto">
       <DashboardHeader 
-        title="Family Dashboard" 
-        description="Manage care for your loved ones" 
-        userType="family"
+        breadcrumbItems={[
+          { label: "Family Dashboard", path: "/family-dashboard" }
+        ]}
       />
       
       {/* Admin conversion button - only visible for your specific user */}
