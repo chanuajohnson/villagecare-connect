@@ -1,5 +1,4 @@
 
-
 # Takes a Village - Changelog
 
 All notable changes to the Takes a Village care coordination platform will be documented in this file.
@@ -19,6 +18,7 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Added detailed error reporting for user deletion operations 
 - Improved cascading deletion handling and error reporting
 - Fixed foreign key constraints causing user deletion failures
+- Added manual cleanup steps for removing cta_engagement_tracking records before user deletion
 
 ## [0.1.2] - 2024-10-XX
 
@@ -84,4 +84,3 @@ All notable changes to the Takes a Village care coordination platform will be do
 - This is our initial release focusing on core functionality
 - Some features are in preview mode and will be fully implemented in upcoming releases
 - We welcome feedback on all aspects of the platform
-
