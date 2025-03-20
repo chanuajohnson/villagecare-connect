@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { UserRole } from '@/types/database';
 
@@ -453,15 +452,21 @@ export const resetAuthState = async () => {
 };
 
 // New enhanced function for deleting users that handles cascading deletes and cleanup
-export const deleteUserWithCleanup = async (userId: string): Promise<{ success: boolean, error?: string }> => {
+export const deleteUserWithCleanup = async (userId: string): Promise<{ 
+  success: boolean, 
+  error?: string,
+  details?: string[] 
+}> => {
   try {
     console.log('Starting user deletion process for user:', userId);
+    const cleanedUpTables: string[] = [];
+    let lastError: any = null;
     
     // Tables to clean up before deleting a user (ordered by dependency)
     const tablesToCleanup = [
+      'cta_engagement_tracking',
       'feature_interest_tracking',
       'professional_locations',
-      'cta_engagement_tracking',
       'feature_upvotes',
       'feature_votes', 
       'user_module_progress',
@@ -473,29 +478,49 @@ export const deleteUserWithCleanup = async (userId: string): Promise<{ success: 
     
     // Clean up related records in each table
     for (const table of tablesToCleanup) {
-      console.log(`Cleaning up ${table} records for user:`, userId);
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('user_id', userId);
-        
-      if (error) {
-        console.warn(`Error cleaning up ${table}:`, error);
-        // Continue with other tables even if one fails
+      try {
+        console.log(`Cleaning up ${table} records for user:`, userId);
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('user_id', userId);
+          
+        if (error) {
+          console.warn(`Error cleaning up ${table}:`, error);
+          lastError = error;
+          // Continue with other tables even if one fails
+        } else {
+          cleanedUpTables.push(table);
+        }
+      } catch (tableError) {
+        console.error(`Error during ${table} cleanup:`, tableError);
+        // Continue with other tables
       }
     }
     
     // Now delete the profile (this will fail if there are still references)
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId);
-      
-    if (profileError) {
-      console.error('Error deleting profile:', profileError);
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+        
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        return { 
+          success: false, 
+          error: `Failed to delete profile: ${profileError.message}`,
+          details: cleanedUpTables
+        };
+      } else {
+        cleanedUpTables.push('profiles');
+      }
+    } catch (profileDeleteError) {
+      console.error('Error during profile deletion:', profileDeleteError);
       return { 
         success: false, 
-        error: `Failed to delete profile: ${profileError.message}`
+        error: `Profile deletion error: ${profileDeleteError instanceof Error ? profileDeleteError.message : String(profileDeleteError)}`,
+        details: cleanedUpTables
       };
     }
     
@@ -508,25 +533,40 @@ export const deleteUserWithCleanup = async (userId: string): Promise<{ success: 
       
       if (rpcError) {
         console.error('Error in admin_delete_user RPC:', rpcError);
-        throw rpcError;
+        
+        // Direct approach as fallback - this might require service_role key
+        try {
+          // This operation may fail in the client if the right permissions aren't available
+          const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+          
+          if (authError) {
+            console.error('Error deleting auth user:', authError);
+            return { 
+              success: false, 
+              error: `Failed to delete auth user: ${authError.message}`,
+              details: cleanedUpTables.concat(['profiles']) 
+            };
+          }
+        } catch (directDeleteError) {
+          console.error('Error in direct auth deletion:', directDeleteError);
+          return { 
+            success: false, 
+            error: `Direct auth deletion failed: ${directDeleteError instanceof Error ? directDeleteError.message : String(directDeleteError)}`,
+            details: cleanedUpTables.concat(['profiles'])
+          };
+        }
       }
-    } catch (rpcError) {
-      console.warn('RPC function approach failed, trying direct deletion:', rpcError);
-      
-      // Direct approach as fallback
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (authError) {
-        console.error('Error deleting auth user:', authError);
-        return { 
-          success: false, 
-          error: `Failed to delete auth user: ${authError.message}` 
-        };
-      }
+    } catch (rpcError: any) {
+      console.error('RPC function approach failed:', rpcError);
+      return { 
+        success: false, 
+        error: `RPC error: ${rpcError.message || 'Unknown error'}`,
+        details: cleanedUpTables.concat(['profiles'])
+      };
     }
     
     console.log('User deletion completed successfully');
-    return { success: true };
+    return { success: true, details: cleanedUpTables.concat(['profiles', 'auth.users']) };
   } catch (error: any) {
     console.error('Unhandled error in deleteUserWithCleanup:', error);
     return { 

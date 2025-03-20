@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase, deleteUserWithCleanup } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,10 @@ export const AdminUserManagement = () => {
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletionDetails, setDeletionDetails] = useState<{isOpen: boolean, message: string}>({
+    isOpen: false,
+    message: ""
+  });
 
   const fetchUsers = async () => {
     try {
@@ -141,11 +146,19 @@ export const AdminUserManagement = () => {
     try {
       setIsLoadingDelete(userId);
       setDeleteError(null);
+      setDeletionDetails({ isOpen: false, message: "" });
       
       // Use the enhanced deleteUserWithCleanup function
-      const { success, error } = await deleteUserWithCleanup(userId);
+      const { success, error, details } = await deleteUserWithCleanup(userId);
       
       if (!success) {
+        // If we have detailed information about tables that were cleaned up, show it
+        if (details && details.length > 0) {
+          setDeletionDetails({
+            isOpen: true,
+            message: `Partial cleanup completed for: ${details.join(', ')}. Final error: ${error || 'Unknown error'}`
+          });
+        }
         throw new Error(error || 'Unknown error during user deletion');
       }
 
@@ -194,6 +207,20 @@ export const AdminUserManagement = () => {
                 <div>
                   <h3 className="font-medium text-destructive">Error deleting user</h3>
                   <p className="text-sm text-destructive/90 mt-1">{deleteError}</p>
+                  
+                  {deletionDetails.isOpen && (
+                    <Collapsible 
+                      open={deletionDetails.isOpen} 
+                      className="mt-2 border border-destructive/20 rounded-md p-2"
+                    >
+                      <CollapsibleContent>
+                        <p className="text-sm text-destructive/80">
+                          {deletionDetails.message}
+                        </p>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                  
                   <p className="text-sm text-destructive/80 mt-2">
                     Note: If deletion fails through this interface, you may need to manually delete
                     records in the database that reference this user before trying again.
