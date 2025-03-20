@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { StoryList } from "@/components/legacy/StoryList";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
+import { Container } from "@/components/ui/container";
 
 const LegacyStoriesPage = () => {
   useEffect(() => {
@@ -11,7 +12,7 @@ const LegacyStoriesPage = () => {
   }, []);
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
+    <Container className="py-8">
       <PageViewTracker 
         actionType="legacy_stories_page_view" 
         journeyStage="content_discovery"
@@ -32,7 +33,7 @@ const LegacyStoriesPage = () => {
       </div>
       
       <StoryList />
-    </div>
+    </Container>
   );
 };
 

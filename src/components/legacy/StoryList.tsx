@@ -53,7 +53,6 @@ const dummyStories: Story[] = [
     hobbies_interests: ["Technology", "Cooking", "Sports"],
     life_story: "Robert spent his early years developing innovative solutions for manufacturing companies. After a successful career as an engineer, he transitioned to education, teaching the next generation of engineers at a local university. His methodical approach to problem-solving influenced hundreds of students who went on to successful careers.",
     created_at: "2023-04-15T10:30:00Z",
-    // Adding the missing fields required by the Story type
     caregiver_personality: null,
     challenges: null, 
     cultural_preferences: null,
@@ -273,7 +272,7 @@ export const StoryList = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const storiesPerPage = 12;
+  const storiesPerPage = 5; // Changed from 12 to 5 for single column layout
   
   // Selected story for detail modal
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -378,7 +377,7 @@ export const StoryList = () => {
   return (
     <div className="space-y-6">
       {/* Search bar */}
-      <div className="relative w-full md:w-1/2 lg:w-1/3">
+      <div className="relative w-full md:w-1/2">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
         <Input
           type="search"
@@ -430,8 +429,8 @@ export const StoryList = () => {
         </div>
       ) : (
         <>
-          {/* Story grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {/* Story grid - changed to a single column layout */}
+          <div className="space-y-8">
             {getCurrentPageStories().map((story) => (
               <StoryCard
                 key={story.id}
@@ -532,3 +531,4 @@ export const StoryList = () => {
     </div>
   );
 };
+
