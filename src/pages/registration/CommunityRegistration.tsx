@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -326,12 +325,9 @@ export default function CommunityRegistration() {
       
       toast.success("Registration completed successfully!");
       
-      // Clear any saved form data as registration was successful
-      localStorage.removeItem('community_registration_data');
-      
-      // Improved redirection: added logging and removed setTimeout to make redirection more immediate
-      console.log("Community registration complete - redirecting to community dashboard");
-      navigate('/dashboard/community', { replace: true });
+      setTimeout(() => {
+        navigate('/dashboard/community');
+      }, 1500);
       
     } catch (error: any) {
       console.error("Registration error:", error);

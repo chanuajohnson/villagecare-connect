@@ -11,13 +11,6 @@ All notable changes to the Takes a Village care coordination platform will be do
 - Advanced meal planning with dietary restrictions
 - Mobile app notifications
 
-## [0.1.4] - 2024-10-XX
-
-### Fixed
-- Fixed community member registration redirect to ensure proper redirection to community dashboard
-- Added more robust user role handling during registration
-- Improved registration completion process with better error handling
-
 ## [0.1.3] - 2024-10-XX
 
 ### Fixed
