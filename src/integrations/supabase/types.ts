@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      care_recipient_profiles: {
+        Row: {
+          birth_year: string
+          career_fields: string[] | null
+          caregiver_personality: string[] | null
+          challenges: string[] | null
+          created_at: string | null
+          cultural_preferences: string | null
+          daily_routines: string | null
+          family_social_info: string | null
+          full_name: string
+          hobbies_interests: string[] | null
+          id: string
+          joyful_things: string | null
+          last_updated: string | null
+          life_story: string | null
+          notable_events: string | null
+          personality_traits: string[] | null
+          sensitivities: string | null
+          specific_requests: string | null
+          unique_facts: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_year: string
+          career_fields?: string[] | null
+          caregiver_personality?: string[] | null
+          challenges?: string[] | null
+          created_at?: string | null
+          cultural_preferences?: string | null
+          daily_routines?: string | null
+          family_social_info?: string | null
+          full_name: string
+          hobbies_interests?: string[] | null
+          id?: string
+          joyful_things?: string | null
+          last_updated?: string | null
+          life_story?: string | null
+          notable_events?: string | null
+          personality_traits?: string[] | null
+          sensitivities?: string | null
+          specific_requests?: string | null
+          unique_facts?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_year?: string
+          career_fields?: string[] | null
+          caregiver_personality?: string[] | null
+          challenges?: string[] | null
+          created_at?: string | null
+          cultural_preferences?: string | null
+          daily_routines?: string | null
+          family_social_info?: string | null
+          full_name?: string
+          hobbies_interests?: string[] | null
+          id?: string
+          joyful_things?: string | null
+          last_updated?: string | null
+          life_story?: string | null
+          notable_events?: string | null
+          personality_traits?: string[] | null
+          sensitivities?: string | null
+          specific_requests?: string | null
+          unique_facts?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cta_engagement_tracking: {
         Row: {
           action_type: string
