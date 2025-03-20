@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, ArrowLeft, Crown, XCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowLeft, Crown, XCircle, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -401,6 +401,19 @@ const SubscriptionPage = () => {
     navigate(-1);
   };
 
+  const ComingSoonBanner = () => (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+      <Clock className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+      <div>
+        <h3 className="font-medium text-blue-800">PayPal Subscriptions Coming Soon</h3>
+        <p className="text-blue-700 text-sm mt-1">
+          Our PayPal subscription service is currently in development and will be available soon. 
+          In the meantime, you can explore our subscription plans.
+        </p>
+      </div>
+    </div>
+  );
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -476,6 +489,8 @@ const SubscriptionPage = () => {
               </Button>
             </div>
             
+            <ComingSoonBanner />
+            
             <div className="bg-muted/30 border p-4 rounded-lg">
               <div className="flex items-start gap-2">
                 <Crown className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
@@ -545,6 +560,7 @@ const SubscriptionPage = () => {
                           price={plan.price.toString()}
                           className="w-full"
                           variant={plan.popular ? "default" : "outline"}
+                          isComingSoon={true}
                           onSuccess={(subscriptionId) => {
                             toast({
                               title: "Subscription Activated",
@@ -584,7 +600,7 @@ const SubscriptionPage = () => {
                       <Button 
                         className={`w-full ${getButtonColor(plan)}`}
                         onClick={() => handleSubscribe(plan.id)}
-                        disabled={processingPayment || isCurrentUserPlan || planAction === "same" || plan.id !== "basic"}
+                        disabled={processingPayment || isCurrentUserPlan || planAction === "same"}
                       >
                         {processingPayment && selectedPlan === plan.id ? (
                           <div className="flex items-center gap-2">

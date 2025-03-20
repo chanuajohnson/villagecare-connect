@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { usePayPalSubscription } from '@/hooks/usePayPalSubscription';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PayPalSubscribeButtonProps {
   planId: string;
@@ -17,6 +18,7 @@ interface PayPalSubscribeButtonProps {
   className?: string;
   onSuccess?: (subscriptionId: string) => void;
   onError?: (error: Error) => void;
+  isComingSoon?: boolean;
 }
 
 export function PayPalSubscribeButton({
@@ -28,7 +30,8 @@ export function PayPalSubscribeButton({
   variant = "default",
   className = "",
   onSuccess,
-  onError
+  onError,
+  isComingSoon = true // Default to true for now (coming soon)
 }: PayPalSubscribeButtonProps) {
   const [{ isPending }] = usePayPalScriptReducer();
   const { createSubscription, completeSubscription, isLoading } = usePayPalSubscription();
@@ -103,6 +106,29 @@ export function PayPalSubscribeButton({
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Processing...
       </Button>
+    );
+  }
+  
+  // Display Coming Soon button if isComingSoon is true
+  if (isComingSoon) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant={variant} 
+              className={`${className} opacity-90`}
+              disabled
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              Coming Soon
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>PayPal subscriptions are launching soon!</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
   
