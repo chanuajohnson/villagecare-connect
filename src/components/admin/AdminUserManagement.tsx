@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { deleteUserWithCleanup } from "@/lib/supabase";
 
 export const AdminUserManagement = () => {
@@ -32,8 +30,8 @@ export const AdminUserManagement = () => {
     isOpen: false,
     message: ""
   });
-  const { user } = useAuth();
 
+  // Always set this to true to enable functionality without authentication
   const isAdminForTesting = true;
 
   const fetchUsers = async () => {
@@ -168,17 +166,6 @@ export const AdminUserManagement = () => {
     fetchUsers();
     fetchSubscriptionData();
   }, []);
-
-  if (!user) {
-    return (
-      <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
-        <div className="flex items-center">
-          <AlertCircle className="h-5 w-5 mr-2" />
-          <p>You must be signed in to access this section.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
