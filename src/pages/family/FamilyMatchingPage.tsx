@@ -260,7 +260,7 @@ export default function FamilyMatchingPage() {
     } else if (user && !isProfileComplete && isMounted) {
       navigate("/registration/family", { 
         state: { 
-          returnPath: "/family-matching", 
+          referringPath: "/family-matching", 
           referringPagePath: referringPath,
           referringPageLabel: referringLabel,
           action: "findFamily" 
@@ -269,7 +269,7 @@ export default function FamilyMatchingPage() {
     } else if (!user && isMounted) {
       navigate("/auth", { 
         state: { 
-          returnPath: "/family-matching",
+          referringPath: "/family-matching",
           referringPagePath: referringPath,
           referringPageLabel: referringLabel,
           action: "findFamily" 
@@ -855,14 +855,13 @@ export default function FamilyMatchingPage() {
                       </div>
                     </div>
                       
-                      <div className="space-y-2">
-                        <Button 
-                          className="w-full"
-                          onClick={() => handleUnlockProfile(family.id, family.is_premium)}
-                        >
-                          Unlock Profile
-                        </Button>
-                      </div>
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleUnlockProfile(family.id, family.is_premium)}
+                      >
+                        Unlock Profile
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -870,3 +869,7 @@ export default function FamilyMatchingPage() {
             ))}
           </div>
         )}
+      </div>
+    </MatchingTracker>
+  );
+}
