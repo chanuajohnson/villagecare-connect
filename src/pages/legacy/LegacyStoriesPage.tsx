@@ -19,6 +19,7 @@ const LegacyStoriesPage = () => {
       
       <DashboardHeader 
         breadcrumbItems={[
+          { label: "Family Dashboard", path: "/dashboard/family" },
           { label: "Legacy Stories", path: "/legacy-stories" }
         ]} 
       />
