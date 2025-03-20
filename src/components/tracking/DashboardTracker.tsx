@@ -8,17 +8,12 @@ interface DashboardTrackerProps {
    * The type of dashboard being tracked
    */
   dashboardType: 'family' | 'professional' | 'community' | 'admin';
-  
-  /**
-   * Optional children to render
-   */
-  children?: React.ReactNode;
 }
 
 /**
  * Component to track dashboard visits with user context
  */
-export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerProps) => {
+export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
   const { trackEngagement } = useTracking();
   const { user, isProfileComplete } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
@@ -28,14 +23,14 @@ export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerPr
     setIsMounted(true);
     
     const trackDashboardView = async () => {
-      if (!isMounted || trackingAttempted.current) return;
+      if (!isMounted || !user || trackingAttempted.current) return;
       
       try {
         trackingAttempted.current = true;
         const actionType = `${dashboardType}_dashboard_view`;
         
         await trackEngagement(actionType as any, {
-          user_status: user && isProfileComplete ? 'complete_profile' : user ? 'incomplete_profile' : 'anonymous',
+          user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
           path: window.location.pathname,
           timestamp: new Date().toISOString(),
         });
@@ -47,7 +42,7 @@ export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerPr
     
     // Delay tracking to avoid blocking UI rendering
     const trackingTimer = setTimeout(() => {
-      if (isMounted) {
+      if (user && isMounted) {
         trackDashboardView().catch(err => {
           console.error("Tracking error in delayed execution:", err);
         });
@@ -58,7 +53,7 @@ export const DashboardTracker = ({ dashboardType, children }: DashboardTrackerPr
       setIsMounted(false);
       clearTimeout(trackingTimer);
     };
-  }, [dashboardType, user, isProfileComplete, trackEngagement]);
+  }, [dashboardType, user?.id, isProfileComplete, trackEngagement, user]);
   
-  return <>{children}</>;
+  return null; // This component doesn't render anything
 };
