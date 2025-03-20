@@ -293,6 +293,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profileComplete = await checkProfileCompletion(user.id);
       console.log('[AuthProvider] Profile complete:', profileComplete);
       
+      const locationState = location.state as { returnPath?: string; action?: string } | null;
+      
+      if (locationState?.returnPath === "/family/story" && locationState?.action === "tellStory") {
+        console.log('[AuthProvider] Redirecting to Tell Their Story page from location state');
+        safeNavigate('/family/story', { skipCheck: true });
+        isRedirectingRef.current = false;
+        return;
+      }
+      
       if (profileComplete && location.pathname.includes('/registration/')) {
         console.log('[AuthProvider] Profile is complete and user is on registration page, redirecting to dashboard');
         const dashboardPath = effectiveRole ? `/dashboard/${effectiveRole.toLowerCase()}` : '/';
@@ -395,7 +404,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     toast.error('Please sign in to ' + action);
-    safeNavigate('/auth', { skipCheck: true });
+    safeNavigate('/auth', { 
+      skipCheck: true,
+      state: {
+        returnPath: redirectPath,
+        action: action === 'tell their story' ? 'tellStory' : null
+      }
+    });
     return false;
   };
 

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useTracking } from "@/hooks/useTracking";
 
 export const TellTheirStoryCard = () => {
-  const { user, isProfileComplete } = useAuth();
+  const { user, isProfileComplete, requireAuth } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { trackEngagement } = useTracking();
@@ -24,14 +24,15 @@ export const TellTheirStoryCard = () => {
         user_status: user ? (isProfileComplete ? 'complete_profile' : 'incomplete_profile') : 'logged_out'
       });
       
-      // Determine redirect based on user status
+      // Check if user is authenticated, and if not, use the requireAuth function
       if (!user) {
-        // User is not logged in
-        toast.info("Please sign in to share your loved one's story");
-        navigate("/auth", { 
-          state: { returnPath: "/family/story", action: "tellStory" }
-        });
-      } else if (!isProfileComplete) {
+        requireAuth('tell their story', '/family/story');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Determine redirect based on user status
+      if (!isProfileComplete) {
         // User is logged in but profile is incomplete
         toast.info("Let's complete your profile first");
         navigate("/registration/family", { 
