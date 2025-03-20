@@ -1,65 +1,72 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, ReactNode } from "react";
 import { useTracking } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-interface MatchingTrackerProps {
+export interface MatchingTrackerProps {
   /**
-   * The type of matching page being tracked
+   * The type of match being tracked (e.g., 'advanced_family', 'basic_caregiver')
    */
-  matchingType: 'family' | 'caregiver';
+  matchType: string;
   
   /**
-   * Additional data to include with the tracking event
+   * The ID of the match being viewed
+   */
+  matchId: string;
+  
+  /**
+   * The match score (percentage)
+   */
+  matchScore: number;
+  
+  /**
+   * Additional data to track with the matching event
    */
   additionalData?: Record<string, any>;
+  
+  /**
+   * Children components to be rendered
+   */
+  children: ReactNode;
 }
 
 /**
- * Component to track matching page visits
+ * Component to track matching-related interactions
  */
-export const MatchingTracker = ({ matchingType, additionalData = {} }: MatchingTrackerProps) => {
+export const MatchingTracker = ({
+  matchType,
+  matchId,
+  matchScore,
+  additionalData = {},
+  children
+}: MatchingTrackerProps) => {
   const { trackEngagement } = useTracking();
-  const { user, isProfileComplete } = useAuth();
-  const [isMounted, setIsMounted] = useState(false);
-  const trackingAttempted = useRef(false);
+  const { user } = useAuth();
+  const hasTracked = useRef(false);
   
   useEffect(() => {
-    setIsMounted(true);
+    if (hasTracked.current) return;
     
-    const trackMatchingPageView = async () => {
-      if (!isMounted || !user || trackingAttempted.current) return;
-      
+    const trackMatchView = async () => {
       try {
-        trackingAttempted.current = true;
-        const actionType = `${matchingType}_matching_page_view`;
+        hasTracked.current = true;
         
-        // Note: caregiver tracking will be disabled in the useTracking hook
-        await trackEngagement(actionType as any, {
-          ...additionalData,
-          user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
+        await trackEngagement('match_view', {
+          match_type: matchType,
+          match_id: matchId,
+          match_score: matchScore,
+          user_id: user?.id || 'anonymous',
           timestamp: new Date().toISOString(),
+          ...additionalData,
         });
       } catch (error) {
-        console.error(`Error tracking matching page view for ${matchingType}:`, error);
-        // Continue execution even if tracking fails
+        console.error('Error tracking match view:', error);
+        // Continue even if tracking fails
       }
     };
     
-    // Delay tracking to avoid blocking UI rendering
-    const trackingTimer = setTimeout(() => {
-      if (user && isMounted) {
-        trackMatchingPageView().catch(err => {
-          console.error("Tracking error in delayed execution:", err);
-        });
-      }
-    }, 1000);
-    
-    return () => {
-      setIsMounted(false);
-      clearTimeout(trackingTimer);
-    };
-  }, [matchingType, user?.id, isProfileComplete, additionalData, trackEngagement, user]);
+    trackMatchView();
+  }, [matchType, matchId, matchScore, user, trackEngagement, additionalData]);
   
-  return null; // This component doesn't render anything
+  return <>{children}</>;
 };

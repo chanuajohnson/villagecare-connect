@@ -1,14 +1,19 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { useTracking, TrackingActionType } from "@/hooks/useTracking";
+import { useTracking } from "@/hooks/useTracking";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface PageViewTrackerProps {
   /**
-   * The action type to use for tracking this page view
+   * The name of the page being tracked
    */
-  actionType: TrackingActionType;
+  pageName: string;
+  
+  /**
+   * Children components to be rendered
+   */
+  children: ReactNode;
   
   /**
    * Additional data to include with the tracking event
@@ -30,7 +35,8 @@ interface PageViewTrackerProps {
  * Component to track page views automatically
  */
 export const PageViewTracker = ({ 
-  actionType, 
+  pageName, 
+  children,
   additionalData = {}, 
   trackPathChanges = false,
   journeyStage
@@ -66,8 +72,9 @@ export const PageViewTracker = ({
       // Determine if this is a return visit to the page
       const isReturnVisit = visitHistory.slice(0, -1).some(visit => visit.path === location.pathname);
       
-      await trackEngagement(actionType, {
+      await trackEngagement('page_view', {
         ...additionalData,
+        page_name: pageName,
         path: location.pathname,
         search: location.search,
         referrer: document.referrer,
@@ -82,10 +89,12 @@ export const PageViewTracker = ({
       previousPath.current = location.pathname + location.search;
     };
     
-    trackPageView();
+    trackPageView().catch(err => {
+      console.error("Error tracking page view:", err);
+    });
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackPathChanges ? location.pathname + location.search : null]);
   
-  return null; // This component doesn't render anything
+  return <>{children}</>; // Render children
 };
