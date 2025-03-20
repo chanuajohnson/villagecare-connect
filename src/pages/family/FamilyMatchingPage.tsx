@@ -442,38 +442,38 @@ export default function FamilyMatchingPage() {
 
   return (
     <MatchingTracker 
-        matchType="family"
-        matchId="general-family-matching-view" 
-        matchScore={100}
-        additionalData={{
-          referrer: referringPath,
-          filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
-            (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
-        }}
-      >
-        <div className="container px-4 py-8">
-          <DashboardHeader 
-            title="Family Matches"
-            description="Find the perfect family match"
-            breadcrumbItems={breadcrumbItems} 
-          />
+      matchType="family"
+      matchId="general-family-matching-view" 
+      matchScore={100}
+      additionalData={{
+        referrer: referringPath,
+        filter_count: careTypes.length + specializedCare.length + requiredCertifications.length + 
+          (availability !== 'all' ? 1 : 0) + (minimumExperience !== 'any' ? 1 : 0) + 1
+      }}
+    >
+      <div className="container px-4 py-8">
+        <DashboardHeader 
+          title="Family Matches"
+          description="Find the perfect family match"
+          breadcrumbItems={breadcrumbItems} 
+        />
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
-        <p className="text-gray-600">
-          We've found {filteredFamilies.length} families that match your profile requirements
-        </p>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-primary" />
-            <span>Filter & Sort</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-primary-900 mb-2">Family Matches</h1>
+          <p className="text-gray-600">
+            We've found {filteredFamilies.length} families that match your profile requirements
+          </p>
+        </div>
+        
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-primary" />
+              <span>Filter & Sort</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="font-medium text-sm">Care Type Needed</h3>
@@ -654,109 +654,109 @@ export default function FamilyMatchingPage() {
               <Label htmlFor="trained-families" className="text-sm">Show only platform-trained families</Label>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : filteredFamilies.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No families match your current filters</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              setCareTypes([]);
-              setSpecializedCare([]);
-              setRequiredCertifications([]);
-              setAvailability("all");
-              setMinimumExperience("any");
-              setMaxDistance(30);
-              setPriceRange([0, 100]);
-              setOnlyTrained(false);
-            }}
-          >
-            Reset Filters
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
-            <CardContent className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-2">
-                <Lock className="h-5 w-5 text-amber-600" />
-                <p className="font-medium text-amber-800">
-                  Unlock Premium Matching: Upgrade for priority placement & access to exclusive family profiles.
-                </p>
-              </div>
-              <Button 
-                variant="default" 
-                className="bg-amber-600 hover:bg-amber-700"
-                onClick={() => {
-                  try {
-                    trackEngagement('premium_matching_cta_click');
-                  } catch (error) {
-                    console.error("Error tracking premium matching click:", error);
-                  }
-                  
-                  navigate("/subscription-features", { 
-                    state: { 
-                      returnPath: "/family-matching",
-                      referringPagePath: referringPath,
-                      referringPageLabel: referringLabel,
-                      featureType: "Premium Matching" 
-                    } 
-                  });
-                }}
-              >
-                Upgrade Now
-              </Button>
-            </CardContent>
-          </Card>
-          
-          {filteredFamilies.map((family) => (
-            <Card 
-              key={family.id} 
-              className={`relative overflow-hidden ${family.is_premium ? 'border-amber-300 shadow-amber-100' : ''}`}
+          </CardContent>
+        </Card>
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredFamilies.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No families match your current filters</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => {
+                setCareTypes([]);
+                setSpecializedCare([]);
+                setRequiredCertifications([]);
+                setAvailability("all");
+                setMinimumExperience("any");
+                setMaxDistance(30);
+                setPriceRange([0, 100]);
+                setOnlyTrained(false);
+              }}
             >
-              {family.is_premium && (
-                <div className="absolute top-0 right-0">
-                  <Badge className="bg-amber-500 text-white uppercase font-bold rounded-tl-none rounded-tr-sm rounded-br-none rounded-bl-sm px-2">
-                    Premium
-                  </Badge>
+              Reset Filters
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200">
+              <CardContent className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-amber-600" />
+                  <p className="font-medium text-amber-800">
+                    Unlock Premium Matching: Upgrade for priority placement & access to exclusive family profiles.
+                  </p>
                 </div>
-              )}
-              
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="flex flex-col items-center md:items-start gap-4">
-                    <div className="flex flex-col items-center">
-                      <Avatar className="h-20 w-20 border-2 border-primary/20">
-                        <AvatarImage src={family.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
-                          {family.full_name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="mt-3 text-center">
-                        <h3 className="text-lg font-semibold">{family.first_name}</h3>
-                        <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          <span>{family.location}</span>
+                <Button 
+                  variant="default" 
+                  className="bg-amber-600 hover:bg-amber-700"
+                  onClick={() => {
+                    try {
+                      trackEngagement('premium_matching_cta_click');
+                    } catch (error) {
+                      console.error("Error tracking premium matching click:", error);
+                    }
+                    
+                    navigate("/subscription-features", { 
+                      state: { 
+                        returnPath: "/family-matching",
+                        referringPagePath: referringPath,
+                        referringPageLabel: referringLabel,
+                        featureType: "Premium Matching" 
+                      } 
+                    });
+                  }}
+                >
+                  Upgrade Now
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {filteredFamilies.map((family) => (
+              <Card 
+                key={family.id} 
+                className={`relative overflow-hidden ${family.is_premium ? 'border-amber-300 shadow-amber-100' : ''}`}
+              >
+                {family.is_premium && (
+                  <div className="absolute top-0 right-0">
+                    <Badge className="bg-amber-500 text-white uppercase font-bold rounded-tl-none rounded-tr-sm rounded-br-none rounded-bl-sm px-2">
+                      Premium
+                    </Badge>
+                  </div>
+                )}
+                
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="flex flex-col items-center md:items-start gap-4">
+                      <div className="flex flex-col items-center">
+                        <Avatar className="h-20 w-20 border-2 border-primary/20">
+                          <AvatarImage src={family.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary-100 text-primary-800 text-xl">
+                            {family.full_name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="mt-3 text-center">
+                          <h3 className="text-lg font-semibold">{family.first_name}</h3>
+                          <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            <span>{family.location}</span>
+                          </div>
                         </div>
+                      </div>
+                      
+                      <div className="bg-primary-50 w-full rounded-lg p-2 text-center">
+                        <span className="text-sm text-gray-600">Match Score</span>
+                        <div className="text-2xl font-bold text-primary-700">{family.match_score}%</div>
                       </div>
                     </div>
                     
-                    <div className="bg-primary-50 w-full rounded-lg p-2 text-center">
-                      <span className="text-sm text-gray-600">Match Score</span>
-                      <div className="text-2xl font-bold text-primary-700">{family.match_score}%</div>
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-2 space-y-3">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2 space-y-3">
+                      <div className="grid grid-cols-3 gap-3">
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-primary-600" />
                         <div>
@@ -831,20 +831,20 @@ export default function FamilyMatchingPage() {
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col justify-between space-y-4">
-                    <div>
-                      <div className="flex items-center gap-1 mb-2">
-                        <UserCheck className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-green-700">Background Checked</span>
-                      </div>
-
-                      {family.has_training && (
+                    
+                    <div className="flex flex-col justify-between space-y-4">
+                      <div>
                         <div className="flex items-center gap-1 mb-2">
-                          <Check className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm text-blue-700">Platform Trained</span>
+                          <UserCheck className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-700">Background Checked</span>
                         </div>
-                      )}
+
+                        {family.has_training && (
+                          <div className="flex items-center gap-1 mb-2">
+                            <Check className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm text-blue-700">Platform Trained</span>
+                          </div>
+                        )}
                       
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-amber-500" />
@@ -854,20 +854,19 @@ export default function FamilyMatchingPage() {
                         <Star className="h-4 w-4 text-amber-500" />
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Button 
-                        className="w-full"
-                        onClick={() => handleUnlockProfile(family.id, family.is_premium)}
-                      >
-                        Unlock Profile
-                      </Button>
+                      
+                      <div className="space-y-2">
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleUnlockProfile(family.id, family.is_premium)}
+                        >
+                          Unlock Profile
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
