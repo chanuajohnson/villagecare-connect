@@ -12,7 +12,10 @@ const LegacyStoriesPage = () => {
 
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
-      <PageViewTracker page="legacy_stories" />
+      <PageViewTracker 
+        actionType="legacy_stories_page_view" 
+        journeyStage="content_discovery"
+      />
       
       <DashboardHeader 
         breadcrumbItems={[
