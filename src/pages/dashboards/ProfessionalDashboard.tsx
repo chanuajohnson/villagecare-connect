@@ -13,6 +13,7 @@ import { MatchingTracker } from "@/components/tracking/MatchingTracker";
 import { getUserRole } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Clipboard, ArrowRight } from "lucide-react";
+import { Container } from "@/components/ui/container";
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();
@@ -55,7 +56,7 @@ export default function ProfessionalDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8">
+      <Container className="py-8">
         <DashboardHeader
           breadcrumbItems={breadcrumbItems}
         />
@@ -106,7 +107,7 @@ export default function ProfessionalDashboard() {
             <TrainingProgramSection />
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

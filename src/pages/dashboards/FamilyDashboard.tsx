@@ -16,6 +16,7 @@ import { TrackedLink } from "@/components/tracking/TrackedLink";
 import { Button } from "@/components/ui/button";
 import { Clipboard, ArrowRight } from "lucide-react";
 import { getUserRole } from "@/lib/supabase";
+import { Container } from "@/components/ui/container";
 
 export default function FamilyDashboard() {
   const { user } = useAuth();
@@ -58,7 +59,7 @@ export default function FamilyDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8">
+      <Container className="py-8">
         <DashboardHeader
           breadcrumbItems={breadcrumbItems}
         />
@@ -123,7 +124,7 @@ export default function FamilyDashboard() {
             <TellTheirStoryCard />
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }
