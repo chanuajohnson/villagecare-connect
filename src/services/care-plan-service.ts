@@ -190,11 +190,11 @@ export const inviteCareTeamMember = async (
       throw error;
     }
 
-    toast.success("Team member invited successfully");
+    toast.success("Team member assigned successfully");
     return data;
   } catch (error) {
-    console.error("Error inviting team member:", error);
-    toast.error("Failed to invite team member");
+    console.error("Error assigning team member:", error);
+    toast.error("Failed to assign team member");
     return null;
   }
 };

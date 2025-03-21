@@ -98,7 +98,7 @@ const CarePlanDetailPage = () => {
 
     try {
       if (!newTeamMember.caregiverId) {
-        toast.error("Please select a professional to invite");
+        toast.error("Please select a professional to assign");
         return;
       }
 
@@ -107,11 +107,11 @@ const CarePlanDetailPage = () => {
         family_id: user.id,
         caregiver_id: newTeamMember.caregiverId,
         role: newTeamMember.role,
-        status: 'invited',
+        status: 'active',
         notes: newTeamMember.notes
       });
 
-      toast.success("Team member invited successfully");
+      toast.success("Team member assigned successfully");
       setInviteDialogOpen(false);
       
       // Reset form
@@ -124,8 +124,8 @@ const CarePlanDetailPage = () => {
       // Refresh team members list
       loadCareTeamMembers();
     } catch (error) {
-      console.error("Error inviting team member:", error);
-      toast.error("Failed to invite team member");
+      console.error("Error assigning team member:", error);
+      toast.error("Failed to assign team member");
     }
   };
 
@@ -290,9 +290,9 @@ const CarePlanDetailPage = () => {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Invite Care Professional</DialogTitle>
+                    <DialogTitle>Assign Care Professional</DialogTitle>
                     <DialogDescription>
-                      Add a care professional to this care plan. They will receive an invitation.
+                      Add a care professional to this care plan. They will be assigned immediately.
                     </DialogDescription>
                   </DialogHeader>
                   
@@ -348,7 +348,7 @@ const CarePlanDetailPage = () => {
                   
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleInviteTeamMember}>Invite Professional</Button>
+                    <Button onClick={handleInviteTeamMember}>Assign Professional</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
