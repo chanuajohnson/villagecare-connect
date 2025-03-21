@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { CarePlan, CareTask } from '@/types/care-management';
 
@@ -48,7 +49,7 @@ export async function fetchCarePlans(userId: string) {
     const { data, error } = await supabase
       .from('care_plans')
       .select('*')
-      .eq('user_id', userId);
+      .eq('family_id', userId);
       
     if (error) throw error;
     
@@ -72,6 +73,66 @@ export async function fetchCareTasks(carePlanId: string) {
   } catch (error) {
     console.error('Error fetching care tasks:', error);
     return [];
+  }
+}
+
+export async function createTask(task: Partial<CareTask>) {
+  try {
+    const { data, error } = await supabase
+      .from('care_tasks')
+      .insert([task])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
+
+    return data as CareTask;
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
+  }
+}
+
+export async function updateTask(task: Partial<CareTask>) {
+  try {
+    const { data, error } = await supabase
+      .from('care_tasks')
+      .update(task)
+      .eq('id', task.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+
+    return data as CareTask;
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
+  }
+}
+
+export async function deleteTask(taskId: string) {
+  try {
+    const { error } = await supabase
+      .from('care_tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    throw error;
   }
 }
 

@@ -1,5 +1,4 @@
 
-// Import path and related TypeScript errors fixed
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { toast } from 'sonner';
-import { fetchCarePlans, fetchCareTasks, createCarePlan, updateCarePlan } from '@/services/care-plan-service';
+import { fetchCarePlans, fetchCareTasks, createCarePlan, updateCarePlan, deleteCarePlan } from '@/services/care-plan-service';
 import { CarePlan } from '@/types/care-management';
 import { CarePlanCard } from '@/components/family/care-management/CarePlanCard';
 import { CarePlanForm } from '@/components/family/care-management/CarePlanForm';
@@ -16,9 +15,12 @@ const CarePlansPage = () => {
   const { user, requireAuth } = useAuth();
   const navigate = useNavigate();
   const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
+  const [carePlanTaskCounts, setCarePlanTaskCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCarePlan, setSelectedCarePlan] = useState<CarePlan | null>(null);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -31,6 +33,14 @@ const CarePlansPage = () => {
       try {
         const plans = await fetchCarePlans(user.id);
         setCarePlans(plans);
+        
+        // Fetch task counts for each care plan
+        const taskCounts: Record<string, number> = {};
+        for (const plan of plans) {
+          const tasks = await fetchCareTasks(plan.id);
+          taskCounts[plan.id] = tasks.length;
+        }
+        setCarePlanTaskCounts(taskCounts);
       } catch (error) {
         console.error('Error loading care plans:', error);
         toast.error('Failed to load care plans');
@@ -48,11 +58,11 @@ const CarePlansPage = () => {
     try {
       const newPlan = await createCarePlan({
         ...planData,
-        user_id: user.id,
+        family_id: user.id,
       });
       
       setCarePlans((prev) => [...prev, newPlan]);
-      setIsCreating(false);
+      setIsCreateFormOpen(false);
       toast.success('Care plan created successfully');
     } catch (error) {
       console.error('Error creating care plan:', error);
@@ -64,7 +74,6 @@ const CarePlansPage = () => {
     if (!selectedCarePlan) return;
     
     try {
-      // Only pass the ID and the updates, not the entire care plan
       await updateCarePlan(selectedCarePlan.id, planData);
       
       setCarePlans((prev) => 
@@ -74,10 +83,27 @@ const CarePlansPage = () => {
       );
       
       setSelectedCarePlan(null);
+      setIsEditFormOpen(false);
       toast.success('Care plan updated successfully');
     } catch (error) {
       console.error('Error updating care plan:', error);
       toast.error('Failed to update care plan');
+    }
+  };
+
+  const handleDeletePlan = async (carePlan: CarePlan) => {
+    try {
+      const success = await deleteCarePlan(carePlan.id);
+      
+      if (success) {
+        setCarePlans((prev) => prev.filter(plan => plan.id !== carePlan.id));
+        toast.success('Care plan deleted successfully');
+      } else {
+        toast.error('Failed to delete care plan');
+      }
+    } catch (error) {
+      console.error('Error deleting care plan:', error);
+      toast.error('Failed to delete care plan');
     }
   };
 
@@ -94,7 +120,7 @@ const CarePlansPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Care Plans</h1>
         <Button 
-          onClick={() => setIsCreating(true)} 
+          onClick={() => setIsCreateFormOpen(true)} 
           className="flex items-center gap-2"
         >
           <PlusCircle size={16} />
@@ -102,34 +128,20 @@ const CarePlansPage = () => {
         </Button>
       </div>
 
-      {isCreating && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Create New Care Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CarePlanForm 
-              onSubmit={handleCreatePlan} 
-              onCancel={() => setIsCreating(false)}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <CarePlanForm
+        open={isCreateFormOpen}
+        onOpenChange={setIsCreateFormOpen}
+        onSubmit={handleCreatePlan}
+        isLoading={isLoading}
+      />
 
-      {selectedCarePlan && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Edit Care Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CarePlanForm 
-              carePlan={selectedCarePlan}
-              onSubmit={handleUpdatePlan} 
-              onCancel={() => setSelectedCarePlan(null)}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <CarePlanForm
+        open={isEditFormOpen}
+        onOpenChange={setIsEditFormOpen}
+        carePlan={selectedCarePlan || undefined}
+        onSubmit={handleUpdatePlan}
+        isLoading={isLoading}
+      />
 
       {isLoading ? (
         <div className="text-center py-12">Loading care plans...</div>
@@ -143,7 +155,13 @@ const CarePlansPage = () => {
             <CarePlanCard 
               key={plan.id} 
               carePlan={plan}
-              onEdit={() => setSelectedCarePlan(plan)}
+              teamMemberCount={0} // You can implement this later if needed
+              taskCount={carePlanTaskCounts[plan.id] || 0}
+              onEdit={() => {
+                setSelectedCarePlan(plan);
+                setIsEditFormOpen(true);
+              }}
+              onDelete={handleDeletePlan}
               onViewTeam={() => handleViewTeam(plan)}
               onViewTasks={() => handleViewTasks(plan)}
             />

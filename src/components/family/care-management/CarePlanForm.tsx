@@ -20,18 +20,20 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface CarePlanFormProps {
+  onSubmit: (values: FormValues) => void;
+  onCancel?: () => void;
+  carePlan?: CarePlan;
+  isLoading?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: CarePlan;
-  onSubmit: (values: FormValues) => void;
-  isLoading?: boolean;
 }
 
 export function CarePlanForm({
   open,
   onOpenChange,
-  initialData,
+  carePlan,
   onSubmit,
+  onCancel,
   isLoading = false,
 }: CarePlanFormProps) {
   const [isMounted, setIsMounted] = useState(false);
@@ -51,20 +53,20 @@ export function CarePlanForm({
   }, []);
 
   useEffect(() => {
-    if (initialData && isMounted) {
+    if (carePlan && isMounted) {
       form.reset({
-        title: initialData.title,
-        description: initialData.description || "",
-        status: initialData.status,
+        title: carePlan.title,
+        description: carePlan.description || "",
+        status: carePlan.status,
       });
-    } else if (isMounted && !initialData) {
+    } else if (isMounted && !carePlan) {
       form.reset({
         title: "",
         description: "",
         status: "active",
       });
     }
-  }, [initialData, form, isMounted]);
+  }, [carePlan, form, isMounted]);
 
   const handleSubmit = async (values: FormValues) => {
     onSubmit(values);
@@ -74,9 +76,9 @@ export function CarePlanForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Care Plan" : "Create Care Plan"}</DialogTitle>
+          <DialogTitle>{carePlan ? "Edit Care Plan" : "Create Care Plan"}</DialogTitle>
           <DialogDescription>
-            {initialData
+            {carePlan
               ? "Update your care plan details below."
               : "Fill out the form below to create a new care plan."}
           </DialogDescription>
@@ -139,13 +141,16 @@ export function CarePlanForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={() => {
+                  if (onCancel) onCancel();
+                  else onOpenChange(false);
+                }}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : initialData ? "Update Plan" : "Create Plan"}
+                {isLoading ? "Saving..." : carePlan ? "Update Plan" : "Create Plan"}
               </Button>
             </DialogFooter>
           </form>

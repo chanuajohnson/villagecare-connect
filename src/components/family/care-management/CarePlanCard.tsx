@@ -27,13 +27,23 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface CarePlanCardProps {
   carePlan: CarePlan;
-  teamMemberCount: number;
-  taskCount: number;
+  teamMemberCount?: number;
+  taskCount?: number;
   onEdit: (carePlan: CarePlan) => void;
-  onDelete: (carePlan: CarePlan) => void;
+  onDelete?: (carePlan: CarePlan) => void;
+  onViewTeam?: () => void;
+  onViewTasks?: () => void;
 }
 
-export function CarePlanCard({ carePlan, teamMemberCount, taskCount, onEdit, onDelete }: CarePlanCardProps) {
+export function CarePlanCard({ 
+  carePlan, 
+  teamMemberCount = 0, 
+  taskCount = 0, 
+  onEdit, 
+  onDelete,
+  onViewTeam,
+  onViewTasks
+}: CarePlanCardProps) {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -59,11 +69,19 @@ export function CarePlanCard({ carePlan, teamMemberCount, taskCount, onEdit, onD
   };
 
   const handleViewTasks = () => {
-    navigate(`/dashboard/family/care-plans/${carePlan.id}/tasks`);
+    if (onViewTasks) {
+      onViewTasks();
+    } else {
+      navigate(`/dashboard/family/care-plans/${carePlan.id}/tasks`);
+    }
   };
 
   const handleViewTeam = () => {
-    navigate(`/dashboard/family/care-plans/${carePlan.id}/team`);
+    if (onViewTeam) {
+      onViewTeam();
+    } else {
+      navigate(`/dashboard/family/care-plans/${carePlan.id}/team`);
+    }
   };
 
   const handleViewSchedule = () => {
@@ -79,7 +97,9 @@ export function CarePlanCard({ carePlan, teamMemberCount, taskCount, onEdit, onD
   };
 
   const confirmDelete = () => {
-    onDelete(carePlan);
+    if (onDelete) {
+      onDelete(carePlan);
+    }
     setIsDeleteDialogOpen(false);
   };
 
@@ -122,11 +142,15 @@ export function CarePlanCard({ carePlan, teamMemberCount, taskCount, onEdit, onD
                   <Calendar className="mr-2 h-4 w-4" />
                   Schedule
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600">
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete Plan
-                </DropdownMenuItem>
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600">
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete Plan
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -162,22 +186,24 @@ export function CarePlanCard({ carePlan, teamMemberCount, taskCount, onEdit, onD
         </Button>
       </CardFooter>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the care plan "{carePlan.title}" and all associated tasks, team members, and shifts. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {onDelete && (
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the care plan "{carePlan.title}" and all associated tasks, team members, and shifts. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Card>
   );
 }
