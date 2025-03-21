@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 import AuthPage from "@/pages/auth/AuthPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
@@ -72,8 +72,8 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
+        <Router>
+          <AuthProvider>
             <PageViewTracker actionType="page_view" />
             <Routes>
               {/* Public routes */}
@@ -124,8 +124,8 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster position="top-right" />
-          </Router>
-        </AuthProvider>
+          </AuthProvider>
+        </Router>
         {/* Remove the ReactQueryDevtools component that's causing the issue */}
         {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>

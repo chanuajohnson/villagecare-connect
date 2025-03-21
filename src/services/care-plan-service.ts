@@ -43,13 +43,12 @@ export async function updateCarePlan(id: string, updates: Partial<CarePlan>) {
   }
 }
 
-// Add these missing functions
-export async function fetchCarePlans(userId: string) {
+export async function fetchCarePlans(familyId: string) {
   try {
     const { data, error } = await supabase
       .from('care_plans')
       .select('*')
-      .eq('family_id', userId);
+      .eq('family_id', familyId);
       
     if (error) throw error;
     
@@ -101,7 +100,7 @@ export async function updateTask(task: Partial<CareTask>) {
     const { data, error } = await supabase
       .from('care_tasks')
       .update(task)
-      .eq('id', task.id)
+      .eq('id', task.id as string)
       .select()
       .single();
 
