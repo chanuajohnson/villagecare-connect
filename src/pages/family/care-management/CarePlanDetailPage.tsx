@@ -566,17 +566,17 @@ const CarePlanDetailPage = () => {
                   <div className="mt-6">
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Additional Shifts</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {carePlan.metadata.additional_shifts.weekdayEvening && (
-                        <Badge variant="outline" className="justify-start">Weekday Evening (4PM-10PM)</Badge>
+                      {carePlan.metadata.additional_shifts.weekdayEvening4pmTo6am && (
+                        <Badge variant="outline" className="justify-start">Weekday Evening (4PM-6AM)</Badge>
                       )}
-                      {carePlan.metadata.additional_shifts.weekdayOvernight && (
-                        <Badge variant="outline" className="justify-start">Weekday Overnight (10PM-6AM)</Badge>
+                      {carePlan.metadata.additional_shifts.weekdayEvening4pmTo8am && (
+                        <Badge variant="outline" className="justify-start">Weekday Evening (4PM-8AM)</Badge>
                       )}
-                      {carePlan.metadata.additional_shifts.weekendEvening && (
-                        <Badge variant="outline" className="justify-start">Weekend Evening (6PM-10PM)</Badge>
+                      {carePlan.metadata.additional_shifts.weekdayEvening6pmTo6am && (
+                        <Badge variant="outline" className="justify-start">Weekday Evening (6PM-6AM)</Badge>
                       )}
-                      {carePlan.metadata.additional_shifts.weekendOvernight && (
-                        <Badge variant="outline" className="justify-start">Weekend Overnight (10PM-6AM)</Badge>
+                      {carePlan.metadata.additional_shifts.weekdayEvening6pmTo8am && (
+                        <Badge variant="outline" className="justify-start">Weekday Evening (6PM-8AM)</Badge>
                       )}
                     </div>
                   </div>
@@ -1082,3 +1082,4 @@ const CarePlanDetailPage = () => {
 };
 
 export default CarePlanDetailPage;
+
