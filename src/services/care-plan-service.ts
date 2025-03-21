@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -21,10 +20,7 @@ export interface CarePlanMetadata {
     weekdayEvening4pmTo6am?: boolean;
     weekdayEvening4pmTo8am?: boolean;
     weekdayEvening6pmTo6am?: boolean;
-    weekdayEvening?: boolean;
-    weekdayOvernight?: boolean;
-    weekendEvening?: boolean;
-    weekendOvernight?: boolean;
+    weekdayEvening6pmTo8am?: boolean;
   };
 }
 
