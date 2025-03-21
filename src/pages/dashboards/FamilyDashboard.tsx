@@ -20,6 +20,7 @@ import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregive
 import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 import { TellTheirStoryCard } from "@/components/family/TellTheirStoryCard";
 import { DashboardTracker } from "@/components/tracking/DashboardTracker";
+import { FamilyShortcutMenuBar } from "@/components/family/FamilyShortcutMenuBar";
 
 const FamilyDashboard = () => {
   const {
@@ -158,7 +159,9 @@ const FamilyDashboard = () => {
             </div> : null}
 
           <h1 className="text-3xl font-semibold mb-4">Family Dashboard</h1>
-          <p className="text-gray-600 mb-8">Comprehensive care coordination platform.</p>
+          <p className="text-gray-600 mb-2">Comprehensive care coordination platform.</p>
+          
+          {user && <FamilyShortcutMenuBar />}
 
           <CaregiverMatchingCard />
           
