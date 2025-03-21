@@ -18,6 +18,40 @@ export const fetchCarePlan = async (carePlanId: string): Promise<CarePlan> => {
   }
 };
 
+// Add fetchCarePlans function to retrieve all care plans for a user
+export const fetchCarePlans = async (userId: string): Promise<CarePlan[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('care_plans')
+      .select('*')
+      .eq('family_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching care plans:', error);
+    throw error;
+  }
+};
+
+// Add fetchCareTasks function to retrieve tasks for a care plan
+export const fetchCareTasks = async (carePlanId: string): Promise<CareTask[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('care_tasks')
+      .select('*')
+      .eq('care_plan_id', carePlanId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching care tasks:', error);
+    throw error;
+  }
+};
+
 export const createTask = async (task: Omit<CareTask, 'id' | 'created_at' | 'updated_at'>): Promise<CareTask> => {
   try {
     // Ensure title is provided and not optional

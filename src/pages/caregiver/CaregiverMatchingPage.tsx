@@ -443,6 +443,7 @@ export default function CaregiverMatchingPage() {
   return (
     <div className="container px-4 py-8">
       <MatchingTracker 
+        currentPage={window.location.pathname}
         matchingType="caregiver" 
         additionalData={{
           referrer: referringPath,

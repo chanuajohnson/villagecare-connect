@@ -4,12 +4,16 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 export interface MatchingTrackerProps {
-  currentPage: string;
+  currentPage?: string; // Make currentPage optional
   matchingType?: string;
   additionalData?: Record<string, any>;
 }
 
-export function MatchingTracker({ currentPage, matchingType, additionalData }: MatchingTrackerProps) {
+export function MatchingTracker({ 
+  currentPage = window.location.pathname, // Default to current path if not provided
+  matchingType, 
+  additionalData 
+}: MatchingTrackerProps) {
   const { user } = useAuth();
 
   useEffect(() => {

@@ -32,7 +32,10 @@ export const JourneyTrackingExample = () => {
       />
       
       {/* For dashboard visits with user context */}
-      <DashboardTracker dashboardType="professional" />
+      <DashboardTracker 
+        currentPage="/dashboard/professional" 
+        dashboardType="professional" 
+      />
       
       {/* Other components would go here */}
     </div>

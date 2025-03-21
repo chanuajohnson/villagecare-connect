@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -7,9 +6,8 @@ import { Plus } from "lucide-react";
 import { CarePlanCard } from "@/components/family/care-management/CarePlanCard";
 import { CarePlanForm } from "@/components/family/care-management/CarePlanForm";
 import { toast } from "sonner";
-import { fetchCarePlans, createCarePlan, updateCarePlan, deleteCarePlan } from "@/services/care-plan-service";
+import { getAllCarePlans, createCarePlan, updateCarePlan, deleteCarePlan, fetchCareTasks } from "@/services/care-plan-service";
 import { fetchCareTeamMembers } from "@/services/care-team-service";
-import { fetchCareTasks } from "@/services/care-plan-service";
 import { CarePlan } from "@/types/care-management";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -37,7 +35,7 @@ export default function CarePlansPage() {
   // Fetch care plans
   const { data: carePlans = [], isLoading: isLoadingCarePlans } = useQuery({
     queryKey: ['carePlans', user?.id],
-    queryFn: () => (user?.id ? fetchCarePlans(user.id) : Promise.resolve([])),
+    queryFn: () => (user?.id ? getAllCarePlans(user.id) : Promise.resolve([])),
     enabled: !!user?.id,
   });
 
@@ -56,7 +54,7 @@ export default function CarePlansPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<CarePlan> }) => updateCarePlan(id, updates),
+    mutationFn: (params: { id: string, updates: Partial<CarePlan> }) => updateCarePlan({...params.updates, id: params.id}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carePlans'] });
       setFormOpen(false);

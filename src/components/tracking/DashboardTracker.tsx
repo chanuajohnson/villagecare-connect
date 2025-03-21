@@ -4,12 +4,16 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 export interface DashboardTrackerProps {
-  currentPage: string;
+  currentPage?: string; // Make currentPage optional
   dashboardType?: string;
   additionalData?: Record<string, any>;
 }
 
-export function DashboardTracker({ currentPage, dashboardType, additionalData }: DashboardTrackerProps) {
+export function DashboardTracker({ 
+  currentPage = window.location.pathname, // Default to current path if not provided
+  dashboardType, 
+  additionalData 
+}: DashboardTrackerProps) {
   const { user } = useAuth();
 
   useEffect(() => {
