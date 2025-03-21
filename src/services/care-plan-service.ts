@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -44,6 +45,22 @@ export interface CareTeamMember {
   role: 'caregiver' | 'nurse' | 'therapist' | 'doctor' | 'other';
   status: 'invited' | 'active' | 'declined' | 'removed';
   notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CareShift {
+  id: string;
+  care_plan_id: string;
+  family_id: string;
+  caregiver_id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  status: 'open' | 'assigned' | 'completed' | 'cancelled';
+  start_time: string;
+  end_time: string;
+  recurring_pattern: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -240,6 +257,107 @@ export const removeCareTeamMember = async (memberId: string): Promise<boolean> =
   } catch (error) {
     console.error("Error removing team member:", error);
     toast.error("Failed to remove team member");
+    return false;
+  }
+};
+
+export const fetchCareShifts = async (
+  planId: string, 
+  startDate?: string, 
+  endDate?: string
+): Promise<CareShift[]> => {
+  try {
+    let query = supabase
+      .from('care_shifts')
+      .select('*')
+      .eq('care_plan_id', planId);
+    
+    if (startDate) {
+      query = query.gte('start_time', `${startDate}T00:00:00`);
+    }
+    
+    if (endDate) {
+      query = query.lte('start_time', `${endDate}T23:59:59`);
+    }
+    
+    const { data, error } = await query.order('start_time', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching care shifts:", error);
+    toast.error("Failed to load care shifts");
+    return [];
+  }
+};
+
+export const createCareShift = async (
+  shift: Omit<CareShift, 'id' | 'created_at' | 'updated_at'>
+): Promise<CareShift | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('care_shifts')
+      .insert(shift)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    toast.success("Care shift created successfully");
+    return data;
+  } catch (error) {
+    console.error("Error creating care shift:", error);
+    toast.error("Failed to create care shift");
+    return null;
+  }
+};
+
+export const updateCareShift = async (
+  shiftId: string,
+  updates: Partial<Omit<CareShift, 'id' | 'care_plan_id' | 'family_id' | 'created_at' | 'updated_at'>>
+): Promise<CareShift | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('care_shifts')
+      .update(updates)
+      .eq('id', shiftId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    toast.success("Care shift updated successfully");
+    return data;
+  } catch (error) {
+    console.error("Error updating care shift:", error);
+    toast.error("Failed to update care shift");
+    return null;
+  }
+};
+
+export const deleteCareShift = async (shiftId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('care_shifts')
+      .delete()
+      .eq('id', shiftId);
+
+    if (error) {
+      throw error;
+    }
+
+    toast.success("Care shift deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Error deleting care shift:", error);
+    toast.error("Failed to delete care shift");
     return false;
   }
 };

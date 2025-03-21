@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -5,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
-import { ArrowLeft, Calendar, Clock, FileText, Plus, Users } from "lucide-react";
-import { fetchCarePlan, fetchCareTeamMembers, inviteCareTeamMember, CareTeamMember, CarePlan } from "@/services/care-plan-service";
+import { ArrowLeft, Calendar, Clock, FileText, Plus, Users, X, Check, Edit2 } from "lucide-react";
+import { fetchCarePlan, fetchCareTeamMembers, inviteCareTeamMember, createCareShift, fetchCareShifts, CareTeamMember, CarePlan, CareShift } from "@/services/care-plan-service";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
+import { format, parse, startOfWeek, endOfWeek, addDays, isToday, addHours, isAfter } from "date-fns";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Professional {
   id: string;
@@ -29,30 +32,110 @@ interface CareTeamMemberWithProfile extends CareTeamMember {
   professionalDetails?: Professional;
 }
 
+interface ShiftForm {
+  careTeamMemberId: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  recurring: boolean;
+  recurrencePattern: string;
+}
+
+const TODAY = new Date();
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHIFT_TYPES = {
+  morning: { label: 'Morning Shift', hours: '6:00 AM - 2:00 PM' },
+  afternoon: { label: 'Afternoon Shift', hours: '2:00 PM - 10:00 PM' },
+  overnight: { label: 'Overnight Shift', hours: '10:00 PM - 6:00 AM' },
+  custom: { label: 'Custom Shift', hours: '' }
+};
+
 const CarePlanDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [careTeamMembers, setCareTeamMembers] = useState<CareTeamMemberWithProfile[]>([]);
+  const [careShifts, setCareShifts] = useState<CareShift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shiftsLoading, setShiftsLoading] = useState(false);
+  const [weekStart, setWeekStart] = useState(startOfWeek(TODAY, { weekStartsOn: 0 }));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(TODAY);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [shiftType, setShiftType] = useState('custom');
   const [newTeamMember, setNewTeamMember] = useState({
     caregiverId: "",
     role: "caregiver" as const,
     notes: ""
   });
+  const [newShift, setNewShift] = useState<ShiftForm>({
+    careTeamMemberId: "",
+    title: "Care Visit",
+    description: "",
+    startTime: format(new Date().setHours(9, 0, 0, 0), "yyyy-MM-dd'T'HH:mm"),
+    endTime: format(new Date().setHours(17, 0, 0, 0), "yyyy-MM-dd'T'HH:mm"),
+    location: "",
+    recurring: false,
+    recurrencePattern: "weekly"
+  });
+
+  // Get the week days for the current week view
+  const weekDays = [...Array(7)].map((_, i) => addDays(weekStart, i));
 
   useEffect(() => {
     if (user && id) {
       loadCarePlan();
       loadCareTeamMembers();
+      loadCareShifts();
       loadProfessionals();
     } else {
       setLoading(false);
     }
   }, [user, id]);
+
+  useEffect(() => {
+    if (id) {
+      loadCareShifts();
+    }
+  }, [weekStart]);
+
+  useEffect(() => {
+    // Set default shift times based on the selected shift type
+    if (shiftType !== 'custom' && selectedDate) {
+      const baseDate = format(selectedDate, 'yyyy-MM-dd');
+      
+      switch(shiftType) {
+        case 'morning':
+          setNewShift({
+            ...newShift,
+            title: 'Morning Care',
+            startTime: `${baseDate}T06:00`,
+            endTime: `${baseDate}T14:00`
+          });
+          break;
+        case 'afternoon':
+          setNewShift({
+            ...newShift,
+            title: 'Afternoon Care',
+            startTime: `${baseDate}T14:00`,
+            endTime: `${baseDate}T22:00`
+          });
+          break;
+        case 'overnight':
+          setNewShift({
+            ...newShift,
+            title: 'Overnight Care',
+            startTime: `${baseDate}T22:00`,
+            endTime: `${format(addDays(selectedDate, 1), 'yyyy-MM-dd')}T06:00`
+          });
+          break;
+      }
+    }
+  }, [shiftType, selectedDate]);
 
   const loadCarePlan = async () => {
     if (!id) return;
@@ -97,6 +180,24 @@ const CarePlanDetailPage = () => {
     } catch (error) {
       console.error("Error loading care team members:", error);
       toast.error("Failed to load care team members");
+    }
+  };
+
+  const loadCareShifts = async () => {
+    if (!id) return;
+
+    try {
+      setShiftsLoading(true);
+      const start = format(weekStart, 'yyyy-MM-dd');
+      const end = format(endOfWeek(weekStart, { weekStartsOn: 0 }), 'yyyy-MM-dd');
+      
+      const shifts = await fetchCareShifts(id, start, end);
+      setCareShifts(shifts);
+    } catch (error) {
+      console.error("Error loading care shifts:", error);
+      toast.error("Failed to load care shifts");
+    } finally {
+      setShiftsLoading(false);
     }
   };
 
@@ -150,6 +251,107 @@ const CarePlanDetailPage = () => {
       console.error("Error assigning team member:", error);
       toast.error("Failed to assign team member");
     }
+  };
+
+  const handleCreateShift = async () => {
+    if (!id || !user || !selectedDate) return;
+
+    try {
+      if (!newShift.careTeamMemberId) {
+        toast.error("Please select a care team member");
+        return;
+      }
+
+      const selectedMember = careTeamMembers.find(m => m.id === newShift.careTeamMemberId);
+      if (!selectedMember) {
+        toast.error("Invalid team member selected");
+        return;
+      }
+
+      const startTime = new Date(newShift.startTime);
+      const endTime = new Date(newShift.endTime);
+
+      if (isAfter(startTime, endTime)) {
+        toast.error("Start time must be before end time");
+        return;
+      }
+
+      const careShift = {
+        care_plan_id: id,
+        family_id: user.id,
+        caregiver_id: selectedMember.caregiver_id,
+        title: newShift.title,
+        description: newShift.description,
+        location: newShift.location || "Client's home",
+        status: "open",
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        recurring_pattern: newShift.recurring ? newShift.recurrencePattern : null
+      };
+
+      await createCareShift(careShift);
+      
+      toast.success("Care shift created successfully");
+      setShiftDialogOpen(false);
+      
+      // Reset form
+      setNewShift({
+        careTeamMemberId: "",
+        title: "Care Visit",
+        description: "",
+        startTime: format(new Date().setHours(9, 0, 0, 0), "yyyy-MM-dd'T'HH:mm"),
+        endTime: format(new Date().setHours(17, 0, 0, 0), "yyyy-MM-dd'T'HH:mm"),
+        location: "",
+        recurring: false,
+        recurrencePattern: "weekly"
+      });
+      
+      loadCareShifts();
+    } catch (error) {
+      console.error("Error creating care shift:", error);
+      toast.error("Failed to create care shift");
+    }
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setWeekStart(prevWeekStart => {
+      const days = direction === 'next' ? 7 : -7;
+      return addDays(prevWeekStart, days);
+    });
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    if (careTeamMembers.length > 0) {
+      setShiftDialogOpen(true);
+      
+      // Set the start/end time for the selected date
+      const baseDate = format(date, 'yyyy-MM-dd');
+      setNewShift(prev => ({
+        ...prev,
+        startTime: `${baseDate}T09:00`,
+        endTime: `${baseDate}T17:00`
+      }));
+    } else {
+      toast.info("Add team members before scheduling shifts");
+      setInviteDialogOpen(true);
+    }
+  };
+
+  const getShiftsForDay = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    return careShifts.filter(shift => {
+      const shiftDate = format(new Date(shift.start_time), 'yyyy-MM-dd');
+      return shiftDate === dateString;
+    });
+  };
+
+  const getTeamMemberName = (caregiverId: string) => {
+    const member = careTeamMembers.find(m => m.caregiver_id === caregiverId);
+    if (member?.professionalDetails?.full_name) {
+      return member.professionalDetails.full_name;
+    }
+    return "Unknown";
   };
 
   const getPlanTypeDisplay = (plan: CarePlan) => {
@@ -460,27 +662,216 @@ const CarePlanDetailPage = () => {
           
           <TabsContent value="schedule">
             <Card>
-              <CardHeader>
-                <CardTitle>Care Schedule</CardTitle>
-                <CardDescription>
-                  Manage care shifts and appointments
-                </CardDescription>
+              <CardHeader className="flex flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 sm:items-center">
+                <div>
+                  <CardTitle>Care Schedule</CardTitle>
+                  <CardDescription>
+                    Manage care shifts and appointments
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
+
               <CardContent>
-                <p className="text-muted-foreground mb-6">
-                  This feature will allow you to schedule and assign care shifts to care team members.
-                </p>
-                
                 {careTeamMembers.length > 0 ? (
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Schedule Shifts</h3>
-                    <div className="bg-muted/50 p-6 rounded-md text-center">
-                      <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                      <p className="font-medium mb-1">Shift scheduling coming soon</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        You can already assign care professionals to this care plan.
-                      </p>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-7 gap-1">
+                      {weekDays.map((day, index) => (
+                        <div key={index} className="flex flex-col items-center p-1">
+                          <span className="text-xs text-muted-foreground">{DAYS_OF_WEEK[day.getDay()].substring(0, 3)}</span>
+                          <button
+                            onClick={() => handleDateClick(day)}
+                            className={`rounded-full w-8 h-8 flex items-center justify-center text-sm mt-1
+                              ${isToday(day) ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                              ${format(day, 'yyyy-MM-dd') === (selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '') ? 'ring-2 ring-primary' : ''}
+                            `}
+                          >
+                            {format(day, 'd')}
+                          </button>
+                        </div>
+                      ))}
                     </div>
+
+                    <div className="space-y-4 mt-6">
+                      {weekDays.map((day, dayIndex) => {
+                        const shiftsForDay = getShiftsForDay(day);
+                        if (shiftsForDay.length === 0) return null;
+                        
+                        return (
+                          <div key={dayIndex} className="border rounded-lg p-4">
+                            <h3 className="font-medium mb-3 flex items-center">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              {format(day, 'EEEE, MMMM d, yyyy')}
+                              {isToday(day) && <Badge className="ml-2 bg-blue-100 text-blue-800">Today</Badge>}
+                            </h3>
+                            
+                            <div className="space-y-3">
+                              {shiftsForDay.map((shift) => (
+                                <div key={shift.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                                  <div className="flex items-center">
+                                    <div className="mr-3 flex-shrink-0">
+                                      <Clock className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium text-sm">{shift.title}</h4>
+                                      <p className="text-xs text-muted-foreground">
+                                        {format(new Date(shift.start_time), 'h:mm a')} - {format(new Date(shift.end_time), 'h:mm a')}
+                                      </p>
+                                      <p className="text-xs mt-1">
+                                        {getTeamMemberName(shift.caregiver_id)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <Edit2 className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem>
+                                        <Check className="mr-2 h-4 w-4" /> Mark Complete
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <X className="mr-2 h-4 w-4" /> Cancel Shift
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <Edit2 className="mr-2 h-4 w-4" /> Edit Details
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {!careShifts.length && (
+                        <div className="text-center py-8 border rounded-lg">
+                          <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                          <h3 className="text-lg font-medium mb-2">No shifts scheduled</h3>
+                          <p className="text-muted-foreground mb-4">Click on a date to add a new care shift</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>Schedule Care Shift</DialogTitle>
+                          <DialogDescription>
+                            {selectedDate && `Create a new shift for ${format(selectedDate, 'MMMM d, yyyy')}`}
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-4 py-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 col-span-2">
+                              <Label>Shift Type</Label>
+                              <Select 
+                                value={shiftType} 
+                                onValueChange={setShiftType}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select shift type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="morning">{SHIFT_TYPES.morning.label} ({SHIFT_TYPES.morning.hours})</SelectItem>
+                                  <SelectItem value="afternoon">{SHIFT_TYPES.afternoon.label} ({SHIFT_TYPES.afternoon.hours})</SelectItem>
+                                  <SelectItem value="overnight">{SHIFT_TYPES.overnight.label} ({SHIFT_TYPES.overnight.hours})</SelectItem>
+                                  <SelectItem value="custom">Custom Shift</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div className="space-y-2 col-span-2">
+                              <Label htmlFor="caregiver">Assign To</Label>
+                              <Select 
+                                value={newShift.careTeamMemberId} 
+                                onValueChange={(value) => setNewShift({...newShift, careTeamMemberId: value})}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select care team member" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {careTeamMembers.map((member) => (
+                                    <SelectItem key={member.id} value={member.id}>
+                                      {member.professionalDetails?.full_name || member.caregiver_id}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div className="space-y-2 col-span-2">
+                              <Label htmlFor="title">Shift Title</Label>
+                              <Input
+                                id="title"
+                                value={newShift.title}
+                                onChange={(e) => setNewShift({...newShift, title: e.target.value})}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="startTime">Start Time</Label>
+                              <Input
+                                id="startTime"
+                                type="datetime-local"
+                                value={newShift.startTime}
+                                onChange={(e) => setNewShift({...newShift, startTime: e.target.value})}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="endTime">End Time</Label>
+                              <Input
+                                id="endTime"
+                                type="datetime-local"
+                                value={newShift.endTime}
+                                onChange={(e) => setNewShift({...newShift, endTime: e.target.value})}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2 col-span-2">
+                              <Label htmlFor="location">Location</Label>
+                              <Input
+                                id="location"
+                                placeholder="Client's home"
+                                value={newShift.location}
+                                onChange={(e) => setNewShift({...newShift, location: e.target.value})}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2 col-span-2">
+                              <Label htmlFor="description">Notes (Optional)</Label>
+                              <Textarea 
+                                id="description"
+                                placeholder="Add any specific instructions for this shift"
+                                value={newShift.description}
+                                onChange={(e) => setNewShift({...newShift, description: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button>
+                          <Button onClick={handleCreateShift}>Create Shift</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 ) : (
                   <div className="text-center py-6">
