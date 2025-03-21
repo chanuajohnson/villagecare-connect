@@ -12,7 +12,9 @@ import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard
 import { TellTheirStoryCard } from "@/components/family/TellTheirStoryCard";
 import { DashboardTracker } from "@/components/tracking/DashboardTracker";
 import { MatchingTracker } from "@/components/tracking/MatchingTracker";
-import { CareManagementCard } from "@/components/family/CareManagementCard";
+import { TrackedLink } from "@/components/tracking/TrackedLink";
+import { Button } from "@/components/ui/button";
+import { Clipboard, ArrowRight } from "lucide-react";
 import { getUserRole } from "@/lib/supabase";
 
 export default function FamilyDashboard() {
@@ -74,6 +76,21 @@ export default function FamilyDashboard() {
           <p className="text-gray-600 mt-2">Manage your care coordination and find qualified caregivers.</p>
         </motion.div>
 
+        {/* Care Management Feature Button */}
+        <div className="mb-8">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => navigate("/dashboard/family/care-plans")}
+          >
+            <Clipboard className="mr-2 h-4 w-4" />
+            Access Care Management System
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+          <p className="text-sm text-gray-500 mt-2">
+            Create and manage care plans, coordinate with team members, and track care tasks
+          </p>
+        </div>
+
         {/* Main dashboard content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
@@ -91,7 +108,7 @@ export default function FamilyDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
-            <CareManagementCard />
+            <DashboardCardGrid />
           </div>
           <div>
             <FamilyNextStepsPanel completedSteps={completedSteps} />
