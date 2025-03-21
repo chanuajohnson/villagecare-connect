@@ -18,15 +18,26 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 
+interface Professional {
+  id: string;
+  full_name: string | null;
+  professional_type: string | null;
+  avatar_url: string | null;
+}
+
+interface CareTeamMemberWithProfile extends CareTeamMember {
+  professionalDetails?: Professional;
+}
+
 const CarePlanDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
-  const [careTeamMembers, setCareTeamMembers] = useState<CareTeamMember[]>([]);
+  const [careTeamMembers, setCareTeamMembers] = useState<CareTeamMemberWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [newTeamMember, setNewTeamMember] = useState({
     caregiverId: "",
     role: "caregiver" as const,
@@ -68,7 +79,21 @@ const CarePlanDetailPage = () => {
 
     try {
       const members = await fetchCareTeamMembers(id);
-      setCareTeamMembers(members);
+      
+      const membersWithDetails = await Promise.all(members.map(async (member) => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, professional_type, avatar_url')
+          .eq('id', member.caregiver_id)
+          .single();
+        
+        return {
+          ...member,
+          professionalDetails: error ? undefined : data
+        };
+      }));
+      
+      setCareTeamMembers(membersWithDetails);
     } catch (error) {
       console.error("Error loading care team members:", error);
       toast.error("Failed to load care team members");
@@ -114,14 +139,12 @@ const CarePlanDetailPage = () => {
       toast.success("Team member assigned successfully");
       setInviteDialogOpen(false);
       
-      // Reset form
       setNewTeamMember({
         caregiverId: "",
         role: "caregiver",
         notes: ""
       });
       
-      // Refresh team members list
       loadCareTeamMembers();
     } catch (error) {
       console.error("Error assigning team member:", error);
@@ -142,6 +165,17 @@ const CarePlanDetailPage = () => {
       default:
         return "Not specified";
     }
+  };
+
+  const getInitials = (name: string | null | undefined, id: string): string => {
+    if (name) {
+      const nameParts = name.split(' ');
+      if (nameParts.length >= 2) {
+        return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    }
+    return id.substring(0, 2).toUpperCase();
   };
 
   if (loading) {
@@ -356,47 +390,54 @@ const CarePlanDetailPage = () => {
             
             {careTeamMembers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {careTeamMembers.map((member) => (
-                  <Card key={member.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center">
-                          <Avatar className="h-10 w-10 mr-3">
-                            <AvatarImage src="" />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {member.caregiver_id.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-base">{member.caregiver_id}</CardTitle>
-                            <CardDescription>
-                              {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                            </CardDescription>
+                {careTeamMembers.map((member) => {
+                  const initials = getInitials(member.professionalDetails?.full_name, member.caregiver_id);
+                  const displayName = member.professionalDetails?.full_name || member.caregiver_id;
+                  const profType = member.professionalDetails?.professional_type;
+                  
+                  return (
+                    <Card key={member.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center">
+                            <Avatar className="h-10 w-10 mr-3">
+                              <AvatarImage src={member.professionalDetails?.avatar_url || ""} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-base">{displayName}</CardTitle>
+                              <CardDescription>
+                                {profType ? `${profType} (${member.role})` : 
+                                  member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                              </CardDescription>
+                            </div>
                           </div>
+                          <Badge className={`${
+                            member.status === 'active' ? 'bg-green-100 text-green-800' :
+                            member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
+                            member.status === 'declined' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                          </Badge>
                         </div>
-                        <Badge className={`${
-                          member.status === 'active' ? 'bg-green-100 text-green-800' :
-                          member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
-                          member.status === 'declined' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    {member.notes && (
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">{member.notes}</p>
-                      </CardContent>
-                    )}
-                    <CardFooter className="border-t pt-4">
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Added {new Date(member.created_at).toLocaleDateString()}
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      {member.notes && (
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">{member.notes}</p>
+                        </CardContent>
+                      )}
+                      <CardFooter className="border-t pt-4">
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Added {new Date(member.created_at).toLocaleDateString()}
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  )}
+                )}
               </div>
             ) : (
               <Card className="bg-muted/50">
