@@ -59,6 +59,7 @@ export type Database = {
           description: string | null
           family_id: string
           id: string
+          metadata: Json | null
           status: string | null
           title: string
           updated_at: string | null
@@ -68,6 +69,7 @@ export type Database = {
           description?: string | null
           family_id: string
           id?: string
+          metadata?: Json | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           description?: string | null
           family_id?: string
           id?: string
+          metadata?: Json | null
           status?: string | null
           title?: string
           updated_at?: string | null

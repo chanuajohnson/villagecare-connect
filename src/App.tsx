@@ -1,4 +1,3 @@
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,6 +38,7 @@ import LegacyStoriesPage from "@/pages/legacy/LegacyStoriesPage";
 import CareManagementPage from "@/pages/family/care-management/CareManagementPage";
 import CreateCarePlanPage from "@/pages/family/care-management/CreateCarePlanPage";
 import NotFound from "@/pages/NotFound";
+import CarePlanDetailPage from "@/pages/family/care-management/CarePlanDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +148,7 @@ const AppContent = () => {
           <Route path="/family/story" element={<FamilyStoryPage />} />
           <Route path="/family/care-management" element={<CareManagementPage />} />
           <Route path="/family/care-management/create" element={<CreateCarePlanPage />} />
+          <Route path="/family/care-management/:id" element={<CarePlanDetailPage />} />
           <Route path="/legacy-stories" element={<LegacyStoriesPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />

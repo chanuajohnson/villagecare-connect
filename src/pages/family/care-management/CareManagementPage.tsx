@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -5,38 +6,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
-import { FileText, Plus, Users, Calendar, ArrowLeft } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { FileText, Plus, Users, Calendar, ArrowLeft, Clock } from "lucide-react";
+import { fetchCarePlans } from "@/services/care-plan-service";
+import { CarePlan } from "@/services/care-plan-service";
 import { toast } from "sonner";
 
 const CareManagementPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [carePlans, setCarePlans] = useState([]);
+  const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchCarePlans();
+      fetchCarePlans(user.id);
     } else {
       setLoading(false);
     }
   }, [user]);
 
-  const fetchCarePlans = async () => {
+  const fetchCarePlans = async (userId: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('care_plans')
-        .select('*')
-        .eq('family_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setCarePlans(data || []);
+      const plans = await fetchCarePlans(userId);
+      setCarePlans(plans);
     } catch (error) {
       console.error("Error fetching care plans:", error);
       toast.error("Failed to load care plans");
@@ -49,8 +42,29 @@ const CareManagementPage = () => {
     navigate("/family/care-management/create");
   };
 
-  const handleViewPlan = (planId) => {
+  const handleViewPlan = (planId: string) => {
     navigate(`/family/care-management/${planId}`);
+  };
+
+  const getPlanTypeDisplay = (plan: CarePlan) => {
+    if (!plan.metadata?.plan_type) return "Not specified";
+    
+    switch (plan.metadata.plan_type) {
+      case 'scheduled':
+        return "Scheduled Care";
+      case 'on-demand':
+        return "On-demand Care";
+      case 'both':
+        return "Scheduled & On-demand";
+      default:
+        return "Not specified";
+    }
+  };
+
+  const getWeekdayCoverageDisplay = (plan: CarePlan) => {
+    if (!plan.metadata?.weekday_coverage) return "None";
+    
+    return plan.metadata.weekday_coverage;
   };
 
   return (
@@ -90,7 +104,11 @@ const CareManagementPage = () => {
         ) : carePlans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {carePlans.map((plan) => (
-              <Card key={plan.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewPlan(plan.id)}>
+              <Card 
+                key={plan.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow" 
+                onClick={() => handleViewPlan(plan.id)}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
@@ -101,11 +119,27 @@ const CareManagementPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <div>Status: <span className={`font-medium ${plan.status === 'active' ? 'text-green-600' : plan.status === 'completed' ? 'text-blue-600' : 'text-orange-600'}`}>
-                      {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-                    </span></div>
-                    <div>Updated: {new Date(plan.updated_at).toLocaleDateString()}</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-muted-foreground">Type: </span>
+                      <span className="ml-2 font-medium">{getPlanTypeDisplay(plan)}</span>
+                    </div>
+                    
+                    {plan.metadata?.plan_type !== 'on-demand' && (
+                      <div className="flex items-center text-sm">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-muted-foreground">Weekday Coverage: </span>
+                        <span className="ml-2 font-medium">{getWeekdayCoverageDisplay(plan)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between text-sm text-muted-foreground pt-2 border-t">
+                      <div>Status: <span className={`font-medium ${plan.status === 'active' ? 'text-green-600' : plan.status === 'completed' ? 'text-blue-600' : 'text-orange-600'}`}>
+                        {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                      </span></div>
+                      <div>Updated: {new Date(plan.updated_at).toLocaleDateString()}</div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

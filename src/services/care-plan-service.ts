@@ -40,10 +40,11 @@ export interface CareTask {
 export interface CareTeamMember {
   id: string;
   care_plan_id: string;
-  user_id: string;
-  role: 'family' | 'professional' | 'friend' | 'other';
-  permissions: 'read' | 'write' | 'admin';
+  family_id: string;
+  caregiver_id: string;
+  role: 'caregiver' | 'nurse' | 'therapist' | 'doctor' | 'other';
   status: 'invited' | 'active' | 'declined' | 'removed';
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -92,15 +93,9 @@ export const createCarePlan = async (
   plan: Omit<CarePlan, 'id' | 'created_at' | 'updated_at'>
 ): Promise<CarePlan | null> => {
   try {
-    // Convert the metadata field to a JSON string
-    const planData = {
-      ...plan,
-      metadata: plan.metadata ? JSON.stringify(plan.metadata) : null
-    };
-
     const { data, error } = await supabase
       .from('care_plans')
-      .insert(planData)
+      .insert(plan)
       .select()
       .single();
 
@@ -162,94 +157,6 @@ export const deleteCarePlan = async (planId: string): Promise<boolean> => {
   }
 };
 
-export const fetchCareTasks = async (planId: string): Promise<CareTask[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('care_tasks')
-      .select('*')
-      .eq('care_plan_id', planId)
-      .order('due_date', { ascending: true });
-
-    if (error) {
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching care tasks:", error);
-    toast.error("Failed to load care tasks");
-    return [];
-  }
-};
-
-export const createCareTask = async (
-  task: Omit<CareTask, 'id' | 'created_at' | 'updated_at'>
-): Promise<CareTask | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('care_tasks')
-      .insert(task)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    toast.success("Care task created successfully");
-    return data;
-  } catch (error) {
-    console.error("Error creating care task:", error);
-    toast.error("Failed to create care task");
-    return null;
-  }
-};
-
-export const updateCareTask = async (
-  taskId: string,
-  updates: Partial<Omit<CareTask, 'id' | 'care_plan_id' | 'created_at' | 'updated_at'>>
-): Promise<CareTask | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('care_tasks')
-      .update(updates)
-      .eq('id', taskId)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    toast.success("Care task updated successfully");
-    return data;
-  } catch (error) {
-    console.error("Error updating care task:", error);
-    toast.error("Failed to update care task");
-    return null;
-  }
-};
-
-export const deleteCareTask = async (taskId: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('care_tasks')
-      .delete()
-      .eq('id', taskId);
-
-    if (error) {
-      throw error;
-    }
-
-    toast.success("Care task deleted successfully");
-    return true;
-  } catch (error) {
-    console.error("Error deleting care task:", error);
-    toast.error("Failed to delete care task");
-    return false;
-  }
-};
-
 export const fetchCareTeamMembers = async (planId: string): Promise<CareTeamMember[]> => {
   try {
     const { data, error } = await supabase
@@ -295,7 +202,7 @@ export const inviteCareTeamMember = async (
 
 export const updateCareTeamMember = async (
   memberId: string,
-  updates: Partial<Omit<CareTeamMember, 'id' | 'care_plan_id' | 'user_id' | 'created_at' | 'updated_at'>>
+  updates: Partial<Omit<CareTeamMember, 'id' | 'care_plan_id' | 'family_id' | 'caregiver_id' | 'created_at' | 'updated_at'>>
 ): Promise<CareTeamMember | null> => {
   try {
     const { data, error } = await supabase
