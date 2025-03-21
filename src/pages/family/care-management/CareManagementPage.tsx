@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -47,6 +48,7 @@ const CareManagementPage = () => {
 
   const handleCreatePlan = () => {
     navigate("/family/care-management/create");
+    toast.info("Creating a new care plan");
   };
 
   const handleViewPlan = (planId) => {
