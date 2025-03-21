@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -9,12 +8,11 @@ import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 import { FileText, Plus, Users, Calendar, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { getCarePlans, CarePlan } from "@/services/care-plan-service";
 
 const CareManagementPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
+  const [carePlans, setCarePlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,12 +26,17 @@ const CareManagementPage = () => {
   const fetchCarePlans = async () => {
     try {
       setLoading(true);
-      if (!user?.id) {
-        throw new Error("User ID not available");
+      const { data, error } = await supabase
+        .from('care_plans')
+        .select('*')
+        .eq('family_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        throw error;
       }
-      
-      const plans = await getCarePlans(user.id);
-      setCarePlans(plans);
+
+      setCarePlans(data || []);
     } catch (error) {
       console.error("Error fetching care plans:", error);
       toast.error("Failed to load care plans");
@@ -46,7 +49,7 @@ const CareManagementPage = () => {
     navigate("/family/care-management/create");
   };
 
-  const handleViewPlan = (planId: string) => {
+  const handleViewPlan = (planId) => {
     navigate(`/family/care-management/${planId}`);
   };
 

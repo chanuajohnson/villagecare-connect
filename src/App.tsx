@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Route,
@@ -7,9 +6,23 @@ import {
 } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Auth } from "@supabase/ui";
+import { supabase } from "@/lib/supabase";
+import AccountPage from "@/pages/AccountPage";
+import LandingPage from "@/pages/LandingPage";
+import PricingPage from "@/pages/PricingPage";
+import DashboardPage from "@/pages/DashboardPage";
+import FamilyDashboard from "@/pages/family/FamilyDashboard";
+import ProfessionalDashboard from "@/pages/professional/ProfessionalDashboard";
+import CommunityDashboard from "@/pages/community/CommunityDashboard";
+import RegistrationPage from "@/pages/RegistrationPage";
+import CareManagementPage from "@/pages/family/care-management/CareManagementPage";
+import CareTeamPage from "@/pages/family/care-management/CareTeamPage";
+import CareSchedulePage from "@/pages/family/care-management/CareSchedulePage";
 import { PageViewTracker } from "./components/tracking/PageViewTracker";
 import { Toaster } from "@/components/ui/sonner";
-import CareManagementPage from "./pages/family/care-management/CareManagementPage";
+
+// Import the CreateCarePlanPage 
 import CreateCarePlanPage from "./pages/family/care-management/CreateCarePlanPage";
 
 function App() {
@@ -24,24 +37,24 @@ function App() {
 
   return (
     <>
-      <PageViewTracker actionType="app_view" additionalData={{ page: "main" }} />
+      <PageViewTracker />
       <Routes>
-        <Route path="/" element={<div>Landing Page</div>} />
-        <Route path="/pricing" element={<div>Pricing Page</div>} />
-        <Route path="/account" element={<div>Account Page</div>} />
-        <Route path="/registration" element={<div>Registration Page</div>} />
-        <Route path="/dashboard" element={<div>Dashboard Page</div>} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/account" element={<AccountPage />} />
+        <Route path="/registration" element={<RegistrationPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
 
         {/* Role Based Dashboards */}
-        <Route path="/dashboard/family" element={<div>Family Dashboard</div>} />
-        <Route path="/dashboard/professional" element={<div>Professional Dashboard</div>} />
-        <Route path="/dashboard/community" element={<div>Community Dashboard</div>} />
+        <Route path="/dashboard/family" element={<FamilyDashboard />} />
+        <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+        <Route path="/dashboard/community" element={<CommunityDashboard />} />
         
         {/* Care Management Routes */}
         <Route path="/family/care-management" element={<CareManagementPage />} />
         <Route path="/family/care-management/create" element={<CreateCarePlanPage />} />
-        <Route path="/family/care-management/team" element={<div>Care Team Page</div>} />
-        <Route path="/family/care-management/schedule" element={<div>Care Schedule Page</div>} />
+        <Route path="/family/care-management/team" element={<CareTeamPage />} />
+        <Route path="/family/care-management/schedule" element={<CareSchedulePage />} />
       </Routes>
       <Toaster />
     </>
