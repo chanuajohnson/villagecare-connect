@@ -383,7 +383,6 @@ export default function FamilyMatchingPage() {
   return (
     <div className="container px-4 py-8">
       <MatchingTracker 
-        currentPage={window.location.pathname}
         matchingType="family" 
         additionalData={{
           referrer: referringPath,
@@ -660,3 +659,4 @@ export default function FamilyMatchingPage() {
     </div>
   );
 }
+

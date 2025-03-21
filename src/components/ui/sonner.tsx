@@ -1,26 +1,28 @@
+import { Toaster as Sonner } from "sonner"
+import { cn } from "@/lib/utils"
+import type { ComponentProps } from "react"
 
-import { Toaster as Sonner } from 'sonner';
+type ToasterProps = ComponentProps<typeof Sonner>
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
-
-function Toaster({ ...props }: ToasterProps) {
+const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
-      className="toaster group"
+      theme="system"
+      className={cn("toaster group", props.className)}
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          closeButton:
-            "group-[.toast]:bg-foreground/20 group-[.toast]:text-foreground",
+          cancelButton:
+            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
       {...props}
     />
-  );
+  )
 }
 
-export { Toaster };
+export { Toaster }

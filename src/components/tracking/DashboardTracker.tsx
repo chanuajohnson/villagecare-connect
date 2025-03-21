@@ -1,43 +1,59 @@
 
-import { useEffect } from 'react';
-import { useAuth } from '@/components/providers/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { useTracking } from "@/hooks/useTracking";
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
-export interface DashboardTrackerProps {
-  currentPage?: string; // Now optional with a default value
-  dashboardType?: string;
-  additionalData?: Record<string, any>;
+interface DashboardTrackerProps {
+  /**
+   * The type of dashboard being tracked
+   */
+  dashboardType: 'family' | 'professional' | 'community' | 'admin';
 }
 
-export function DashboardTracker({ 
-  currentPage = window.location.pathname, // Default to current path if not provided
-  dashboardType, 
-  additionalData 
-}: DashboardTrackerProps) {
-  const { user } = useAuth();
-
+/**
+ * Component to track dashboard visits with user context
+ */
+export const DashboardTracker = ({ dashboardType }: DashboardTrackerProps) => {
+  const { trackEngagement } = useTracking();
+  const { user, isProfileComplete } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+  const trackingAttempted = useRef(false);
+  
   useEffect(() => {
-    if (!user) return;
-
+    setIsMounted(true);
+    
     const trackDashboardView = async () => {
+      if (!isMounted || !user || trackingAttempted.current) return;
+      
       try {
-        await supabase.from('cta_engagement_tracking').insert({
-          user_id: user.id,
-          action_type: 'dashboard_view',
-          additional_data: {
-            page: currentPage,
-            dashboardType,
-            ...(additionalData || {}),
-            timestamp: new Date().toISOString(),
-          },
+        trackingAttempted.current = true;
+        const actionType = `${dashboardType}_dashboard_view`;
+        
+        await trackEngagement(actionType as any, {
+          user_status: isProfileComplete ? 'complete_profile' : 'incomplete_profile',
+          path: window.location.pathname,
+          timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error('Error tracking dashboard view:', error);
+        console.error(`Error tracking dashboard view for ${dashboardType}:`, error);
+        // Continue execution even if tracking fails
       }
     };
-
-    trackDashboardView();
-  }, [user, currentPage, dashboardType, additionalData]);
-
-  return null;
-}
+    
+    // Delay tracking to avoid blocking UI rendering
+    const trackingTimer = setTimeout(() => {
+      if (user && isMounted) {
+        trackDashboardView().catch(err => {
+          console.error("Tracking error in delayed execution:", err);
+        });
+      }
+    }, 1000);
+    
+    return () => {
+      setIsMounted(false);
+      clearTimeout(trackingTimer);
+    };
+  }, [dashboardType, user?.id, isProfileComplete, trackEngagement, user]);
+  
+  return null; // This component doesn't render anything
+};
