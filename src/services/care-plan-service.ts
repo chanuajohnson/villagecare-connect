@@ -10,6 +10,19 @@ export interface CarePlan {
   status: 'active' | 'completed' | 'cancelled';
   created_at: string;
   updated_at: string;
+  metadata?: CarePlanMetadata;
+}
+
+export interface CarePlanMetadata {
+  plan_type: 'scheduled' | 'on-demand' | 'both';
+  weekday_coverage?: '8am-4pm' | '6am-6pm' | 'none';
+  weekend_coverage?: 'yes' | 'no';
+  additional_shifts?: {
+    weekdayEvening: boolean;
+    weekdayOvernight: boolean;
+    weekendEvening: boolean;
+    weekendOvernight: boolean;
+  };
 }
 
 export interface CareTask {
@@ -79,9 +92,15 @@ export const createCarePlan = async (
   plan: Omit<CarePlan, 'id' | 'created_at' | 'updated_at'>
 ): Promise<CarePlan | null> => {
   try {
+    // Convert the metadata field to a JSON string
+    const planData = {
+      ...plan,
+      metadata: plan.metadata ? JSON.stringify(plan.metadata) : null
+    };
+
     const { data, error } = await supabase
       .from('care_plans')
-      .insert(plan)
+      .insert(planData)
       .select()
       .single();
 
