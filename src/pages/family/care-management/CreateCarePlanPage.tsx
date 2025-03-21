@@ -15,7 +15,7 @@ import { createCarePlan } from "@/services/care-plan-service";
 import { toast } from "sonner";
 
 type PlanType = 'scheduled' | 'on-demand' | 'both';
-type WeekdayOption = '8am-4pm' | '6am-6pm' | 'none';
+type WeekdayOption = '8am-4pm' | '6am-6pm' | '6pm-8am' | 'none';
 type WeekendOption = 'yes' | 'no';
 
 const CreateCarePlanPage = () => {
@@ -32,10 +32,12 @@ const CreateCarePlanPage = () => {
   
   // Additional shifts
   const [shifts, setShifts] = useState({
-    weekdayEvening: false,  // 4PM - 12AM
-    weekdayOvernight: false, // 12AM - 8AM
-    weekendEvening: false,   // 6PM - 2AM
-    weekendOvernight: false  // 2AM - 6AM
+    weekdayEvening4pmTo6am: false,  // 4PM - 6AM
+    weekdayEvening4pmTo8am: false,  // 4PM - 8AM
+    weekdayEvening6pmTo6am: false,  // 6PM - 6AM
+    weekdayOvernight: false,        // 12AM - 8AM
+    weekendEvening: false,          // 6PM - 2AM
+    weekendOvernight: false         // 2AM - 6AM
   });
 
   const handleShiftChange = (shift: keyof typeof shifts) => {
@@ -236,6 +238,18 @@ const CreateCarePlanPage = () => {
                       </div>
                       
                       <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="6pm-8am" id="option3" />
+                        <div className="grid gap-1.5 leading-none">
+                          <Label htmlFor="option3" className="font-medium">
+                            Option 3: Monday - Friday, 6 PM - 8 AM
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Extended nighttime coverage to relieve standard daytime coverage.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
                         <RadioGroupItem value="none" id="option-none" />
                         <div className="grid gap-1.5 leading-none">
                           <Label htmlFor="option-none" className="font-medium">
@@ -301,16 +315,48 @@ const CreateCarePlanPage = () => {
                     <div className="grid gap-4">
                       <div className="flex items-start space-x-2">
                         <Checkbox 
-                          id="weekday-evening"
-                          checked={shifts.weekdayEvening} 
-                          onCheckedChange={() => handleShiftChange('weekdayEvening')}
+                          id="weekday-evening-4pm-6am"
+                          checked={shifts.weekdayEvening4pmTo6am} 
+                          onCheckedChange={() => handleShiftChange('weekdayEvening4pmTo6am')}
                         />
                         <div className="grid gap-1.5 leading-none">
-                          <Label htmlFor="weekday-evening" className="font-medium">
-                            Weekday Evening Shift (4 PM - 12 AM)
+                          <Label htmlFor="weekday-evening-4pm-6am" className="font-medium">
+                            Weekday Evening Shift (4 PM - 6 AM)
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            Evening care on weekdays after the primary shift ends.
+                            Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
+                        <Checkbox 
+                          id="weekday-evening-4pm-8am"
+                          checked={shifts.weekdayEvening4pmTo8am} 
+                          onCheckedChange={() => handleShiftChange('weekdayEvening4pmTo8am')}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                          <Label htmlFor="weekday-evening-4pm-8am" className="font-medium">
+                            Weekday Evening Shift (4 PM - 8 AM)
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
+                        <Checkbox 
+                          id="weekday-evening-6pm-6am"
+                          checked={shifts.weekdayEvening6pmTo6am} 
+                          onCheckedChange={() => handleShiftChange('weekdayEvening6pmTo6am')}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                          <Label htmlFor="weekday-evening-6pm-6am" className="font-medium">
+                            Weekday Evening Shift (6 PM - 6 AM)
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage.
                           </p>
                         </div>
                       </div>

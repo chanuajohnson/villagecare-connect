@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -14,13 +15,16 @@ export interface CarePlan {
 
 export interface CarePlanMetadata {
   plan_type: 'scheduled' | 'on-demand' | 'both';
-  weekday_coverage?: '8am-4pm' | '6am-6pm' | 'none';
+  weekday_coverage?: '8am-4pm' | '6am-6pm' | '6pm-8am' | 'none';
   weekend_coverage?: 'yes' | 'no';
   additional_shifts?: {
-    weekdayEvening: boolean;
-    weekdayOvernight: boolean;
-    weekendEvening: boolean;
-    weekendOvernight: boolean;
+    weekdayEvening4pmTo6am?: boolean;
+    weekdayEvening4pmTo8am?: boolean;
+    weekdayEvening6pmTo6am?: boolean;
+    weekdayEvening?: boolean;
+    weekdayOvernight?: boolean;
+    weekendEvening?: boolean;
+    weekendOvernight?: boolean;
   };
 }
 
