@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -33,6 +32,13 @@ export interface CareTeamMember {
   status: 'invited' | 'active' | 'declined' | 'removed';
   created_at: string;
   updated_at: string;
+}
+
+export interface CarePlanCreateDto {
+  title: string;
+  description: string;
+  family_id: string;
+  status: 'active' | 'completed' | 'cancelled';
 }
 
 export const fetchCarePlans = async (userId: string): Promise<CarePlan[]> => {
@@ -76,7 +82,7 @@ export const fetchCarePlan = async (planId: string): Promise<CarePlan | null> =>
 };
 
 export const createCarePlan = async (
-  plan: Omit<CarePlan, 'id' | 'created_at' | 'updated_at'>
+  plan: Omit<CarePlan, 'id' | 'created_at' | 'updated_at'> | CarePlanCreateDto
 ): Promise<CarePlan | null> => {
   try {
     const { data, error } = await supabase
