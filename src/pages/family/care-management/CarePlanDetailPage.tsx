@@ -60,6 +60,19 @@ interface CareTeamMemberWithProfile extends CareTeamMember {
 }
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const SHIFT_TITLE_OPTIONS = [
+  { id: "weekday_standard", label: "Monday - Friday, 8 AM - 4 PM", description: "Standard daytime coverage during business hours", timeRange: { start: "08:00", end: "16:00" } },
+  { id: "weekday_extended", label: "Monday - Friday, 6 AM - 6 PM", description: "Extended daytime coverage for more comprehensive care", timeRange: { start: "06:00", end: "18:00" } },
+  { id: "weekday_night", label: "Monday - Friday, 6 PM - 8 AM", description: "Extended nighttime coverage to relieve standard daytime coverage", timeRange: { start: "18:00", end: "08:00" } },
+  { id: "saturday", label: "Saturday, 6 AM - 6 PM", description: "Daytime weekend coverage with a dedicated caregiver", timeRange: { start: "06:00", end: "18:00" } },
+  { id: "sunday", label: "Sunday, 6 AM - 6 PM", description: "Daytime weekend coverage with a dedicated caregiver", timeRange: { start: "06:00", end: "18:00" } },
+  { id: "weekday_evening", label: "Weekday Evening Shift (4 PM - 12 AM)", description: "Evening care on weekdays after the primary shift ends", timeRange: { start: "16:00", end: "00:00" } },
+  { id: "weekday_overnight", label: "Weekday Overnight Shift (12 AM - 8 AM)", description: "Overnight care on weekdays for continuous 24-hour coverage", timeRange: { start: "00:00", end: "08:00" } },
+  { id: "weekend_evening", label: "Weekend Evening Shift (6 PM - 2 AM)", description: "Evening care on weekends after the primary weekend shift", timeRange: { start: "18:00", end: "02:00" } },
+  { id: "weekend_overnight", label: "Weekend Overnight Shift (2 AM - 6 AM)", description: "Overnight care on weekends for complete weekend coverage", timeRange: { start: "02:00", end: "06:00" } }
+];
+
 const TIME_SLOTS = [
   { label: "Morning (6AM-12PM)", value: "morning", time: { start: "06:00", end: "12:00" } },
   { label: "Afternoon (12PM-6PM)", value: "afternoon", time: { start: "12:00", end: "18:00" } },
@@ -92,6 +105,7 @@ const CarePlanDetailPage = () => {
   const [newShift, setNewShift] = useState({
     caregiverId: "",
     title: "",
+    selectedShiftType: "",
     description: "",
     day: "",
     timeSlot: "",
@@ -247,10 +261,11 @@ const CarePlanDetailPage = () => {
     
     try {
       const baseDayDate = selectedDay || (dateRange?.from ? new Date(dateRange.from) : new Date());
-      const timeSlotInfo = TIME_SLOTS.find(slot => slot.value === newShift.timeSlot);
       
-      if (!timeSlotInfo) {
-        toast.error("Please select a valid time slot");
+      const selectedShiftType = SHIFT_TITLE_OPTIONS.find(option => option.id === newShift.selectedShiftType);
+      
+      if (!selectedShiftType) {
+        toast.error("Please select a valid shift type");
         return;
       }
 
@@ -269,10 +284,10 @@ const CarePlanDetailPage = () => {
       }
       
       for (const shiftDate of datesToCreateShifts) {
-        const shiftTitle = newShift.title || `${shiftDate.toLocaleDateString()} ${timeSlotInfo.label} Shift`;
+        const shiftTitle = selectedShiftType.label;
         
-        const [startHour, startMinute] = timeSlotInfo.time.start.split(':').map(Number);
-        const [endHour, endMinute] = timeSlotInfo.time.end.split(':').map(Number);
+        const [startHour, startMinute] = selectedShiftType.timeRange.start.split(':').map(Number);
+        const [endHour, endMinute] = selectedShiftType.timeRange.end.split(':').map(Number);
         
         const startTime = new Date(shiftDate);
         startTime.setHours(startHour, startMinute, 0);
@@ -288,12 +303,12 @@ const CarePlanDetailPage = () => {
           family_id: user.id,
           caregiver_id: newShift.caregiverId !== "unassigned" ? newShift.caregiverId : undefined,
           title: shiftTitle,
-          description: newShift.description || `${timeSlotInfo.label} care shift`,
-          location: newShift.location || "Patient's home",
+          description: selectedShiftType.description,
+          location: "Patient's home",
           status: "open" as "open" | "assigned" | "completed" | "cancelled",
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
-          recurring_pattern: newShift.recurring === "yes" ? "weekly" : undefined
+          recurring_pattern: undefined
         };
 
         if (editingShift && !isRangeSelection) {
@@ -312,6 +327,7 @@ const CarePlanDetailPage = () => {
       setNewShift({
         caregiverId: "",
         title: "",
+        selectedShiftType: "",
         description: "",
         day: "",
         timeSlot: "",
@@ -343,27 +359,20 @@ const CarePlanDetailPage = () => {
 
   const handleEditShift = (shift: CareShift) => {
     const shiftDate = new Date(shift.start_time);
-    const shiftStartHour = shiftDate.getHours();
     
-    let timeSlot = "";
-    if (shiftStartHour >= 6 && shiftStartHour < 12) {
-      timeSlot = "morning";
-    } else if (shiftStartHour >= 12 && shiftStartHour < 18) {
-      timeSlot = "afternoon";
-    } else if (shiftStartHour >= 18 && shiftStartHour < 22) {
-      timeSlot = "evening";
-    } else {
-      timeSlot = "overnight";
-    }
+    const matchingShiftType = SHIFT_TITLE_OPTIONS.find(option => 
+      option.label === shift.title
+    ) || SHIFT_TITLE_OPTIONS[0];
     
     setSelectedDay(shiftDate);
     setNewShift({
       caregiverId: shift.caregiver_id || "",
       title: shift.title,
+      selectedShiftType: matchingShiftType.id,
       description: shift.description || "",
       day: format(shiftDate, "yyyy-MM-dd"),
-      timeSlot,
-      recurring: shift.recurring_pattern ? "yes" : "no",
+      timeSlot: "",
+      recurring: "no",
       location: shift.location || ""
     });
     setEditingShift(shift);
@@ -765,7 +774,7 @@ const CarePlanDetailPage = () => {
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
-                          <DialogTitle>{editingShift ? 'Edit Shift' : 'Create New Shift'}</DialogTitle>
+                          <DialogTitle>{editingShift ? 'Edit Shift' : 'Assign shift and team'}</DialogTitle>
                           <DialogDescription>
                             {editingShift 
                               ? 'Update this care shift details and assignment' 
@@ -775,13 +784,22 @@ const CarePlanDetailPage = () => {
                         
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
-                            <Label htmlFor="title">Shift Title (Optional)</Label>
-                            <Input 
-                              id="title"
-                              placeholder="Morning Care"
-                              value={newShift.title}
-                              onChange={(e) => setNewShift({...newShift, title: e.target.value})}
-                            />
+                            <Label htmlFor="title">Shift Title</Label>
+                            <Select 
+                              value={newShift.selectedShiftType} 
+                              onValueChange={(value) => setNewShift({...newShift, selectedShiftType: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a shift type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SHIFT_TITLE_OPTIONS.map((option) => (
+                                  <SelectItem key={option.id} value={option.id}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                           
                           <div className="flex flex-col space-y-2">
@@ -881,25 +899,6 @@ const CarePlanDetailPage = () => {
                               </Popover>
                             </div>
                           )}
-
-                          <div className="space-y-2">
-                            <Label htmlFor="timeSlot">Time Slot</Label>
-                            <Select 
-                              value={newShift.timeSlot} 
-                              onValueChange={(value) => setNewShift({...newShift, timeSlot: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a time slot" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {TIME_SLOTS.map((slot) => (
-                                  <SelectItem key={slot.value} value={slot.value}>
-                                    {slot.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
                           
                           <div className="space-y-2">
                             <Label htmlFor="caregiverId">Assign To (Optional)</Label>
@@ -920,44 +919,6 @@ const CarePlanDetailPage = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="location">Location (Optional)</Label>
-                            <Input 
-                              id="location"
-                              placeholder="Patient's home"
-                              value={newShift.location}
-                              onChange={(e) => setNewShift({...newShift, location: e.target.value})}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
-                            <Textarea 
-                              id="description"
-                              placeholder="Details about this shift"
-                              value={newShift.description}
-                              onChange={(e) => setNewShift({...newShift, description: e.target.value})}
-                            />
-                          </div>
-                          
-                          {!isRangeSelection && (
-                            <div className="space-y-2">
-                              <Label htmlFor="recurring">Recurring Weekly</Label>
-                              <Select 
-                                value={newShift.recurring} 
-                                onValueChange={(value) => setNewShift({...newShift, recurring: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Is this a recurring shift?" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="no">No</SelectItem>
-                                  <SelectItem value="yes">Yes - Weekly</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
                         </div>
                         
                         <DialogFooter>
@@ -965,7 +926,7 @@ const CarePlanDetailPage = () => {
                           <Button 
                             onClick={handleCreateShift}
                             disabled={
-                              !newShift.timeSlot || 
+                              !newShift.selectedShiftType || 
                               (isRangeSelection && (!dateRange?.from || !dateRange.to)) ||
                               (!isRangeSelection && !selectedDay)
                             }
