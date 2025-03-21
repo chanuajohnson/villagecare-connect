@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
-import { ArrowLeft, Calendar, Clock, FileText, Plus, Users, ArrowRight, X, Edit, Trash2 } from "lucide-react";
+import { 
+  ArrowLeft, Calendar, Clock, FileText, Plus, Users, ArrowRight, X, Edit, 
+  Trash2, MoreHorizontal, UserMinus, CalendarRange, ChevronDown
+} from "lucide-react";
 import { 
   fetchCarePlan, 
   fetchCareTeamMembers, 
@@ -20,7 +23,10 @@ import {
   deleteCareShift,
   CareShift
 } from "@/services/care-plan-service";
-import { format, addDays, startOfWeek, parse, isSameDay } from "date-fns";
+import { 
+  format, addDays, startOfWeek, parse, isSameDay, parseISO, addWeeks, 
+  isWithinInterval, endOfDay, startOfDay, subWeeks
+} from "date-fns";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,7 +44,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, UserMinus } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface Professional {
   id: string;
@@ -72,6 +80,13 @@ const CarePlanDetailPage = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<Date>(startOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
   const [newTeamMember, setNewTeamMember] = useState({
     caregiverId: "",
     role: "caregiver" as const,
@@ -89,6 +104,7 @@ const CarePlanDetailPage = () => {
   const [editingShift, setEditingShift] = useState<CareShift | null>(null);
   const [confirmRemoveDialogOpen, setConfirmRemoveDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<CareTeamMemberWithProfile | null>(null);
+  const [isRangeSelection, setIsRangeSelection] = useState(false);
 
   useEffect(() => {
     if (user && id) {
@@ -230,10 +246,11 @@ const CarePlanDetailPage = () => {
   };
 
   const handleCreateShift = async () => {
-    if (!id || !user || !selectedDay) return;
-
+    if (!id || !user) return;
+    
     try {
-      const dayDate = new Date(selectedDay);
+      // Single date or first date in range
+      const baseDayDate = selectedDay || (dateRange.from ? new Date(dateRange.from) : new Date());
       const timeSlotInfo = TIME_SLOTS.find(slot => slot.value === newShift.timeSlot);
       
       if (!timeSlotInfo) {
@@ -241,42 +258,65 @@ const CarePlanDetailPage = () => {
         return;
       }
 
-      const shiftTitle = newShift.title || `${dayDate.toLocaleDateString()} ${timeSlotInfo.label} Shift`;
+      // If it's a date range, prepare for multiple shift creation
+      const datesToCreateShifts = [];
       
-      // Parse the start and end times from the time slot
-      const [startHour, startMinute] = timeSlotInfo.time.start.split(':').map(Number);
-      const [endHour, endMinute] = timeSlotInfo.time.end.split(':').map(Number);
-      
-      // Set the start and end times for the shift
-      const startTime = new Date(dayDate);
-      startTime.setHours(startHour, startMinute, 0);
-      
-      const endTime = new Date(dayDate);
-      if (endHour < startHour) {
-        // Handle overnight shifts (end time is on the next day)
-        endTime.setDate(endTime.getDate() + 1);
-      }
-      endTime.setHours(endHour, endMinute, 0);
-
-      const shiftData = {
-        care_plan_id: id,
-        family_id: user.id,
-        caregiver_id: newShift.caregiverId || undefined,
-        title: shiftTitle,
-        description: newShift.description || `${timeSlotInfo.label} care shift`,
-        location: newShift.location || "Patient's home",
-        status: "open" as const,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        recurring_pattern: newShift.recurring === "yes" ? "weekly" : undefined
-      };
-
-      if (editingShift) {
-        await updateCareShift(editingShift.id, shiftData);
+      if (isRangeSelection && dateRange.from && dateRange.to) {
+        let currentDate = new Date(dateRange.from);
+        const endDate = new Date(dateRange.to);
+        
+        while (currentDate <= endDate) {
+          datesToCreateShifts.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
       } else {
-        await createCareShift(shiftData);
+        datesToCreateShifts.push(baseDayDate);
+      }
+      
+      // Create shifts for each date in the range
+      for (const shiftDate of datesToCreateShifts) {
+        const shiftTitle = newShift.title || `${shiftDate.toLocaleDateString()} ${timeSlotInfo.label} Shift`;
+        
+        // Parse the start and end times from the time slot
+        const [startHour, startMinute] = timeSlotInfo.time.start.split(':').map(Number);
+        const [endHour, endMinute] = timeSlotInfo.time.end.split(':').map(Number);
+        
+        // Set the start and end times for the shift
+        const startTime = new Date(shiftDate);
+        startTime.setHours(startHour, startMinute, 0);
+        
+        const endTime = new Date(shiftDate);
+        if (endHour < startHour) {
+          // Handle overnight shifts (end time is on the next day)
+          endTime.setDate(endTime.getDate() + 1);
+        }
+        endTime.setHours(endHour, endMinute, 0);
+
+        const shiftData = {
+          care_plan_id: id,
+          family_id: user.id,
+          caregiver_id: newShift.caregiverId || undefined,
+          title: shiftTitle,
+          description: newShift.description || `${timeSlotInfo.label} care shift`,
+          location: newShift.location || "Patient's home",
+          status: "open" as "open" | "assigned" | "completed" | "cancelled",
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          recurring_pattern: newShift.recurring === "yes" ? "weekly" : undefined
+        };
+
+        if (editingShift && !isRangeSelection) {
+          await updateCareShift(editingShift.id, shiftData);
+        } else {
+          await createCareShift(shiftData);
+        }
       }
 
+      toast.success(isRangeSelection ? 
+        "Care shifts created for selected date range" : 
+        (editingShift ? "Care shift updated" : "Care shift created")
+      );
+      
       setShiftDialogOpen(false);
       setNewShift({
         caregiverId: "",
@@ -288,6 +328,8 @@ const CarePlanDetailPage = () => {
         location: ""
       });
       setEditingShift(null);
+      setDateRange({ from: undefined, to: undefined });
+      setIsRangeSelection(false);
       loadCareShifts();
     } catch (error) {
       console.error("Error creating/updating care shift:", error);
@@ -334,6 +376,8 @@ const CarePlanDetailPage = () => {
       location: shift.location || ""
     });
     setEditingShift(shift);
+    setIsRangeSelection(false);
+    setDateRange({ from: undefined, to: undefined });
     setShiftDialogOpen(true);
   };
 
@@ -344,6 +388,8 @@ const CarePlanDetailPage = () => {
       day: format(day, "yyyy-MM-dd"),
     });
     setEditingShift(null);
+    setIsRangeSelection(false);
+    setDateRange({ from: undefined, to: undefined });
     setShiftDialogOpen(true);
   };
 
@@ -356,8 +402,7 @@ const CarePlanDetailPage = () => {
 
   const navigateWeek = (direction: 'prev' | 'next') => {
     setSelectedWeek(prev => {
-      const offset = direction === 'prev' ? -7 : 7;
-      return addDays(prev, offset);
+      return direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1);
     });
   };
 
@@ -727,7 +772,7 @@ const CarePlanDetailPage = () => {
                           Add Shift
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
+                      <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                           <DialogTitle>{editingShift ? 'Edit Shift' : 'Create New Shift'}</DialogTitle>
                           <DialogDescription>
@@ -748,15 +793,106 @@ const CarePlanDetailPage = () => {
                             />
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="day">Day</Label>
-                            <Input 
-                              id="day"
-                              type="date"
-                              value={newShift.day}
-                              onChange={(e) => setNewShift({...newShift, day: e.target.value})}
-                            />
+                          <div className="flex flex-col space-y-2">
+                            <Label>Date Selection</Label>
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                type="button" 
+                                variant={isRangeSelection ? "default" : "outline"} 
+                                className="w-1/2"
+                                onClick={() => setIsRangeSelection(true)}
+                              >
+                                <CalendarRange className="mr-2 h-4 w-4" />
+                                Date Range
+                              </Button>
+                              <Button 
+                                type="button" 
+                                variant={!isRangeSelection ? "default" : "outline"} 
+                                className="w-1/2"
+                                onClick={() => setIsRangeSelection(false)}
+                              >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Single Date
+                              </Button>
+                            </div>
                           </div>
+
+                          {!isRangeSelection ? (
+                            <div className="space-y-2">
+                              <Label htmlFor="day">Day</Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full justify-start text-left"
+                                  >
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    {selectedDay ? (
+                                      format(selectedDay, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={selectedDay || undefined}
+                                    onSelect={(date) => {
+                                      setSelectedDay(date);
+                                      if (date) {
+                                        setNewShift({
+                                          ...newShift,
+                                          day: format(date, "yyyy-MM-dd"),
+                                        });
+                                      }
+                                    }}
+                                    initialFocus
+                                    className="p-3 pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <Label>Date Range</Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full justify-start text-left"
+                                  >
+                                    <CalendarRange className="mr-2 h-4 w-4" />
+                                    {dateRange.from ? (
+                                      dateRange.to ? (
+                                        <>
+                                          {format(dateRange.from, "PPP")} - {format(dateRange.to, "PPP")}
+                                        </>
+                                      ) : (
+                                        format(dateRange.from, "PPP")
+                                      )
+                                    ) : (
+                                      <span>Pick a date range</span>
+                                    )}
+                                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="range"
+                                    selected={{
+                                      from: dateRange.from,
+                                      to: dateRange.to,
+                                    }}
+                                    onSelect={setDateRange}
+                                    initialFocus
+                                    className="p-3 pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
 
                           <div className="space-y-2">
                             <Label htmlFor="timeSlot">Time Slot</Label>
@@ -790,7 +926,7 @@ const CarePlanDetailPage = () => {
                                 <SelectItem value="">Unassigned</SelectItem>
                                 {careTeamMembers.map((member) => (
                                   <SelectItem key={member.caregiver_id} value={member.caregiver_id}>
-                                    {member.professionalDetails?.full_name || member.caregiver_id}
+                                    {member.professionalDetails?.full_name || "Unknown Professional"}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -817,27 +953,38 @@ const CarePlanDetailPage = () => {
                             />
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="recurring">Recurring Weekly</Label>
-                            <Select 
-                              value={newShift.recurring} 
-                              onValueChange={(value) => setNewShift({...newShift, recurring: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Is this a recurring shift?" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="no">No</SelectItem>
-                                <SelectItem value="yes">Yes - Weekly</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          {!isRangeSelection && (
+                            <div className="space-y-2">
+                              <Label htmlFor="recurring">Recurring Weekly</Label>
+                              <Select 
+                                value={newShift.recurring} 
+                                onValueChange={(value) => setNewShift({...newShift, recurring: value})}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Is this a recurring shift?" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="no">No</SelectItem>
+                                  <SelectItem value="yes">Yes - Weekly</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
                         </div>
                         
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button>
-                          <Button onClick={handleCreateShift}>
-                            {editingShift ? 'Update Shift' : 'Create Shift'}
+                          <Button 
+                            onClick={handleCreateShift}
+                            disabled={
+                              !newShift.timeSlot || 
+                              (isRangeSelection && (!dateRange.from || !dateRange.to)) ||
+                              (!isRangeSelection && !selectedDay)
+                            }
+                          >
+                            {isRangeSelection 
+                              ? 'Create Shifts' 
+                              : (editingShift ? 'Update Shift' : 'Create Shift')}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
