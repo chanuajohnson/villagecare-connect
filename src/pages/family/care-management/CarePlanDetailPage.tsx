@@ -246,7 +246,6 @@ const CarePlanDetailPage = () => {
     if (!id || !user) return;
     
     try {
-      // Single date or first date in range
       const baseDayDate = selectedDay || (dateRange?.from ? new Date(dateRange.from) : new Date());
       const timeSlotInfo = TIME_SLOTS.find(slot => slot.value === newShift.timeSlot);
       
@@ -255,7 +254,6 @@ const CarePlanDetailPage = () => {
         return;
       }
 
-      // If it's a date range, prepare for multiple shift creation
       const datesToCreateShifts = [];
       
       if (isRangeSelection && dateRange?.from && dateRange.to) {
@@ -270,21 +268,17 @@ const CarePlanDetailPage = () => {
         datesToCreateShifts.push(baseDayDate);
       }
       
-      // Create shifts for each date in the range
       for (const shiftDate of datesToCreateShifts) {
         const shiftTitle = newShift.title || `${shiftDate.toLocaleDateString()} ${timeSlotInfo.label} Shift`;
         
-        // Parse the start and end times from the time slot
         const [startHour, startMinute] = timeSlotInfo.time.start.split(':').map(Number);
         const [endHour, endMinute] = timeSlotInfo.time.end.split(':').map(Number);
         
-        // Set the start and end times for the shift
         const startTime = new Date(shiftDate);
         startTime.setHours(startHour, startMinute, 0);
         
         const endTime = new Date(shiftDate);
         if (endHour < startHour) {
-          // Handle overnight shifts (end time is on the next day)
           endTime.setDate(endTime.getDate() + 1);
         }
         endTime.setHours(endHour, endMinute, 0);
@@ -292,7 +286,7 @@ const CarePlanDetailPage = () => {
         const shiftData = {
           care_plan_id: id,
           family_id: user.id,
-          caregiver_id: newShift.caregiverId || undefined,
+          caregiver_id: newShift.caregiverId !== "unassigned" ? newShift.caregiverId : undefined,
           title: shiftTitle,
           description: newShift.description || `${timeSlotInfo.label} care shift`,
           location: newShift.location || "Patient's home",
@@ -917,7 +911,7 @@ const CarePlanDetailPage = () => {
                                 <SelectValue placeholder="Select a team member" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Unassigned</SelectItem>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
                                 {careTeamMembers.map((member) => (
                                   <SelectItem key={member.caregiver_id} value={member.caregiver_id}>
                                     {member.professionalDetails?.full_name || "Unknown Professional"}
@@ -1104,7 +1098,6 @@ const CarePlanDetailPage = () => {
         </Tabs>
       </Container>
 
-      {/* Confirmation Dialog for Removing Team Member */}
       <Dialog open={confirmRemoveDialogOpen} onOpenChange={setConfirmRemoveDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
