@@ -1,102 +1,99 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, ClipboardList, ChevronRight, UsersRound } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { fetchSharedCarePlans } from "@/services/care-plan-service";
-import { fetchCareShiftsByCaregiver, requestShift } from "@/services/care-shift-service";
-import { CarePlan, CareShift } from "@/types/care-management";
-import { format, isAfter } from "date-fns";
-import { toast } from "sonner";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Clock, ClipboardList, Users } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
+import { CarePlan, CareTeamMember, CareShift } from "@/types/care-management";
+import { format } from "date-fns";
 
 export function CarePlansAccess() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("shared-plans");
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("care_plans");
+  const [carePlans, setCarePlans] = useState<CarePlan[]>([]);
+  const [careTeams, setCareTeams] = useState<CareTeamMember[]>([]);
+  const [shifts, setShifts] = useState<CareShift[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch shared care plans
-  const { 
-    data: sharedPlans = [], 
-    isLoading: isLoadingPlans 
-  } = useQuery({
-    queryKey: ['sharedCarePlans', user?.id],
-    queryFn: () => (user?.id ? fetchSharedCarePlans(user.id) : Promise.resolve([])),
-    enabled: !!user?.id,
-  });
+  useEffect(() => {
+    if (!user) return;
 
-  // Fetch care shifts
-  const { 
-    data: careShifts = [], 
-    isLoading: isLoadingShifts 
-  } = useQuery({
-    queryKey: ['caregiverShifts', user?.id],
-    queryFn: () => (user?.id ? fetchCareShiftsByCaregiver(user.id) : Promise.resolve([])),
-    enabled: !!user?.id,
-  });
+    const fetchCarePlansAndTeams = async () => {
+      setLoading(true);
+      try {
+        // Get care teams the professional is part of
+        const { data: teamData, error: teamError } = await supabase
+          .from('care_team_members')
+          .select('*, care_plan:care_plans(*)')
+          .eq('caregiver_id', user.id)
+          .eq('status', 'active');
 
-  // Request shift mutation
-  const requestShiftMutation = useMutation({
-    mutationFn: ({ shiftId, caregiverId }: { shiftId: string, caregiverId: string }) => 
-      requestShift(shiftId, caregiverId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['caregiverShifts'] });
-      toast.success('Shift requested successfully!');
-    },
-    onError: () => {
-      toast.error('Failed to request shift. Please try again.');
-    }
-  });
+        if (teamError) throw teamError;
 
-  // Filter open shifts that are in the future
-  const openShifts = careShifts.filter(
-    shift => shift.status === 'open' && isAfter(new Date(shift.start_time), new Date())
-  );
+        // Extract care plan ids
+        const careTeamMembers = teamData || [];
+        setCareTeams(careTeamMembers);
 
-  // Filter shifts assigned to this caregiver
-  const myShifts = careShifts.filter(
-    shift => shift.caregiver_id === user?.id && isAfter(new Date(shift.start_time), new Date())
-  );
+        // Get care plans from team memberships
+        const carePlanIds = careTeamMembers.map(team => team.care_plan_id);
+        if (carePlanIds.length > 0) {
+          const { data: planData, error: planError } = await supabase
+            .from('care_plans')
+            .select('*')
+            .in('id', carePlanIds);
 
-  // Format date
-  const formatDateTime = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+          if (planError) throw planError;
+          setCarePlans(planData || []);
+
+          // Get upcoming shifts for these care plans
+          const { data: shiftData, error: shiftError } = await supabase
+            .from('care_shifts')
+            .select('*')
+            .in('care_plan_id', carePlanIds)
+            .gt('start_time', new Date().toISOString())
+            .order('start_time', { ascending: true })
+            .limit(5);
+
+          if (shiftError) throw shiftError;
+          setShifts(shiftData || []);
+        }
+      } catch (error) {
+        console.error('Error fetching care plans and teams:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCarePlansAndTeams();
+  }, [user]);
+
+  // Helper functions for rendering
+  const getCarePlanById = (id: string) => {
+    return carePlans.find(plan => plan.id === id);
+  };
+  
+  const getInitials = (name: string = 'User') => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  };
-
-  const formatTime = (dateString: string) => {
-    return format(new Date(dateString), 'h:mm a');
-  };
-
-  // Request a shift
-  const handleRequestShift = (shiftId: string) => {
-    if (user?.id) {
-      requestShiftMutation.mutate({ shiftId, caregiverId: user.id });
-    }
-  };
-
-  // Get status badge style
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return "bg-green-100 text-green-800";
-      case 'requested':
-        return "bg-yellow-100 text-yellow-800";
-      case 'open':
-        return "bg-blue-100 text-blue-800";
-      case 'cancelled':
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const formatShiftTime = (shift: CareShift) => {
+    try {
+      const start = new Date(shift.start_time);
+      const end = new Date(shift.end_time);
+      
+      const dateStr = format(start, 'MMM d, yyyy');
+      const timeStr = `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`;
+      
+      return { date: dateStr, time: timeStr };
+    } catch (error) {
+      console.error('Error formatting shift time:', error);
+      return { date: 'Invalid date', time: 'Invalid time' };
     }
   };
 
@@ -104,155 +101,151 @@ export function CarePlansAccess() {
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <ClipboardList className="h-6 w-6 mr-2 text-blue-600" />
-          Care Plans & Shifts
+          <ClipboardList className="h-5 w-5 mr-2 text-blue-600" />
+          Family Care Plans
         </CardTitle>
         <CardDescription>
-          View assigned care plans and available shifts
+          Care plans you have been authorized to access
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="shared-plans">Shared Plans</TabsTrigger>
-            <TabsTrigger value="shifts">Available Shifts</TabsTrigger>
+        <Tabs defaultValue="care_plans" onValueChange={setActiveTab}>
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="care_plans" className="flex-1">Care Plans</TabsTrigger>
+            <TabsTrigger value="upcoming_shifts" className="flex-1">Upcoming Shifts</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="shared-plans">
-            {isLoadingPlans ? (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
-                ))}
+          <TabsContent value="care_plans">
+            {loading ? (
+              <div className="py-8 text-center text-gray-500">
+                Loading care plans...
               </div>
-            ) : sharedPlans.length > 0 ? (
-              <div className="space-y-3">
-                {sharedPlans.map((plan: CarePlan) => (
-                  <div key={plan.id} className="border rounded-lg p-3 hover:bg-gray-50">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium">{plan.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          Created: {formatDate(plan.created_at)}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className={
-                        plan.status === 'active' ? 'bg-green-100 text-green-800' :
-                        plan.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }>
-                        {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+            ) : carePlans.length === 0 ? (
+              <div className="py-8 text-center text-gray-500">
+                <p className="mb-2">You don't have access to any care plans yet.</p>
+                <p className="text-sm text-gray-400">When families add you to their care team, their plans will appear here.</p>
               </div>
             ) : (
-              <div className="text-center py-6">
-                <UsersRound className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <h3 className="text-lg font-medium">No Shared Plans</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  No families have shared care plans with you yet.
-                </p>
+              <div className="space-y-4">
+                {carePlans.map((plan) => (
+                  <div key={plan.id} className="flex items-start border-b border-gray-100 pb-4">
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{plan.title}</h3>
+                        <Badge variant={plan.status === 'active' ? 'default' : 'secondary'}>
+                          {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                        </Badge>
+                      </div>
+                      
+                      {plan.description && (
+                        <p className="text-gray-600 text-sm mt-1 line-clamp-2">{plan.description}</p>
+                      )}
+                      
+                      <div className="flex items-center gap-3 mt-3">
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <Users className="h-4 w-4" />
+                          <span>{
+                            careTeams.filter(team => team.care_plan_id === plan.id).length
+                          } team members</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Created {new Date(plan.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/dashboard/family/care-plans/${plan.id}/team`)}
+                    >
+                      View
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>
           
-          <TabsContent value="shifts">
-            <div className="space-y-4">
-              {myShifts.length > 0 && (
-                <div>
-                  <h3 className="font-medium mb-3">My Upcoming Shifts</h3>
-                  <div className="space-y-3">
-                    {myShifts.map((shift: CareShift) => (
-                      <div key={shift.id} className="border rounded-lg p-3 hover:bg-gray-50">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{shift.title}</h4>
-                            <p className="text-sm text-gray-700">
-                              {formatDate(shift.start_time)}
-                              {" "}
-                              {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
-                            </p>
-                            {shift.location && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {shift.location}
-                              </p>
-                            )}
+          <TabsContent value="upcoming_shifts">
+            {loading ? (
+              <div className="py-8 text-center text-gray-500">
+                Loading shifts...
+              </div>
+            ) : shifts.length === 0 ? (
+              <div className="py-8 text-center text-gray-500">
+                <p className="mb-2">No upcoming shifts scheduled.</p>
+                <p className="text-sm text-gray-400">When you are assigned to shifts, they will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {shifts.map((shift) => {
+                  const { date, time } = formatShiftTime(shift);
+                  const plan = getCarePlanById(shift.care_plan_id);
+                  
+                  return (
+                    <div key={shift.id} className="flex items-start border-b border-gray-100 pb-4">
+                      <div className="mr-3">
+                        <Avatar>
+                          {shift.caregiver?.avatar_url ? (
+                            <AvatarImage src={shift.caregiver.avatar_url} alt="Caregiver" />
+                          ) : (
+                            <AvatarFallback>{getInitials(shift.caregiver?.full_name)}</AvatarFallback>
+                          )}
+                        </Avatar>
+                      </div>
+                      
+                      <div className="flex-grow">
+                        <h3 className="text-base font-medium">{shift.title}</h3>
+                        {plan && <p className="text-sm text-gray-600">{plan.title}</p>}
+                        
+                        <div className="flex flex-wrap gap-x-3 mt-2">
+                          <div className="flex items-center gap-1 text-sm text-gray-500">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>{date}</span>
                           </div>
-                          <Badge variant="outline" className={getStatusBadge(shift.status)}>
-                            {shift.status.charAt(0).toUpperCase() + shift.status.slice(1)}
-                          </Badge>
+                          
+                          <div className="flex items-center gap-1 text-sm text-gray-500">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{time}</span>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {openShifts.length > 0 && (
-                <div>
-                  <h3 className="font-medium mb-3">Available Shifts</h3>
-                  <div className="space-y-3">
-                    {openShifts.map((shift: CareShift) => (
-                      <div key={shift.id} className="border rounded-lg p-3 hover:bg-gray-50">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{shift.title}</h4>
-                            <p className="text-sm text-gray-700">
-                              {formatDate(shift.start_time)}
-                              {" "}
-                              {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
-                            </p>
-                            {shift.location && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Location: {shift.location}
-                              </p>
-                            )}
-                            {shift.family && (
-                              <div className="flex items-center mt-2">
-                                <Avatar className="h-5 w-5 mr-1">
-                                  <AvatarImage src={shift.family.avatar_url} />
-                                  <AvatarFallback>
-                                    {shift.family.full_name?.charAt(0) || "F"}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs">{shift.family.full_name}</span>
-                              </div>
-                            )}
-                          </div>
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleRequestShift(shift.id)}
-                            disabled={requestShiftMutation.isPending}
-                          >
-                            Request
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {openShifts.length === 0 && myShifts.length === 0 && (
-                <div className="text-center py-6">
-                  <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                  <h3 className="text-lg font-medium">No Available Shifts</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    There are no open shifts available for you at this time.
-                  </p>
-                </div>
-              )}
-            </div>
+                      
+                      <Badge 
+                        variant={
+                          shift.status === 'confirmed' ? 'default' :
+                          shift.status === 'requested' ? 'outline' : 'secondary'
+                        }
+                      >
+                        {shift.status.charAt(0).toUpperCase() + shift.status.slice(1)}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={() => navigate("/dashboard/professional/schedule")} className="w-full">
-          View Full Schedule
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
+        {carePlans.length > 0 && (
+          <Button 
+            variant={activeTab === 'care_plans' ? 'default' : 'outline'} 
+            className="w-full"
+            onClick={() => {
+              if (carePlans.length > 0) {
+                navigate(`/dashboard/family/care-plans/${carePlans[0].id}/team`);
+              }
+            }}
+          >
+            {activeTab === 'care_plans' ? 'View Care Plans' : 'View Calendar'}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

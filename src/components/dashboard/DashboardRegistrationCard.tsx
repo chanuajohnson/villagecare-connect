@@ -1,80 +1,67 @@
 
-import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UpvoteFeatureButton } from "@/components/features/UpvoteFeatureButton";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
-interface DashboardRegistrationCardProps {
-  session: any;
+export interface DashboardRegistrationCardProps {
+  userType: string;
+  completedSteps: string[];
+  totalSteps: number;
+  registrationPath: string;
 }
 
-export const DashboardRegistrationCard = ({ session }: DashboardRegistrationCardProps) => {
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-  
-  useEffect(() => {
-    const checkProfileCompletion = async () => {
-      if (!session?.user?.id) return;
-      
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('professional_type, full_name, care_services')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error checking profile completion:', error);
-          return;
-        }
-        
-        // For professional users, check if they have the minimum required fields
-        const isProfessionalComplete = profile?.professional_type && 
-                                      profile?.full_name && 
-                                      profile?.care_services;
-        
-        setIsProfileComplete(!!isProfessionalComplete);
-      } catch (error) {
-        console.error('Error checking profile:', error);
-      }
-    };
-    
-    checkProfileCompletion();
-  }, [session]);
-  
-  // If profile is complete, don't show the registration card
-  if (isProfileComplete) {
-    return null;
-  }
+export function DashboardRegistrationCard({ 
+  userType, 
+  completedSteps, 
+  totalSteps, 
+  registrationPath 
+}: DashboardRegistrationCardProps) {
+  const navigate = useNavigate();
+  const progress = Math.round((completedSteps.length / totalSteps) * 100);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="mb-8"
-    >
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete Your Registration</CardTitle>
-          <CardDescription>Set up your professional profile to start connecting with families</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link to={session ? '/register/professional' : '/auth'}>
-            <Button className="w-full">
-              {session ? 'Complete Registration' : 'Sign in to Register'}
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-          </Link>
-          <UpvoteFeatureButton 
-            featureTitle="Professional Registration" 
-            className="w-full" 
-          />
-        </CardContent>
-      </Card>
-    </motion.div>
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle>Complete Your Profile</CardTitle>
+        <CardDescription>
+          Finish your {userType} profile to unlock all features
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between mb-1 text-sm">
+              <span>Profile Completion</span>
+              <span>{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+          
+          <div className="space-y-2">
+            {completedSteps.length < totalSteps ? (
+              <p className="text-sm text-muted-foreground">
+                Complete your profile to improve matching results and access all features.
+              </p>
+            ) : (
+              <p className="text-sm text-green-600">
+                Great job! Your profile is complete.
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        {completedSteps.length < totalSteps ? (
+          <Button onClick={() => navigate(registrationPath)} className="w-full">
+            Continue Registration
+          </Button>
+        ) : (
+          <Button variant="outline" className="w-full" disabled>
+            Profile Complete
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
-};
+}

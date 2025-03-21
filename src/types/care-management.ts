@@ -68,6 +68,10 @@ export interface CareShift {
     full_name?: string;
     avatar_url?: string;
   };
+  family?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
 }
 
 export interface CalendarEvent {

@@ -74,7 +74,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Router>
-            <PageViewTracker />
+            <PageViewTracker actionType="page_view" />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -98,6 +97,27 @@ const taskFormSchema = z.object({
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
+
+export const createTask = async (taskData: Omit<CareTask, "id" | "created_at" | "updated_at">) => {
+  // Ensure title is provided
+  if (!taskData.title) {
+    throw new Error("Task title is required");
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('care_tasks')
+      .insert(taskData)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating care task:', error);
+    throw error;
+  }
+};
 
 export default function CareTasksPage() {
   const { carePlanId } = useParams<{ carePlanId: string }>();
