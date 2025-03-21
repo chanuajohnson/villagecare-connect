@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
-import { ArrowLeft, Calendar, Clock, FileText, Plus, Users, X, Check, Edit2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, FileText, Plus, Users, X, Check, Edit2, ArrowRight } from "lucide-react";
 import { fetchCarePlan, fetchCareTeamMembers, inviteCareTeamMember, createCareShift, fetchCareShifts, CareTeamMember, CarePlan, CareShift } from "@/services/care-plan-service";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -283,7 +283,7 @@ const CarePlanDetailPage = () => {
         title: newShift.title,
         description: newShift.description,
         location: newShift.location || "Client's home",
-        status: "open",
+        status: "open" as "open" | "assigned" | "completed" | "cancelled",
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         recurring_pattern: newShift.recurring ? newShift.recurrencePattern : null
