@@ -836,4 +836,3 @@ const CarePlanDetailPage = () => {
                             </div>
                             
                             <div className="flex items-start space-x-2">
-                              <Checkbox
