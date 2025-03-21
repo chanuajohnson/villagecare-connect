@@ -34,7 +34,8 @@ import LegacyStoriesPage from "@/pages/legacy/LegacyStoriesPage";
 import SubscriptionPage from "@/pages/subscription/SubscriptionPage";
 import SubscriptionFeaturesPage from "@/pages/subscription/SubscriptionFeaturesPage";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query/devtools';
+// Remove the import of ReactQueryDevtools from devtools subdirectory since it's causing issues
+// import { ReactQueryDevtools } from '@tanstack/react-query/devtools';
 
 // Care Management System pages
 import CarePlansPage from "@/pages/family/care-management/CarePlansPage";
@@ -125,7 +126,8 @@ function App() {
             <Toaster position="top-right" />
           </Router>
         </AuthProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* Remove the ReactQueryDevtools component that's causing the issue */}
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>
     </ThemeProvider>
   );
