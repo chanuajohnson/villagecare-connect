@@ -10,7 +10,8 @@ import { ArrowLeft, Calendar, Clock, FileText, Plus, Users, ArrowRight, X, Edit,
 import { 
   fetchCarePlan, 
   fetchCareTeamMembers, 
-  inviteCareTeamMember, 
+  inviteCareTeamMember,
+  removeCareTeamMember,
   CareTeamMember, 
   CarePlan,
   fetchCareShifts,
@@ -30,6 +31,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, UserMinus } from "lucide-react";
 
 interface Professional {
   id: string;
@@ -78,6 +87,8 @@ const CarePlanDetailPage = () => {
     location: ""
   });
   const [editingShift, setEditingShift] = useState<CareShift | null>(null);
+  const [confirmRemoveDialogOpen, setConfirmRemoveDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<CareTeamMemberWithProfile | null>(null);
 
   useEffect(() => {
     if (user && id) {
@@ -197,6 +208,24 @@ const CarePlanDetailPage = () => {
     } catch (error) {
       console.error("Error assigning team member:", error);
       toast.error("Failed to assign team member");
+    }
+  };
+
+  const handleRemoveTeamMember = async () => {
+    if (!memberToRemove) return;
+
+    try {
+      const success = await removeCareTeamMember(memberToRemove.id);
+      if (success) {
+        loadCareTeamMembers();
+        toast.success("Team member removed successfully");
+      }
+    } catch (error) {
+      console.error("Error removing team member:", error);
+      toast.error("Failed to remove team member");
+    } finally {
+      setConfirmRemoveDialogOpen(false);
+      setMemberToRemove(null);
     }
   };
 
@@ -425,18 +454,18 @@ const CarePlanDetailPage = () => {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">{carePlan.title}</h1>
+              <h1 className="text-3xl font-bold">{carePlan?.title}</h1>
               <p className="text-muted-foreground mt-1">
-                {carePlan.description || "No description provided"}
+                {carePlan?.description || "No description provided"}
               </p>
             </div>
             
             <Badge className={`${
-              carePlan.status === 'active' ? 'bg-green-100 text-green-800' :
-              carePlan.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+              carePlan?.status === 'active' ? 'bg-green-100 text-green-800' :
+              carePlan?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
               'bg-orange-100 text-orange-800'
             }`}>
-              {carePlan.status.charAt(0).toUpperCase() + carePlan.status.slice(1)}
+              {carePlan?.status.charAt(0).toUpperCase() + carePlan?.status.slice(1)}
             </Badge>
           </div>
         </div>
@@ -542,7 +571,8 @@ const CarePlanDetailPage = () => {
                         <SelectContent>
                           {professionals.map((prof) => (
                             <SelectItem key={prof.id} value={prof.id}>
-                              {prof.full_name || prof.id} {prof.professional_type ? `(${prof.professional_type})` : ''}
+                              {prof.full_name || "Unknown Professional"} 
+                              {prof.professional_type ? ` (${prof.professional_type})` : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -613,14 +643,36 @@ const CarePlanDetailPage = () => {
                               </CardDescription>
                             </div>
                           </div>
-                          <Badge className={`${
-                            member.status === 'active' ? 'bg-green-100 text-green-800' :
-                            member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
-                            member.status === 'declined' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={`${
+                              member.status === 'active' ? 'bg-green-100 text-green-800' :
+                              member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
+                              member.status === 'declined' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                            </Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    setMemberToRemove(member);
+                                    setConfirmRemoveDialogOpen(true);
+                                  }}
+                                >
+                                  <UserMinus className="h-4 w-4 mr-2" />
+                                  Remove from team
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                       </CardHeader>
                       {member.notes && (
@@ -910,6 +962,26 @@ const CarePlanDetailPage = () => {
           </TabsContent>
         </Tabs>
       </Container>
+
+      {/* Confirmation Dialog for Removing Team Member */}
+      <Dialog open={confirmRemoveDialogOpen} onOpenChange={setConfirmRemoveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Team Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {memberToRemove?.professionalDetails?.full_name || memberToRemove?.caregiver_id} from the care team?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setConfirmRemoveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRemoveTeamMember}>
+              Remove Team Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
