@@ -19,6 +19,7 @@ import { CaregiverMatchingCard } from "@/components/family/CaregiverMatchingCard
 import { DashboardCaregiverMatches } from "@/components/family/DashboardCaregiverMatches";
 import { SubscriptionFeatureLink } from "@/components/subscription/SubscriptionFeatureLink";
 import { TellTheirStoryCard } from "@/components/family/TellTheirStoryCard";
+import { DashboardTracker } from "@/components/tracking/DashboardTracker";
 
 const FamilyDashboard = () => {
   const {
@@ -121,6 +122,7 @@ const FamilyDashboard = () => {
     });
   };
   return <div className="min-h-screen bg-background">
+      <DashboardTracker dashboardType="family" />
       <div className="container px-4 py-8">
         <DashboardHeader breadcrumbItems={breadcrumbItems} />
 
@@ -295,7 +297,7 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management">
                         <Button variant="secondary" className="w-full">Create Plan</Button>
                       </Link>
                     </CardContent>
@@ -309,7 +311,7 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management">
                         <Button variant="secondary" className="w-full">Add Member</Button>
                       </Link>
                     </CardContent>
@@ -323,7 +325,7 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management">
                         <Button variant="secondary" className="w-full">Schedule</Button>
                       </Link>
                     </CardContent>
@@ -337,7 +339,7 @@ const FamilyDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management">
                         <Button variant="secondary" className="w-full">View</Button>
                       </Link>
                     </CardContent>
@@ -354,7 +356,7 @@ const FamilyDashboard = () => {
                       <CardDescription>View and manage care plans</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management">
                         <Button variant="secondary" className="w-full">View Plans</Button>
                       </Link>
                     </CardContent>
@@ -369,7 +371,7 @@ const FamilyDashboard = () => {
                       <CardDescription>Manage your care team members</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management/team">
                         <Button variant="secondary" className="w-full">View Team</Button>
                       </Link>
                     </CardContent>
@@ -384,7 +386,7 @@ const FamilyDashboard = () => {
                       <CardDescription>Schedule and manage appointments</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Link to="/family/features-overview">
+                      <Link to="/family/care-management/schedule">
                         <Button variant="secondary" className="w-full">View Calendar</Button>
                       </Link>
                     </CardContent>
