@@ -4,7 +4,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 export interface MatchingTrackerProps {
-  currentPage?: string; // Make currentPage optional
+  currentPage?: string; // Now optional with a default value
   matchingType?: string;
   additionalData?: Record<string, any>;
 }

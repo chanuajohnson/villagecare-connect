@@ -4,7 +4,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 export interface DashboardTrackerProps {
-  currentPage?: string; // Make currentPage optional
+  currentPage?: string; // Now optional with a default value
   dashboardType?: string;
   additionalData?: Record<string, any>;
 }
