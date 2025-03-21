@@ -65,12 +65,11 @@ const SHIFT_TITLE_OPTIONS = [
   { id: "weekday_standard", label: "Monday - Friday, 8 AM - 4 PM", description: "Standard daytime coverage during business hours", timeRange: { start: "08:00", end: "16:00" } },
   { id: "weekday_extended", label: "Monday - Friday, 6 AM - 6 PM", description: "Extended daytime coverage for more comprehensive care", timeRange: { start: "06:00", end: "18:00" } },
   { id: "weekday_night", label: "Monday - Friday, 6 PM - 8 AM", description: "Extended nighttime coverage to relieve standard daytime coverage", timeRange: { start: "18:00", end: "08:00" } },
-  { id: "saturday", label: "Saturday, 6 AM - 6 PM", description: "Daytime weekend coverage with a dedicated caregiver", timeRange: { start: "06:00", end: "18:00" } },
-  { id: "sunday", label: "Sunday, 6 AM - 6 PM", description: "Daytime weekend coverage with a dedicated caregiver", timeRange: { start: "06:00", end: "18:00" } },
-  { id: "weekday_evening", label: "Weekday Evening Shift (4 PM - 12 AM)", description: "Evening care on weekdays after the primary shift ends", timeRange: { start: "16:00", end: "00:00" } },
-  { id: "weekday_overnight", label: "Weekday Overnight Shift (12 AM - 8 AM)", description: "Overnight care on weekdays for continuous 24-hour coverage", timeRange: { start: "00:00", end: "08:00" } },
-  { id: "weekend_evening", label: "Weekend Evening Shift (6 PM - 2 AM)", description: "Evening care on weekends after the primary weekend shift", timeRange: { start: "18:00", end: "02:00" } },
-  { id: "weekend_overnight", label: "Weekend Overnight Shift (2 AM - 6 AM)", description: "Overnight care on weekends for complete weekend coverage", timeRange: { start: "02:00", end: "06:00" } }
+  { id: "saturday_sunday", label: "Saturday - Sunday, 6 AM - 6 PM", description: "Daytime weekend coverage with a dedicated caregiver", timeRange: { start: "06:00", end: "18:00" } },
+  { id: "weekday_evening_4pm_6am", label: "Weekday Evening Shift (4 PM - 6 AM)", description: "Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage", timeRange: { start: "16:00", end: "06:00" } },
+  { id: "weekday_evening_4pm_8am", label: "Weekday Evening Shift (4 PM - 8 AM)", description: "Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage", timeRange: { start: "16:00", end: "08:00" } },
+  { id: "weekday_evening_6pm_6am", label: "Weekday Evening Shift (6 PM - 6 AM)", description: "Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage", timeRange: { start: "18:00", end: "06:00" } },
+  { id: "weekday_evening_6pm_8am", label: "Weekday Evening Shift (6 PM - 8 AM)", description: "Evening care on weekdays after the primary shift ends, or continuous 24-hour coverage", timeRange: { start: "18:00", end: "08:00" } }
 ];
 
 const TIME_SLOTS = [
