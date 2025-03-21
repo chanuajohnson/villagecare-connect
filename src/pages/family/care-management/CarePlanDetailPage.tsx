@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -105,10 +104,9 @@ const CarePlanDetailPage = () => {
 
       await inviteCareTeamMember({
         care_plan_id: id,
-        user_id: user.id,
+        family_id: user.id,
         caregiver_id: newTeamMember.caregiverId,
         role: newTeamMember.role,
-        permissions: 'read',
         status: 'invited',
         notes: newTeamMember.notes
       });
@@ -378,7 +376,7 @@ const CarePlanDetailPage = () => {
                         </div>
                         <Badge className={`${
                           member.status === 'active' ? 'bg-green-100 text-green-800' :
-                          member.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
                           member.status === 'declined' ? 'bg-red-100 text-red-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
