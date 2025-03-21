@@ -1,731 +1,582 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { Button } from "@/components/ui/button";
+
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { 
-  Card, 
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter
-} from "@/components/ui/card";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { 
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle 
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { toast } from "sonner";
-import { 
-  Plus, 
-  ClipboardList, 
-  MoreHorizontal, 
-  Edit, 
-  Trash, 
+  CheckCircle, 
+  Clock, 
   Calendar, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Circle 
-} from "lucide-react";
-import { CarePlan, CareTask, CareTaskStatus, CareTeamMember } from "@/types/care-management";
-import { 
-  fetchCarePlan, 
-  fetchCareTasks,
-  createCareTask,
-  updateCareTask,
-  deleteCareTask 
-} from "@/services/care-plan-service";
-import { fetchCareTeamMembers } from "@/services/care-team-service";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+  Plus, 
+  Edit,
+  Trash2,
+  User,
+  ArrowLeft,
+  MoreVertical
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { Navigation } from '@/components/layout/Navigation';
+import { format } from 'date-fns';
+import { CareTask, CareTaskStatus } from '@/types/care-management';
+import { fetchCarePlan, createTask, updateTask, deleteTask } from '@/services/care-plan-service';
+import { supabase } from '@/lib/supabase';
 
-const taskFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  description: z.string().optional(),
-  due_date: z.string().optional(),
-  assigned_to: z.string().optional(),
-  status: z.enum(["pending", "in_progress", "completed"]),
-});
-
-type TaskFormValues = z.infer<typeof taskFormSchema>;
-
-export const createTask = async (taskData: Omit<CareTask, "id" | "created_at" | "updated_at">) => {
-  // Ensure title is provided
-  if (!taskData.title) {
-    throw new Error("Task title is required");
-  }
-  
-  try {
-    const { data, error } = await supabase
-      .from('care_tasks')
-      .insert(taskData)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error creating care task:', error);
-    throw error;
-  }
-};
+interface TaskFormData {
+  title: string;
+  description: string;
+  due_date: string;
+  assigned_to: string;
+  status: CareTaskStatus;
+}
 
 export default function CareTasksPage() {
   const { carePlanId } = useParams<{ carePlanId: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  const [taskFormOpen, setTaskFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<CareTask | null>(null);
+  const [carePlan, setCarePlan] = useState<any>(null);
+  const [tasks, setTasks] = useState<CareTask[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<CareTask | null>(null);
-
-  const breadcrumbItems = [
-    {
-      label: "Dashboard",
-      path: "/dashboard",
-    },
-    {
-      label: "Family",
-      path: "/dashboard/family",
-    },
-    {
-      label: "Care Plans",
-      path: "/dashboard/family/care-plans",
-    },
-    {
-      label: "Tasks",
-      path: `/dashboard/family/care-plans/${carePlanId}/tasks`,
-    },
-  ];
-
-  // Form
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      due_date: "",
-      assigned_to: "",
-      status: "pending",
-    },
+  const [currentTask, setCurrentTask] = useState<CareTask | null>(null);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [formData, setFormData] = useState<TaskFormData>({
+    title: '',
+    description: '',
+    due_date: new Date().toISOString().split('T')[0],
+    assigned_to: '',
+    status: 'pending'
   });
-
-  // Queries
-  const { data: carePlan } = useQuery({
-    queryKey: ['carePlan', carePlanId],
-    queryFn: () => (carePlanId ? fetchCarePlan(carePlanId) : Promise.resolve(null)),
-    enabled: !!carePlanId,
-  });
-
-  const { data: careTasks = [], isLoading: isLoadingTasks } = useQuery({
-    queryKey: ['careTasks', carePlanId],
-    queryFn: () => (carePlanId ? fetchCareTasks(carePlanId) : Promise.resolve([])),
-    enabled: !!carePlanId,
-  });
-
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['careTeamMembers', carePlanId],
-    queryFn: () => (carePlanId ? fetchCareTeamMembers(carePlanId) : Promise.resolve([])),
-    enabled: !!carePlanId,
-  });
-
-  // Mutations
-  const createTaskMutation = useMutation({
-    mutationFn: (task: Omit<CareTask, 'id' | 'created_at' | 'updated_at'>) => createCareTask(task),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['careTasks'] });
-      setTaskFormOpen(false);
-      form.reset();
-      toast.success("Care task created successfully!");
-    },
-    onError: (error) => {
-      console.error("Error creating care task:", error);
-      toast.error("Failed to create care task.");
-    }
-  });
-
-  const updateTaskMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<CareTask> }) => updateCareTask(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['careTasks'] });
-      setTaskFormOpen(false);
-      setEditingTask(null);
-      form.reset();
-      toast.success("Care task updated successfully!");
-    },
-    onError: (error) => {
-      console.error("Error updating care task:", error);
-      toast.error("Failed to update care task.");
-    }
-  });
-
-  const deleteTaskMutation = useMutation({
-    mutationFn: (id: string) => deleteCareTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['careTasks'] });
-      setIsDeleteDialogOpen(false);
-      setTaskToDelete(null);
-      toast.success("Care task deleted successfully!");
-    },
-    onError: (error) => {
-      console.error("Error deleting care task:", error);
-      toast.error("Failed to delete care task.");
-    }
-  });
-
-  const toggleTaskStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string, status: CareTaskStatus }) => updateCareTask(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['careTasks'] });
-    },
-    onError: (error) => {
-      console.error("Error updating task status:", error);
-      toast.error("Failed to update task status.");
-    }
-  });
-
-  // Set form values when editing a task
+  
   useEffect(() => {
-    if (editingTask) {
-      form.reset({
-        title: editingTask.title,
-        description: editingTask.description || "",
-        due_date: editingTask.due_date || "",
-        assigned_to: editingTask.assigned_to || "",
-        status: editingTask.status,
-      });
-    } else {
-      form.reset({
-        title: "",
-        description: "",
-        due_date: "",
-        assigned_to: "",
-        status: "pending",
-      });
+    if (carePlanId && user) {
+      loadData();
     }
-  }, [editingTask, form]);
+  }, [carePlanId, user]);
 
-  // Format date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "No date set";
+  const loadData = async () => {
     try {
-      return format(new Date(dateString), "MMM d, yyyy");
+      // Load care plan data
+      const planData = await fetchCarePlan(carePlanId || '');
+      setCarePlan(planData);
+      
+      // Load tasks
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('care_tasks')
+        .select('*')
+        .eq('care_plan_id', carePlanId)
+        .order('due_date', { ascending: true });
+      
+      if (tasksError) throw tasksError;
+      setTasks(tasksData || []);
+      
+      // Load team members
+      const { data: teamData, error: teamError } = await supabase
+        .from('care_team_members')
+        .select(`
+          id,
+          caregiver_id,
+          role,
+          caregiver:caregiver_id (
+            id,
+            full_name,
+            avatar_url,
+            professional_type
+          )
+        `)
+        .eq('care_plan_id', carePlanId)
+        .eq('status', 'active');
+      
+      if (teamError) throw teamError;
+      setTeamMembers(teamData || []);
+      
     } catch (error) {
-      return "Invalid date";
+      console.error('Error loading care plan data:', error);
+      toast.error('Failed to load care plan data');
     }
   };
 
-  // Handle form submission
-  const onSubmit = (values: TaskFormValues) => {
-    if (!carePlanId) return;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-    const taskData = {
-      ...values,
-      care_plan_id: carePlanId,
-      due_date: values.due_date || undefined,
-      assigned_to: values.assigned_to || undefined,
-    };
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-    if (editingTask) {
-      updateTaskMutation.mutate({ id: editingTask.id, updates: taskData });
-    } else {
-      createTaskMutation.mutate(taskData);
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      due_date: new Date().toISOString().split('T')[0],
+      assigned_to: '',
+      status: 'pending'
+    });
+    setCurrentTask(null);
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!carePlanId) return;
+      
+      // Create the new task
+      const newTask = {
+        care_plan_id: carePlanId,
+        title: formData.title,
+        description: formData.description,
+        due_date: formData.due_date,
+        assigned_to: formData.assigned_to,
+        status: formData.status
+      };
+      
+      const createdTask = await createTask(newTask);
+      setTasks(prev => [...prev, createdTask]);
+      
+      setIsAddDialogOpen(false);
+      resetForm();
+      toast.success('Task added successfully');
+    } catch (error) {
+      console.error('Error adding task:', error);
+      toast.error('Failed to add task');
     }
   };
 
-  // Edit task
-  const handleEditTask = (task: CareTask) => {
-    setEditingTask(task);
-    setTaskFormOpen(true);
+  const handleEditTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!currentTask || !carePlanId) return;
+      
+      const updatedTask = {
+        id: currentTask.id,
+        care_plan_id: carePlanId,
+        title: formData.title,
+        description: formData.description,
+        due_date: formData.due_date,
+        assigned_to: formData.assigned_to,
+        status: formData.status
+      };
+      
+      await updateTask(updatedTask);
+      
+      setTasks(prev => 
+        prev.map(task => task.id === currentTask.id ? { ...task, ...updatedTask } : task)
+      );
+      
+      setIsEditDialogOpen(false);
+      resetForm();
+      toast.success('Task updated successfully');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
+    }
   };
 
-  // Delete task
-  const handleDeleteTask = (task: CareTask) => {
-    setTaskToDelete(task);
+  const handleDeleteTask = async () => {
+    try {
+      if (!currentTask) return;
+      
+      await deleteTask(currentTask.id);
+      
+      setTasks(prev => prev.filter(task => task.id !== currentTask.id));
+      
+      setIsDeleteDialogOpen(false);
+      resetForm();
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+    }
+  };
+
+  const openEditDialog = (task: CareTask) => {
+    setCurrentTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description || '',
+      due_date: task.due_date ? task.due_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      assigned_to: task.assigned_to || '',
+      status: task.status
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (task: CareTask) => {
+    setCurrentTask(task);
     setIsDeleteDialogOpen(true);
   };
 
-  // Toggle task status
-  const toggleTaskStatus = (task: CareTask) => {
-    const newStatus: CareTaskStatus = task.status === "completed" ? "pending" : "completed";
-    toggleTaskStatusMutation.mutate({ id: task.id, status: newStatus });
+  const getAssigneeName = (assigneeId: string) => {
+    const member = teamMembers.find(m => m.caregiver_id === assigneeId);
+    return member?.caregiver?.full_name || 'Unassigned';
   };
 
-  // Get color for task status
-  const getStatusColor = (status: CareTaskStatus) => {
+  const getStatusIcon = (status: CareTaskStatus) => {
     switch (status) {
-      case "completed":
-        return "text-green-600";
-      case "in_progress":
-        return "text-blue-600";
-      case "pending":
+      case 'completed':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'in_progress':
+        return <Clock className="h-5 w-5 text-blue-500" />;
       default:
-        return "text-gray-600";
+        return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
 
-  // Find assigned team member name
-  const getAssignedToName = (assignedToId?: string) => {
-    if (!assignedToId) return "Unassigned";
-    
-    const teamMember = teamMembers.find(member => member.caregiver_id === assignedToId);
-    return teamMember?.caregiver?.full_name || "Unknown";
+  const getStatusText = (status: CareTaskStatus) => {
+    switch (status) {
+      case 'completed':
+        return 'Completed';
+      case 'in_progress':
+        return 'In Progress';
+      default:
+        return 'Pending';
+    }
   };
 
-  if (!carePlanId) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'No date set';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  if (!carePlan) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Error</CardTitle>
-            <CardDescription>Missing care plan ID</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button onClick={() => navigate("/dashboard/family/care-plans")}>
-              Go back to Care Plans
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container py-8">
+          <div className="flex justify-center items-center h-64">
+            <p>Loading care plan...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Filter and sort tasks
-  const pendingTasks = careTasks.filter(task => task.status !== "completed");
-  const completedTasks = careTasks.filter(task => task.status === "completed");
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8">
-        <DashboardHeader breadcrumbItems={breadcrumbItems} />
-
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="mr-2" 
-              onClick={() => navigate("/dashboard/family/care-plans")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="container py-8">
+        <div className="mb-8">
+          <Link to={`/dashboard/family/care-plans`} className="flex items-center text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Care Plans
+          </Link>
+          
+          <div className="flex flex-wrap justify-between items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Care Tasks</h1>
-              {carePlan && (
-                <p className="text-gray-600">
-                  Plan: {carePlan.title}
-                </p>
-              )}
+              <h1 className="text-3xl font-bold tracking-tight">{carePlan.title} - Tasks</h1>
+              <p className="text-muted-foreground mt-1">{carePlan.description}</p>
             </div>
+            
+            <Button onClick={() => {
+              resetForm();
+              setIsAddDialogOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Task
+            </Button>
           </div>
-          <Button onClick={() => {
-            setEditingTask(null);
-            setTaskFormOpen(true);
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+          
+          <div className="flex mt-4 space-x-2">
+            <Link to={`/dashboard/family/care-plans/${carePlanId}/team`}>
+              <Button variant="outline">
+                <User className="mr-2 h-4 w-4" />
+                Care Team
+              </Button>
+            </Link>
+          </div>
         </div>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              <ClipboardList className="h-5 w-5 mr-2 text-blue-600" />
-              Active Tasks
-            </CardTitle>
-            <CardDescription>
-              Tasks that need to be completed
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingTasks ? (
-              <div className="animate-pulse space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-gray-100 rounded"></div>
-                ))}
-              </div>
-            ) : pendingTasks.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">Status</TableHead>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingTasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
-                        <button
-                          onClick={() => toggleTaskStatus(task)}
-                          className="cursor-pointer hover:opacity-80"
-                        >
-                          {task.status === "completed" ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-gray-400" />
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div>
-                          {task.title}
-                          {task.description && (
-                            <p className="text-xs text-gray-500 mt-1">{task.description}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getAssignedToName(task.assigned_to)}</TableCell>
-                      <TableCell>
-                        {task.due_date ? (
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-                            {formatDate(task.due_date)}
-                          </div>
-                        ) : (
-                          "No due date"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditTask(task)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteTask(task)}
-                              className="text-red-600"
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-8">
-                <ClipboardList className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <h3 className="text-lg font-medium">No Active Tasks</h3>
-                <p className="text-sm text-gray-500 mt-1 mb-4">
-                  Add your first task to get started
-                </p>
+        
+        <div className="grid grid-cols-1 gap-4">
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center h-40">
+                <p className="text-muted-foreground mb-4">No tasks have been added to this care plan yet.</p>
                 <Button onClick={() => {
-                  setEditingTask(null);
-                  setTaskFormOpen(true);
+                  resetForm();
+                  setIsAddDialogOpen(true);
                 }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Task
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add First Task
                 </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {completedTasks.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-xl">
-                <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-                Completed Tasks
-              </CardTitle>
-              <CardDescription>
-                Tasks that have been finished
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">Status</TableHead>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {completedTasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
-                        <button
-                          onClick={() => toggleTaskStatus(task)}
-                          className="cursor-pointer hover:opacity-80"
+              </CardContent>
+            </Card>
+          ) : (
+            tasks.map(task => (
+              <Card key={task.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start space-x-3">
+                      {getStatusIcon(task.status)}
+                      <div>
+                        <CardTitle className="text-xl">{task.title}</CardTitle>
+                        <CardDescription className="mt-1">{task.description}</CardDescription>
+                      </div>
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(task)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => openDeleteDialog(task)}
+                          className="text-destructive focus:text-destructive"
                         >
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        </button>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div>
-                          <span className="line-through text-gray-500">{task.title}</span>
-                          {task.description && (
-                            <p className="text-xs text-gray-400 mt-1 line-through">{task.description}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-gray-500">
-                        {getAssignedToName(task.assigned_to)}
-                      </TableCell>
-                      <TableCell className="text-gray-500">
-                        {task.due_date ? formatDate(task.due_date) : "No due date"}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleDeleteTask(task)}>
-                              <Trash className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Task Form Dialog */}
-        <Dialog open={taskFormOpen} onOpenChange={setTaskFormOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>{editingTask ? "Edit Task" : "Add New Task"}</DialogTitle>
-              <DialogDescription>
-                {editingTask
-                  ? "Update the task details below."
-                  : "Fill out the form to create a new care task."}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Task Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Task title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Add details about this task" 
-                          {...field} 
-                          value={field.value || ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="due_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Due Date (Optional)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            value={field.value || ""} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="assigned_to"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign To (Optional)</FormLabel>
-                      <Select 
-                        value={field.value || ""} 
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Assign to team member" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
-                          {teamMembers.map((member: CareTeamMember) => (
-                            <SelectItem 
-                              key={member.caregiver_id} 
-                              value={member.caregiver_id}
-                            >
-                              {member.caregiver?.full_name || "Unknown"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setTaskFormOpen(false);
-                      setEditingTask(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                  >
-                    {createTaskMutation.isPending || updateTaskMutation.isPending
-                      ? "Saving..."
-                      : editingTask
-                      ? "Update Task"
-                      : "Add Task"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Task</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this task? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => taskToDelete && deleteTaskMutation.mutate(taskToDelete.id)}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap justify-between text-sm text-muted-foreground gap-2">
+                    <div className="flex items-center">
+                      <Calendar className="mr-1 h-4 w-4" />
+                      <span>{formatDate(task.due_date)}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <User className="mr-1 h-4 w-4" />
+                      <span>{getAssigneeName(task.assigned_to || '')}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {getStatusText(task.status)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
+      
+      {/* Add Task Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to the care plan.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddTask}>
+            <div className="space-y-4 py-4">
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="title">Task Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="due_date">Due Date</Label>
+                <Input
+                  id="due_date"
+                  name="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="assigned_to">Assigned To</Label>
+                <Select 
+                  value={formData.assigned_to} 
+                  onValueChange={(value) => handleSelectChange('assigned_to', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Unassigned</SelectItem>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.caregiver_id} value={member.caregiver_id}>
+                        {member.caregiver?.full_name || 'Unknown'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange('status', value as CareTaskStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setIsAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Add Task</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Task Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Update task details.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditTask}>
+            <div className="space-y-4 py-4">
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="edit-title">Task Title</Label>
+                <Input
+                  id="edit-title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="edit-due_date">Due Date</Label>
+                <Input
+                  id="edit-due_date"
+                  name="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="edit-assigned_to">Assigned To</Label>
+                <Select 
+                  value={formData.assigned_to} 
+                  onValueChange={(value) => handleSelectChange('assigned_to', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Unassigned</SelectItem>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.caregiver_id} value={member.caregiver_id}>
+                        {member.caregiver?.full_name || 'Unknown'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange('status', value as CareTaskStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Task Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTask}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

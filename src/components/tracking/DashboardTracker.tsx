@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 
 export interface DashboardTrackerProps {
   currentPage: string;
+  dashboardType?: string;
+  additionalData?: Record<string, any>;
 }
 
-export function DashboardTracker({ currentPage }: DashboardTrackerProps) {
+export function DashboardTracker({ currentPage, dashboardType, additionalData }: DashboardTrackerProps) {
   const { user } = useAuth();
 
   useEffect(() => {
@@ -20,6 +22,8 @@ export function DashboardTracker({ currentPage }: DashboardTrackerProps) {
           action_type: 'dashboard_view',
           additional_data: {
             page: currentPage,
+            dashboardType,
+            ...(additionalData || {}),
             timestamp: new Date().toISOString(),
           },
         });
@@ -29,7 +33,7 @@ export function DashboardTracker({ currentPage }: DashboardTrackerProps) {
     };
 
     trackDashboardView();
-  }, [user, currentPage]);
+  }, [user, currentPage, dashboardType, additionalData]);
 
   return null;
 }

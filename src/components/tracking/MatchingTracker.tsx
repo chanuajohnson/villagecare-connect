@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 
 export interface MatchingTrackerProps {
   currentPage: string;
+  matchingType?: string;
+  additionalData?: Record<string, any>;
 }
 
-export function MatchingTracker({ currentPage }: MatchingTrackerProps) {
+export function MatchingTracker({ currentPage, matchingType, additionalData }: MatchingTrackerProps) {
   const { user } = useAuth();
 
   useEffect(() => {
@@ -20,6 +22,8 @@ export function MatchingTracker({ currentPage }: MatchingTrackerProps) {
           action_type: 'matching_view',
           additional_data: {
             page: currentPage,
+            matchingType,
+            ...(additionalData || {}),
             timestamp: new Date().toISOString(),
           },
         });
@@ -29,7 +33,7 @@ export function MatchingTracker({ currentPage }: MatchingTrackerProps) {
     };
 
     trackMatchingView();
-  }, [user, currentPage]);
+  }, [user, currentPage, matchingType, additionalData]);
 
   return null;
 }
