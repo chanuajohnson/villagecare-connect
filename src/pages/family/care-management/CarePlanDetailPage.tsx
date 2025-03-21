@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -47,6 +46,7 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 interface Professional {
   id: string;
@@ -80,10 +80,7 @@ const CarePlanDetailPage = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<Date>(startOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
   });
@@ -250,7 +247,7 @@ const CarePlanDetailPage = () => {
     
     try {
       // Single date or first date in range
-      const baseDayDate = selectedDay || (dateRange.from ? new Date(dateRange.from) : new Date());
+      const baseDayDate = selectedDay || (dateRange?.from ? new Date(dateRange.from) : new Date());
       const timeSlotInfo = TIME_SLOTS.find(slot => slot.value === newShift.timeSlot);
       
       if (!timeSlotInfo) {
@@ -261,7 +258,7 @@ const CarePlanDetailPage = () => {
       // If it's a date range, prepare for multiple shift creation
       const datesToCreateShifts = [];
       
-      if (isRangeSelection && dateRange.from && dateRange.to) {
+      if (isRangeSelection && dateRange?.from && dateRange.to) {
         let currentDate = new Date(dateRange.from);
         const endDate = new Date(dateRange.to);
         
@@ -864,7 +861,7 @@ const CarePlanDetailPage = () => {
                                     className="w-full justify-start text-left"
                                   >
                                     <CalendarRange className="mr-2 h-4 w-4" />
-                                    {dateRange.from ? (
+                                    {dateRange?.from ? (
                                       dateRange.to ? (
                                         <>
                                           {format(dateRange.from, "PPP")} - {format(dateRange.to, "PPP")}
@@ -881,10 +878,7 @@ const CarePlanDetailPage = () => {
                                 <PopoverContent className="w-auto p-0" align="start">
                                   <CalendarComponent
                                     mode="range"
-                                    selected={{
-                                      from: dateRange.from,
-                                      to: dateRange.to,
-                                    }}
+                                    selected={dateRange}
                                     onSelect={setDateRange}
                                     initialFocus
                                     className="p-3 pointer-events-auto"
@@ -978,7 +972,7 @@ const CarePlanDetailPage = () => {
                             onClick={handleCreateShift}
                             disabled={
                               !newShift.timeSlot || 
-                              (isRangeSelection && (!dateRange.from || !dateRange.to)) ||
+                              (isRangeSelection && (!dateRange?.from || !dateRange.to)) ||
                               (!isRangeSelection && !selectedDay)
                             }
                           >
