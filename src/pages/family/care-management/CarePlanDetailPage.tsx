@@ -7,13 +7,14 @@ import { Container } from "@/components/ui/container";
 import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 import { 
   ArrowLeft, Calendar, Clock, FileText, Plus, Users, ArrowRight, X, Edit, 
-  Trash2, MoreHorizontal, UserMinus, CalendarRange, ChevronDown
+  Trash2, MoreHorizontal, UserMinus, CalendarRange, ChevronDown, Save, Pencil
 } from "lucide-react";
 import { 
   fetchCarePlan, 
   fetchCareTeamMembers, 
   inviteCareTeamMember,
   removeCareTeamMember,
+  updateCarePlan,
   CareTeamMember, 
   CarePlan,
   fetchCareShifts,
@@ -47,6 +48,8 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Professional {
   id: string;
@@ -58,6 +61,11 @@ interface Professional {
 interface CareTeamMemberWithProfile extends CareTeamMember {
   professionalDetails?: Professional;
 }
+
+type TeamMemberRole = "caregiver" | "nurse" | "therapist" | "doctor" | "other";
+type PlanType = 'scheduled' | 'on-demand' | 'both';
+type WeekdayOption = '8am-4pm' | '6am-6pm' | '6pm-8am' | 'none';
+type WeekendOption = 'yes' | 'no';
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -98,7 +106,7 @@ const CarePlanDetailPage = () => {
   });
   const [newTeamMember, setNewTeamMember] = useState({
     caregiverId: "",
-    role: "caregiver" as const,
+    role: "caregiver" as TeamMemberRole,
     notes: ""
   });
   const [newShift, setNewShift] = useState({
@@ -115,6 +123,33 @@ const CarePlanDetailPage = () => {
   const [confirmRemoveDialogOpen, setConfirmRemoveDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<CareTeamMemberWithProfile | null>(null);
   const [isRangeSelection, setIsRangeSelection] = useState(false);
+  // Add states for editing care plan
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedCarePlan, setEditedCarePlan] = useState<{
+    title: string;
+    description: string;
+    planType: PlanType;
+    weekdayOption: WeekdayOption;
+    weekendOption: WeekendOption;
+    additionalShifts: {
+      weekdayEvening4pmTo6am: boolean;
+      weekdayEvening4pmTo8am: boolean;
+      weekdayEvening6pmTo6am: boolean;
+      weekdayEvening6pmTo8am: boolean;
+    }
+  }>({
+    title: "",
+    description: "",
+    planType: "scheduled",
+    weekdayOption: "8am-4pm",
+    weekendOption: "yes",
+    additionalShifts: {
+      weekdayEvening4pmTo6am: false,
+      weekdayEvening4pmTo8am: false,
+      weekdayEvening6pmTo6am: false,
+      weekdayEvening6pmTo8am: false
+    }
+  });
 
   useEffect(() => {
     if (user && id) {
@@ -126,6 +161,25 @@ const CarePlanDetailPage = () => {
       setLoading(false);
     }
   }, [user, id]);
+
+  // Initialize edit form when care plan loads
+  useEffect(() => {
+    if (carePlan) {
+      setEditedCarePlan({
+        title: carePlan.title,
+        description: carePlan.description || "",
+        planType: carePlan.metadata?.plan_type || "scheduled",
+        weekdayOption: carePlan.metadata?.weekday_coverage || "8am-4pm",
+        weekendOption: carePlan.metadata?.weekend_coverage || "yes",
+        additionalShifts: {
+          weekdayEvening4pmTo6am: carePlan.metadata?.additional_shifts?.weekdayEvening4pmTo6am || false,
+          weekdayEvening4pmTo8am: carePlan.metadata?.additional_shifts?.weekdayEvening4pmTo8am || false,
+          weekdayEvening6pmTo6am: carePlan.metadata?.additional_shifts?.weekdayEvening6pmTo6am || false,
+          weekdayEvening6pmTo8am: carePlan.metadata?.additional_shifts?.weekdayEvening6pmTo8am || false
+        }
+      });
+    }
+  }, [carePlan]);
 
   const loadCarePlan = async () => {
     if (!id) return;
@@ -450,6 +504,52 @@ const CarePlanDetailPage = () => {
     return id.substring(0, 2).toUpperCase();
   };
 
+  // Add new function to handle care plan editing
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+  };
+
+  // Add new function to handle saving edited care plan
+  const saveCarePlanChanges = async () => {
+    if (!id || !user) return;
+
+    try {
+      // Prepare plan updates with edited values
+      const planUpdates = {
+        title: editedCarePlan.title,
+        description: editedCarePlan.description,
+        metadata: {
+          plan_type: editedCarePlan.planType,
+          weekday_coverage: editedCarePlan.weekdayOption,
+          weekend_coverage: editedCarePlan.weekendOption,
+          additional_shifts: editedCarePlan.additionalShifts
+        }
+      };
+
+      const updatedPlan = await updateCarePlan(id, planUpdates);
+      
+      if (updatedPlan) {
+        setCarePlan(updatedPlan);
+        setIsEditMode(false);
+        toast.success("Care plan updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating care plan:", error);
+      toast.error("Failed to update care plan");
+    }
+  };
+
+  // Add new function to handle form changes
+  const handleShiftCheckboxChange = (shiftKey: string) => {
+    setEditedCarePlan(prev => ({
+      ...prev,
+      additionalShifts: {
+        ...prev.additionalShifts,
+        [shiftKey]: !prev.additionalShifts[shiftKey as keyof typeof prev.additionalShifts]
+      }
+    }));
+  };
+
   if (loading) {
     return (
       <Container className="py-12">
@@ -498,19 +598,62 @@ const CarePlanDetailPage = () => {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">{carePlan?.title}</h1>
-              <p className="text-muted-foreground mt-1">
-                {carePlan?.description || "No description provided"}
-              </p>
+              {isEditMode ? (
+                <div className="mb-2">
+                  <Label htmlFor="title">Plan Title</Label>
+                  <Input 
+                    id="title" 
+                    value={editedCarePlan.title}
+                    onChange={(e) => setEditedCarePlan({...editedCarePlan, title: e.target.value})}
+                    className="mb-2"
+                  />
+                  
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    value={editedCarePlan.description}
+                    onChange={(e) => setEditedCarePlan({...editedCarePlan, description: e.target.value})}
+                    rows={2}
+                  />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold">{carePlan?.title}</h1>
+                  <p className="text-muted-foreground mt-1">
+                    {carePlan?.description || "No description provided"}
+                  </p>
+                </>
+              )}
             </div>
             
-            <Badge className={`${
-              carePlan?.status === 'active' ? 'bg-green-100 text-green-800' :
-              carePlan?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-              'bg-orange-100 text-orange-800'
-            }`}>
-              {carePlan?.status.charAt(0).toUpperCase() + carePlan?.status.slice(1)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {isEditMode ? (
+                <>
+                  <Button variant="outline" onClick={toggleEditMode}>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                  <Button onClick={saveCarePlanChanges}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={toggleEditMode}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Plan
+                </Button>
+              )}
+              
+              <Badge className={`${
+                carePlan?.status === 'active' ? 'bg-green-100 text-green-800' :
+                carePlan?.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                carePlan?.status === 'orange' ? 'bg-orange-100 text-orange-800' :
+                'bg-orange-100 text-orange-800'
+              }`}>
+                {carePlan?.status.charAt(0).toUpperCase() + carePlan?.status.slice(1)}
+              </Badge>
+            </div>
           </div>
         </div>
 
@@ -523,562 +666,171 @@ const CarePlanDetailPage = () => {
           
           <TabsContent value="details">
             <Card>
-              <CardHeader>
-                <CardTitle>Care Plan Details</CardTitle>
-                <CardDescription>
-                  Information about this care plan
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle>Care Plan Details</CardTitle>
+                  <CardDescription>
+                    Information about this care plan
+                  </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Plan Type</h3>
-                    <p className="font-medium">{getPlanTypeDisplay(carePlan)}</p>
-                  </div>
-                  
-                  {carePlan.metadata?.plan_type !== 'on-demand' && (
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Weekday Coverage</h3>
-                      <p className="font-medium">{carePlan.metadata?.weekday_coverage || "None"}</p>
-                    </div>
-                  )}
-                  
-                  {carePlan.metadata?.plan_type !== 'on-demand' && (
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Weekend Coverage</h3>
-                      <p className="font-medium">{carePlan.metadata?.weekend_coverage === 'yes' ? "6AM-6PM" : "None"}</p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Created On</h3>
-                    <p className="font-medium">{new Date(carePlan.created_at).toLocaleDateString()}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Last Updated</h3>
-                    <p className="font-medium">{new Date(carePlan.updated_at).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                
-                {carePlan.metadata?.additional_shifts && (
-                  <div className="mt-6">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Additional Shifts</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {carePlan.metadata.additional_shifts.weekdayEvening4pmTo6am && (
-                        <Badge variant="outline" className="justify-start">Weekday Evening (4PM-6AM)</Badge>
-                      )}
-                      {carePlan.metadata.additional_shifts.weekdayEvening4pmTo8am && (
-                        <Badge variant="outline" className="justify-start">Weekday Evening (4PM-8AM)</Badge>
-                      )}
-                      {carePlan.metadata.additional_shifts.weekdayEvening6pmTo6am && (
-                        <Badge variant="outline" className="justify-start">Weekday Evening (6PM-6AM)</Badge>
-                      )}
-                      {carePlan.metadata.additional_shifts.weekdayEvening6pmTo8am && (
-                        <Badge variant="outline" className="justify-start">Weekday Evening (6PM-8AM)</Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="team">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Care Team Members</h2>
-              <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Team Member
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Assign Care Professional</DialogTitle>
-                    <DialogDescription>
-                      Add a care professional to this care plan. They will be assigned immediately.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="caregiver">Care Professional</Label>
-                      <Select 
-                        value={newTeamMember.caregiverId} 
-                        onValueChange={(value) => setNewTeamMember({...newTeamMember, caregiverId: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a professional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {professionals.map((prof) => (
-                            <SelectItem key={prof.id} value={prof.id}>
-                              {prof.full_name || "Unknown Professional"} 
-                              {prof.professional_type ? ` (${prof.professional_type})` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Role</Label>
-                      <Select 
-                        value={newTeamMember.role} 
-                        onValueChange={(value: any) => setNewTeamMember({...newTeamMember, role: value})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="caregiver">Caregiver</SelectItem>
-                          <SelectItem value="nurse">Nurse</SelectItem>
-                          <SelectItem value="therapist">Therapist</SelectItem>
-                          <SelectItem value="doctor">Doctor</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Notes (Optional)</Label>
-                      <Textarea 
-                        id="notes"
-                        placeholder="Add any specific notes or instructions for this team member"
-                        value={newTeamMember.notes}
-                        onChange={(e) => setNewTeamMember({...newTeamMember, notes: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleInviteTeamMember}>Assign Professional</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-            
-            {careTeamMembers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {careTeamMembers.map((member) => {
-                  const initials = getInitials(member.professionalDetails?.full_name, member.caregiver_id);
-                  const displayName = member.professionalDetails?.full_name || member.caregiver_id;
-                  const profType = member.professionalDetails?.professional_type;
-                  
-                  return (
-                    <Card key={member.id}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center">
-                            <Avatar className="h-10 w-10 mr-3">
-                              <AvatarImage src={member.professionalDetails?.avatar_url || ""} />
-                              <AvatarFallback className="bg-primary/10 text-primary">
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base">{displayName}</CardTitle>
-                              <CardDescription>
-                                {profType ? `${profType} (${member.role})` : 
-                                  member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={`${
-                              member.status === 'active' ? 'bg-green-100 text-green-800' :
-                              member.status === 'invited' ? 'bg-yellow-100 text-yellow-800' :
-                              member.status === 'declined' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
-                            </Badge>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Open menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => {
-                                    setMemberToRemove(member);
-                                    setConfirmRemoveDialogOpen(true);
-                                  }}
-                                >
-                                  <UserMinus className="h-4 w-4 mr-2" />
-                                  Remove from team
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      {member.notes && (
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">{member.notes}</p>
-                        </CardContent>
-                      )}
-                      <CardFooter className="border-t pt-4">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Added {new Date(member.created_at).toLocaleDateString()}
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  )}
-                )}
-              </div>
-            ) : (
-              <Card className="bg-muted/50">
-                <CardHeader>
-                  <CardTitle>No Team Members</CardTitle>
-                  <CardDescription>
-                    You haven't added any care professionals to this care plan yet.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">Add your first team member to start assigning shifts and tasks.</p>
-                  <Button onClick={() => setInviteDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add First Team Member
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <CardTitle>Care Schedule</CardTitle>
-                    <CardDescription>
-                      Manage care shifts based on the care plan coverage
-                    </CardDescription>
-                  </div>
-                  {careTeamMembers.length > 0 && (
-                    <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Shift
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-lg">
-                        <DialogHeader>
-                          <DialogTitle>{editingShift ? 'Edit Shift' : 'Assign shift and team'}</DialogTitle>
-                          <DialogDescription>
-                            {editingShift 
-                              ? 'Update this care shift details and assignment' 
-                              : 'Add a new care shift to the schedule'}
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="title">Shift Title</Label>
-                            <Select 
-                              value={newShift.selectedShiftType} 
-                              onValueChange={(value) => setNewShift({...newShift, selectedShiftType: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a shift type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {SHIFT_TITLE_OPTIONS.map((option) => (
-                                  <SelectItem key={option.id} value={option.id}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div className="flex flex-col space-y-2">
-                            <Label>Date Selection</Label>
-                            <div className="flex items-center space-x-2">
-                              <Button 
-                                type="button" 
-                                variant={isRangeSelection ? "default" : "outline"} 
-                                className="w-1/2"
-                                onClick={() => setIsRangeSelection(true)}
-                              >
-                                <CalendarRange className="mr-2 h-4 w-4" />
-                                Date Range
-                              </Button>
-                              <Button 
-                                type="button" 
-                                variant={!isRangeSelection ? "default" : "outline"} 
-                                className="w-1/2"
-                                onClick={() => setIsRangeSelection(false)}
-                              >
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Single Date
-                              </Button>
-                            </div>
-                          </div>
-
-                          {!isRangeSelection ? (
-                            <div className="space-y-2">
-                              <Label htmlFor="day">Day</Label>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-full justify-start text-left"
-                                  >
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    {selectedDay ? (
-                                      format(selectedDay, "PPP")
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <CalendarComponent
-                                    mode="single"
-                                    selected={selectedDay || undefined}
-                                    onSelect={(date) => {
-                                      setSelectedDay(date);
-                                      if (date) {
-                                        setNewShift({
-                                          ...newShift,
-                                          day: format(date, "yyyy-MM-dd"),
-                                        });
-                                      }
-                                    }}
-                                    initialFocus
-                                    className="p-3 pointer-events-auto"
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <Label>Date Range</Label>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-full justify-start text-left"
-                                  >
-                                    <CalendarRange className="mr-2 h-4 w-4" />
-                                    {dateRange?.from ? (
-                                      dateRange.to ? (
-                                        <>
-                                          {format(dateRange.from, "PPP")} - {format(dateRange.to, "PPP")}
-                                        </>
-                                      ) : (
-                                        format(dateRange.from, "PPP")
-                                      )
-                                    ) : (
-                                      <span>Pick a date range</span>
-                                    )}
-                                    <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <CalendarComponent
-                                    mode="range"
-                                    selected={dateRange}
-                                    onSelect={setDateRange}
-                                    initialFocus
-                                    className="p-3 pointer-events-auto"
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          )}
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="caregiverId">Assign To (Optional)</Label>
-                            <Select 
-                              value={newShift.caregiverId} 
-                              onValueChange={(value) => setNewShift({...newShift, caregiverId: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a team member" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="unassigned">Unassigned</SelectItem>
-                                {careTeamMembers.map((member) => (
-                                  <SelectItem key={member.caregiver_id} value={member.caregiver_id}>
-                                    {member.professionalDetails?.full_name || "Unknown Professional"}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button>
-                          <Button 
-                            onClick={handleCreateShift}
-                            disabled={
-                              !newShift.selectedShiftType || 
-                              (isRangeSelection && (!dateRange?.from || !dateRange.to)) ||
-                              (!isRangeSelection && !selectedDay)
-                            }
-                          >
-                            {isRangeSelection 
-                              ? 'Create Shifts' 
-                              : (editingShift ? 'Update Shift' : 'Create Shift')}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {careTeamMembers.length > 0 ? (
+                {isEditMode ? (
                   <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
-                        <ArrowLeft className="h-4 w-4" />
-                        <span className="ml-1">Previous</span>
-                      </Button>
-                      <h3 className="font-medium">
-                        Week of {format(selectedWeek, "MMMM d, yyyy")}
-                      </h3>
-                      <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
-                        <span className="mr-1">Next</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-7 gap-2">
-                      {getWeekDays().map((day, index) => (
-                        <div key={index} className="text-center font-medium text-xs">
-                          {format(day, "EEE")}
-                          <br />
-                          {format(day, "d")}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="grid grid-cols-7 gap-2">
-                      {getWeekDays().map((day, index) => {
-                        const dayShifts = getShiftsForDay(day);
-                        const isWeekend = index === 0 || index === 6;
-                        
-                        return (
-                          <div 
-                            key={index} 
-                            className={`border rounded-md p-2 min-h-[120px] ${
-                              isWeekend ? 'bg-blue-50/30' : ''
-                            }`}
-                          >
-                            {dayShifts.length > 0 ? (
-                              <div className="space-y-2">
-                                {dayShifts.map(shift => (
-                                  <div 
-                                    key={shift.id} 
-                                    className="text-xs p-1.5 rounded bg-blue-100 border border-blue-200 flex flex-col"
-                                  >
-                                    <div className="font-medium truncate">{shift.title}</div>
-                                    <div className="text-muted-foreground truncate">
-                                      {getTimeDisplay(shift.start_time)} - {getTimeDisplay(shift.end_time)}
-                                    </div>
-                                    <div className={`truncate mt-1 ${
-                                      shift.caregiver_id ? 'text-green-700' : 'text-orange-700'
-                                    }`}>
-                                      {getCaregiverName(shift.caregiver_id)}
-                                    </div>
-                                    <div className="flex justify-end gap-1 mt-1">
-                                      <Button 
-                                        size="icon" 
-                                        variant="ghost" 
-                                        className="h-6 w-6"
-                                        onClick={() => handleEditShift(shift)}
-                                      >
-                                        <Edit className="h-3 w-3" />
-                                      </Button>
-                                      <Button 
-                                        size="icon" 
-                                        variant="ghost" 
-                                        className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        onClick={() => handleDeleteShift(shift.id)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div 
-                                className="flex items-center justify-center h-full cursor-pointer hover:bg-slate-50 transition-colors rounded"
-                                onClick={() => openNewShiftDialog(day)}
-                              >
-                                <Plus className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
+                    <div>
+                      <h3 className="text-base font-medium mb-2">Plan Type</h3>
+                      <RadioGroup 
+                        value={editedCarePlan.planType} 
+                        onValueChange={(value) => setEditedCarePlan({...editedCarePlan, planType: value as PlanType})}
+                        className="space-y-2"
+                      >
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="scheduled" id="edit-scheduled" />
+                          <div className="grid gap-1 leading-none">
+                            <Label htmlFor="edit-scheduled" className="font-medium">
+                              Scheduled Care Plan
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Regularly scheduled caregiving shifts
+                            </p>
                           </div>
-                        );
-                      })}
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="on-demand" id="edit-on-demand" />
+                          <div className="grid gap-1 leading-none">
+                            <Label htmlFor="edit-on-demand" className="font-medium">
+                              On-Demand Care
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Flexible care shifts as needed
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="both" id="edit-both" />
+                          <div className="grid gap-1 leading-none">
+                            <Label htmlFor="edit-both" className="font-medium">
+                              Both (Scheduled + On-Demand)
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Regular scheduled care with additional on-demand support
+                            </p>
+                          </div>
+                        </div>
+                      </RadioGroup>
                     </div>
                     
-                    <div className="bg-muted/30 rounded-md p-4">
-                      <h3 className="font-medium mb-2">About the Schedule</h3>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• Click on an empty day to add a new shift</li>
-                        <li>• You can assign shifts to care team members</li>
-                        <li>• Set shifts as recurring for regular schedules</li>
-                        <li>• Edit or delete shifts using the icons</li>
-                      </ul>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                    <p className="font-medium mb-1">Add team members first</p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Before scheduling shifts, you need to add care professionals to your team.
-                    </p>
-                    <Button onClick={() => setInviteDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Team Member
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </Container>
-
-      <Dialog open={confirmRemoveDialogOpen} onOpenChange={setConfirmRemoveDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Remove Team Member</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove {memberToRemove?.professionalDetails?.full_name || memberToRemove?.caregiver_id} from the care team?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => setConfirmRemoveDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleRemoveTeamMember}>
-              Remove Team Member
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default CarePlanDetailPage;
-
+                    {(editedCarePlan.planType === "scheduled" || editedCarePlan.planType === "both") && (
+                      <>
+                        <div>
+                          <h3 className="text-base font-medium mb-2">Primary Weekday Coverage</h3>
+                          <RadioGroup 
+                            value={editedCarePlan.weekdayOption} 
+                            onValueChange={(value) => setEditedCarePlan({...editedCarePlan, weekdayOption: value as WeekdayOption})}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="8am-4pm" id="edit-option1" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-option1" className="font-medium">
+                                  Monday - Friday, 8 AM - 4 PM
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Standard daytime coverage
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="6am-6pm" id="edit-option2" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-option2" className="font-medium">
+                                  Monday - Friday, 6 AM - 6 PM
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Extended daytime coverage
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="6pm-8am" id="edit-option3" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-option3" className="font-medium">
+                                  Monday - Friday, 6 PM - 8 AM
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Extended nighttime coverage
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="none" id="edit-option-none" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-option-none" className="font-medium">
+                                  No Weekday Coverage
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Skip weekday coverage
+                                </p>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-base font-medium mb-2">Weekend Coverage</h3>
+                          <RadioGroup 
+                            value={editedCarePlan.weekendOption} 
+                            onValueChange={(value) => setEditedCarePlan({...editedCarePlan, weekendOption: value as WeekendOption})}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="yes" id="edit-weekend-yes" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-weekend-yes" className="font-medium">
+                                  Saturday - Sunday, 6 AM - 6 PM
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Daytime weekend coverage
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="no" id="edit-weekend-no" />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-weekend-no" className="font-medium">
+                                  No Weekend Coverage
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Skip regular weekend coverage
+                                </p>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-base font-medium mb-2">Additional Shifts</h3>
+                          <div className="space-y-2">
+                            <div className="flex items-start space-x-2">
+                              <Checkbox 
+                                id="edit-shift-4pm-6am"
+                                checked={editedCarePlan.additionalShifts.weekdayEvening4pmTo6am} 
+                                onCheckedChange={() => handleShiftCheckboxChange('weekdayEvening4pmTo6am')}
+                              />
+                              <div className="grid gap-1 leading-none">
+                                <Label htmlFor="edit-shift-4pm-6am" className="font-medium">
+                                  Weekday Evening (4 PM - 6 AM)
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Evening care after primary shift
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-
