@@ -57,7 +57,7 @@ const CareManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageViewTracker pageName="care_management" />
+      <PageViewTracker actionType="family_dashboard_view" additionalData={{ section: "care_management" }} />
       
       <Container className="py-8">
         <div className="mb-6">
