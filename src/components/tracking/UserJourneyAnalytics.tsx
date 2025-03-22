@@ -1,32 +1,42 @@
 
 import { useState } from "react";
 import { Container } from "@/components/ui/container";
-import { PageViewTracker } from "@/components/tracking/PageViewTracker";
+import { CompleteTracker } from "@/components/tracking/CompleteTracker";
 import { UserJourneyMonitor } from "@/components/tracking/UserJourneyMonitor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserJourneyTracker } from "@/components/tracking/UserJourneyTracker";
+import { useCompleteTracking } from "@/hooks/useCompleteTracking";
+import { UserJourneyStage } from "@/components/tracking/UserJourneyTracker";
 
 export const UserJourneyAnalytics = () => {
   // Default to the specified user ID
   const [userId, setUserId] = useState("d18b867c-fd20-4b59-b355-846e0853eb8a");
   const [inputUserId, setInputUserId] = useState("");
+  const { trackFeatureWithJourney } = useCompleteTracking();
+
+  const handleFeatureExplore = (featureName: string) => {
+    trackFeatureWithJourney(
+      featureName,
+      "explore",
+      "feature_discovery",
+      { location: "analytics_page", user_filtered: userId }
+    );
+  };
 
   return (
     <Container className="py-8">
-      {/* Track page view */}
-      <PageViewTracker 
-        actionType="admin_analytics_view" 
-        additionalData={{ section: "user_journey" }}
-        journeyStage="active_usage"
-      />
-      
-      {/* Add general journey tracking for this analytics page */}
-      <UserJourneyTracker 
-        journeyStage="feature_discovery" 
-        additionalData={{ feature: "journey_analytics" }}
+      {/* Use CompleteTracker for combined tracking */}
+      <CompleteTracker 
+        pageTracking={{ 
+          actionType: "admin_analytics_view", 
+          additionalData: { section: "user_journey" }
+        }}
+        journeyTracking={{
+          journeyStage: "active_usage",
+          additionalData: { feature: "journey_analytics" }
+        }}
       />
       
       <h1 className="text-3xl font-bold mb-6">User Journey Tracking System</h1>
@@ -47,7 +57,16 @@ export const UserJourneyAnalytics = () => {
                 placeholder="Enter user ID"
                 className="flex-1"
               />
-              <Button onClick={() => setUserId(inputUserId || "d18b867c-fd20-4b59-b355-846e0853eb8a")}>
+              <Button onClick={() => {
+                setUserId(inputUserId || "d18b867c-fd20-4b59-b355-846e0853eb8a");
+                // Track this action with journey context
+                trackFeatureWithJourney(
+                  "user_filter", 
+                  "apply",
+                  "active_usage", 
+                  { filtered_user_id: inputUserId || "d18b867c-fd20-4b59-b355-846e0853eb8a" }
+                );
+              }}>
                 Track User
               </Button>
             </div>
@@ -57,8 +76,18 @@ export const UserJourneyAnalytics = () => {
       
       <Tabs defaultValue="monitor">
         <TabsList className="mb-4">
-          <TabsTrigger value="monitor">User Journey Monitor</TabsTrigger>
-          <TabsTrigger value="guide">Implementation Guide</TabsTrigger>
+          <TabsTrigger 
+            value="monitor" 
+            onClick={() => handleFeatureExplore("journey_monitor")}
+          >
+            User Journey Monitor
+          </TabsTrigger>
+          <TabsTrigger 
+            value="guide" 
+            onClick={() => handleFeatureExplore("implementation_guide")}
+          >
+            Implementation Guide
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="monitor">
@@ -70,108 +99,160 @@ export const UserJourneyAnalytics = () => {
             <CardHeader>
               <CardTitle>Journey Tracking Implementation Guide</CardTitle>
               <CardDescription>
-                How to implement user journey tracking across your application
+                How to implement unified tracking across your application
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium mb-2">Components Overview</h3>
+                <h3 className="text-lg font-medium mb-2">Tracking System Overview</h3>
                 <p className="mb-4">
-                  The journey tracking system consists of several key components that work together:
+                  Our tracking system consists of several integrated components:
                 </p>
                 <ul className="list-disc pl-5 space-y-2">
                   <li>
-                    <strong>UserJourneyTracker</strong>: Core component that tracks journey stages.
-                    Place this on key pages and user interaction points.
+                    <strong>CompleteTracker</strong>: Unified component that combines PageView and Journey tracking.
+                    The simplest way to track across multiple dimensions.
+                  </li>
+                  <li>
+                    <strong>useCompleteTracking Hook</strong>: Programmatic tracking that integrates journey stages
+                    with specific actions.
+                  </li>
+                  <li>
+                    <strong>UserJourneyTracker</strong>: Core component for tracking journey stages.
                   </li>
                   <li>
                     <strong>PageViewTracker</strong>: Tracks page views with journey context.
-                    Use this on every page to capture navigation patterns.
-                  </li>
-                  <li>
-                    <strong>useTracking Hook</strong>: Underlying hook that handles sending tracking data.
-                    Used by the tracker components but can also be used directly.
                   </li>
                 </ul>
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Implementing Journey Tracking</h3>
+                <h3 className="text-lg font-medium mb-2">Using the CompleteTracker</h3>
                 <p className="mb-4">
-                  To implement comprehensive journey tracking across your application:
+                  The CompleteTracker is the simplest way to implement comprehensive tracking:
                 </p>
-                <ol className="list-decimal pl-5 space-y-2">
-                  <li>
-                    <strong>Identify key journey stages</strong>: Map out the important stages in your user journey.
-                    Examples: first_visit, authentication, feature_discovery, etc.
-                  </li>
-                  <li>
-                    <strong>Place UserJourneyTracker on key pages</strong>:
-                    <pre className="bg-muted p-3 rounded-md text-sm mt-2">
-{`// On landing page
-<UserJourneyTracker journeyStage="first_visit" />
+                <pre className="bg-muted p-3 rounded-md text-sm mt-2">
+{`// Basic implementation
+<CompleteTracker 
+  pageTracking={{ actionType: "dashboard_view" }}
+  journeyTracking={{ journeyStage: "active_usage" }}
+/>
 
-// On authentication page
-<UserJourneyTracker journeyStage="authentication" />
-
-// On profile page
-<UserJourneyTracker journeyStage="profile_creation" />`}
-                    </pre>
-                  </li>
-                  <li>
-                    <strong>Add context with additionalData</strong>:
-                    <pre className="bg-muted p-3 rounded-md text-sm mt-2">
-{`<UserJourneyTracker 
-  journeyStage="feature_discovery" 
-  additionalData={{
-    feature: "care_management",
-    source: "dashboard",
-    user_segment: "family"
+// With additional context
+<CompleteTracker 
+  pageTracking={{ 
+    actionType: "caregiver_matching_page_view", 
+    additionalData: { results_count: results.length } 
+  }}
+  journeyTracking={{ 
+    journeyStage: "matching_exploration", 
+    additionalData: { match_quality: "high" }
   }}
 />`}
-                    </pre>
-                  </li>
-                  <li>
-                    <strong>Track key interactions</strong>: For important user actions, track journey stages programmatically:
-                    <pre className="bg-muted p-3 rounded-md text-sm mt-2">
-{`import { useTracking } from "@/hooks/useTracking";
-
-const MyComponent = () => {
-  const { trackEngagement } = useTracking();
-  
-  const handleImportantAction = async () => {
-    // Handle the action...
-    
-    // Then track the journey stage
-    await trackEngagement('user_journey_progress', {
-      journey_stage: 'conversion',
-      action: 'subscription_purchase',
-      plan_type: 'premium'
-    });
-  };
-  
-  return (
-    <Button onClick={handleImportantAction}>
-      Subscribe Now
-    </Button>
-  );
-};`}
-                    </pre>
-                  </li>
-                </ol>
+                </pre>
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Journey Analytics</h3>
+                <h3 className="text-lg font-medium mb-2">Programmatic Tracking with useCompleteTracking</h3>
+                <p className="mb-4">
+                  For tracking user interactions and events programmatically:
+                </p>
+                <pre className="bg-muted p-3 rounded-md text-sm mt-2">
+{`import { useCompleteTracking } from "@/hooks/useCompleteTracking";
+
+const MyComponent = () => {
+  const { trackWithJourney, trackFeatureWithJourney } = useCompleteTracking();
+  
+  const handleImportantAction = async () => {
+    // Handle the action logic...
+    
+    // Then track with journey context
+    await trackWithJourney(
+      'subscription_initiated', 
+      'subscription_consideration',
+      {
+        plan_type: 'premium',
+        source: 'matching_page'
+      }
+    );
+  };
+  
+  const handleFeatureExplore = () => {
+    trackFeatureWithJourney(
+      'care_coordination',
+      'view',
+      'feature_discovery',
+      { source: 'dashboard' }
+    );
+  };
+  
+  return (
+    <>
+      <Button onClick={handleImportantAction}>Subscribe</Button>
+      <Button onClick={handleFeatureExplore}>Explore Feature</Button>
+    </>
+  );
+};`}
+                </pre>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-medium mb-2">Journey Stages</h3>
+                <p className="mb-4">
+                  Standard journey stages to use consistently across your application:
+                </p>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {[
+                    'first_visit',
+                    'authentication',
+                    'profile_creation',
+                    'feature_discovery',
+                    'matching_exploration',
+                    'subscription_consideration',
+                    'active_usage',
+                    'return_visit',
+                    'conversion'
+                  ].map((stage: UserJourneyStage) => (
+                    <li key={stage} className="bg-muted p-2 rounded text-sm font-mono">
+                      {stage}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-medium mb-2">Best Practices</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>
+                    Use <strong>CompleteTracker</strong> for page-level tracking
+                  </li>
+                  <li>
+                    Use <strong>useCompleteTracking</strong> for user interactions
+                  </li>
+                  <li>
+                    Be consistent with journey stage names
+                  </li>
+                  <li>
+                    Include relevant context in additionalData
+                  </li>
+                  <li>
+                    Track both journey progression and specific actions
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-medium mb-2">Analyzing the Data</h3>
                 <p>
-                  The journey data is stored in the <code>cta_engagement_tracking</code> table with <code>action_type='user_journey_progress'</code>.
-                  Use queries to analyze:
+                  The integrated tracking system stores all data in the same table with correlated information between
+                  page views, journey stages, and specific actions. This allows for powerful analysis:
                 </p>
                 <ul className="list-disc pl-5 space-y-2 mt-2">
-                  <li>Journey stage conversion rates</li>
-                  <li>Time spent between stages</li>
-                  <li>Drop-off points in the user journey</li>
-                  <li>Segment performance by user role or other criteria</li>
+                  <li>Follow users through their entire journey</li>
+                  <li>See which pages correspond to which journey stages</li>
+                  <li>Identify where users drop off</li>
+                  <li>Measure time spent in each journey stage</li>
+                  <li>Correlate journey stages with conversion events</li>
                 </ul>
               </div>
             </CardContent>
