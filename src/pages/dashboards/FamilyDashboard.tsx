@@ -165,117 +165,6 @@ const FamilyDashboard = () => {
 
           <CaregiverMatchingCard />
           
-          <TellTheirStoryCard />
-
-          <DashboardCaregiverMatches />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <motion.div initial={{
-            opacity: 0,
-            y: 20
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.5
-          }}>
-              <Card className="h-full border-l-4 border-l-primary">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                    Message Board
-                  </CardTitle>
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-500">Care provider availability in Trinidad and Tobago</p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleViewFullBoard} disabled={refreshing}>
-                        <Clock className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                        <span className="sr-only">Refresh</span>
-                      </Button>
-                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-100">Professional</Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {loading ? <div className="flex justify-center items-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div> : messages.length > 0 ? <div className="space-y-3">
-                      {messages.filter(message => message.type === "professional").slice(0, 3).map(message => <div key={message.id} className="p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 bg-gray-50 border-l-primary-400">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="bg-primary-200">
-                                <AvatarFallback className="text-primary-800">
-                                  {message.author_initial}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h4 className="font-medium text-sm">{message.title}</h4>
-                                <p className="text-xs text-gray-600">{message.author}</p>
-                              </div>
-                            </div>
-                            {message.urgency && <Badge variant="outline" className={message.urgency === "Immediate" ? "bg-red-50 text-red-700" : message.urgency === "Short Notice" ? "bg-orange-50 text-orange-700" : message.urgency === "This Weekend" ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}>
-                                {message.urgency}
-                              </Badge>}
-                          </div>
-                          
-                          <p className="text-xs text-gray-600">{message.details}</p>
-                          
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {message.specialties && message.specialties.map((specialty, index) => <Badge key={index} variant="outline" className="text-xs bg-white">
-                                {specialty}
-                              </Badge>)}
-                          </div>
-                          
-                          <div className="flex justify-between items-center pt-1 text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>Posted {formatTimePosted(message.time_posted)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              <span>{message.location}</span>
-                            </div>
-                          </div>
-                        </div>)}
-                    </div> : <div className="text-center py-6">
-                      <p className="text-gray-500">No care providers found in Trinidad and Tobago</p>
-                      <Button variant="outline" size="sm" className="mt-2" onClick={refreshData} disabled={refreshing}>
-                        Refresh Data
-                      </Button>
-                    </div>}
-                  
-                  <SubscriptionFeatureLink featureType="Full Message Board" returnPath="/family/message-board" referringPagePath="/dashboard/family" referringPageLabel="Family Dashboard">
-                    View Full Message Board
-                  </SubscriptionFeatureLink>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <FamilyPostCareNeedForm />
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5 text-primary" />
-                Profile Management
-              </CardTitle>
-              <CardDescription>Manage your profile information and preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
-              <Link to="/registration/family">
-                <Button variant="default" className="w-full">
-                  Manage Profile
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <UpvoteFeatureButton featureTitle="Profile Management" className="w-full" buttonText="Upvote this Feature" />
-            </CardContent>
-          </Card>
-
-          <FamilyNextStepsPanel />
-
           <div className="space-y-6 mb-8">
             <Card className="mb-2">
               <CardHeader>
@@ -398,6 +287,117 @@ const FamilyDashboard = () => {
               </CardContent>
             </Card>
           </div>
+          
+          <TellTheirStoryCard />
+
+          <DashboardCaregiverMatches />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.5
+          }}>
+              <Card className="h-full border-l-4 border-l-primary">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Message Board
+                  </CardTitle>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-500">Care provider availability in Trinidad and Tobago</p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleViewFullBoard} disabled={refreshing}>
+                        <Clock className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                        <span className="sr-only">Refresh</span>
+                      </Button>
+                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-100">Professional</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {loading ? <div className="flex justify-center items-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div> : messages.length > 0 ? <div className="space-y-3">
+                      {messages.filter(message => message.type === "professional").slice(0, 3).map(message => <div key={message.id} className="p-3 rounded-lg space-y-2 hover:bg-gray-50 transition-colors cursor-pointer border-l-2 bg-gray-50 border-l-primary-400">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="bg-primary-200">
+                                <AvatarFallback className="text-primary-800">
+                                  {message.author_initial}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="font-medium text-sm">{message.title}</h4>
+                                <p className="text-xs text-gray-600">{message.author}</p>
+                              </div>
+                            </div>
+                            {message.urgency && <Badge variant="outline" className={message.urgency === "Immediate" ? "bg-red-50 text-red-700" : message.urgency === "Short Notice" ? "bg-orange-50 text-orange-700" : message.urgency === "This Weekend" ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}>
+                                {message.urgency}
+                              </Badge>}
+                          </div>
+                          
+                          <p className="text-xs text-gray-600">{message.details}</p>
+                          
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {message.specialties && message.specialties.map((specialty, index) => <Badge key={index} variant="outline" className="text-xs bg-white">
+                                {specialty}
+                              </Badge>)}
+                          </div>
+                          
+                          <div className="flex justify-between items-center pt-1 text-xs text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>Posted {formatTimePosted(message.time_posted)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              <span>{message.location}</span>
+                            </div>
+                          </div>
+                        </div>)}
+                    </div> : <div className="text-center py-6">
+                      <p className="text-gray-500">No care providers found in Trinidad and Tobago</p>
+                      <Button variant="outline" size="sm" className="mt-2" onClick={refreshData} disabled={refreshing}>
+                        Refresh Data
+                      </Button>
+                    </div>}
+                  
+                  <SubscriptionFeatureLink featureType="Full Message Board" returnPath="/family/message-board" referringPagePath="/dashboard/family" referringPageLabel="Family Dashboard">
+                    View Full Message Board
+                  </SubscriptionFeatureLink>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <FamilyPostCareNeedForm />
+          </div>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5 text-primary" />
+                Profile Management
+              </CardTitle>
+              <CardDescription>Manage your profile information and preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">Keep your profile up-to-date to ensure you receive the most relevant care coordination support and recommendations.</p>
+              <Link to="/registration/family">
+                <Button variant="default" className="w-full">
+                  Manage Profile
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <UpvoteFeatureButton featureTitle="Profile Management" className="w-full" buttonText="Upvote this Feature" />
+            </CardContent>
+          </Card>
+
+          <FamilyNextStepsPanel />
 
           <Card className="mb-8">
             <CardHeader>

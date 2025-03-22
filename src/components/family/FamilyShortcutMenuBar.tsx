@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,11 @@ export function FamilyShortcutMenuBar() {
             </Button>
           </Link>
           <Link to="/family/care-management/schedule">
-            
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span>Schedule</span>
+              <ArrowRight className="h-3 w-3" />
+            </Button>
           </Link>
         </div>
       </Container>
