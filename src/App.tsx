@@ -1,185 +1,215 @@
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/components/providers/AuthProvider";
-import { Navigation } from "@/components/layout/Navigation";
-import { useEffect, Suspense, lazy, useState } from "react";
-import { initializeSupabase, isSupabaseExperiencingIssues } from "@/lib/supabase";
-import { Fab } from "@/components/ui/fab";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { Auth } from "@supabase/ui";
+import AccountPage from "./pages/AccountPage";
+import HomePage from "./pages/HomePage";
+import Dashboard from "./pages/Dashboard";
+import HelpPage from "./pages/support/HelpPage";
+import FAQPage from "./pages/support/FAQPage";
+import ContactPage from "./pages/support/ContactPage";
+import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
+import CommunityPage from "./pages/CommunityPage";
+import CaregiverMatchingPage from "./pages/CaregiverMatchingPage";
+import TaskManagementPage from "./pages/TaskManagementPage";
+import ProfessionalNetworkPage from "./pages/ProfessionalNetworkPage";
+import RegistrationPage from "./pages/RegistrationPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import LandingPage from "./pages/LandingPage";
+import PricingPage from "./pages/PricingPage";
+import AdminUserManagementPage from "./pages/admin/AdminUserManagementPage";
+import JourneyTrackingExample from "./components/tracking/JourneyTrackingExample";
+import JourneyAnalyticsPage from "./pages/admin/JourneyAnalyticsPage";
 
-// Import all page components
-import Index from "@/pages/Index";
-import AuthPage from "@/pages/auth/AuthPage";
-import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
-import FeaturesPage from "@/pages/features/FeaturesPage";
-import AboutPage from "@/pages/about/AboutPage";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import FamilyDashboard from "@/pages/dashboards/FamilyDashboard";
-import CommunityDashboard from "@/pages/dashboards/CommunityDashboard";
-import ProfessionalDashboard from "@/pages/dashboards/ProfessionalDashboard";
-import FamilyRegistration from "@/pages/registration/FamilyRegistration";
-import ProfessionalRegistration from "@/pages/registration/ProfessionalRegistration";
-import ProfessionalRegistrationFix from "@/pages/registration/ProfessionalRegistrationFix";
-import CommunityRegistration from "@/pages/registration/CommunityRegistration";
-import CommunityFeaturesOverview from "@/pages/community/CommunityFeaturesOverview";
-import ProfessionalFeaturesOverview from "@/pages/professional/ProfessionalFeaturesOverview";
-import MessageBoardPage from "@/pages/professional/MessageBoardPage";
-import TrainingResourcesPage from "@/pages/professional/TrainingResourcesPage";
-import ModuleViewerPage from "@/pages/professional/ModuleViewerPage";
-import FamilyFeaturesOverview from "@/pages/family/FamilyFeaturesOverview";
-import FamilyStoryPage from "@/pages/family/FamilyStoryPage";
-import FAQPage from "@/pages/support/FAQPage";
-import SubscriptionPage from "@/pages/subscription/SubscriptionPage";
-import SubscriptionFeaturesPage from "@/pages/subscription/SubscriptionFeaturesPage";
-import CaregiverMatchingPage from "@/pages/caregiver/CaregiverMatchingPage";
-import FamilyMatchingPage from "@/pages/family/FamilyMatchingPage";
-import LegacyStoriesPage from "@/pages/legacy/LegacyStoriesPage";
-import CareManagementPage from "@/pages/family/care-management/CareManagementPage";
-import CreateCarePlanPage from "@/pages/family/care-management/CreateCarePlanPage";
-import NotFound from "@/pages/NotFound";
-import CarePlanDetailPage from "@/pages/family/care-management/CarePlanDetailPage";
+function App() {
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const supabase = useSupabaseClient();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (was cacheTime)
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-const AppWithProviders = () => {
-  const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'available' | 'issues'>('checking');
-  
   useEffect(() => {
-    initializeSupabase()
-      .then(success => {
-        setSupabaseStatus(success ? 'available' : 'issues');
-      })
-      .catch(() => {
-        setSupabaseStatus('issues');
-      });
-    
-    // Add custom style to reposition Lovable badge to top-right
-    const style = document.createElement('style');
-    style.textContent = `
-      .lovable-badge {
-        bottom: auto !important;
-        right: auto !important;
-        top: 10px !important;
-        left: 10px !important;
-        z-index: 100 !important;
-        opacity: 0.7 !important;
-        transform: scale(0.8) !important;
-      }
-      .lovable-badge:hover {
-        opacity: 1 !important;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // Check Supabase status periodically
-    const checkInterval = setInterval(() => {
-      setSupabaseStatus(isSupabaseExperiencingIssues() ? 'issues' : 'available');
-    }, 30000); // Check every 30 seconds
-    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const {
+      data: { subscription: authListener },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user || null); // Update user state
+    });
+
     return () => {
-      clearInterval(checkInterval);
+      authListener?.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
+
+  useEffect(() => {
+    const getRole = async () => {
+      if (!user?.id) {
+        setUserRole(null);
+        return;
+      }
+
+      // First, try to get the role from user metadata (fastest)
+      if (user?.app_metadata?.role) {
+        setUserRole(user.app_metadata.role);
+        return;
+      }
+
+      // Second, query the profiles table
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+        } else if (data?.role) {
+          setUserRole(data.role);
+          return;
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching profile:", err);
+      }
+
+      // Finally, use localStorage fallback for registration intent
+      const localStorageRole = localStorage.getItem("registration_role");
+      if (localStorageRole) {
+        setUserRole(localStorageRole);
+        return;
+      }
+
+      setUserRole(null);
+    };
+
+    getRole();
+  }, [user?.id, user?.app_metadata?.role, supabase]);
+
+  const isAdmin = userRole === "admin";
+  const isCaregiver = userRole === "caregiver";
+  const isFamily = userRole === "family";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Sonner />
-        {supabaseStatus === 'issues' && (
-          <div className="bg-yellow-100 text-yellow-800 px-4 py-2 fixed top-0 left-0 right-0 z-50 text-center">
-            Supabase is currently experiencing issues. Some features may not work properly.
-          </div>
-        )}
-        <BrowserRouter>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route exact path="/" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountPage session={session} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <HelpPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <CommunityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/caregiver-matching"
+          element={
+            <ProtectedRoute>
+              <CaregiverMatchingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task-management"
+          element={
+            <ProtectedRoute>
+              <TaskManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/professional-network"
+          element={
+            <ProtectedRoute>
+              <ProfessionalNetworkPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/registration" element={<RegistrationPage />} />
+        <Route
+          path="/admin/user-management"
+          element={
+            <AdminRoute>
+              <AdminUserManagementPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/dashboard/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/tracking-example"
+          element={
+            <ProtectedRoute>
+              <JourneyTrackingExample />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/admin/journey-analytics" element={<JourneyAnalyticsPage />} />
+      </Routes>
+    </Router>
   );
-};
 
-const AppContent = () => {
-  const location = useLocation();
-  const isIndexPage = location.pathname === "/";
-  
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
-          <Route path="/dashboard/family" element={<FamilyDashboard />} />
-          <Route path="/dashboard/community" element={<CommunityDashboard />} />
-          <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
-          
-          <Route path="/registration/family" element={<FamilyRegistration />} />
-          <Route path="/registration/professional" element={<ProfessionalRegistration />} />
-          <Route path="/registration/professional-fix" element={<ProfessionalRegistrationFix />} />
-          <Route path="/registration/community" element={<CommunityRegistration />} />
-          
-          <Route path="/community/features-overview" element={<CommunityFeaturesOverview />} />
-          <Route path="/professional/features-overview" element={<ProfessionalFeaturesOverview />} />
-          <Route path="/professional/message-board" element={<MessageBoardPage />} />
-          <Route path="/professional/training-resources" element={<TrainingResourcesPage />} />
-          
-          <Route path="/professional/module/:moduleId" element={<ModuleViewerPage />} />
-          <Route path="/professional/training-resources/module/:moduleId" element={<ModuleViewerPage />} />
-          <Route path="/professional/training-resources/module/:moduleId/lesson/:lessonId" element={<ModuleViewerPage />} />
-          
-          <Route path="/family/features-overview" element={<FamilyFeaturesOverview />} />
-          <Route path="/family/message-board" element={<MessageBoardPage />} />
-          <Route path="/family/story" element={<FamilyStoryPage />} />
-          <Route path="/family/care-management" element={<CareManagementPage />} />
-          <Route path="/family/care-management/create" element={<CreateCarePlanPage />} />
-          <Route path="/family/care-management/:id" element={<CarePlanDetailPage />} />
-          <Route path="/legacy-stories" element={<LegacyStoriesPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/subscription" element={<SubscriptionPage />} />
-          <Route path="/subscription-features" element={<SubscriptionFeaturesPage />} />
-          
-          <Route path="/caregiver-matching" element={<CaregiverMatchingPage />} />
-          <Route path="/family-matching" element={<FamilyMatchingPage />} />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      
-      {!isIndexPage && <GlobalFAB />}
-    </div>
-  );
-};
-
-const GlobalFAB = () => {
-  const location = useLocation();
-  const pathname = location.pathname;
-  
-  if (pathname === "/" || pathname === "/faq") {
-    return null;
+  function ProtectedRoute({ children }) {
+    if (!session) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
   }
-  
-  return (
-    <Fab 
-      className="bg-primary-500 hover:bg-primary-600 text-white"
-      label="Support options"
-    />
-  );
-};
 
-export default AppWithProviders;
+  function AdminRoute({ children }) {
+    if (!isAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+  }
+}
+
+export default App;
