@@ -7,38 +7,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { useEffect, Suspense, lazy, useState } from "react";
 import { initializeSupabase, isSupabaseExperiencingIssues } from "@/lib/supabase";
 import { Fab } from "@/components/ui/fab";
-
-// Import all page components
-import Index from "@/pages/Index";
-import AuthPage from "@/pages/auth/AuthPage";
-import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
-import FeaturesPage from "@/pages/features/FeaturesPage";
-import AboutPage from "@/pages/about/AboutPage";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import FamilyDashboard from "@/pages/dashboards/FamilyDashboard";
-import CommunityDashboard from "@/pages/dashboards/CommunityDashboard";
-import ProfessionalDashboard from "@/pages/dashboards/ProfessionalDashboard";
-import FamilyRegistration from "@/pages/registration/FamilyRegistration";
-import ProfessionalRegistration from "@/pages/registration/ProfessionalRegistration";
-import ProfessionalRegistrationFix from "@/pages/registration/ProfessionalRegistrationFix";
-import CommunityRegistration from "@/pages/registration/CommunityRegistration";
-import CommunityFeaturesOverview from "@/pages/community/CommunityFeaturesOverview";
-import ProfessionalFeaturesOverview from "@/pages/professional/ProfessionalFeaturesOverview";
-import MessageBoardPage from "@/pages/professional/MessageBoardPage";
-import TrainingResourcesPage from "@/pages/professional/TrainingResourcesPage";
-import ModuleViewerPage from "@/pages/professional/ModuleViewerPage";
-import FamilyFeaturesOverview from "@/pages/family/FamilyFeaturesOverview";
-import FamilyStoryPage from "@/pages/family/FamilyStoryPage";
-import FAQPage from "@/pages/support/FAQPage";
-import SubscriptionPage from "@/pages/subscription/SubscriptionPage";
-import SubscriptionFeaturesPage from "@/pages/subscription/SubscriptionFeaturesPage";
-import CaregiverMatchingPage from "@/pages/caregiver/CaregiverMatchingPage";
-import FamilyMatchingPage from "@/pages/family/FamilyMatchingPage";
-import LegacyStoriesPage from "@/pages/legacy/LegacyStoriesPage";
-import CareManagementPage from "@/pages/family/care-management/CareManagementPage";
-import CreateCarePlanPage from "@/pages/family/care-management/CreateCarePlanPage";
-import NotFound from "@/pages/NotFound";
-import CarePlanDetailPage from "@/pages/family/care-management/CarePlanDetailPage";
+import UserJourneyPage from "@/pages/admin/UserJourneyPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -125,6 +94,7 @@ const AppContent = () => {
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/admin/user-journey" element={<UserJourneyPage />} />
           <Route path="/dashboard/family" element={<FamilyDashboard />} />
           <Route path="/dashboard/community" element={<CommunityDashboard />} />
           <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
