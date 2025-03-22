@@ -6,18 +6,19 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { JourneyTrackingExample } from "./components/tracking/JourneyTrackingExample";
 import JourneyAnalyticsPage from "./pages/admin/JourneyAnalyticsPage";
+import { supabase } from "./lib/supabase"; // Use the existing Supabase client
 
 function App() {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  const supabase = useSupabaseClient();
 
   useEffect(() => {
+    // Fetch session directly from the Supabase client
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -36,7 +37,7 @@ function App() {
     return () => {
       authListener?.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     const getRole = async () => {
@@ -80,7 +81,7 @@ function App() {
     };
 
     getRole();
-  }, [user?.id, user?.app_metadata?.role, supabase]);
+  }, [user?.id, user?.app_metadata?.role]);
 
   const isAdmin = userRole === "admin";
   const isCaregiver = userRole === "caregiver";
