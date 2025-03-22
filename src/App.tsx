@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -6,25 +7,8 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Auth } from "@supabase/ui";
-import AccountPage from "./pages/AccountPage";
-import HomePage from "./pages/HomePage";
-import Dashboard from "./pages/Dashboard";
-import HelpPage from "./pages/support/HelpPage";
-import FAQPage from "./pages/support/FAQPage";
-import ContactPage from "./pages/support/ContactPage";
-import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
-import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
-import CommunityPage from "./pages/CommunityPage";
-import CaregiverMatchingPage from "./pages/CaregiverMatchingPage";
-import TaskManagementPage from "./pages/TaskManagementPage";
-import ProfessionalNetworkPage from "./pages/ProfessionalNetworkPage";
-import RegistrationPage from "./pages/RegistrationPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import LandingPage from "./pages/LandingPage";
-import PricingPage from "./pages/PricingPage";
-import AdminUserManagementPage from "./pages/admin/AdminUserManagementPage";
-import JourneyTrackingExample from "./components/tracking/JourneyTrackingExample";
+import { JourneyTrackingExample } from "./components/tracking/JourneyTrackingExample";
 import JourneyAnalyticsPage from "./pages/admin/JourneyAnalyticsPage";
 
 function App() {
@@ -105,13 +89,13 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route exact path="/" element={<LandingPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/" element={<div>Landing Page</div>} />
+        <Route path="/pricing" element={<div>Pricing Page</div>} />
         <Route
           path="/account"
           element={
             <ProtectedRoute>
-              <AccountPage session={session} />
+              <div>Account Page</div>
             </ProtectedRoute>
           }
         />
@@ -119,7 +103,7 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <div>Dashboard</div>
             </ProtectedRoute>
           }
         />
@@ -127,19 +111,19 @@ function App() {
           path="/help"
           element={
             <ProtectedRoute>
-              <HelpPage />
+              <div>Help Page</div>
             </ProtectedRoute>
           }
         />
-        <Route path="/faq" element={<FAQPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/terms" element={<TermsOfServicePage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/faq" element={<div>FAQ Page</div>} />
+        <Route path="/contact" element={<div>Contact Page</div>} />
+        <Route path="/terms" element={<div>Terms of Service Page</div>} />
+        <Route path="/privacy" element={<div>Privacy Policy Page</div>} />
         <Route
           path="/community"
           element={
             <ProtectedRoute>
-              <CommunityPage />
+              <div>Community Page</div>
             </ProtectedRoute>
           }
         />
@@ -147,7 +131,7 @@ function App() {
           path="/caregiver-matching"
           element={
             <ProtectedRoute>
-              <CaregiverMatchingPage />
+              <div>Caregiver Matching Page</div>
             </ProtectedRoute>
           }
         />
@@ -155,7 +139,7 @@ function App() {
           path="/task-management"
           element={
             <ProtectedRoute>
-              <TaskManagementPage />
+              <div>Task Management Page</div>
             </ProtectedRoute>
           }
         />
@@ -163,16 +147,16 @@ function App() {
           path="/professional-network"
           element={
             <ProtectedRoute>
-              <ProfessionalNetworkPage />
+              <div>Professional Network Page</div>
             </ProtectedRoute>
           }
         />
-        <Route path="/registration" element={<RegistrationPage />} />
+        <Route path="/registration" element={<div>Registration Page</div>} />
         <Route
           path="/admin/user-management"
           element={
             <AdminRoute>
-              <AdminUserManagementPage />
+              <div>Admin User Management Page</div>
             </AdminRoute>
           }
         />
@@ -192,7 +176,10 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/admin/journey-analytics" element={<JourneyAnalyticsPage />} />
+        <Route 
+          path="/admin/journey-analytics" 
+          element={<JourneyAnalyticsPage />} 
+        />
       </Routes>
     </Router>
   );
