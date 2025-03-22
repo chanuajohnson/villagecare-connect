@@ -13,7 +13,6 @@ export type UserJourneyStage =
   | 'subscription_consideration'
   | 'active_usage'
   | 'return_visit'
-  | 'conversion'
   | string; // Allow custom journey stages
 
 interface UserJourneyTrackerProps {
@@ -36,25 +35,6 @@ interface UserJourneyTrackerProps {
 /**
  * Component to track user journey stages
  * Use this component on key pages to track where users are in their journey
- * 
- * Example usage:
- * 
- * ```tsx
- * // On a landing page
- * <UserJourneyTracker journeyStage="first_visit" />
- * 
- * // On a feature exploration page with additional data
- * <UserJourneyTracker 
- *   journeyStage="feature_discovery" 
- *   additionalData={{ feature: "caregiver_matching" }}
- * />
- * 
- * // Track a subscription-related event once per session
- * <UserJourneyTracker 
- *   journeyStage="subscription_consideration" 
- *   trackOnce={true}
- * />
- * ```
  */
 export const UserJourneyTracker = ({ 
   journeyStage, 
