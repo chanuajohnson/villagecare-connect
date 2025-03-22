@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Search, Calendar, ArrowUpRight, Clock, Activity } from "lucide-react";
+import { Search, Calendar, ArrowUpRight, Clock, Activity, Plus } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 const UserJourneyPage = () => {
@@ -57,6 +57,45 @@ const UserJourneyPage = () => {
     } catch (error: any) {
       console.error("Error fetching user journey data:", error);
       toast.error(`Error fetching data: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add a test record function for debugging
+  const addTestRecord = async () => {
+    if (!userId.trim()) {
+      toast.error("Please enter a user ID first");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("cta_engagement_tracking")
+        .insert({
+          user_id: userId,
+          action_type: "test_journey_event",
+          session_id: "test-session-id",
+          additional_data: {
+            path: "/admin/user-journey",
+            journey_stage: "testing",
+            test_record: true,
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Test record added successfully");
+      // Refetch the data to show the new record
+      fetchUserJourneyData();
+      
+    } catch (error: any) {
+      console.error("Error adding test record:", error);
+      toast.error(`Error adding test record: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +151,19 @@ const UserJourneyPage = () => {
                 )}
                 Look Up User
               </Button>
+              
+              {/* Debug button for adding a test record */}
+              {user?.id === '605540d7-ae87-4a7c-9bd0-5699937f0670' && (
+                <Button 
+                  onClick={addTestRecord} 
+                  disabled={isLoading}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Test Record
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -197,6 +249,16 @@ const UserJourneyPage = () => {
                 <li>feature_discovery</li>
                 <li>subscription_consideration</li>
                 <li>active_usage</li>
+              </ul>
+              
+              <p className="mt-4 text-amber-600">
+                <strong>Troubleshooting:</strong> If you're not seeing journey data for a user, ensure that:
+              </p>
+              <ul className="list-disc pl-5 text-amber-700">
+                <li>The user has visited pages with <code>UserJourneyTracker</code> components</li>
+                <li>The user was authenticated during those visits</li>
+                <li>The correct user ID is being used for lookup</li>
+                <li>There are no RLS policy restrictions preventing data access</li>
               </ul>
             </div>
           </CardContent>

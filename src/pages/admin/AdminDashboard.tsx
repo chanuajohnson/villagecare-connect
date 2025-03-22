@@ -8,6 +8,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart } from "lucide-react";
+import { UserJourneyTracker } from "@/components/tracking/UserJourneyTracker";
+import { useJourneyTracking } from "@/hooks/useJourneyTracking";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -22,9 +24,23 @@ const AdminDashboard = () => {
     },
   ];
 
+  // Track admin dashboard visits
+  useJourneyTracking({
+    journeyStage: "admin_dashboard_visit",
+    additionalData: {
+      admin_section: "main_dashboard"
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8">
+        {/* Also add the component-based tracking for demonstration */}
+        <UserJourneyTracker 
+          journeyStage="admin_section_view" 
+          additionalData={{ section: "admin_dashboard" }}
+        />
+        
         <DashboardHeader
           breadcrumbItems={breadcrumbItems}
         />
